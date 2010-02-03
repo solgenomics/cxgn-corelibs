@@ -1,0 +1,70 @@
+=head1 dbConfigure - set the database configuration for a MOBY lsid resolver
+
+dbConfigure -  set the database configuration for a MOBY lsid resolver
+
+=head2 Author
+
+Mark Wilkinson (markw at illuminae dot com)
+
+=head2 Purpose
+
+to set the connection configuration for the MOBY lsid resolver.  This
+module should be hand-edited to reflect your database connection information
+and then renamed to dbConfigure.pm
+
+=cut
+
+#$Id: dbConfigure.pm.template,v 1.2 2004/01/11 01:31:37 mwilkinson Exp $
+package MOBY::lsid::authority::dbConfigure;
+use strict;
+use base 'Exporter';
+require Exporter;
+
+our @EXPORT_OK = qw(
+	$centraldb
+	$namespacedb
+	$objectdb
+	$servicedb
+	$relationshipdb
+	);
+
+# parameters for the mobycentral database
+our $centraldb = {'host' => '',
+		'dbname' => '',
+		'user' => '',
+		'pass' => '',
+		'port' => ,
+	};
+
+# parameters for the namespace database
+our $namespacedb = {'host' => '',
+		'dbname' => '',
+		'user' => '',
+		'pass' => '',
+		'port' => ,
+	};
+
+# parameters for the object database
+our $objectdb = {	'host' => '',
+		'dbname' => '',
+		'user' => '',
+		'pass' => '',
+		'port' => ,
+	};
+
+# parameters for the service database
+our $servicedb = {'host' => '',
+		'dbname' => '',
+		'user' => '',
+		'pass' => '',
+		'port' => ,
+	};
+
+
+# parameters for the relationship database
+our $relationshipdb = {'host' => '',
+		'dbname' => '',
+		'user' => '',
+		'pass' => '',
+		'port' => ,
+	};

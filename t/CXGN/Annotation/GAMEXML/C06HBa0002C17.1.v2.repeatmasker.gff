@@ -1,0 +1,36 @@
+##gff-version 2
+##date 2006-06-15
+##sequence-region C06HBa0002C17.seq.screen
+C06HBa0002C17.1-1	RepeatMasker	similarity	7981	8146	14.7	+	.	Target "Motif:Contig1202" 64 229
+C06HBa0002C17.1-10	RepeatMasker	similarity	11039	11352	17.4	+	.	Target "Motif:Contig358" 3 311
+C06HBa0002C17.1-12	RepeatMasker	similarity	143	427	28.2	-	.	Target "Motif:Contig372" 4 288
+C06HBa0002C17.1-13	RepeatMasker	similarity	5413	5495	24.1	+	.	Target "Motif:Contig372" 3 85
+C06HBa0002C17.1-13	RepeatMasker	similarity	6139	6258	19.2	-	.	Target "Motif:Contig153" 1 120
+C06HBa0002C17.1-13	RepeatMasker	similarity	8963	9020	20.0	-	.	Target "Motif:Contig598" 742 849
+C06HBa0002C17.1-13	RepeatMasker	similarity	11244	11698	 4.6	-	.	Target "Motif:Contig240" 1 467
+C06HBa0002C17.1-13	RepeatMasker	similarity	11666	11737	15.3	-	.	Target "Motif:Contig240" 852 926
+C06HBa0002C17.1-13	RepeatMasker	similarity	17049	17181	 8.4	-	.	Target "Motif:Contig598" 756 886
+C06HBa0002C17.1-14	RepeatMasker	similarity	1093	1266	15.0	+	.	Target "Motif:Contig1202" 70 244
+C06HBa0002C17.1-14	RepeatMasker	similarity	3231	3379	15.8	+	.	Target "Motif:Contig144" 20 167
+C06HBa0002C17.1-14	RepeatMasker	similarity	4732	4819	11.6	+	.	Target "Motif:Contig1268" 2 89
+C06HBa0002C17.1-14	RepeatMasker	similarity	6102	6132	 6.5	-	.	Target "Motif:Contig1660" 20 50
+C06HBa0002C17.1-14	RepeatMasker	similarity	6297	6356	15.0	-	.	Target "Motif:Contig1660" 16 77
+C06HBa0002C17.1-14	RepeatMasker	similarity	9630	9718	13.9	-	.	Target "Motif:Contig1268" 17 104
+C06HBa0002C17.1-14	RepeatMasker	similarity	13396	13549	27.7	+	.	Target "Motif:Contig1227" 8 161
+C06HBa0002C17.1-14	RepeatMasker	similarity	13530	13673	24.1	-	.	Target "Motif:Contig1227" 2 142
+C06HBa0002C17.1-2	RepeatMasker	similarity	333	518	14.7	+	.	Target "Motif:Contig97" 1 184
+C06HBa0002C17.1-2	RepeatMasker	similarity	518	900	19.9	-	.	Target "Motif:Contig1298" 839 1211
+C06HBa0002C17.1-2	RepeatMasker	similarity	1382	1529	19.3	-	.	Target "Motif:Contig1258" 1 136
+C06HBa0002C17.1-2	RepeatMasker	similarity	1518	1968	11.1	+	.	Target "Motif:Contig97" 176 630
+C06HBa0002C17.1-5	RepeatMasker	similarity	458	568	18.9	-	.	Target "Motif:Contig1268" 1 113
+C06HBa0002C17.1-5	RepeatMasker	similarity	4692	4753	19.4	-	.	Target "Motif:Contig1660" 1 67
+C06HBa0002C17.1-5	RepeatMasker	similarity	5784	5945	14.2	-	.	Target "Motif:Contig1202" 33 208
+C06HBa0002C17.1-5	RepeatMasker	similarity	8311	8657	 6.9	-	.	Target "Motif:Contig598" 530 880
+C06HBa0002C17.1-5	RepeatMasker	similarity	21879	21952	22.8	+	.	Target "Motif:Contig372" 2 68
+C06HBa0002C17.1-5	RepeatMasker	similarity	21953	22197	25.0	-	.	Target "Motif:Contig372" 782 1011
+C06HBa0002C17.1-6	RepeatMasker	similarity	1	257	 7.8	+	.	Target "Motif:Contig1227" 39 308
+C06HBa0002C17.1-7	RepeatMasker	similarity	7927	8044	11.1	-	.	Target "Motif:Contig153" 1 117
+C06HBa0002C17.1-7	RepeatMasker	similarity	9754	9858	19.2	-	.	Target "Motif:Contig1454" 1 114
+C06HBa0002C17.1-8	RepeatMasker	similarity	474	690	14.2	+	.	Target "Motif:Contig1209" 1 219
+C06HBa0002C17.1-8	RepeatMasker	similarity	691	806	10.3	-	.	Target "Motif:Contig1227" 195 310
+C06HBa0002C17.1-8	RepeatMasker	similarity	1042	1190	20.1	+	.	Target "Motif:Contig1227" 161 309

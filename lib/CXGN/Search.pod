@@ -1,0 +1,91 @@
+=head1 NAME
+
+CXGN::Search -  high-level framework for making powerful searches that all share
+  the same interface, making it easy to integrate searches and learn to use ones
+  written by others.
+
+=head1 DESCRIPTION
+
+A search implemented with this framework consists of a set of three objects:
+a Query, which encapsulates the parameters of a search, a Search, which knows
+how to actually execute the search and return the result set, and the Result,
+which is a 'page' of results from the total result set, with functions to
+iterate over the results, optionally turning pages for you automatically.
+
+Pretty much any kind of search that can be expressed as this kind of process
+(that is, pretty much anything) can be implemented as a set of search 
+framework subclasses.  The advantage of doing this is that the searches will
+all work the same way from the point of view of someone using them, meaning
+it's easier to integrate searches, or just use a new search you're not familiar
+with.
+
+Also, if you use the popular search framework subclasses going along with
+L<CXGN::Search::DBI::Simple>, you can construct many kinds of powerful database
+searches that use Perl's L<DBI> and L<Class::DBI> with astonishingly little
+effort.
+
+After you make your search, you may want to make it a nice web search,
+with automatically filling in forms, etc.  There are things you can
+subclass that will help you do this too, see L<CXGN::Search::WWWQuery>
+(for any kind of search), and L<CXGN::Search::DBI::Simple::WWWQuery>
+(more specialized functionality for database searches).
+
+=head1 USING SEARCHES
+
+Using a search that's been written for the search framework is drop-dead
+easy, which is the whole point.  Here's how to use BogoPeopleSearch, which
+happens to be a database search done with L<CXGN::Search::DBI::Simple>.
+
+  use CXGN::BogoPeopleSearch;
+
+  #find all the people whose last name begins with J
+  my $search = CXGN::BogoPeopleSearch->new;
+  my $query = $search->new_query;
+  $query->last_name("LIKE 'J%'");
+  my $results = $search->do_search($query);
+
+  #print them all out
+  print "In all, ",$results->total_results,
+        " people have a last name beginning with J:\n";
+  while( my $person = $results->next_result ) {
+    print "  ",$person->[1]," ",$person->[2],"\n";
+  }
+
+And that, as they say, is that.
+
+=head1 CREATING SEARCHES
+
+This document just describes the overarching structure of a search framework
+search, that is, it consists of three objects, and you feed the query to the
+search and get back a result.  This alone doesn't make implementing a search
+any faster or easier, it just gives you a specification for its interface.
+
+For making it easier to implement specific types of searches, like database
+searches, BLAST searches, or whatever, there are partial implementations
+you can subclass:
+
+  L<CXGN::Search::DBI::Simple>
+  L<CXGN::Search::DBI::CDBI> (a subclass of Simple that adds optimizations for returning Class::DBI objects)
+
+=head1 INHERITANCE HIERARCHY
+
+see L<http://internal.sgn.cornell.edu/docs/search/inheritance_diagram.pdf>
+
+=head1 INTERFACES (ABSTRACT CLASSES)
+
+  L<CXGN::Search::SearchI>
+  L<CXGN::Search::QueryI>
+  L<CXGN::Search::ResultI>
+
+=head1 SEARCH IMPLEMENTATIONS
+
+  L<CXGN::Unigene::Search> - low complexity
+  L<CXGN::Genomic::Search::GSS> - medium complexity
+  L<CXGN::Genomic::Search::Clone> - high complexity
+
+=head1 AUTHOR(S)
+
+  Robert Buels - rmb32@cornell.edu
+
+=cut
+

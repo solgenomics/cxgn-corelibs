@@ -1,0 +1,26 @@
+<project name="lsid_resolver.kpf">
+<files>
+ <file url="ClassResolver.pm">
+ </file>
+ <file url="NamespaceResolver.pm">
+ </file>
+ <file url="ServiceResolver.pm">
+ </file>
+ <file url="RelationshipResolver.pm">
+ </file>
+ <file url="PredicateResolver.pm">
+ </file>
+ <file url="metadata.pl">
+ </file>
+ <file url="authority.pl">
+ </file>
+ <file url="Error.pm">
+ </file>
+ <file url="RDFConfigure.pm">
+ </file>
+ <file url="dbConfigure.pm.template">
+ </file>
+ <file url="ServiceInstanceResolver.pm">
+ </file>
+</files>
+</project>

@@ -1,0 +1,7 @@
+# SQL library
+# Format:
+# query_name (modules, that, can, use, query) sql_query;
+fooq (MyPackage, MyOtherPackage) SELECT * FROM my_table;
+barq (MyOtherPackage)            SELECT some_column
+                                 FROM my_table;
+bazq (test_sqllibrarian.pl)      SELECT bleh FROM table;

@@ -1,0 +1,2352 @@
+BLASTN 2.2.18 [Mar-02-2008]
+
+
+Reference: Altschul, Stephen F., Thomas L. Madden, Alejandro A. Schaffer, 
+Jinghui Zhang, Zheng Zhang, Webb Miller, and David J. Lipman (1997), 
+"Gapped BLAST and PSI-BLAST: a new generation of protein database search
+programs",  Nucleic Acids Res. 25:3389-3402.
+
+Query= RH091N17_SP6_722514 (trimmed for quality and cloning vector)
+         (678 letters)
+
+Database: Potato BAC End Sequences 
+           127,767 sequences; 82,390,459 total letters
+
+Searching..................................................done
+
+
+
+                                                                 Score    E
+Sequences producing significant alignments:                      (bits) Value
+
+RHPOTKEY0091N17_SP6_722514                                           1344   0.0  
+RHPOTKEY0137C22_SP6_667522                                           1112   0.0  
+RHPOTKEY0158C01_T7_687371                                             204   1e-51
+RHPOTKEY0124D02_T7_635207                                             172   5e-42
+RHPOTKEY0013A07_SP6_658300                                            170   2e-41
+RHPOTKEY0133B11_SP6_638848                                            170   2e-41
+RHPOTKEY0135D19_SP6_663050                                            167   3e-40
+RHPOTKEY0145A14_T7_628624                                             161   2e-38
+RHPOTKEY0188L24_SP6_737011                                            159   7e-38
+RHPOTKEY0142N17_T7_739027                                             153   4e-36
+RHPOTKEY0041N10_T7_657408                                             147   3e-34
+RHPOTKEY0165I24_T7_651350                                             147   3e-34
+RHPOTKEY0084P24_SP6_647451                                            143   4e-33
+RHPOTKEY0122D09_SP6_702256                                            139   6e-32
+RHPOTKEY0164K09_T7_621682                                             139   6e-32
+RHPOTKEY0121M22_T7_726226                                             135   1e-30
+RHPOTKEY0127A24_T7_645867                                             135   1e-30
+RHPOTKEY0181L04_SP6_644240                                            135   1e-30
+RHPOTKEY0134C18_SP6_634681                                            133   4e-30
+RHPOTKEY0092H08_SP6_634497                                            127   2e-28
+RHPOTKEY0177B21_T7_643978                                             127   2e-28
+RHPOTKEY0121K05_SP6_744023                                            123   4e-27
+RHPOTKEY0183P01_SP6_715450                                            123   4e-27
+RHPOTKEY0200F06_SP6_637503                                            123   4e-27
+RHPOTKEY0024O07_T7_681865                                             121   1e-26
+RHPOTKEY0181O19_SP6_700482                                            121   1e-26
+RHPOTKEY0031P14_SP6_734723                                            119   6e-26
+RHPOTKEY0092E08_SP6_620473                                            119   6e-26
+RHPOTKEY0121F12_T7_705455                                             119   6e-26
+RHPOTKEY0126J15_T7_748780                                             119   6e-26
+RHPOTKEY0186K14_T7_754112                                             119   6e-26
+RHPOTKEY0191F16_SP6_693591                                            119   6e-26
+RHPOTKEY0080I24_SP6_750364                                            117   2e-25
+RHPOTKEY0176O01_SP6_675174                                            117   2e-25
+RHPOTKEY0143L11_T7_637052                                             115   9e-25
+RHPOTKEY0145L14_SP6_647488                                            115   9e-25
+RHPOTKEY0185J11_SP6_759425                                            109   6e-23
+RHPOTKEY0043H11_SP6_741560                                            107   2e-22
+RHPOTKEY0120O08_SP6_679695                                            107   2e-22
+RHPOTKEY0123D22_SP6_725805                                            107   2e-22
+RHPOTKEY0167L18_T7_759299                                             107   2e-22
+RHPOTKEY0175O19_T7_653580                                             107   2e-22
+RHPOTKEY0119I18_T7_709416                                             105   9e-22
+RHPOTKEY0033M09_SP6_728216                                            103   3e-21
+RHPOTKEY0183C19_T7_624522                                             103   3e-21
+RHPOTKEY0147C22_SP6_654853                                            100   5e-20
+RHPOTKEY0162P15_SP6_705129                                            100   5e-20
+RHPOTKEY0127B16_SP6_655172                                             98   2e-19
+RHPOTKEY0102I20_T7_684455                                              94   3e-18
+RHPOTKEY0103G06_T7_628992                                              94   3e-18
+RHPOTKEY0107O22_SP6_659028                                             94   3e-18
+RHPOTKEY0173K12_SP6_743590                                             94   3e-18
+RHPOTKEY0048O08_SP6_708624                                             92   1e-17
+RHPOTKEY0127O22_SP6_716494                                             92   1e-17
+RHPOTKEY0045I23_T7_706031                                              90   5e-17
+RHPOTKEY0152C21_T7_630691                                              90   5e-17
+RHPOTKEY0177B21_SP6_687663                                             90   5e-17
+RHPOTKEY0136E19_SP6_758490                                             88   2e-16
+RHPOTKEY0163O08_T7_681825                                              88   2e-16
+RHPOTKEY0083A16_T7_712551                                              86   8e-16
+RHPOTKEY0094A16_SP6_716362                                             86   8e-16
+RHPOTKEY0177K19_T7_756600                                              86   8e-16
+RHPOTKEY0197N05_SP6_643915                                             86   8e-16
+RHPOTKEY0065E18_SP6_687999                                             84   3e-15
+RHPOTKEY0149B10_SP6_651808                                             84   3e-15
+RHPOTKEY0167P12_SP6_751767                                             84   3e-15
+RHPOTKEY0198L01_T7_631432                                              84   3e-15
+RHPOTKEY0103A17_T7_703327                                              82   1e-14
+RHPOTKEY0124E10_T7_653973                                              82   1e-14
+RHPOTKEY0135L17_SP6_691179                                             82   1e-14
+RHPOTKEY0166L13_SP6_663902                                             82   1e-14
+RHPOTKEY0171F20_SP6_719488                                             82   1e-14
+RHPOTKEY0183I12_SP6_719034                                             82   1e-14
+RHPOTKEY0106L07_SP6_622992                                             80   5e-14
+RHPOTKEY0168M14_T7_695969                                              80   5e-14
+RHPOTKEY0185K24_SP6_755092                                             80   5e-14
+RHPOTKEY0197B21_SP6_704122                                             78   2e-13
+RHPOTKEY0153N14_T7_740142                                              76   8e-13
+RHPOTKEY0191N18_SP6_688348                                             76   8e-13
+RHPOTKEY0001B14_T7_715066                                              74   3e-12
+RHPOTKEY0066M07_SP6_716259                                             74   3e-12
+RHPOTKEY0121H06_SP6_680467                                             74   3e-12
+RHPOTKEY0177N17_T7_730304                                              74   3e-12
+RHPOTKEY0163A10_SP6_699630                                             72   1e-11
+RHPOTKEY0005H20_SP6_702598                                             70   5e-11
+RHPOTKEY0024E20_SP6_694129                                             70   5e-11
+RHPOTKEY0073B12_T7_700388                                              70   5e-11
+RHPOTKEY0134H04_SP6_650735                                             70   5e-11
+RHPOTKEY0147K22_T7_697571                                              70   5e-11
+RHPOTKEY0159J10_T7_702820                                              70   5e-11
+
+>RHPOTKEY0091N17_SP6_722514 
+          Length = 678
+
+ Score = 1344 bits (678), Expect = 0.0
+ Identities = 678/678 (100%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 1   ttctgatagtgcttggaggaatgcaacagatcttagttgcaggtgcagcaccaggtcaac 60
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 1   ttctgatagtgcttggaggaatgcaacagatcttagttgcaggtgcagcaccaggtcaac 60
+
+                                                                       
+Query: 61  agaggcatcttaagcccaggtatctcttggggtgcctagctcgtgatttcgtctggagct 120
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 61  agaggcatcttaagcccaggtatctcttggggtgcctagctcgtgatttcgtctggagct 120
+
+                                                                       
+Query: 121 gttccgatagagtagcagaagatgctcggggtgtttcttaggctttttgtaataccccgt 180
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 121 gttccgatagagtagcagaagatgctcggggtgtttcttaggctttttgtaataccccgt 180
+
+                                                                       
+Query: 181 atttaaaaaggccaaatcgcagctttccagatgttgcaggtaccaaaccacaccggccac 240
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 181 atttaaaaaggccaaatcgcagctttccagatgttgcaggtaccaaaccacaccggccac 240
+
+                                                                       
+Query: 241 ccacgacccgtggaatggaccacagaccgtaggtgtggtccatggttggcctgcctaggt 300
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 241 ccacgacccgtggaatggaccacagaccgtaggtgtggtccatggttggcctgcctaggt 300
+
+                                                                       
+Query: 301 aagatctgaaggtctagaaccacgacctgaccaataaaccattggtcagaacacagtccg 360
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 301 aagatctgaaggtctagaaccacgacctgaccaataaaccattggtcagaacacagtccg 360
+
+                                                                       
+Query: 361 tggtttgaagccccaaagtcaggcttttaaccaccatcgacggccgtgcaggacggtccg 420
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 361 tggtttgaagccccaaagtcaggcttttaaccaccatcgacggccgtgcaggacggtccg 420
+
+                                                                       
+Query: 421 tcgtcctgaccacgatccatcaatgcggtctcgtggttcactgctggcagttatttttca 480
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 421 tcgtcctgaccacgatccatcaatgcggtctcgtggttcactgctggcagttatttttca 480
+
+                                                                       
+Query: 481 ggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtt 540
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 481 ggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtt 540
+
+                                                                       
+Query: 541 tataaccccctatataagtcttttaacccccaaattcaccccatttatttcatttttcta 600
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 541 tataaccccctatataagtcttttaacccccaaattcaccccatttatttcatttttcta 600
+
+                                                                       
+Query: 601 aattcacaaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaaaga 660
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 601 aattcacaaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaaaga 660
+
+                             
+Query: 661 ggagaagaagattcaacc 678
+           ||||||||||||||||||
+Sbjct: 661 ggagaagaagattcaacc 678
+
+
+>RHPOTKEY0137C22_SP6_667522 
+          Length = 830
+
+ Score = 1112 bits (561), Expect = 0.0
+ Identities = 570/573 (99%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 1   ttctgatagtgcttggaggaatgcaacagatcttagttgcaggtgcagcaccaggtcaac 60
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 258 ttctgatagtgcttggaggaatgcaacagatcttagttgcaggtgcagcaccaggtcaac 317
+
+                                                                       
+Query: 61  agaggcatcttaagcccaggtatctcttggggtgcctagctcgtgatttcgtctggagct 120
+           |||||||||||||||||||||||||||||||||||||||| |||||||||| ||||||||
+Sbjct: 318 agaggcatcttaagcccaggtatctcttggggtgcctagcccgtgatttcgactggagct 377
+
+                                                                       
+Query: 121 gttccgatagagtagcagaagatgctcggggtgtttcttaggctttttgtaataccccgt 180
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 378 gttccgatagagtagcagaagatgctcggggtgtttcttaggctttttgtaataccccgt 437
+
+                                                                       
+Query: 181 atttaaaaaggccaaatcgcagctttccagatgttgcaggtaccaaaccacaccggccac 240
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 438 atttaaaaaggccaaatcgcagctttccagatgttgcaggtaccaaaccacaccggccac 497
+
+                                                                       
+Query: 241 ccacgacccgtggaatggaccacagaccgtaggtgtggtccatggttggcctgcctaggt 300
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 498 ccacgacccgtggaatggaccacagaccgtaggtgtggtccatggttggcctgcctaggt 557
+
+                                                                       
+Query: 301 aagatctgaaggtctagaaccacgacctgaccaataaaccattggtcagaacacagtccg 360
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ||
+Sbjct: 558 aagatctgaaggtctagaaccacgacctgaccaataaaccattggtcagaacacagttcg 617
+
+                                                                       
+Query: 361 tggtttgaagccccaaagtcaggcttttaaccaccatcgacggccgtgcaggacggtccg 420
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 618 tggtttgaagccccaaagtcaggcttttaaccaccatcgacggccgtgcaggacggtccg 677
+
+                                                                       
+Query: 421 tcgtcctgaccacgatccatcaatgcggtctcgtggttcactgctggcagttatttttca 480
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 678 tcgtcctgaccacgatccatcaatgcggtctcgtggttcactgctggcagttatttttca 737
+
+                                                                       
+Query: 481 ggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtt 540
+           ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Sbjct: 738 ggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtt 797
+
+                                            
+Query: 541 tataaccccctatataagtcttttaacccccaa 573
+           |||||||||||||||||||||||||||||||||
+Sbjct: 798 tataaccccctatataagtcttttaacccccaa 830
+
+
+>RHPOTKEY0158C01_T7_687371 
+          Length = 519
+
+ Score =  204 bits (103), Expect = 1e-51
+ Identities = 156/171 (91%), Gaps = 2/171 (1%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 451 tcgtggttcactgctggcagttatttttcaggggcagttgggtgttttcctaattaatta 510
+           |||||||||||||||||||||||||||||||||  |||||||| ||||||||||||||||
+Sbjct: 344 tcgtggttcactgctggcagttatttttcagggttagttgggtcttttcctaattaatta 403
+
+                                                                       
+Query: 511 gttcctatactatgttgttttgcctatgtttataaccccctatataagtcttttaa-ccc 569
+            |||||||||||| |  |||||||||||||||  | |||||||||||||||||||| |||
+Sbjct: 404 attcctatactatatcattttgcctatgtttagga-cccctatataagtcttttaacccc 462
+
+                                                              
+Query: 570 ccaaattcaccccatttatttcatttttctaaattcacaaaagaacaccaa 620
+           ||||||||||||||||||||||||| ||| |||||| |||||||| |||||
+Sbjct: 463 ccaaattcaccccatttatttcattcttccaaattctcaaaagaaaaccaa 513
+
+
+
+ Score =  200 bits (101), Expect = 2e-50
+ Identities = 188/217 (86%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 205 ttccagatgttgcaggtaccaaaccacaccggccacccacgacccgtggaatggaccaca 264
+           ||||||||||||||||| ||| ||||  ||||||||||||  ||||||||||||||||| 
+Sbjct: 117 ttccagatgttgcaggtgccagaccatgccggccacccacagcccgtggaatggaccacg 176
+
+                                                                       
+Query: 265 gaccgtaggtgtggtccatggttggcctgcctaggtaagatctgaaggtctagaaccacg 324
+            |||||||||||||||  ||||| ||||||||||||| ||||||| || | | |||||||
+Sbjct: 177 aaccgtaggtgtggtctgtggtttgcctgcctaggtaggatctgagggcccaaaaccacg 236
+
+                                                                       
+Query: 325 acctgaccaataaaccattggtcagaacacagtccgtggtttgaagccccaaagtcaggc 384
+           || ||||||||  ||| ||||| ||| ||| ||||||||||||||||||||| |||| ||
+Sbjct: 237 acatgaccaatggaccgttggttagaccacggtccgtggtttgaagccccaatgtcaagc 296
+
+                                                
+Query: 385 ttttaaccaccatcgacggccgtgcaggacggtccgt 421
+           |||| | |||||||||||| ||||||||||| |||||
+Sbjct: 297 ttttgagcaccatcgacggtcgtgcaggacgatccgt 333
+
+
+>RHPOTKEY0124D02_T7_635207 
+          Length = 721
+
+ Score =  172 bits (87), Expect = 5e-42
+ Identities = 180/206 (87%), Gaps = 5/206 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 465 tggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactatg 524
+           ||||||||||||| ||||| || |||||| |||||||||||||||| ||||||||| |||
+Sbjct: 233 tggcagttatttt-cagggacaattgggtcttttcctaattaattaattcctatacgatg 175
+
+                                                                       
+Query: 525 ttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcaccccat 584
+           |  |||| ||||  |||| |||||| ||||||||||||||||||||||||||||||||||
+Sbjct: 174 tcatttttcctacatttagaacccc-tatataagtcttttaacccccaaattcaccccat 116
+
+                                                                       
+Query: 585 ttatttcatttttctaaattcacaaaagaacaccaaatctcctcctaaataattctctct 644
+           |||||||||| |||||||||| |||||||| | |||   |||||  |||| |||||||||
+Sbjct: 115 ttatttcattcttctaaattcccaaaagaaaatcaa--ttcctctcaaat-attctctct 59
+
+                                     
+Query: 645 ctagaaacttgaaagaggagaagaag 670
+           |||||||||||||  || ||||||||
+Sbjct: 58  ctagaaacttgaagaagaagaagaag 33
+
+
+>RHPOTKEY0013A07_SP6_658300 
+          Length = 790
+
+ Score =  170 bits (86), Expect = 2e-41
+ Identities = 169/194 (87%), Gaps = 2/194 (1%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 485 cagttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttata 544
+           ||||||||| |||| ||||||||||| ||| | |||||||| |||||| |||| |||| |
+Sbjct: 468 cagttgggtctttttctaattaattaattcatgtactatgtcgttttgtctatatttaga 527
+
+                                                                       
+Query: 545 accccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaatt 604
+           ||||| |||||||| ||||||||||||||||||||| |||||| || ||| ||| |||||
+Sbjct: 528 acccc-tatataagccttttaacccccaaattcacctcatttaatttattcttccaaatt 586
+
+                                                                       
+Query: 605 cacaaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaaagaggag 664
+           | ||||||||  ||||||||||||  |||| ||||||||||||||||||||||  || ||
+Sbjct: 587 cccaaaagaatcccaaatctcctctcaaat-attctctctctagaaacttgaagaagaag 645
+
+                         
+Query: 665 aagaagattcaacc 678
+           ||||||||||||||
+Sbjct: 646 aagaagattcaacc 659
+
+
+>RHPOTKEY0133B11_SP6_638848 
+          Length = 792
+
+ Score =  170 bits (86), Expect = 2e-41
+ Identities = 169/194 (87%), Gaps = 2/194 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 485 cagttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttata 544
+           ||||||||| |||| ||||||||||| ||| | |||||||| |||||| |||| |||| |
+Sbjct: 308 cagttgggtctttttctaattaattaattcatgtactatgtcgttttgtctatatttaga 249
+
+                                                                       
+Query: 545 accccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaatt 604
+           ||||| |||||||| ||||||||||||||||||||| |||||| || ||| ||| |||||
+Sbjct: 248 acccc-tatataagccttttaacccccaaattcacctcatttaatttattcttccaaatt 190
+
+                                                                       
+Query: 605 cacaaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaaagaggag 664
+           | ||||||||  ||||||||||||  |||| ||||||||||||||||||||||  || ||
+Sbjct: 189 cccaaaagaatcccaaatctcctctcaaat-attctctctctagaaacttgaagaagaag 131
+
+                         
+Query: 665 aagaagattcaacc 678
+           ||||||||||||||
+Sbjct: 130 aagaagattcaacc 117
+
+
+>RHPOTKEY0135D19_SP6_663050 
+          Length = 757
+
+ Score =  167 bits (84), Expect = 3e-40
+ Identities = 194/228 (85%), Gaps = 2/228 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 451 tcgtggttcactgctggcagttatttttcaggggcagttgggtgttttcctaattaatta 510
+           |||||||||||| ||  |||||| ||||||||||  ||||||| ||||||||||||||||
+Sbjct: 318 tcgtggttcactactatcagttaattttcaggggttgttgggtcttttcctaattaatta 259
+
+                                                                       
+Query: 511 gttcctatactatgttgttttgcctatgtttataaccccctatataagtcttttaacccc 570
+           |||| ||||||||||  ||||| ||||||| |  | ||||||| |||||||||| ||| |
+Sbjct: 258 gttcatatactatgtcattttgactatgttgagga-cccctatgtaagtctttttacctc 200
+
+                                                                       
+Query: 571 caaattcaccccatttatttcatttttctaaattcacaaaagaacaccaaatctcctcct 630
+           |||||||||| |||||| |||||| || |||||||| |||||||  ||||||||||||  
+Sbjct: 199 caaattcacctcatttaattcattcttttaaattcataaaagaatcccaaatctcctctc 140
+
+                                                           
+Query: 631 aaataattctctctctagaaacttgaaagaggagaagaagattcaacc 678
+           |||| |||||||||||||||  |||||  || |||||| |||||||||
+Sbjct: 139 aaat-attctctctctagaatgttgaagaagaagaagaggattcaacc 93
+
+
+>RHPOTKEY0145A14_T7_628624 
+          Length = 790
+
+ Score =  161 bits (81), Expect = 2e-38
+ Identities = 185/215 (86%), Gaps = 6/215 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           |||| |||||| |||||| ||  |||||||| ||||||||||||  ||||||||||||||
+Sbjct: 322 gctgacagttaattttcaaggttagttgggtattttcctaattaggtagttcctatacta 263
+
+                                                                       
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccc 582
+           |||||||||| |||||||||  | |||||||||||| ||| | |||||||||||||||||
+Sbjct: 262 tgttgttttgtctatgtttaggaacccctatataagccttattacccccaaattcacccc 203
+
+                                                                       
+Query: 583 atttatttcatttttctaaattcacaaaagaacaccaaatctcctc-ctaaataattctc 641
+           ||||| |||||| ||| |||||| |||||||| |  |||| ||||| | |||| ||||||
+Sbjct: 202 atttaattcattcttccaaattcccaaaagaaaaagaaat-tcctctccaaat-attctc 145
+
+                                              
+Query: 642 tctctagaaacttgaaagaggagaagaagattcaa 676
+           |||||||||||||||   || ||||||||||||||
+Sbjct: 144 tctctagaaacttga---agaagaagaagattcaa 113
+
+
+>RHPOTKEY0188L24_SP6_737011 
+          Length = 705
+
+ Score =  159 bits (80), Expect = 7e-38
+ Identities = 175/204 (85%), Gaps = 2/204 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 475 ttttcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcc 534
+           |||||||||  |||| ||| |||| |||||||||| |||||||||||| |||||||||||
+Sbjct: 680 ttttcagggttagttaggtctttttctaattaatttgttcctatactacgttgttttgcc 621
+
+                                                                       
+Query: 535 tatgtttataaccccctatataagtcttttaacccccaaattcaccccatttatttcatt 594
+           |||||||   |||   |||||||||||||| |||||||||| || |||||||| ||||||
+Sbjct: 620 tatgtttgggaccaa-tatataagtctttttacccccaaatccatcccatttaattcatt 562
+
+                                                                       
+Query: 595 tttctaaattcacaaaagaacaccaaatctcctcctaaataattctctctctagaaactt 654
+            ||| |||||||||||||||  |||||| |||||  |||| |||||||||||||||||||
+Sbjct: 561 cttccaaattcacaaaagaatcccaaatttcctctcaaat-attctctctctagaaactt 503
+
+                                   
+Query: 655 gaaagaggagaagaagattcaacc 678
+           ||||  | ||||||||||| ||||
+Sbjct: 502 gaaaaggaagaagaagatttaacc 479
+
+
+>RHPOTKEY0142N17_T7_739027 
+          Length = 790
+
+ Score =  153 bits (77), Expect = 4e-36
+ Identities = 194/227 (85%), Gaps = 7/227 (3%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 453 gtggttcactgctggcagttatttttcaggggcagttgggtgttttcctaattaattagt 512
+           |||||||||||||| |||||| |||| |||||||||||||| |||||||||| |||||||
+Sbjct: 514 gtggttcactgctgacagttaatttttaggggcagttgggtcttttcctaataaattagt 455
+
+                                                                       
+Query: 513 tcctatactatgttgttttgcctatgtttataaccccctatataagtcttttaaccccca 572
+           ||||||||||  |||||||||||| |||||  | ||||||| |||||||||| |||||||
+Sbjct: 454 tcctatactacattgttttgcctaagtttagga-cccctatgtaagtctttt-accccca 397
+
+                                                                       
+Query: 573 aattcaccccatttatttcatttttctaaattcac-aaaagaacaccaaatctcctccta 631
+           ||||||  |||||||||||||| |||     |||| ||||||| |||||| ||||||  |
+Sbjct: 396 aattcattccatttatttcattcttcctttatcactaaaagaaaaccaaaactcctctca 337
+
+                                                          
+Query: 632 aataattctctctctagaaacttgaaagaggagaagaagattcaacc 678
+           ||| ||||||| || ||||||||||   || ||||||||||||||||
+Sbjct: 336 aat-attctctttcaagaaacttga---agaagaagaagattcaacc 294
+
+
+>RHPOTKEY0041N10_T7_657408 
+          Length = 814
+
+ Score =  147 bits (74), Expect = 3e-34
+ Identities = 167/194 (86%), Gaps = 3/194 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 465 tggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactatg 524
+           |||||||||||||||||||  |||||||| |||||| ||||||||| |||||||||||||
+Sbjct: 585 tggcagttatttttcagggttagttgggtcttttccaaattaattaattcctatactatg 526
+
+                                                                       
+Query: 525 ttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcaccccat 584
+           | ||||||||| ||| ||  | |||||||||||||||||| |||||||||||   |||||
+Sbjct: 525 tcgttttgcctgtgtctagga-cccctatataagtctttttacccccaaattagacccat 467
+
+                                                                       
+Query: 585 ttatttcatttttctaaattcacaaaagaaca-ccaaatctcctcctaaataattctctc 643
+           ||| |||||| ||| ||| | ||||||||| | | ||||||||||  |||||||||||||
+Sbjct: 466 ttacttcattcttccaaaattacaaaagaagatcaaaatctcctctcaaataattctctc 407
+
+                         
+Query: 644 tctagaaacttgaa 657
+            ||| |||||||||
+Sbjct: 406 ccta-aaacttgaa 394
+
+
+>RHPOTKEY0165I24_T7_651350 
+          Length = 587
+
+ Score =  147 bits (74), Expect = 3e-34
+ Identities = 160/186 (86%), Gaps = 2/186 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 436 tccatcaatgcggtctcgtggttcactgctggcagttatttttcaggggcagttgggtgt 495
+           |||||| ||| |||||||| | |||||| |||||||||||||| |||||||||||||| |
+Sbjct: 482 tccatcgatggggtctcgtaggtcactgttggcagttattttt-aggggcagttgggttt 424
+
+                                                                       
+Query: 496 tttcctaattaattagttcctatactatgttgttttgcctatgtttataaccccctatat 555
+           |||||||||||||| ||||||||||||| | ||||| ||||| |||| || ||| |||||
+Sbjct: 423 tttcctaattaatttgttcctatactatatcgttttacctatatttagaa-cccatatat 365
+
+                                                                       
+Query: 556 aagtcttttaacccccaaattcaccccatttatttcatttttctaaattcacaaaagaac 615
+           ||| | ||| | |||||||||||||||||||| |||||| |||  || || |||||||| 
+Sbjct: 364 aagcccttttaaccccaaattcaccccatttaattcattcttcctaaatcccaaaagaaa 305
+
+                 
+Query: 616 accaaa 621
+           ||||||
+Sbjct: 304 accaaa 299
+
+
+>RHPOTKEY0084P24_SP6_647451 
+          Length = 783
+
+ Score =  143 bits (72), Expect = 4e-33
+ Identities = 172/202 (85%), Gaps = 5/202 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 477 ttcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgccta 536
+           |||| ||| |||||||| |||||||||||||||| ||| ||||| | |||||||||||||
+Sbjct: 528 ttcaagggtagttgggtcttttcctaattaattaattcttatacaacgttgttttgccta 469
+
+                                                                       
+Query: 537 tgtttataaccccctatataagtcttttaacccccaaattcaccccatttatttcatttt 596
+            ||||   ||||| ||||||||||||||||||||||||||||||||||||| |||||| |
+Sbjct: 468 agtttgggacccc-tatataagtcttttaacccccaaattcaccccatttaattcattct 410
+
+                                                                       
+Query: 597 tctaaattcacaaaagaacaccaaatctcctcctaaataattctctctctagaaacttga 656
+           || || ||||||||| || ||| |||   |||  |||| ||||||| |||||||||||||
+Sbjct: 409 tccaatttcacaaaataaaaccgaattagctctcaaat-attctctatctagaaacttga 351
+
+                                 
+Query: 657 aagaggagaagaagattcaacc 678
+              || ||||||||||||||||
+Sbjct: 350 ---agaagaagaagattcaacc 332
+
+
+>RHPOTKEY0122D09_SP6_702256 
+          Length = 740
+
+ Score =  139 bits (70), Expect = 6e-32
+ Identities = 169/197 (85%), Gaps = 5/197 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 475 ttttcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcc 534
+           |||| |||||||||||||| |||||||||||||||  |||||||| |||||  ||| |||
+Sbjct: 242 ttttaaggggcagttgggtcttttcctaattaatttattcctatattatgtcatttagcc 183
+
+                                                                       
+Query: 535 tatgtttataaccccctatataagtcttttaaccccc-aaattcaccccatttatttcat 593
+           ||  |||| |||||| || |||||||||||||||||| |||||||||| |||||||||||
+Sbjct: 182 tacatttagaacccc-tacataagtcttttaaccccccaaattcacccaatttatttcat 124
+
+                                                                       
+Query: 594 ttttctaaattcacaaaagaacaccaaatctcctcctaaataattctctctctagaaact 653
+           ||||| |||||| |||||||| | |||   |||||  |||| ||||||||||||||||||
+Sbjct: 123 ttttccaaattcccaaaagaaaatcaa--ttcctctcaaat-attctctctctagaaact 67
+
+                            
+Query: 654 tgaaagaggagaagaag 670
+           ||||  || ||||||||
+Sbjct: 66  tgaagaagaagaagaag 50
+
+
+>RHPOTKEY0164K09_T7_621682 
+          Length = 766
+
+ Score =  139 bits (70), Expect = 6e-32
+ Identities = 215/258 (83%), Gaps = 4/258 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 394 ccatcgacggccgtgcaggacggtccgtcgtcctgaccacgatccatcaatgcggtctcg 453
+           ||||||| ||||||| ||||||||| ||||||||||||| | ||  | | || |||||| 
+Sbjct: 297 ccatcgatggccgtgtaggacggtctgtcgtcctgaccatggtctgttagtggggtctca 238
+
+                                                                       
+Query: 454 tggttcactgctggcagttatttttcaggggcagttgggtgttttcctaattaattagtt 513
+           ||| |||| ||| |||||||   |||||||| |||||||| |||||||||||||||||||
+Sbjct: 237 tgggtcacagctagcagtta-agttcaggggtagttgggtcttttcctaattaattagtt 179
+
+                                                                       
+Query: 514 cctatactatgttgttttgcctatgtttataaccccctatataagtctttt-aaccccca 572
+           ||||||||| || |||||  |  |   || |  ||||||||||||| |||| ||||||||
+Sbjct: 178 cctatactacgtcgttttttccttcacta-agacccctatataagtattttcaaccccca 120
+
+                                                                       
+Query: 573 aattcaccccatttatttcatttttctaaattcacaaaagaacaccaaatctcctcctaa 632
+           |||| | |||||| | |||||| ||| ||||||| ||||||| |||||||||||||  ||
+Sbjct: 119 aatt-aacccattcacttcattcttccaaattcataaaagaaaaccaaatctcctctcaa 61
+
+                             
+Query: 633 ataattctctctctagaa 650
+           ||||||||||||||||||
+Sbjct: 60  ataattctctctctagaa 43
+
+
+>RHPOTKEY0121M22_T7_726226 
+          Length = 648
+
+ Score =  135 bits (68), Expect = 1e-30
+ Identities = 140/160 (87%), Gaps = 3/160 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 461 ctgctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatac 520
+           ||||| |||||||||||| |||| | ||||||| |||||||||||||||| |||||||||
+Sbjct: 355 ctgctagcagttatttttaaggg-ctgttgggtcttttcctaattaattaattcctatac 297
+
+                                                                       
+Query: 521 tatgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacc 580
+           |||||  ||||  |||  |||| |||||| |||||||||||||| |||||||||||||||
+Sbjct: 296 tatgtctttttttctacatttagaacccc-tatataagtctttttacccccaaattcacc 238
+
+                                                   
+Query: 581 ccatttatttcatttttctaaattcacaaaagaacaccaa 620
+           ||||||| |||||| ||| |||||| |||||||| |||||
+Sbjct: 237 ccattta-ttcattcttccaaattcccaaaagaaaaccaa 199
+
+
+
+ Score = 81.8 bits (41), Expect = 1e-14
+ Identities = 77/89 (86%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 213 gttgcaggtaccaaaccacaccggccacccacgacccgtggaatggaccacagaccgtag 272
+           ||||||||| ||| ||||  |||||||||| || |||||||| ||||||||| ||| |||
+Sbjct: 619 gttgcaggtgccagaccatgccggccacccgcggcccgtggattggaccacataccctag 560
+
+                                        
+Query: 273 gtgtggtccatggttggcctgcctaggta 301
+           ||||||||| |||||||||| | ||||||
+Sbjct: 559 gtgtggtccgtggttggcctacttaggta 531
+
+
+>RHPOTKEY0127A24_T7_645867 
+          Length = 284
+
+ Score =  135 bits (68), Expect = 1e-30
+ Identities = 123/139 (88%), Gaps = 3/139 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 478 tcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcctat 537
+           |||||||||||||||| |||||||||||||||||||||||||||||||  |||| |||||
+Sbjct: 219 tcaggggcagttgggtcttttcctaattaattagttcctatactatgtcatttttcctat 160
+
+                                                                       
+Query: 538 gtttataaccccctatataagtcttttaa--cccccaaattcaccccatttatttcattt 595
+            |||| || ||||||| |||||||||| |  |||||||||||||||||||||  ||||| 
+Sbjct: 159 atttagaa-cccctatgtaagtctttttacccccccaaattcaccccatttaagtcattc 101
+
+                              
+Query: 596 ttctaaattcacaaaagaa 614
+           ||| |||||| ||||||||
+Sbjct: 100 ttccaaattcccaaaagaa 82
+
+
+>RHPOTKEY0181L04_SP6_644240 
+          Length = 683
+
+ Score =  135 bits (68), Expect = 1e-30
+ Identities = 135/156 (86%), Gaps = 1/156 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 495 ttttcctaattaattagttcctatactatgttgttttgcctatgtttataaccccctata 554
+           |||||||||||||||| |||||||||| |||  ||||||||  || || |||||| ||||
+Sbjct: 277 ttttcctaattaattaattcctatactttgtcattttgcctgagtctagaacccc-tata 219
+
+                                                                       
+Query: 555 taagtcttttaacccccaaattcaccccatttatttcatttttctaaattcacaaaagaa 614
+           |||||||||| |||||||||||||||||||||| |||||| ||| |||||| ||||||||
+Sbjct: 218 taagtctttttacccccaaattcaccccatttaattcattcttccaaattcccaaaagaa 159
+
+                                               
+Query: 615 caccaaatctcctcctaaataattctctctctagaa 650
+            |||||| |||| |  |||  |||||||||||||||
+Sbjct: 158 aaccaaacctccactcaaaatattctctctctagaa 123
+
+
+>RHPOTKEY0134C18_SP6_634681 
+          Length = 753
+
+ Score =  133 bits (67), Expect = 4e-30
+ Identities = 143/163 (87%), Gaps = 4/163 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 495 ttttcctaattaattagttcctatactatgttgttttgcctatgtttataaccccctata 554
+           |||||||||||||||| |||||||||||||| ||||||||||| |||| || ||||||| 
+Sbjct: 276 ttttcctaattaattaattcctatactatgtcgttttgcctatatttagaa-cccctatt 218
+
+                                                                       
+Query: 555 taagtcttttaacccccaaattcaccccatttatttcatttttctaaattcacaaaagaa 614
+           |||  | ||||||||||||||||||||||||||||||||| ||| ||| ||||||||  |
+Sbjct: 217 taa-acctttaacccccaaattcaccccatttatttcattcttcaaaaatcacaaaaaga 159
+
+                                                      
+Query: 615 caccaaatctcctcctaaataattctctctctagaaacttgaa 657
+            ||||| ||  |||| |||| ||||||||||||||||||||||
+Sbjct: 158 aaccaattcctctcc-aaat-attctctctctagaaacttgaa 118
+
+
+>RHPOTKEY0092H08_SP6_634497 
+          Length = 729
+
+ Score =  127 bits (64), Expect = 2e-28
+ Identities = 173/204 (84%), Gaps = 4/204 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 468 cagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactatgttg 527
+           ||||||||||| ||||| |||||||| |||||||||||||||| ||||||||||||||  
+Sbjct: 455 cagttattttttaggggtagttgggtattttcctaattaattaattcctatactatgtca 396
+
+                                                                       
+Query: 528 ttttgcctatgtttataaccccctatataag-tcttttaacccccaaattcaccccattt 586
+            ||||||||| |||| |||||||||| |||| | ||| |||||||||||| | |||||||
+Sbjct: 395 gtttgcctatatttagaaccccctatgtaagctttttaaacccccaaatt-aacccattt 337
+
+                                                                       
+Query: 587 atttcatttttctaaattcacaaaagaacaccaaatctcctcctaaataattctctctct 646
+           | |||||| ||| |||||| | |||||| | ||| ||  |||| |||| |||||||||||
+Sbjct: 336 acttcattcttccaaattcccgaaagaaaatcaactcctctcc-aaat-attctctctct 279
+
+                                   
+Query: 647 agaaacttgaaagaggagaagaag 670
+           |||||| ||||  || ||||||||
+Sbjct: 278 agaaacctgaagaagaagaagaag 255
+
+
+>RHPOTKEY0177B21_T7_643978 
+          Length = 458
+
+ Score =  127 bits (64), Expect = 2e-28
+ Identities = 110/124 (88%), Gaps = 1/124 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 547 cccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaattca 606
+           |||||||||||||||||| ||||||||||||| |||||||| |||||| ||||||  || 
+Sbjct: 299 cccctatataagtctttttacccccaaattcatcccatttaattcattcttctaatctcc 240
+
+                                                                       
+Query: 607 caaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaaagaggagaa 666
+           |||||||| |||||||||||||| |||| |||| |||||||||||||||||  || ||||
+Sbjct: 239 caaaagaaaaccaaatctcctcccaaat-attccctctctagaaacttgaagaagaagaa 181
+
+               
+Query: 667 gaag 670
+           ||||
+Sbjct: 180 gaag 177
+
+
+>RHPOTKEY0121K05_SP6_744023 
+          Length = 543
+
+ Score =  123 bits (62), Expect = 4e-27
+ Identities = 145/170 (85%), Gaps = 2/170 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 488 ttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttataacc 547
+           |||||||||||| |||||||||| ||||||||| |||| ||||| |||  || ||  | |
+Sbjct: 281 ttgggtgttttcttaattaattatttcctatacaatgtcgtttttcctgagtctagga-c 223
+
+                                                                       
+Query: 548 ccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaattcac 607
+           |||||||||||| |||| |||||||||||   |||||||| ||||||  || |||||| |
+Sbjct: 222 ccctatataagtttttttacccccaaattagacccatttacttcattcgtccaaattccc 163
+
+                                                             
+Query: 608 aaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaa 657
+           |||| || |||||||||||||| |||| ||||||||||||||||||||||
+Sbjct: 162 aaaacaaaaccaaatctcctcccaaat-attctctctctagaaacttgaa 114
+
+
+>RHPOTKEY0183P01_SP6_715450 
+          Length = 804
+
+ Score =  123 bits (62), Expect = 4e-27
+ Identities = 184/214 (85%), Gaps = 8/214 (3%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 447 ggtctcgtggttcactgctggcagttatttttcaggggcagttgggtgttttcctaatta 506
+           |||||| ||| |||||||||  ||||||||| || ||| |||||||| ||||||||||||
+Sbjct: 318 ggtctcatgggtcactgctgttagttatttt-caagggtagttgggtcttttcctaatta 260
+
+                                                                       
+Query: 507 attagttcctatactatgttgttttgcctatgtttataaccccctatataag-tctttta 565
+           || | ||||||||||||||  |||||||||||||||||| |||||||||||| | ||| |
+Sbjct: 259 atgaattcctatactatgtcattttgcctatgtttataa-cccctatataagctttttca 201
+
+                                                                       
+Query: 566 acccccaaattcaccccatttatttcatttttctaaattca-caaaagaacaccaaatct 624
+           | | ||||||| | |||||||| |||||| ||| || |||| |||||||| ||||||| |
+Sbjct: 200 atctccaaatt-aacccatttaattcattcttccaatttcaccaaaagaaaaccaaat-t 143
+
+                                             
+Query: 625 cctc-ctaaataattctctctctagaaacttgaa 657
+           |||| | |||| ||||||||||||||||||||||
+Sbjct: 142 cctctccaaat-attctctctctagaaacttgaa 110
+
+
+>RHPOTKEY0200F06_SP6_637503 
+          Length = 543
+
+ Score =  123 bits (62), Expect = 4e-27
+ Identities = 171/203 (84%), Gaps = 7/203 (3%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 476 tttcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcct 535
+           |||||||| ||||||||| |||||||||||| ||| |||||||| |||||  ||||||| 
+Sbjct: 345 tttcagggtcagttgggtcttttcctaattagttaattcctatattatgtcattttgcc- 403
+
+                                                                       
+Query: 536 atgtttataaccccctatataagtcttttaacccccaaattcaccccatttatttcattt 595
+           || |||| |||||  |||||||||||||| ||||||||||||| |||||||| || ||| 
+Sbjct: 404 atatttagaaccca-tatataagtctttttacccccaaattcatcccatttaatttattc 462
+
+                                                                       
+Query: 596 ttctaaattcacaaaagaacaccaaatctcctcctaaataattctctctctagaaacttg 655
+           ||| |||||| |||||||| |||||    ||| || ||  ||||||||||||| ||||||
+Sbjct: 463 ttccaaattcccaaaagaaaaccaa----ccttctcaaatattctctctctag-aacttg 517
+
+                                  
+Query: 656 aaagaggagaagaagattcaacc 678
+           ||  || ||||||||||||||||
+Sbjct: 518 aagaagtagaagaagattcaacc 540
+
+
+>RHPOTKEY0024O07_T7_681865 
+          Length = 754
+
+ Score =  121 bits (61), Expect = 1e-26
+ Identities = 116/133 (87%), Gaps = 1/133 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 488 ttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttataacc 547
+           |||||| |||| ||||||||||||||||||||||||||  |||| |||||||||   |||
+Sbjct: 150 ttgggtcttttactaattaattagttcctatactatgtcattttacctatgttttggacc 91
+
+                                                                       
+Query: 548 ccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaattcac 607
+           || |||||||| |||||||||||  ||||||||||||||| |||||| ||| |||||| |
+Sbjct: 90  cc-tatataagccttttaaccccagaattcaccccatttaattcattcttcgaaattccc 32
+
+                        
+Query: 608 aaaagaacaccaa 620
+           ||||||| |||||
+Sbjct: 31  aaaagaaaaccaa 19
+
+
+>RHPOTKEY0181O19_SP6_700482 
+          Length = 722
+
+ Score =  121 bits (61), Expect = 1e-26
+ Identities = 99/109 (90%), Gaps = 2/109 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 486 agttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttataa 545
+           |||||||||||||||||||||||||||||||||| |||||  |||||||||  |||| ||
+Sbjct: 558 agttgggtgttttcctaattaattagttcctataatatgtcattttgcctacatttagaa 499
+
+                                                            
+Query: 546 ccccctatataagtcttttaacccccaaattcaccccatttatttcatt 594
+             ||||||||||||||||| | |||||||||||||||||||||||||||
+Sbjct: 498 -tccctatataagtcttttta-ccccaaattcaccccatttatttcatt 452
+
+
+>RHPOTKEY0031P14_SP6_734723 
+          Length = 750
+
+ Score =  119 bits (60), Expect = 6e-26
+ Identities = 122/140 (87%), Gaps = 2/140 (1%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 465 tggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactatg 524
+           |||||||||||||| | || ||||||  | |||||||||||||||| || ||||||||||
+Sbjct: 222 tggcagttatttttaaagg-cagttgaatcttttcctaattaattaatttctatactatg 280
+
+                                                                       
+Query: 525 ttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcaccccat 584
+           |  |||||||||  |||| |||||| |||||||||| ||| |||||||||||||||||||
+Sbjct: 281 tcattttgcctacatttagaacccc-tatataagtccttttacccccaaattcaccccat 339
+
+                               
+Query: 585 ttatttcatttttctaaatt 604
+           |||||||||| ||| |||||
+Sbjct: 340 ttatttcattcttccaaatt 359
+
+
+>RHPOTKEY0092E08_SP6_620473 
+          Length = 726
+
+ Score =  119 bits (60), Expect = 6e-26
+ Identities = 156/184 (84%), Gaps = 3/184 (1%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 488 ttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttataacc 547
+           |||||| |||| |||||||||||||| | ||||||||| |||||| |||| |||| ||||
+Sbjct: 281 ttgggtatttttctaattaattagtttcaatactatgtcgttttggctatttttagaacc 340
+
+                                                                       
+Query: 548 ccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaattcac 607
+           || || | ||| ||||||||||| || ||||||||||||| |||||| ||| || |||||
+Sbjct: 341 cc-tacaaaagccttttaacccctaa-ttcaccccatttacttcattcttccaatttcac 398
+
+                                                                       
+Query: 608 aaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaaagaggagaag 667
+           |||||||  ||||| ||||||| |||| |||||||||| |||||||| ||  || |||||
+Sbjct: 399 aaaagaatcccaaaactcctcccaaat-attctctctcaagaaactttaataagaagaag 457
+
+               
+Query: 668 aaga 671
+           ||||
+Sbjct: 458 aaga 461
+
+
+
+ Score = 83.8 bits (42), Expect = 3e-15
+ Identities = 75/86 (87%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 207 ccagatgttgcaggtaccaaaccacaccggccacccacgacccgtggaatggaccacaga 266
+           |||||| |||||||| |||||| |  ||| ||||||||||| ||||||||||||||| ||
+Sbjct: 1   ccagatattgcaggtgccaaactatgccgaccacccacgactcgtggaatggaccacgga 60
+
+                                     
+Query: 267 ccgtaggtgtggtccatggttggcct 292
+            |||||||||||| | ||||||||||
+Sbjct: 61  tcgtaggtgtggtacgtggttggcct 86
+
+
+>RHPOTKEY0121F12_T7_705455 
+          Length = 726
+
+ Score =  119 bits (60), Expect = 6e-26
+ Identities = 171/204 (83%), Gaps = 3/204 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 468 cagttatt-tttcaggggcagttgggtgttttcctaattaattagttcctatactatgtt 526
+           |||||||| ||||||||  ||||||||  |||||| |||||||||||||||   ||||| 
+Sbjct: 347 cagttattatttcagggttagttgggtcgtttcctgattaattagttcctaacatatgtg 288
+
+                                                                       
+Query: 527 gttttgcctatgtttataaccccctatataagtcttttaacccccaaattcaccccattt 586
+           |||||| ||||||||| |||||| |||||||||||||| | ||| |||||||||||||||
+Sbjct: 287 gttttgtctatgtttagaacccc-tatataagtctttttaacccaaaattcaccccattt 229
+
+                                                                       
+Query: 587 atttcatttttctaaattcacaaaagaacaccaaatctcctcctaaataattctctctct 646
+           | |||||| ||   | || || ||||||  ||||| ||||||  |||| |||||||||||
+Sbjct: 228 acttcattcttactatttaactaaagaatcccaaaactcctctcaaat-attctctctct 170
+
+                                   
+Query: 647 agaaacttgaaagaggagaagaag 670
+           |||||||||||  || ||||||||
+Sbjct: 169 agaaacttgaagaagaagaagaag 146
+
+
+>RHPOTKEY0126J15_T7_748780 
+          Length = 819
+
+ Score =  119 bits (60), Expect = 6e-26
+ Identities = 93/104 (89%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 194 aaatcgcagctttccagatgttgcaggtaccaaaccacaccggccacccacgacccgtgg 253
+           |||| |||||||||||||||||| |||||| ||||||| ||||||||||||   ||||||
+Sbjct: 323 aaatagcagctttccagatgttgtaggtacaaaaccacgccggccacccactgtccgtgg 264
+
+                                                       
+Query: 254 aatggaccacagaccgtaggtgtggtccatggttggcctgccta 297
+           | ||||||||||||||||||||||||   |||||||||||||||
+Sbjct: 263 agtggaccacagaccgtaggtgtggtttgtggttggcctgccta 220
+
+
+>RHPOTKEY0186K14_T7_754112 
+          Length = 782
+
+ Score =  119 bits (60), Expect = 6e-26
+ Identities = 93/104 (89%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 194 aaatcgcagctttccagatgttgcaggtaccaaaccacaccggccacccacgacccgtgg 253
+           |||| |||||||||||||||||| |||||| ||||||| ||||||||||||   ||||||
+Sbjct: 506 aaatagcagctttccagatgttgtaggtacaaaaccacgccggccacccactgtccgtgg 447
+
+                                                       
+Query: 254 aatggaccacagaccgtaggtgtggtccatggttggcctgccta 297
+           | ||||||||||||||||||||||||   |||||||||||||||
+Sbjct: 446 agtggaccacagaccgtaggtgtggtttgtggttggcctgccta 403
+
+
+
+ Score =  107 bits (54), Expect = 2e-22
+ Identities = 182/218 (83%), Gaps = 5/218 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 456 gttcactgctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcc 515
+           ||||||||||| |||||| |||||||||||| ||  || |||| ||||||| ||||||||
+Sbjct: 240 gttcactgctgtcagttaattttcaggggcatttttgtcttttactaattagttagttcc 181
+
+                                                                       
+Query: 516 tatactatgttgttttgcctatgtttataaccccctatataagtc-ttttaacccccaaa 574
+           ||||||| || ||||||||||||||||  |  || ||| | |||| ||||| ||||||||
+Sbjct: 180 tatactacgtcgttttgcctatgtttagga-tccttatgtgagtctttttaccccccaaa 122
+
+                                                                       
+Query: 575 ttcaccccatttatttcatttttctaaattcacaaaagaa-caccaaatctcctcctaaa 633
+           ||||| ||||||| |||| || || |||||||||||||||   ||||| || || |||||
+Sbjct: 121 ttcacaccatttaattca-ttctccaaattcacaaaagaattcccaaaacttct-ctaaa 64
+
+                                                 
+Query: 634 taattctctctctagaaacttgaaagaggagaagaaga 671
+            || | ||||||||||||||||||  || |||||||||
+Sbjct: 63  aaaatttctctctagaaacttgaagaagaagaagaaga 26
+
+
+>RHPOTKEY0191F16_SP6_693591 
+          Length = 832
+
+ Score =  119 bits (60), Expect = 6e-26
+ Identities = 122/140 (87%), Gaps = 2/140 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 475 ttttcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcc 534
+           ||||||||| ||||||||| ||||  || |||||||  ||||||||||||| ||||||||
+Sbjct: 265 ttttcagggtcagttgggtctttttgtatttaattaagtcctatactatgtcgttttgcc 206
+
+                                                                       
+Query: 535 tatgtttataaccccctatataagtcttttaacccccaaattcaccccatttatttcatt 594
+           ||| ||||  | |||||||||||||||||||| ||||||||||| || ||||||||||||
+Sbjct: 205 tatattta-gagcccctatataagtcttttaa-ccccaaattcaaccaatttatttcatt 148
+
+                               
+Query: 595 tttctaaattcacaaaagaa 614
+            ||| |||||| ||||||||
+Sbjct: 147 attccaaattcccaaaagaa 128
+
+
+>RHPOTKEY0080I24_SP6_750364 
+          Length = 643
+
+ Score =  117 bits (59), Expect = 2e-25
+ Identities = 134/155 (86%), Gaps = 3/155 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 461 ctgctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatac 520
+           |||||| ||||||||||  ||||| |||| ||| |||||| ||||||||||||| |||||
+Sbjct: 155 ctgctgtcagttatttta-aggggaagttaggtcttttccaaattaattagttcatatac 97
+
+                                                                       
+Query: 521 tatgttgttttgcctatgtttataaccccctatataagtcttttaaccccc-aaattcac 579
+           |||||  ||||||||||| |||  ||||| |||| ||| |||||||||||| ||||||||
+Sbjct: 96  tatgtcattttgcctatggttaggacccc-tatagaagccttttaaccccccaaattcac 38
+
+                                              
+Query: 580 cccatttatttcatttttctaaattcacaaaagaa 614
+           |||||||| |||||| ||| |||||| ||||||||
+Sbjct: 37  cccatttaattcattcttccaaattcccaaaagaa 3
+
+
+>RHPOTKEY0176O01_SP6_675174 
+          Length = 405
+
+ Score =  117 bits (59), Expect = 2e-25
+ Identities = 130/151 (86%), Gaps = 2/151 (1%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 464 ctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactat 523
+           ||||||||||||||  || || |||||||| |||||| | ||||||| ||| ||||||| 
+Sbjct: 177 ctggcagttatttta-agaggtagttgggtcttttccaagttaattaattcttatactac 235
+
+                                                                       
+Query: 524 gttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccca 583
+           || |||||||||| |||||  ||||| |||||||||||||| ||||||||||||||||||
+Sbjct: 236 gtcgttttgcctaagtttaggacccc-tatataagtctttttacccccaaattcacccca 294
+
+                                          
+Query: 584 tttatttcatttttctaaattcacaaaagaa 614
+           | || |||||| ||| |||||| ||||||||
+Sbjct: 295 tctaattcattcttccaaattcccaaaagaa 325
+
+
+>RHPOTKEY0143L11_T7_637052 
+          Length = 677
+
+ Score =  115 bits (58), Expect = 9e-25
+ Identities = 158/187 (84%), Gaps = 7/187 (3%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 475 ttttcaggggcagttgggtgttttcctaat----taattagttcctatactatgttgttt 530
+           ||||||||| ||||||||||||||||||||    |||||||||| |||||||||||| ||
+Sbjct: 237 ttttcagggtcagttgggtgttttcctaatcaattaattagttcatatactatgttggtt 178
+
+                                                                       
+Query: 531 tgcctatgtttataaccccctatataagtcttttaacccccaaattcaccccatttattt 590
+           ||||||  | ||  | ||| ||||||| |||||| |||||||||||   |||||||| ||
+Sbjct: 177 tgcctaactctaggagccc-tatataaatctttttacccccaaattagacccatttagtt 119
+
+                                                                       
+Query: 591 catttttctaaattcacaaaagaacaccaaatctcctcctaaataattctctctctagaa 650
+           |||| ||| |||||| |||||||| ||||||| ||||   |||| |||||||||||||||
+Sbjct: 118 cattcttccaaattcccaaaagaaaaccaaat-tcctttcaaat-attctctctctagaa 61
+
+                  
+Query: 651 acttgaa 657
+           |||||||
+Sbjct: 60  acttgaa 54
+
+
+>RHPOTKEY0145L14_SP6_647488 
+          Length = 353
+
+ Score =  115 bits (58), Expect = 9e-25
+ Identities = 178/211 (84%), Gaps = 9/211 (4%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 468 cagttatt-tttcaggggcagttgggtgttttcctaattaattagttcctatactatgtt 526
+           |||||||| |||||| ||||||||||| |||| |||||| |||| || ||||||||||| 
+Sbjct: 240 cagttattatttcagaggcagttgggtcttttactaattgattaattactatactatgtc 181
+
+                                                                       
+Query: 527 gttttgcctatgtttataaccccctatataagtcttttaacccccaaattcaccccattt 586
+            |||||||||| |||| || |||||||||||||||||| ||||| |||||||||||   |
+Sbjct: 180 attttgcctatatttagaa-cccctatataagtctttttacccctaaattcacccc---t 125
+
+                                                                       
+Query: 587 atttcatttttctaaattcacaaaagaacaccaaatctcctcctaaataattctctctct 646
+           | |||||| ||||||| || ||||| || |||||  ||||||  |||| ||||| |||||
+Sbjct: 124 aattcattcttctaaaatcccaaaataaaaccaa--ctcctctcaaat-attctgtctct 68
+
+                                          
+Query: 647 agaaacttgaaagaggagaagaagattcaac 677
+           | |||||||||  || |||||||||||||||
+Sbjct: 67  a-aaacttgaagaagaagaagaagattcaac 38
+
+
+>RHPOTKEY0185J11_SP6_759425 
+          Length = 667
+
+ Score =  109 bits (55), Expect = 6e-23
+ Identities = 80/87 (91%), Gaps = 1/87 (1%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 496 tttcctaattaattagttcctatactatgttgttttgcctatgtttataaccccctatat 555
+           ||||||||||||||| ||||||||||||||  |||||||||| |||| || |||||||||
+Sbjct: 582 tttcctaattaattaattcctatactatgtcattttgcctatatttagaa-cccctatat 640
+
+                                      
+Query: 556 aagtcttttaacccccaaattcacccc 582
+           ||| |||||||||||||||||||||||
+Sbjct: 641 aagccttttaacccccaaattcacccc 667
+
+
+>RHPOTKEY0043H11_SP6_741560 
+          Length = 569
+
+ Score =  107 bits (54), Expect = 2e-22
+ Identities = 124/146 (84%), Gaps = 1/146 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 476 tttcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcct 535
+           |||||| |||| |||||| ||||||||||| |||| ||||||||||||||  ||||||||
+Sbjct: 532 tttcagaggcaattgggtcttttcctaattcattacttcctatactatgtcattttgcct 473
+
+                                                                       
+Query: 536 atgtttataaccccctatataagtcttttaacccccaaattcaccccatttatttcattt 595
+           | || ||  | | ||||||||| |||||| |||||||||||||||||||| | |||||| 
+Sbjct: 472 aagtctagga-cacctatataactctttttacccccaaattcaccccattcaattcattc 414
+
+                                     
+Query: 596 ttctaaattcacaaaagaacaccaaa 621
+           ||| |||| | |||||||| ||||||
+Sbjct: 413 ttccaaatacccaaaagaaaaccaaa 388
+
+
+>RHPOTKEY0120O08_SP6_679695 
+          Length = 611
+
+ Score =  107 bits (54), Expect = 2e-22
+ Identities = 164/198 (82%), Gaps = 2/198 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 185 aaaaaggccaaa-tcgcagctttccagatgttgcaggtaccaaaccacaccggccaccca 243
+           |||||||||||| | |||||||||||||| |||||||| |||||| |  ||| |||||||
+Sbjct: 569 aaaaaggccaaaatagcagctttccagatattgcaggtgccaaactatgccgaccaccca 510
+
+                                                                       
+Query: 244 cgacccgtggaatggaccacagaccgtaggtgtggtccatggttggcctgcctaggtaag 303
+           |||| ||||||||||||||| || |||||||||||| | |||||||||| || | |||||
+Sbjct: 509 cgactcgtggaatggaccacggatcgtaggtgtggtacgtggttggcctacccaagtaag 450
+
+                                                                       
+Query: 304 atctgaaggtctagaaccacgacctgaccaataaaccattggtcagaacacagtccgtgg 363
+            | ||| |||| | ||||||  | |||||||   ||| ||||||| | ||| ||| ||||
+Sbjct: 449 ttgtgagggtccacaaccactgcatgaccaaaggaccgttggtcaaaccacggtctgtgg 390
+
+                             
+Query: 364 tttgaagccccaaagtca 381
+           || ||| |||||||||||
+Sbjct: 389 ttcgaa-ccccaaagtca 373
+
+
+
+ Score = 95.6 bits (48), Expect = 9e-19
+ Identities = 153/184 (83%), Gaps = 3/184 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 488 ttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttataacc 547
+           |||||| |||| |||||||||||||| | ||||||| | |||||| |||| |||| ||||
+Sbjct: 266 ttgggtctttttctaattaattagtttcaatactatttcgttttggctatttttagaacc 207
+
+                                                                       
+Query: 548 ccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaattcac 607
+           |  || | ||| ||||||||||| || ||||||||||||| |||||| ||| || |||||
+Sbjct: 206 ct-tacaaaagccttttaacccctaa-ttcaccccatttacttcattcttccaatttcac 149
+
+                                                                       
+Query: 608 aaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaaagaggagaag 667
+           |||||||  ||||| ||||||| |||| ||| |||||| |||||||| ||  || |||||
+Sbjct: 148 aaaagaatcccaaaactcctcccaaat-attttctctcaagaaactttaataagaagaag 90
+
+               
+Query: 668 aaga 671
+           ||||
+Sbjct: 89  aaga 86
+
+
+>RHPOTKEY0123D22_SP6_725805 
+          Length = 716
+
+ Score =  107 bits (54), Expect = 2e-22
+ Identities = 162/194 (83%), Gaps = 3/194 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 459 cactgctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctat 518
+           |||| ||||| ||||||||||| ||  |||||||| |||||||||||||||   |  |||
+Sbjct: 296 cactactggcggttatttttcaaggttagttgggtattttcctaattaattcactattat 237
+
+                                                                       
+Query: 519 actatgttgttttgcctatgtttataaccccctatataagtctt-ttaacccccaaattc 577
+           ||||||| |||||| |||||||||  | |||||||||||||||| ||| |||||||||| 
+Sbjct: 236 actatgtcgttttgtctatgtttagga-cccctatataagtcttcttaccccccaaatta 178
+
+                                                                       
+Query: 578 accccatttatttcatttttctaaattcacaaaagaacaccaaatc-tcctcctaaataa 636
+             |||||||| |||| ||||| ||| ||||||||||| | |||| | || ||  ||||||
+Sbjct: 177 gacccatttacttcagttttccaaaatcacaaaagaagatcaaaacatcttctaaaataa 118
+
+                         
+Query: 637 ttctctctctagaa 650
+           ||||||||||||||
+Sbjct: 117 ttctctctctagaa 104
+
+
+>RHPOTKEY0167L18_T7_759299 
+          Length = 771
+
+ Score =  107 bits (54), Expect = 2e-22
+ Identities = 182/215 (84%), Gaps = 11/215 (5%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 464 ctggcagttatttttcaggggcagttgggtgtttt-cctaattaattagttcctatacta 522
+           |||| ||||| |||||||||  |||||||| |||| |||||||| |||||||||||||||
+Sbjct: 238 ctggtagttaattttcagggttagttgggtttttttcctaattagttagttcctatacta 179
+
+                                                                       
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccc 582
+           ||| |||||| |||||||||  | |||||||||| || |||  ||||||||||||| || 
+Sbjct: 178 tgtcgttttgtctatgtttagga-cccctatataggtattt--acccccaaattca-cct 123
+
+                                                                       
+Query: 583 atttatttcatttttctaaattcacaaaagaacaccaaatctcctc-ctaaataattctc 641
+           ||||| |||||| ||| |||||| |||| | | ||||||| ||||| | |||| ||||||
+Sbjct: 122 atttaattcattcttccaaattcccaaacggaaaccaaat-tcctctccaaat-attctc 65
+
+                                              
+Query: 642 tctctagaaacttgaaagaggagaagaagattcaa 676
+           |||||||||||||||   || ||||||||||||||
+Sbjct: 64  tctctagaaacttga---agaagaagaagattcaa 33
+
+
+>RHPOTKEY0175O19_T7_653580 
+          Length = 583
+
+ Score =  107 bits (54), Expect = 2e-22
+ Identities = 182/215 (84%), Gaps = 11/215 (5%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 464 ctggcagttatttttcaggggcagttgggtgtttt-cctaattaattagttcctatacta 522
+           |||| ||||| |||||||||  |||||||| |||| |||||||| |||||||||||||||
+Sbjct: 235 ctggtagttaattttcagggttagttgggtttttttcctaattagttagttcctatacta 176
+
+                                                                       
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccc 582
+           ||| |||||| |||||||||  | |||||||||| || |||  ||||||||||||| || 
+Sbjct: 175 tgtcgttttgtctatgtttagga-cccctatataggtattt--acccccaaattca-cct 120
+
+                                                                       
+Query: 583 atttatttcatttttctaaattcacaaaagaacaccaaatctcctc-ctaaataattctc 641
+           ||||| |||||| ||| |||||| |||| | | ||||||| ||||| | |||| ||||||
+Sbjct: 119 atttaattcattcttccaaattcccaaacggaaaccaaat-tcctctccaaat-attctc 62
+
+                                              
+Query: 642 tctctagaaacttgaaagaggagaagaagattcaa 676
+           |||||||||||||||   || ||||||||||||||
+Sbjct: 61  tctctagaaacttga---agaagaagaagattcaa 30
+
+
+>RHPOTKEY0119I18_T7_709416 
+          Length = 775
+
+ Score =  105 bits (53), Expect = 9e-22
+ Identities = 146/172 (84%), Gaps = 5/172 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 502 aattaattagttcctatactatgttgttttgcctatgtttataaccccctatataagtct 561
+           |||||||||||| | ||||||||| |||||| ||| ||||| |||||| |||| ||| ||
+Sbjct: 775 aattaattagtttcaatactatgtcgttttggcta-gtttagaacccc-tataaaagcct 718
+
+                                                                       
+Query: 562 tttaacccccaaattcaccccatttatttcatttttctaaattcacaaaagaacaccaaa 621
+           |||||||||||||||||||||||||| |||||| ||| |||||| ||| ||||  |||| 
+Sbjct: 717 tttaacccccaaattcaccccatttacttcattcttccaaattcccaagagaaatccaa- 659
+
+                                                               
+Query: 622 tctcctcctaaataattctctctctagaaacttgaaagaggagaagaagatt 673
+             |||||  |||| ||||||||| ||||||||||||  || |||||||||||
+Sbjct: 658 -ttcctctcaaat-attctctctttagaaacttgaagaagaagaagaagatt 609
+
+
+>RHPOTKEY0033M09_SP6_728216 
+          Length = 464
+
+ Score =  103 bits (52), Expect = 3e-21
+ Identities = 130/152 (85%), Gaps = 3/152 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           ||||||||||||||| ||||| ||||| ||| |||||||| ||| ||| || ||||||||
+Sbjct: 245 gctggcagttatttt-cagggtcagttcggtcttttcctatttatttaattactatacta 187
+
+                                                                       
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccc 582
+           |||  |||| |||| || ||  ||||| |||||||||||||| ||||| |||||||||||
+Sbjct: 186 tgtcatttttcctaagtataggacccc-tatataagtctttttacccc-aaattcacccc 129
+
+                                           
+Query: 583 atttatttcatttttctaaattcacaaaagaa 614
+           ||||| |||||| ||| |||||| ||||||||
+Sbjct: 128 atttaattcattcttccaaattcccaaaagaa 97
+
+
+>RHPOTKEY0183C19_T7_624522 
+          Length = 748
+
+ Score =  103 bits (52), Expect = 3e-21
+ Identities = 149/178 (83%), Gaps = 5/178 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 495 ttttcctaattaattagttcctatactatgttgttttgcctatgtttataaccccctata 554
+           ||||||||||||| |||| |||| ||||  | | ||| ||||||||||  ||||  ||||
+Sbjct: 198 ttttcctaattaaatagtccctaaactacatcggtttacctatgtttaggaccc--tata 141
+
+                                                                       
+Query: 555 taagtcttttaacccccaaattcaccccatttatttcatttttctaaattcac--aaaag 612
+           |||||||||| ||| |||||||||||||||||  |||||| ||| ||||||||  |||| 
+Sbjct: 140 taagtctttttacctccaaattcaccccatttcattcattcttccaaattcacaaaaaaa 81
+
+                                                                     
+Query: 613 aacaccaaatctcctcctaaataattctctctctagaaacttgaaagaggagaagaag 670
+           || | |||||||||||  |||| ||||||||||||||||||||||  || ||||||||
+Sbjct: 80  aaaaacaaatctcctctcaaat-attctctctctagaaacttgaagaagaagaagaag 24
+
+
+>RHPOTKEY0147C22_SP6_654853 
+          Length = 338
+
+ Score = 99.6 bits (50), Expect = 5e-20
+ Identities = 153/182 (84%), Gaps = 4/182 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 471 ttatttttcagg-ggcagttgggtgttttcctaattaattagttcctatactatgttgtt 529
+           |||||||||||| || |||||||| ||||||||||||||||  |||||| ||||||||||
+Sbjct: 180 ttatttttcaggagggagttgggtcttttcctaattaattaactcctatgctatgttgtt 121
+
+                                                                       
+Query: 530 ttgcctatgtttataaccccctatataagtcttttaa-cccccaaattcaccccatttat 588
+           || ||  |   ||  ||||| ||||||||| |||||| |||||||||| |||| ||| | 
+Sbjct: 120 ttacccttcactaagacccc-tatataagtattttaaacccccaaattaaccc-attcac 63
+
+                                                                       
+Query: 589 ttcatttttctaaattcacaaaagaacaccaaatctcctcctaaataattctctctctag 648
+           |||||| ||| || |||||||||||| |||||||||||||  |||||||| | |||||||
+Sbjct: 62  ttcattcttccaatttcacaaaagaaaaccaaatctcctctcaaataattttttctctag 3
+
+             
+Query: 649 aa 650
+           ||
+Sbjct: 2   aa 1
+
+
+>RHPOTKEY0162P15_SP6_705129 
+          Length = 821
+
+ Score = 99.6 bits (50), Expect = 5e-20
+ Identities = 99/114 (86%), Gaps = 1/114 (0%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           |||| ||||||  ||||||||| |||||||| ||||| |||||| ||||||| |||||||
+Sbjct: 709 gctgacagttaagtttcaggggtagttgggtcttttcataattagttagttcatatacta 768
+
+                                                                 
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaatt 576
+           |||  |||| ||||||||||  ||||| |||||||||||||| |||||||||||
+Sbjct: 769 tgtcatttttcctatgtttaggacccc-tatataagtctttttacccccaaatt 821
+
+
+>RHPOTKEY0127B16_SP6_655172 
+          Length = 770
+
+ Score = 97.6 bits (49), Expect = 2e-19
+ Identities = 100/113 (88%), Gaps = 3/113 (2%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 464 ctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactat 523
+           |||||||||| |||| |||||||||||||| ||||||||||||||||||| |||||||||
+Sbjct: 584 ctggcagttactttt-aggggcagttgggtattttcctaattaattagtttctatactat 642
+
+                                                                
+Query: 524 gttgttttgcctatgtttataaccccctatataagtcttttaacccccaaatt 576
+           |   |||||||||||||||  | || |||||||||||| || |||||||||||
+Sbjct: 643 gccattttgcctatgtttagga-ccgctatataagtctgtt-acccccaaatt 693
+
+
+>RHPOTKEY0102I20_T7_684455 
+          Length = 849
+
+ Score = 93.7 bits (47), Expect = 3e-18
+ Identities = 165/198 (83%), Gaps = 6/198 (3%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           |||| |||||| |||| |||||||||||||| ||||||||||||||||||||||||||||
+Sbjct: 772 gctgtcagttaatttt-aggggcagttgggtcttttcctaattaattagttcctatacta 714
+
+                                                                       
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtctttt-aacccccaaattcaccc 581
+            || |||||  |  |   || |  ||||||||||||| |||| |||||||||||| | ||
+Sbjct: 713 cgtagttttatccttcacta-agacccctatataagtattttcaacccccaaatt-agcc 656
+
+                                                                       
+Query: 582 catttatttcatttttctaaattcacaaaagaacaccaaatctc--ctcctaaataattc 639
+            ||| | |||||| ||| |||||||||||| || ||||| ||||  |||| || || |||
+Sbjct: 655 tattcacttcattcttccaaattcacaaaaaaagaccaattctcctctccaaattatttc 596
+
+                             
+Query: 640 tctctctagaaacttgaa 657
+           ||||||||||||||||||
+Sbjct: 595 tctctctagaaacttgaa 578
+
+
+>RHPOTKEY0103G06_T7_628992 
+          Length = 781
+
+ Score = 93.7 bits (47), Expect = 3e-18
+ Identities = 160/195 (82%), Gaps = 2/195 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           |||| ||||||||||| || || |||||||| |||||||||||||||| | |||||||||
+Sbjct: 542 gctgacagttatttttaagaggtagttgggtcttttcctaattaattaatccctatacta 483
+
+                                                                       
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccc 582
+           |||  ||||| |||  || | || ||| || ||||| ||||| |||||||||||   | |
+Sbjct: 482 tgtcattttgtctacattaagaa-cccttacataagactttttacccccaaattagactc 424
+
+                                                                       
+Query: 583 atttatttcatttttctaaattcacaaaagaacaccaaatctcctcctaaataattctct 642
+           | |||| |||||  || |||||| |||||||| |||||||||||||  |||  |||||||
+Sbjct: 423 aattatatcattcatccaaattcccaaaagaaaaccaaatctcctctcaaaatattctct 364
+
+                          
+Query: 643 ctctagaaacttgaa 657
+           ||||| |||||||||
+Sbjct: 363 ctcta-aaacttgaa 350
+
+
+>RHPOTKEY0107O22_SP6_659028 
+          Length = 677
+
+ Score = 93.7 bits (47), Expect = 3e-18
+ Identities = 95/111 (85%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 224 caaaccacaccggccacccacgacccgtggaatggaccacagaccgtaggtgtggtccat 283
+           ||||||||  |||||||||||| || || ||| ||||||| ||||||||||||||||| |
+Sbjct: 368 caaaccacgtcggccacccacggccagttgaagggaccacggaccgtaggtgtggtccgt 427
+
+                                                              
+Query: 284 ggttggcctgcctaggtaagatctgaaggtctagaaccacgacctgaccaa 334
+           |||||||||||||||  | | ||||| || ||||||||| | |||||||||
+Sbjct: 428 ggttggcctgcctagcaatggtctgagggcctagaaccatggcctgaccaa 478
+
+
+>RHPOTKEY0173K12_SP6_743590 
+          Length = 776
+
+ Score = 93.7 bits (47), Expect = 3e-18
+ Identities = 112/131 (85%), Gaps = 2/131 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 464 ctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactat 523
+           ||||||||||| ||| |||| || || ||| ||||||||||||| || ||| |||| |||
+Sbjct: 315 ctggcagttatatttaaggg-caattaggtcttttcctaattaactaattcatataatat 257
+
+                                                                       
+Query: 524 gttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccca 583
+           ||  |||||||||||| ||  ||||  |||||||  ||||||||||||||||||||||||
+Sbjct: 256 gtcattttgcctatgtctaggaccca-tatataaaccttttaacccccaaattcacccca 198
+
+                      
+Query: 584 tttatttcatt 594
+           |||||||||||
+Sbjct: 197 tttatttcatt 187
+
+
+>RHPOTKEY0048O08_SP6_708624 
+          Length = 824
+
+ Score = 91.7 bits (46), Expect = 1e-17
+ Identities = 88/102 (86%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 430 ccacgatccatcaatgcggtctcgtggttcactgctggcagttatttttcaggggcagtt 489
+           ||||| ||||||| || |||||||||| ||||  | | ||||||| ||||||||||||||
+Sbjct: 177 ccacggtccatcagtggggtctcgtgggtcacaacagacagttatctttcaggggcagtt 236
+
+                                                     
+Query: 490 gggtgttttcctaattaattagttcctatactatgttgtttt 531
+           |||| |||||| |||||||||||| |||||||| || |||||
+Sbjct: 237 gggtcttttcccaattaattagttactatactacgtcgtttt 278
+
+
+>RHPOTKEY0127O22_SP6_716494 
+          Length = 294
+
+ Score = 91.7 bits (46), Expect = 1e-17
+ Identities = 136/162 (83%), Gaps = 3/162 (1%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 450 ctcgtggttcactgctggcagttatttttcaggggcagttgggtgttttcctaattaatt 509
+           ||||||| ||||||| | |||||||||| ||||||||||| ||| |||| ||||||||||
+Sbjct: 114 ctcgtgggtcactgcggtcagttatttt-caggggcagtttggtctttttctaattaatt 172
+
+                                                                       
+Query: 510 agttcctatactatgttgttttgcctatgtttataaccccctatataagtcttttaaccc 569
+           | ||| ||||||||||  |||| || |||| || || ||||||||||||  |||||  ||
+Sbjct: 173 aattcatatactatgtcatttttccaatgtatagaa-cccctatataagctttttatacc 231
+
+                                                     
+Query: 570 ccaaattcaccccatttatttcatttttctaaattcacaaaa 611
+           ||||||| | |||||||| |||||| ||| || |||||||||
+Sbjct: 232 ccaaatt-aacccatttaattcattcttccaatttcacaaaa 272
+
+
+>RHPOTKEY0045I23_T7_706031 
+          Length = 830
+
+ Score = 89.7 bits (45), Expect = 5e-17
+ Identities = 102/121 (84%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 178 cgtatttaaaaaggccaaatcgcagctttccagatgttgcaggtaccaaaccacaccggc 237
+           |||||| ||||||| |||||  |||||||| || ||||| |||| ||||||||| || ||
+Sbjct: 804 cgtattaaaaaaggtcaaataacagctttctaggtgttgtaggtgccaaaccacgccagc 745
+
+                                                                       
+Query: 238 cacccacgacccgtggaatggaccacagaccgtaggtgtggtccatggttggcctgccta 297
+            ||||||||||| ||||||||||||| | | ||| ||||||||  |||||||||| ||||
+Sbjct: 744 aacccacgacccatggaatggaccacggtctgtatgtgtggtctctggttggcctaccta 685
+
+            
+Query: 298 g 298
+           |
+Sbjct: 684 g 684
+
+
+
+ Score = 75.8 bits (38), Expect = 8e-13
+ Identities = 91/106 (85%), Gaps = 2/106 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 468 cagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactatgttg 527
+           ||||||||||| ||||||||||||||  ||| ||||||||||||||  ||||||||||  
+Sbjct: 513 cagttattttt-aggggcagttgggtcgtttgctaattaattagttattatactatgtca 455
+
+                                                         
+Query: 528 ttttgcctatgtttataaccccctatataagtcttttaacccccaa 573
+           ||||  |||||||||  | |||||||||||| ||||| ||||||||
+Sbjct: 454 tttttgctatgtttagga-cccctatataagcctttttacccccaa 410
+
+
+>RHPOTKEY0152C21_T7_630691 
+          Length = 672
+
+ Score = 89.7 bits (45), Expect = 5e-17
+ Identities = 83/93 (89%), Gaps = 2/93 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 566 acccccaaattcaccccatttatttcatttttctaaattcacaaaagaacaccaaatctc 625
+           ||||||||||| | |||||||| |||||| ||| ||||||||||||||| ||||||||||
+Sbjct: 140 acccccaaatt-agcccatttacttcattcttccaaattcacaaaagaataccaaatctc 82
+
+                                            
+Query: 626 ctc-ctaaataattctctctctagaaacttgaa 657
+           ||| | ||||| ||||||| |||||||||||||
+Sbjct: 81  ctctccaaatatttctctcactagaaacttgaa 49
+
+
+>RHPOTKEY0177B21_SP6_687663 
+          Length = 746
+
+ Score = 89.7 bits (45), Expect = 5e-17
+ Identities = 112/129 (86%), Gaps = 4/129 (3%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 551 tatataagtcttttaacccccaaattcaccccatttatttcatttttctaaa-ttcacaa 609
+           |||||||| ||||| |||||| ||||||||||||||| |||||| ||| ||| ||| |||
+Sbjct: 217 tatataagactttttacccccgaattcaccccatttaattcattcttccaaatttcccaa 158
+
+                                                                       
+Query: 610 aagaacaccaaatctcctcctaaataattctctctctagaaacttgaaagaggagaagaa 669
+           || || | ||||||||||||||||| |||||||||||  |||||||||  || |||||||
+Sbjct: 157 aataa-atcaaatctcctcctaaat-attctctctct-taaacttgaagaagaagaagaa 101
+
+                    
+Query: 670 gattcaacc 678
+           |||||||||
+Sbjct: 100 gattcaacc 92
+
+
+>RHPOTKEY0136E19_SP6_758490 
+          Length = 670
+
+ Score = 87.7 bits (44), Expect = 2e-16
+ Identities = 56/60 (93%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           |||| ||||||||||||| ||||| |||||| ||||||||||||||||||||||||||||
+Sbjct: 401 gctgacagttatttttcaagggcatttgggttttttcctaattaattagttcctatacta 342
+
+
+>RHPOTKEY0163O08_T7_681825 
+          Length = 613
+
+ Score = 87.7 bits (44), Expect = 2e-16
+ Identities = 120/143 (83%), Gaps = 3/143 (2%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           |||| |||||||||||||| | ||||||||| |||||| ||||||| | || ||| ||| 
+Sbjct: 384 gctgacagttatttttcagtgtcagttgggtcttttcccaattaatcaatttctacact- 442
+
+                                                                       
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccc 582
+            || ||||||| || ||||| |||||  ||||||||| |||| |||||||||||| ||||
+Sbjct: 443 -gtcgttttgcgtaagtttagaaccca-tatataagtttttttacccccaaattcccccc 500
+
+                                  
+Query: 583 atttatttcatttttctaaattc 605
+           ||||| |||||| ||| ||||||
+Sbjct: 501 atttaattcattcttccaaattc 523
+
+
+>RHPOTKEY0083A16_T7_712551 
+          Length = 764
+
+ Score = 85.7 bits (43), Expect = 8e-16
+ Identities = 81/92 (88%), Gaps = 5/92 (5%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 589 ttcatttttctaaattcacaaaagaacaccaaatctc--ctcctaaataattctctctct 646
+           |||||| ||| ||||||||||||||| ||||||||||  |||| ||||| ||||||||||
+Sbjct: 386 ttcattcttccaaattcacaaaagaaaaccaaatctcctctccaaaatatttctctctct 327
+
+                                           
+Query: 647 agaaacttgaaagaggagaagaagattcaacc 678
+           ||||||||||   || ||||||||||||||||
+Sbjct: 326 agaaacttga---agaagaagaagattcaacc 298
+
+
+>RHPOTKEY0094A16_SP6_716362 
+          Length = 268
+
+ Score = 85.7 bits (43), Expect = 8e-16
+ Identities = 116/139 (83%), Gaps = 1/139 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 476 tttcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcct 535
+           |||||||  ||||||||| |||| |||| || ||| |||||||| |||||  ||||||||
+Sbjct: 212 tttcaggttcagttgggtctttttctaactagttaattcctataatatgtcattttgcct 153
+
+                                                                       
+Query: 536 atgtttataaccccctatataagtcttttaacccccaaattcaccccatttatttcattt 595
+           ||||||| || ||| |||||||   |||| |||||||||||||||| |||||  ||||| 
+Sbjct: 152 atgtttagaa-cccttatataatattttttacccccaaattcaccctatttaagtcattc 94
+
+                              
+Query: 596 ttctaaattcacaaaagaa 614
+           ||| |||||| ||||||||
+Sbjct: 93  ttccaaattctcaaaagaa 75
+
+
+>RHPOTKEY0177K19_T7_756600 
+          Length = 377
+
+ Score = 85.7 bits (43), Expect = 8e-16
+ Identities = 98/114 (85%), Gaps = 3/114 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           |||||||||||||||  ||||||||  |||| |||| ||||||||||  |||||||||||
+Sbjct: 122 gctggcagttatttt--aggggcaggcgggtctttttctaattaattcattcctatacta 65
+
+                                                                 
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaatt 576
+           ||| ||||| ||||| |||| |  |||||||||||||||||  |||||||||||
+Sbjct: 64  tgtcgtttttcctatattta-agacccctatataagtctttctacccccaaatt 12
+
+
+>RHPOTKEY0197N05_SP6_643915 
+          Length = 662
+
+ Score = 85.7 bits (43), Expect = 8e-16
+ Identities = 116/139 (83%), Gaps = 1/139 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 476 tttcaggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcct 535
+           |||||||  ||||||||| |||| |||| || ||| |||||||| |||||  ||||||||
+Sbjct: 142 tttcaggttcagttgggtctttttctaactagttaattcctataatatgtcattttgcct 83
+
+                                                                       
+Query: 536 atgtttataaccccctatataagtcttttaacccccaaattcaccccatttatttcattt 595
+           ||||||| || ||| |||||||   |||| |||||||||||||||| |||||  ||||| 
+Sbjct: 82  atgtttagaa-cccttatataatattttttacccccaaattcaccctatttaagtcattc 24
+
+                              
+Query: 596 ttctaaattcacaaaagaa 614
+           ||| |||||| ||||||||
+Sbjct: 23  ttccaaattctcaaaagaa 5
+
+
+>RHPOTKEY0065E18_SP6_687999 
+          Length = 830
+
+ Score = 83.8 bits (42), Expect = 3e-15
+ Identities = 54/58 (93%)
+ Strand = Plus / Plus
+
+                                                                     
+Query: 235 ggccacccacgacccgtggaatggaccacagaccgtaggtgtggtccatggttggcct 292
+           ||||||||||||||||||||  ||||||| ||||||||||||||||||||| ||||||
+Sbjct: 669 ggccacccacgacccgtggatgggaccacggaccgtaggtgtggtccatggatggcct 726
+
+
+>RHPOTKEY0149B10_SP6_651808 
+          Length = 610
+
+ Score = 83.8 bits (42), Expect = 3e-15
+ Identities = 145/174 (83%), Gaps = 4/174 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 486 agttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttataa 545
+           |||||||| |||| ||||||||||||||||||||||| |||||||| ||  |  |||  |
+Sbjct: 281 agttgggtctttttctaattaattagttcctatactacgttgttttacccttcattaaga 222
+
+                                                                       
+Query: 546 ccccctatataagtctttt-aacccccaaattcaccccatttatttcatttttctaaatt 604
+           || | |||| |||  |||| |||||| ||||| |||| ||| | |||||| ||| |||||
+Sbjct: 221 cctc-tatagaagctttttcaacccctaaattaaccc-attcacttcattcttccaaatt 164
+
+                                                                 
+Query: 605 cacaaaagaacaccaaatctcctc-ctaaataattctctctctagaaacttgaa 657
+           || ||||||| |||| |||||||| ||||| | |||||||||||||||||||||
+Sbjct: 163 cataaaagaaaaccatatctcctctctaaaaatttctctctctagaaacttgaa 110
+
+
+>RHPOTKEY0167P12_SP6_751767 
+          Length = 807
+
+ Score = 83.8 bits (42), Expect = 3e-15
+ Identities = 136/166 (81%), Gaps = 1/166 (0%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctatacta 522
+           |||| ||||||||||| || || |||||||| |||||||||||||||| | |||||||||
+Sbjct: 173 gctgacagttatttttaagaggtagttgggtcttttcctaattaattaatccctatacta 114
+
+                                                                       
+Query: 523 tgttgttttgcctatgtttataaccccctatataagtcttttaacccccaaattcacccc 582
+           |||  ||||| |||  || | || ||| || ||||| ||||| |||||||||||   | |
+Sbjct: 113 tgtcattttgtctacattaagaa-cccttacataagactttttacccccaaattagactc 55
+
+                                                         
+Query: 583 atttatttcatttttctaaattcacaaaagaacaccaaatctcctc 628
+           | |||| |||||  || |||||| |||||||| |||||||||||||
+Sbjct: 54  aattatatcattcatccaaattcccaaaagaaaaccaaatctcctc 9
+
+
+>RHPOTKEY0198L01_T7_631432 
+          Length = 755
+
+ Score = 83.8 bits (42), Expect = 3e-15
+ Identities = 96/113 (84%), Gaps = 2/113 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 547 cccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaattca 606
+           ||||||||||||  |||||||||||||||||| |||||| |  ||||| ||| ||| |||
+Sbjct: 140 cccctatataagcattttaacccccaaattcaacccattcaagtcattcttccaaaatca 81
+
+                                                                
+Query: 607 caaaagaacaccaaatctc--ctcctaaataattctctctctagaaacttgaa 657
+            ||||||| | ||| ||||  |||| ||||| |||||||||||||||||||||
+Sbjct: 80  aaaaagaagatcaattctcctctccaaaatatttctctctctagaaacttgaa 28
+
+
+>RHPOTKEY0103A17_T7_703327 
+          Length = 796
+
+ Score = 81.8 bits (41), Expect = 1e-14
+ Identities = 91/105 (86%), Gaps = 2/105 (1%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 547 cccctatataagtctttt-aacccccaaattcaccccatttatttcatttttctaaattc 605
+           ||||||||||||| |||| |||||| ||||| | |||||||| |||||| ||| || |||
+Sbjct: 528 cccctatataagtattttcaacccctaaatt-aacccatttacttcattcttccaatttc 586
+
+                                                        
+Query: 606 acaaaagaacaccaaatctcctcctaaataattctctctctagaa 650
+           ||||||||| |||||||||  ||  ||||||||||||||||||||
+Sbjct: 587 acaaaagaaaaccaaatcttttctcaaataattctctctctagaa 631
+
+
+>RHPOTKEY0124E10_T7_653973 
+          Length = 725
+
+ Score = 81.8 bits (41), Expect = 1e-14
+ Identities = 47/49 (95%)
+ Strand = Plus / Minus
+
+                                                            
+Query: 483 ggcagttgggtgttttcctaattaattagttcctatactatgttgtttt 531
+           ||||||||||| ||||||||||||||||||||||||||||||| |||||
+Sbjct: 434 ggcagttgggtattttcctaattaattagttcctatactatgtcgtttt 386
+
+
+>RHPOTKEY0135L17_SP6_691179 
+          Length = 818
+
+ Score = 81.8 bits (41), Expect = 1e-14
+ Identities = 47/49 (95%)
+ Strand = Plus / Minus
+
+                                                            
+Query: 483 ggcagttgggtgttttcctaattaattagttcctatactatgttgtttt 531
+           ||||||||||| ||||||||||||||||||||||||||||||| |||||
+Sbjct: 497 ggcagttgggtattttcctaattaattagttcctatactatgtcgtttt 449
+
+
+>RHPOTKEY0166L13_SP6_663902 
+          Length = 771
+
+ Score = 81.8 bits (41), Expect = 1e-14
+ Identities = 75/85 (88%), Gaps = 1/85 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 480 aggggcagttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgt 539
+           ||||| |||||||||||||||||||||  ||||||||||||||||| |||||| |||  |
+Sbjct: 375 aggggtagttgggtgttttcctaattatatagttcctatactatgtcgttttgactacat 316
+
+                                    
+Query: 540 ttataaccccctatataagtctttt 564
+           ||| || |||||||||||| |||||
+Sbjct: 315 tta-aaacccctatataagcctttt 292
+
+
+>RHPOTKEY0171F20_SP6_719488 
+          Length = 731
+
+ Score = 81.8 bits (41), Expect = 1e-14
+ Identities = 54/57 (94%), Gaps = 1/57 (1%)
+ Strand = Plus / Minus
+
+                                                                    
+Query: 463 gctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctata 519
+           ||||||||||||||| ||||||||||| |||||||| ||||||||||||||||||||
+Sbjct: 408 gctggcagttatttt-caggggcagttaggtgtttttctaattaattagttcctata 353
+
+
+>RHPOTKEY0183I12_SP6_719034 
+          Length = 760
+
+ Score = 81.8 bits (41), Expect = 1e-14
+ Identities = 47/49 (95%)
+ Strand = Plus / Minus
+
+                                                            
+Query: 483 ggcagttgggtgttttcctaattaattagttcctatactatgttgtttt 531
+           ||||||||||| ||||||||||||||||||||||||||||||| |||||
+Sbjct: 494 ggcagttgggtattttcctaattaattagttcctatactatgtcgtttt 446
+
+
+>RHPOTKEY0106L07_SP6_622992 
+          Length = 428
+
+ Score = 79.8 bits (40), Expect = 5e-14
+ Identities = 70/79 (88%), Gaps = 2/79 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 600 aaattcacaaaagaacaccaaatctcctcct--aaataattctctctctagaaacttgaa 657
+           ||||| ||||||||| | ||||||||||||   |||||||||||||||||||||||||||
+Sbjct: 158 aaatttacaaaagaagatcaaatctcctccccaaaataattctctctctagaaacttgaa 99
+
+                              
+Query: 658 agaggagaagaagattcaa 676
+             || ||||||||||||||
+Sbjct: 98  gaagaagaagaagattcaa 80
+
+
+>RHPOTKEY0168M14_T7_695969 
+          Length = 830
+
+ Score = 79.8 bits (40), Expect = 5e-14
+ Identities = 70/79 (88%), Gaps = 2/79 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 600 aaattcacaaaagaacaccaaatctcctcct--aaataattctctctctagaaacttgaa 657
+           ||||| ||||||||| | ||||||||||||   |||||||||||||||||||||||||||
+Sbjct: 782 aaatttacaaaagaagatcaaatctcctccccaaaataattctctctctagaaacttgaa 723
+
+                              
+Query: 658 agaggagaagaagattcaa 676
+             || ||||||||||||||
+Sbjct: 722 gaagaagaagaagattcaa 704
+
+
+>RHPOTKEY0185K24_SP6_755092 
+          Length = 552
+
+ Score = 79.8 bits (40), Expect = 5e-14
+ Identities = 142/172 (82%), Gaps = 3/172 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 486 agttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttataa 545
+           ||||||||  ||||||||||||||| |||||||| ||||| ||||| |||| || ||  |
+Sbjct: 546 agttgggtaatttcctaattaattaattcctatattatgtagtttttcctaagtctagga 487
+
+                                                                       
+Query: 546 ccccctatataagtcttttaacccccaaattcaccccatttatttcatttttctaaattc 605
+            ||||||||||||| |||| || ||||||||   |||||||| |||||| ||| ||||||
+Sbjct: 486 -cccctatataagtgtttttacgcccaaattagacccatttacttcattcttccaaattc 428
+
+                                                               
+Query: 606 acaaaagaacaccaaatctcctcctaaataattctctctctagaaacttgaa 657
+            ||||| || | |||||||| ||| |||| ||| ||||| |||||| |||||
+Sbjct: 427 tcaaaacaa-atcaaatctcttcccaaat-attttctctatagaaatttgaa 378
+
+
+>RHPOTKEY0197B21_SP6_704122 
+          Length = 784
+
+ Score = 77.8 bits (39), Expect = 2e-13
+ Identities = 143/171 (83%), Gaps = 5/171 (2%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 501 taattaattagttcctatactatgttgttttgcctatgtttataaccccctatataagtc 560
+           |||||||||| ||||||||| |||| |||||| |||| |||| |||||  ||||||||  
+Sbjct: 732 taattaattaattcctatacaatgtcgttttgactatatttagaacccg-tatataagct 674
+
+                                                                       
+Query: 561 ttttaacccccaaattcaccccatttatttcatttttctaaattcacaaaagaacaccaa 620
+           ||| |||||| ||||| | || ||||| |||||| ||| || || ||||||||| |||||
+Sbjct: 673 tttcaacccctaaattaatcc-atttaattcattcttccaattttacaaaagaaaaccaa 615
+
+                                                              
+Query: 621 atctcctc-ctaaataattctctctctagaaacttgaaagaggagaagaag 670
+           || ||||| | ||||| |||||||||||||||||||||  || ||||||||
+Sbjct: 614 at-tcctctccaaata-ttctctctctagaaacttgaagaagaagaagaag 566
+
+
+>RHPOTKEY0153N14_T7_740142 
+          Length = 851
+
+ Score = 75.8 bits (38), Expect = 8e-13
+ Identities = 128/154 (83%), Gaps = 3/154 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 468 cagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactatgttg 527
+           ||||||||||||||| | |||||||| |||||||||||||||| |||||||| ||| |  
+Sbjct: 228 cagttatttttcaggagtagttgggtcttttcctaattaattaattcctatattatatca 169
+
+                                                                       
+Query: 528 ttttgcctatgtttataaccccctatataag-tcttttaacccccaaattcaccccattt 586
+           ||||  |||| |||| || || | ||||||| | ||| |||||||||||| | |||||||
+Sbjct: 168 tttttactatatttagaa-cctcaatataagctttttcaacccccaaatt-aacccattt 111
+
+                                             
+Query: 587 atttcatttttctaaattcacaaaagaacaccaa 620
+           | |||||| ||| |||||  |||||||| |||||
+Sbjct: 110 acttcattcttccaaattgccaaaagaaaaccaa 77
+
+
+>RHPOTKEY0191N18_SP6_688348 
+          Length = 827
+
+ Score = 75.8 bits (38), Expect = 8e-13
+ Identities = 128/154 (83%), Gaps = 3/154 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 468 cagttatttttcaggggcagttgggtgttttcctaattaattagttcctatactatgttg 527
+           ||||||||||||||| | |||||||| |||||||||||||||| |||||||| ||| |  
+Sbjct: 293 cagttatttttcaggagtagttgggtcttttcctaattaattaattcctatattatatca 234
+
+                                                                       
+Query: 528 ttttgcctatgtttataaccccctatataag-tcttttaacccccaaattcaccccattt 586
+           ||||  |||| |||| || || | ||||||| | ||| |||||||||||| | |||||||
+Sbjct: 233 tttttactatatttagaa-cctcaatataagctttttcaacccccaaatt-aacccattt 176
+
+                                             
+Query: 587 atttcatttttctaaattcacaaaagaacaccaa 620
+           | |||||| ||| |||||  |||||||| |||||
+Sbjct: 175 acttcattcttccaaattgccaaaagaaaaccaa 142
+
+
+>RHPOTKEY0001B14_T7_715066 
+          Length = 681
+
+ Score = 73.8 bits (37), Expect = 3e-12
+ Identities = 74/85 (87%), Gaps = 1/85 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 453 gtggttcactgctggcagttattttt-caggggcagttgggtgttttcctaattaattag 511
+           |||| ||||||||  ||||||||||| |||||| |||||||| || ||||||||||||| 
+Sbjct: 614 gtgggtcactgctttcagttattttttcaggggaagttgggtcttctcctaattaattaa 555
+
+                                    
+Query: 512 ttcctatactatgttgttttgccta 536
+           ||| ||||||||||  |||||||||
+Sbjct: 554 ttcatatactatgtcattttgccta 530
+
+
+>RHPOTKEY0066M07_SP6_716259 
+          Length = 799
+
+ Score = 73.8 bits (37), Expect = 3e-12
+ Identities = 43/45 (95%)
+ Strand = Plus / Minus
+
+                                                        
+Query: 481 ggggcagttgggtgttttcctaattaattagttcctatactatgt 525
+           |||| |||||||| |||||||||||||||||||||||||||||||
+Sbjct: 435 ggggtagttgggtcttttcctaattaattagttcctatactatgt 391
+
+
+>RHPOTKEY0121H06_SP6_680467 
+          Length = 727
+
+ Score = 73.8 bits (37), Expect = 3e-12
+ Identities = 46/49 (93%)
+ Strand = Plus / Minus
+
+                                                            
+Query: 316 agaaccacgacctgaccaataaaccattggtcagaacacagtccgtggt 364
+           ||||||||||||||||||| ||||||| ||||||| |||||||||||||
+Sbjct: 418 agaaccacgacctgaccaacaaaccatcggtcagaccacagtccgtggt 370
+
+
+>RHPOTKEY0177N17_T7_730304 
+          Length = 658
+
+ Score = 73.8 bits (37), Expect = 3e-12
+ Identities = 127/153 (83%), Gaps = 3/153 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 460 actgctggcagttatttttcaggggcagttgggtgttttcctaattaattagttcctata 519
+           |||||||||||||   ||||||||| |||||||| |||||||||||||||| ||||||||
+Sbjct: 167 actgctggcagttgagtttcaggggtagttgggtcttttcctaattaattaattcctata 108
+
+                                                                       
+Query: 520 ctatgttgttttgcctatgtttataaccccctatataag-tcttttaacccccaaattca 578
+            || || ||||| ||  |   || || |||||||||||| | ||| |||| ||||||| |
+Sbjct: 107 atacgtcgttttaccattcacta-aaacccctatataagctttttcaacctccaaatt-a 50
+
+                                            
+Query: 579 ccccatttatttcatttttctaaattcacaaaa 611
+            |||||||| |||||| ||| ||||||||||||
+Sbjct: 49  acccatttacttcattcttccaaattcacaaaa 17
+
+
+>RHPOTKEY0163A10_SP6_699630 
+          Length = 542
+
+ Score = 71.9 bits (36), Expect = 1e-11
+ Identities = 82/96 (85%), Gaps = 1/96 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 486 agttgggtgttttcctaattaattagttcctatactatgttgttttgcctatgtttataa 545
+           |||||||| |||||||||||| ||  | ||||||||| ||  |||||||||||| ||  |
+Sbjct: 144 agttgggtcttttcctaattattttatccctatactacgtcattttgcctatgtctaaga 85
+
+                                               
+Query: 546 ccccctatataagtcttttaacccccaaattcaccc 581
+           |||| ||||||||| |||||||||||||||| ||||
+Sbjct: 84  cccc-tatataagtattttaacccccaaatttaccc 50
+
+
+>RHPOTKEY0005H20_SP6_702598 
+          Length = 807
+
+ Score = 69.9 bits (35), Expect = 5e-11
+ Identities = 62/71 (87%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 228 ccacaccggccacccacgacccgtggaatggaccacagaccgtaggtgtggtccatggtt 287
+           |||| ||| |||||||||||| |||||| ||||||||||  ||||||||||||  |||||
+Sbjct: 255 ccacgccgtccacccacgacctgtggaagggaccacagattgtaggtgtggtctgtggtt 314
+
+                      
+Query: 288 ggcctgcctag 298
+           ||||| |||||
+Sbjct: 315 ggcctacctag 325
+
+
+>RHPOTKEY0024E20_SP6_694129 
+          Length = 723
+
+ Score = 69.9 bits (35), Expect = 5e-11
+ Identities = 59/67 (88%)
+ Strand = Plus / Plus
+
+                                                                       
+Query: 390 accaccatcgacggccgtgcaggacggtccgtcgtcctgaccacgatccatcaatgcggt 449
+           |||||||||||||  |||||||||| ||||||||||||||||||| ||| |||  | |||
+Sbjct: 585 accaccatcgacgatcgtgcaggacagtccgtcgtcctgaccacggtccgtcagcggggt 644
+
+                  
+Query: 450 ctcgtgg 456
+           |||||||
+Sbjct: 645 ctcgtgg 651
+
+
+>RHPOTKEY0073B12_T7_700388 
+          Length = 763
+
+ Score = 69.9 bits (35), Expect = 5e-11
+ Identities = 41/43 (95%)
+ Strand = Plus / Minus
+
+                                                      
+Query: 480 aggggcagttgggtgttttcctaattaattagttcctatacta 522
+           ||||||| |||||| ||||||||||||||||||||||||||||
+Sbjct: 496 aggggcatttgggtcttttcctaattaattagttcctatacta 454
+
+
+>RHPOTKEY0134H04_SP6_650735 
+          Length = 693
+
+ Score = 69.9 bits (35), Expect = 5e-11
+ Identities = 78/91 (85%), Gaps = 1/91 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 567 cccccaaattcaccccatttatttcatttttctaaattcacaaaagaacaccaaatctcc 626
+           ||||||||||   |||||||| |||||| ||| |||||| |||||||| | |||||||| 
+Sbjct: 203 cccccaaattagacccatttacttcattcttccaaattcccaaaagaagatcaaatctcg 144
+
+                                          
+Query: 627 tcctaaataattctctctctagaaacttgaa 657
+           | | ||||| |||||||||||||||||||||
+Sbjct: 143 ttccaaata-ttctctctctagaaacttgaa 114
+
+
+>RHPOTKEY0147K22_T7_697571 
+          Length = 193
+
+ Score = 69.9 bits (35), Expect = 5e-11
+ Identities = 78/91 (85%), Gaps = 1/91 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 567 cccccaaattcaccccatttatttcatttttctaaattcacaaaagaacaccaaatctcc 626
+           ||||||||||   |||||||| |||||| ||| |||||| |||||||| | |||||||| 
+Sbjct: 179 cccccaaattagacccatttacttcattcttccaaattcccaaaagaagatcaaatctcg 120
+
+                                          
+Query: 627 tcctaaataattctctctctagaaacttgaa 657
+           | | ||||| |||||||||||||||||||||
+Sbjct: 119 ttccaaata-ttctctctctagaaacttgaa 90
+
+
+>RHPOTKEY0159J10_T7_702820 
+          Length = 797
+
+ Score = 69.9 bits (35), Expect = 5e-11
+ Identities = 78/91 (85%), Gaps = 1/91 (1%)
+ Strand = Plus / Minus
+
+                                                                       
+Query: 567 cccccaaattcaccccatttatttcatttttctaaattcacaaaagaacaccaaatctcc 626
+           ||||||||||   |||||||| |||||| ||| |||||| |||||||| | |||||||| 
+Sbjct: 228 cccccaaattagacccatttacttcattcttccaaattcccaaaagaagatcaaatctcg 169
+
+                                          
+Query: 627 tcctaaataattctctctctagaaacttgaa 657
+           | | ||||| |||||||||||||||||||||
+Sbjct: 168 ttccaaata-ttctctctctagaaacttgaa 139
+
+
+  Database: Potato BAC End Sequences
+    Posted date:  Dec 4, 2009  1:00 AM
+  Number of letters in database: 82,390,459
+  Number of sequences in database:  127,767
+  
+Lambda     K      H
+    1.37    0.711     1.31 
+
+Gapped
+Lambda     K      H
+    1.37    0.711     1.31 
+
+
+Matrix: blastn matrix:1 -3
+Gap Penalties: Existence: 5, Extension: 2
+Number of Sequences: 127767
+Number of Hits to DB: 646,803
+Number of extensions: 39428
+Number of successful extensions: 13198
+Number of sequences better than 1.0e-10: 90
+Number of HSP's gapped: 13099
+Number of HSP's successfully gapped: 100
+Length of query: 678
+Length of database: 82,390,459
+Length adjustment: 18
+Effective length of query: 660
+Effective length of database: 80,090,653
+Effective search space: 52859830980
+Effective search space used: 52859830980
+X1: 11 (21.8 bits)
+X2: 15 (29.7 bits)
+X3: 50 (99.1 bits)
+S1: 12 (24.3 bits)
+S2: 35 (69.9 bits)
