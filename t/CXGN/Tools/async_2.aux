@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+#this is a little helper script that goes with async.t in this same directory
+use strict;
+use warnings;
+
+use Storable qw/store_fd/;
+
+use File::Temp qw/tempfile/;
+
+use CXGN::Tools::Run;
+
+my $sleeper = CXGN::Tools::Run->run_async('sleep',30);
+my ($fh,$filename) = tempfile;
+store_fd($sleeper,$fh);
+print "$filename\n";

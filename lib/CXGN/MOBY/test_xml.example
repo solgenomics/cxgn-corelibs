@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+	<moby:MOBY xmlns:moby='http://www.biomoby.org/moby-s'>
+	      <moby:mobyContent>
+	          <moby:mobyData queryID='1'><moby:Simple moby:articleName=''>
+<Object namespace='SGN-U' id='23141'/>
+</moby:Simple>
+</moby:mobyData>
+
+	      </moby:mobyContent>
+	</moby:MOBY>

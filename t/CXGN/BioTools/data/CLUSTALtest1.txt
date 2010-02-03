@@ -1,0 +1,4 @@
+CLUSTAL
+
+sq1 AATT
+sq2 GGCC
