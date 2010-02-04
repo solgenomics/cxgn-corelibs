@@ -182,7 +182,7 @@ Expect (e-value) Threshold: $evalue
 There are now $num_results results.  Please login to view these results.
 
 Thank you,
-SOL Genomics Network
+Sol Genomics Network
 
 MESSAGE
 ;

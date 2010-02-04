@@ -11,7 +11,7 @@ A class to interrogate the database about projects. The object is not specific t
 
  Lukas Mueller, John Binns, Robert Buels.
 
- Copyleft (c) SOL Genomics Network. All rights reversed.
+ Copyleft (c) Sol Genomics Network. All rights reversed.
 
 =cut
 

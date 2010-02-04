@@ -24,7 +24,7 @@ This class also handles a lot of the BAC status management, which it probably sh
 
 Lukas Mueller, John Binns, Robert Buels, Evan Herbst.
 
-Copyleft (c) SOL Genomics Network. All rights reversed. Hahaha!
+Copyleft (c) Sol Genomics Network. All rights reversed. Hahaha!
 
 
 =head1 METHODS
