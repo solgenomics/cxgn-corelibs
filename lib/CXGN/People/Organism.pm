@@ -12,7 +12,7 @@ The SGN user database can store people's favorite organisms, which are maintaine
 
 Lukas Mueller, John Binns, Robert Buels.
 
-Copyleft (c) SOL Genomics Network. All rights reversed.
+Copyleft (c) Sol Genomics Network. All rights reversed.
 
 =head1 METHODS
 

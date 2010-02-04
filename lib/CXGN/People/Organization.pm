@@ -10,7 +10,7 @@ People -- classes to deal with community data, login, user comments etc
 =head1 AUTHORS
 
 Lukas Mueller, John Binns, Robert Buels.
-Copyleft (c) SOL Genomics Network. All rights reversed.
+Copyleft (c) Sol Genomics Network. All rights reversed.
 
 =cut
 

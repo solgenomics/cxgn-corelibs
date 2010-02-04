@@ -10,7 +10,7 @@ All the functionalities in this class should really be moved to CXGN::People::Pe
 
 Lukas Mueller, John Binns, Robert Buels
 .
-Copyleft (c) SOL Genomics Network. All rights reversed.
+Copyleft (c) Sol Genomics Network. All rights reversed.
 
 =cut
 
