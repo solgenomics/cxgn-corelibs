@@ -747,7 +747,23 @@ sub _die_if_error {
      && $self->_diefile_exists) {
     my $error_string = $self->_file_contents( $self->_diefile_name );
     if( $self->is_cluster ) {
-	$error_string = __PACKAGE__.': cluster job id: '.$self->job_id."\n$error_string";
+	# if it's a cluster job, look for warnings from the resource
+	# manager in the error file and include those in the error output
+	my $pbs_warnings = '';
+	if( -f $self->err_file ) {
+	    eval {
+		open my $e, $self->err_file or die "WARNING: $! opening err file ".$self->err_file;
+		while( <$e> ) {
+		    $pbs_warnings .= $_ if /^==>> PBS:/;
+		}
+		$pbs_warnings = "resource manager output:\n" if $pbs_warnings;
+	    };
+	    $pbs_warnings .= $@ if $@;
+	}
+	# and also prepend the cluster job ID to aid troubleshooting
+	$error_string =  __PACKAGE__.': cluster job id: '.$self->job_id."\n"
+	               . __PACKAGE__.": $pbs_warnings\n"
+		       . $error_string
     }
     #kill our child process's whole group if it's still running for some reason
     kill SIGKILL => -($self->pid) if $self->is_async;
@@ -803,7 +819,7 @@ sub _file_contents {
 #then returns the new string
 sub _format_error_message {
   my $self = shift;
-  my $error = shift || 'unknown error';
+  my $error = shift || 'no error message';
   $error =~ s/[\.,\s]*$//; #chop off any ending punctuation or whitespace
   my $of = $self->out_file;
   my $ef = $self->err_file;
