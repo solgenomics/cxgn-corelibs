@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use English;
 use Carp;
-use POSIX qw( :sys_wait_h );
+use POSIX qw( :sys_wait_h strftime );
 use Time::HiRes qw/time/;
 
 use IPC::Cmd ();
