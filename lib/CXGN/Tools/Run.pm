@@ -754,15 +754,16 @@ sub _die_if_error {
 	    eval {
 		open my $e, $self->err_file or die "WARNING: $! opening err file ".$self->err_file;
 		while( <$e> ) {
-		    $pbs_warnings .= $_ if /^==>> PBS:/;
+		    next unless m|^\=\>\> PBS:|;
+		    $pbs_warnings .= $_;
 		}
-		$pbs_warnings = "resource manager output:\n" if $pbs_warnings;
+		$pbs_warnings = __PACKAGE__.": resource manager output:\n$pbs_warnings" if $pbs_warnings;
 	    };
 	    $pbs_warnings .= $@ if $@;
 	}
 	# and also prepend the cluster job ID to aid troubleshooting
 	$error_string =  __PACKAGE__.': cluster job id: '.$self->job_id."\n"
-	               . __PACKAGE__.": $pbs_warnings\n"
+	               . $pbs_warnings
 		       . $error_string
     }
     #kill our child process's whole group if it's still running for some reason
