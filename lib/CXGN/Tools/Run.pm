@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use English;
 use Carp;
-use POSIX qw( :sys_wait_h);
+use POSIX qw( :sys_wait_h );
 use Time::HiRes qw/time/;
 
 use IPC::Cmd ();
@@ -814,11 +814,13 @@ sub _format_error_message {
       ("(no stderr captured)")
     }
   };
-  return join '', map {chomp; __PACKAGE__.": $_\n"} ( "command failed: ".$self->_command,
-						      $error,
-						      @out_tail,
-						      @err_tail,
-						    );
+  return join '', map {chomp; __PACKAGE__.": $_\n"} ( 
+      "date: ".strftime('%Y-%m-%d %H:%M:%S %Z',localtime),
+      "command failed: ".$self->_command,
+      $error,
+      @out_tail,
+      @err_tail,
+  );
 }
 
 
