@@ -1,6 +1,7 @@
 package CXGN::Tools::Run;
 use strict;
 use warnings;
+use namespace::autoclean;
 use English;
 use Carp;
 use POSIX qw( :sys_wait_h strftime );
@@ -14,6 +15,7 @@ use File::Basename;
 use File::Spec;
 use Cwd;
 use UNIVERSAL qw/isa/;
+use Scalar::Util qw/ blessed /;
 
 use File::NFSLock qw/uncache/;
 
@@ -422,7 +424,7 @@ sub run_cluster {
   ###submit the job with qsub in the form of a bash script that contains a perl script
   #we do this so we can use CXGN::Tools::Run to write
   my $working_dir = $self->_working_dir_isset ? "working_dir => '".$self->_working_dir."'," : '';
-  my $cmd_string = join(', ', map { my $s=$_;
+  my $cmd_string = join(",\n", map { my $s="$_"; #< stringify args
 				    $s=~s/'/\\'/g; #< quote for inserting into a single-quoted string
 				    "'$s'"
 				  } @args
@@ -552,7 +554,7 @@ sub _common_prerun {
   #make sure all of our args are defined
   defined || croak "undefined argument passed to run method" foreach @$args;
 
-  my %options = ref($args->[-1]) ? %{pop @$args} : ();
+  my %options = ref($args->[-1]) && !blessed($args->[-1]) ? %{pop @$args} : ();
 
   my @allowed_options = qw(
 			   in_file
