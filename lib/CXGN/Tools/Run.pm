@@ -385,7 +385,7 @@ sub run_cluster {
 #    warn "relpath $path\n";
     $path = File::Spec->rel2abs($path);
 #    warn "abspath $path\n";
-    return 1 if $path =~ m!(/net/[^/]+)?(/data/(shared|prod|trunk)|/home)!;
+    return 1 if $path =~ m!(/net/[^/]+)?(/data/(shared|prod|trunk)|/(home|crypt))!;
     return 0;
   }
 
