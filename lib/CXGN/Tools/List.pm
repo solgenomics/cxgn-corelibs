@@ -250,36 +250,42 @@ sub distinct {
 
 =head2 balanced_split
 
-  Usage: my @lists = balanced_split($num_pieces,@list);
+  Usage: my $lists = balanced_split( $num_pieces, \@list );
   Desc : split the given list in to the given number of pieces,
          with the lengths of the pieces differing by at most
          1 element.  If the number of requested pieces is less
          than the number of elements in the input, returns a
          1-element array for each element in the input
   Args : number of pieces to split into, list to split
-  Ret  : a list of arrayrefs, as ([piece 1],[piece 2], ...)
+  Ret  : ref to split array, as [ [piece 1], [piece 2], ... ]
   Side Effects: croaks if num_pieces is not at least 1
   Example:
 
 =cut
 
-sub balanced_split($@) {
-  my ($num_pieces,@input) = @_;
+sub balanced_split {
+  my ($num_pieces,$input) = @_;
 
   croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
     unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
+  croak "balanced_split takes an arrayref as its second argument"
+    unless $input && ref $input eq 'ARRAY';
 
-  return map {[$_]} @input
-    if $num_pieces >= @input;
+  return [ map {[$_]} @$input ]
+    if $num_pieces >= @$input;
 
-  my $base_jobsize = POSIX::floor(@input/$num_pieces);
+  my $base_jobsize = POSIX::floor(@$input/$num_pieces);
   my @piece_sizes = ($base_jobsize+0)x$num_pieces;
-  my $remainder = @input - @piece_sizes*$piece_sizes[0];
+  my $remainder = @$input - @piece_sizes*$piece_sizes[0];
   $_++ foreach @piece_sizes[0..($remainder-1)];
 
-  return map {
-    [splice @input,0,$_]
-  } @piece_sizes;
+  my @result;
+  my $offset = 0;
+  foreach my $piece_size (@piece_sizes) {
+      push @result, [ @{$input}[$offset..($offset+$piece_size-1)] ];
+      $offset += $piece_size;
+  }
+  return \@result;
 }
 
 =head2 odds
