@@ -303,12 +303,11 @@ sub balanced_split_sizes {
   croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
     unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
 
-  my $base_jobsize = POSIX::floor( $num / $num_pieces );
-  my @piece_sizes = ($base_jobsize+0)x$num_pieces;
-  my $remainder = $num - @piece_sizes*$piece_sizes[0];
-  $_++ foreach @piece_sizes[0..($remainder-1)];
+  my $div = $num / $num_pieces;
+  my $base_jobsize = POSIX::floor( $div );
+  my $remainder    = POSIX::fmod( $num, $base_jobsize );
 
-  return \@piece_sizes;
+  return [ ($base_jobsize+1)x$remainder, ($base_jobsize)x($num_pieces-$remainder) ];
 }
 
 
