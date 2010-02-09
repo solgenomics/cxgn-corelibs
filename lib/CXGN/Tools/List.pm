@@ -84,6 +84,7 @@ BEGIN {
 		       str_in
                        distinct
 		       balanced_split
+		       balanced_split_sizes
 		       evens odds
 		       index_where
 		       list_join
@@ -297,19 +298,28 @@ sub balanced_split {
 sub balanced_split_sizes {
   my ( $num_pieces, $num ) = @_;
 
-  return [ (1) x $num ]
-    if $num_pieces >= $num;
-
-  croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
-    unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
-
-  my $div = $num / $num_pieces;
-  my $base_jobsize = POSIX::floor( $div );
-  my $remainder    = POSIX::fmod( $num, $base_jobsize );
-
-  return [ ($base_jobsize+1)x$remainder, ($base_jobsize)x($num_pieces-$remainder) ];
+  my @calc = balanced_split_calc( $num_pieces, $num );
+  return [ map {
+                 my ($count, $size) = @$_;
+		 ( $size )x$count
+           } @calc
+	 ];
 }
+sub balanced_split_calc {
+    my ( $num_pieces, $num ) = @_;
 
+    croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
+	unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
+
+    return ( [0,2], [$num,1] )
+	if $num_pieces >= $num;
+
+    my $div = $num / $num_pieces;
+    my $base_jobsize = POSIX::floor( $div );
+    my $remainder    = POSIX::fmod( $num, $base_jobsize );
+
+    return ( [ $remainder, $base_jobsize+1 ], [ $num_pieces-$remainder, $base_jobsize ] );
+}
 
 =head2 odds
 
