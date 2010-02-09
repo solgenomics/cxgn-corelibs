@@ -266,27 +266,51 @@ sub distinct {
 sub balanced_split {
   my ($num_pieces,$input) = @_;
 
-  croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
-    unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
   croak "balanced_split takes an arrayref as its second argument"
     unless $input && ref $input eq 'ARRAY';
+  croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
+    unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
 
-  return [ map {[$_]} @$input ]
-    if $num_pieces >= @$input;
-
-  my $base_jobsize = POSIX::floor(@$input/$num_pieces);
-  my @piece_sizes = ($base_jobsize+0)x$num_pieces;
-  my $remainder = @$input - @piece_sizes*$piece_sizes[0];
-  $_++ foreach @piece_sizes[0..($remainder-1)];
+  my $piece_sizes = balanced_split_sizes( $num_pieces, scalar(@$input) );
 
   my @result;
   my $offset = 0;
-  foreach my $piece_size (@piece_sizes) {
+  foreach my $piece_size (@$piece_sizes) {
       push @result, [ @{$input}[$offset..($offset+$piece_size-1)] ];
       $offset += $piece_size;
   }
   return \@result;
 }
+
+=head2 balanced_split_sizes
+
+  Usage: my $pieces = balances_split_sizes( $num_elements )
+  Desc : get the piece sizes to use for a balanced split,
+         with the size of pieces differing by no more than 1
+  Args : number of elements in the set
+  Ret  : arrayref of piece sizes, e.g. [ 2, 2, 2, 1 ]
+  Side Effects: none
+  Example :
+
+=cut
+
+sub balanced_split_sizes {
+  my ( $num_pieces, $num ) = @_;
+
+  return [ (1) x $num ]
+    if $num_pieces >= $num;
+
+  croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
+    unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
+
+  my $base_jobsize = POSIX::floor( $num / $num_pieces );
+  my @piece_sizes = ($base_jobsize+0)x$num_pieces;
+  my $remainder = $num - @piece_sizes*$piece_sizes[0];
+  $_++ foreach @piece_sizes[0..($remainder-1)];
+
+  return \@piece_sizes;
+}
+
 
 =head2 odds
 
