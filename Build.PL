@@ -28,7 +28,7 @@ my $build = Module::Build->new(
 #         'APR::Table' => 0,
 
 	# bioperl modules
-	'Bio::Root::Version' => '1.006000',
+#	'Bio::Root::Version' => '1.006000',
 # 	'Bio::AlignIO' => 0,
 # 	'Bio::Annotation::SimpleValue' => 0,
 # 	'Bio::Annotation::Target' => 0,
