@@ -13,12 +13,14 @@ use CXGN::VHost;
 
 use base qw | CXGN::DB::Object |;
 
-1;
+
 
 =head2 function new()
 
   Synopsis:	
-  Arguments:	none
+  Arguments:	a database handle [ DBI object or CXGN::DB::Connection object]
+                the base dir [ file path ]
+                the temp_dir [ relative path ]
   Returns:	a handle to a view_maps object
   Side effects:	
   Description:	constructor
@@ -28,13 +30,23 @@ use base qw | CXGN::DB::Object |;
 sub new {
     my $class = shift;
     my $dbh = shift;
-    my $page = CXGN::Page->new();
+    my $basepath = shift;
+    my $temp_dir = shift;
+
     my $self = bless {}, $class;
     $self->set_dbh($dbh);
     # set some defaults...
     #
-    $self->{page} = $page;
-    $self -> {unzoomedheight} = 20; # how many cM are seen at zoom level 1    
+    $self->{unzoomedheight} = 20; # how many cM are seen at zoom level 1    
+
+    # create an set the cache file in the constructor,
+    # such that we can define the temp dirs before
+    # we generate the image using generate_image()
+    #
+    my $cache = CXGN::Tools::WebImageCache->new();
+    $self->set_cache($cache);
+    $cache->set_basedir($basepath);
+    $cache->set_temp_dir($temp_dir);
 
     return $self;
 }
@@ -102,22 +114,16 @@ sub set_cache {
 
 =cut
 
-sub generate_page {
+sub generate_image {
     my $self = shift;
 
-    my $vhost = CXGN::VHost->new();
-    my $cache = CXGN::Tools::WebImageCache->new();
-    
     # define a key for the cache. lets just use the name of the
     # script and the map_version_ids of the maps being displayed
     #
-    $cache->set_key("view_maps".(join "-", map { $_->get_id() } ($self->get_maps())));
+    $self->get_cache()->set_key("view_maps".(join "-", map { $_->get_id() } ($self->get_maps())));
+    
+    $self->get_cache()->set_expiration_time(86400);
 
-    $cache->set_basedir($vhost->get_conf("basepath"));
-    $cache->set_temp_dir(File::Spec->catfile($vhost->get_conf("tempfiles_subdir"), "cview"));
-    $cache->set_expiration_time(86400);
-
-    $self->set_cache($cache);
 
     if (! $self->get_cache()->is_valid()) { 
 	my $map_width = $self->{map_width} = 720;    
@@ -276,42 +282,42 @@ sub get_select_toolbar {
 	};
 }
 
-=head2 function display()
+# =head2 function display()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	composes the page and displays it.
+#   Synopsis:	
+#   Arguments:	
+#   Returns:	
+#   Side effects:	
+#   Description:	composes the page and displays it.
 
-=cut
+# =cut
 
-sub display {
-    my $self = shift;
+# sub display {
+#     my $self = shift;
     
 
-    $self->{page}->header("SGN comparative mapviewer");
-    my $width = int($self->{map_width}/3);
+#     $self->{page}->header("SGN comparative mapviewer");
+#     my $width = int($self->{map_width}/3);
     
-    my $select = $self->get_select_toolbar();
+#     my $select = $self->get_select_toolbar();
     
-    print "$select";
+#     print "$select";
 
-    if (!$self->get_maps()) { 
-	print "<br /><br /><center>Note: No maps are selected. Please select maps from the pull down menus above.</center>\n";
-    }
+#     if (!$self->get_maps()) { 
+# 	print "<br /><br /><center>Note: No maps are selected. Please select maps from the pull down menus above.</center>\n";
+#     }
 
-    print $self->get_cache()->get_image_html();
+#     print $self->get_cache()->get_image_html();
 
-#    print "<img src=\"$self->{image_url}\" usemap=\"#chr_comp_map\" border=\"0\" alt=\"\" />\n";
+# #    print "<img src=\"$self->{image_url}\" usemap=\"#chr_comp_map\" border=\"0\" alt=\"\" />\n";
 
-#    print $self->{map}->get_image_map("chr_comp_map");
+# #    print $self->{map}->get_image_map("chr_comp_map");
 
-    $self->{page}->footer();
+#     $self->{page}->footer();
 
     
     
-}
+# }
 
 =head2 function error_message_page()
 
@@ -325,8 +331,6 @@ sub display {
 
 sub error_message_page {
     my $self = shift;
-    my $page = CXGN::Page->new();
-    $page->header();
 
     my $title = page_title_html("Error: No center map defined");
 
@@ -343,8 +347,6 @@ sub error_message_page {
 
 HTML
 
-     $page->footer();
-
     exit();
 }
 
@@ -353,3 +355,5 @@ sub clean_up {
     my $self = shift;
 }
 
+
+return 1;
