@@ -19,7 +19,7 @@ use CXGN::Cview::ChrLink;
 use CXGN::Cview::MapFactory;
 
 
-use base qw( CXGN::DB::Connection );
+use base qw | CXGN::DB::Object |;
 
 return 1;
 
@@ -79,7 +79,7 @@ The following functions are defined in the class:
 =head2 function new()
 
   Synopsis:     generates a new chromosome_viewer object
-  Parameters:   none
+  Parameters:   $dbh - a database handle 
   Returns:      an object handle
   Side effects: sets some useful default values, creates an SGN page object and
                 establishes a connection to the database through the page object.
@@ -91,11 +91,13 @@ The following functions are defined in the class:
 
 sub new { 
     my $class = shift;
+    my $dbh = shift;
 
-    my $self = $class->SUPER::new(@_);
+    if (! $dbh) { die "Chromosome_viewer now takes a dbh parameter."; }
+    my $self = $class->SUPER::new($dbh, @_);
 
     $self -> {unzoomedheight} = 20; # how many cM are seen at zoom level 1    
-#    $self -> {raster_size} = 5;     # the default raster size for genetic maps
+#    $self -> {raster_size} = 5;    # the default raster size for genetic maps
                                     # for sequence-based maps this will be changed to 1
                                     # later on.
     $self->set_temp_dir("/tmp");    # set some default for the temp_dir. However, this
@@ -148,7 +150,7 @@ sub _adjust_parameters {
 
     # generate the map objects
     #
-    my $map_factory = CXGN::Cview::MapFactory->new($self);
+    my $map_factory = CXGN::Cview::MapFactory->new($self->get_dbh(), $self->get_db_backend());
 #    print STDERR "Generating MapFactory with id ".$self->get_map_version_id()."\n";
 #    print STDERR "IS A ".ref($map_factory)."\n";
 
@@ -427,7 +429,7 @@ sub generate_image {
     # show IL lines if requested
     #    
     if ($self->get_show_IL() && $self->get_ref_map()->has_IL()) { 
-	my $map_factory = CXGN::Cview::MapFactory->new($self);
+	my $map_factory = CXGN::Cview::MapFactory->new($self->get_dbh(), $self->get_db_backend());
 	#print STDERR "Current map_id = ".$self->get_map_id()."\n";
 	my $IL_map = $map_factory->create({ map_version_id=>"il6.".($self->get_map_id()) });
 	$self->{IL} = $IL_map->get_chromosome($self->get_ref_chr());
@@ -450,7 +452,7 @@ sub generate_image {
     # show the physical map if requested
     #
     if ($self->get_show_physical()) {
-	my $map_factory = CXGN::Cview::MapFactory->new($self);
+	my $map_factory = CXGN::Cview::MapFactory->new($self->get_dbh(), $self->get_db_backend());
 	
 	my $physical_map = $map_factory -> create ( {map_version_id => "p9"});
 	
@@ -460,8 +462,6 @@ sub generate_image {
 	$self->{p}->set_horizontal_offset($x_distance*$element_count);
 	$self->{p}->set_vertical_offset(40);
 	$self->{p}->set_height($self->get_chr_height());
-#	CXGN::Cview::Cview_data_adapter::fetch_chromosome($self, $self->{p}, $self->get_ref_map(), $self->get_ref_chr());
-#	CXGN::Cview::Cview_data_adapter::fetch_physical($self, $self->{p}, $self->get_ref_map(), $self->get_ref_chr());
 	
 	$self->{map}->add_physical($self->{p});
     }
@@ -580,8 +580,7 @@ sub generate_image {
 	$self->{c2}->set_hilite($self->get_hilite_zoomed());
 	$self->{c2}->set_horizontal_offset($x_distance*$element_count);
 
-#	CXGN::Cview::Cview_data_adapter::fetch_chromosome_overgo($self, $self->{c2}, $self->get_ref_map(), $self->get_ref_chr(), $self->get_cM_start(), $self->get_cM_end());
-	#
+
 	# because we have incomplete length information from the query above, 
 	# we set the length of the zoomed in chromosome
 	# to be the same as the comparison chromosome (the length is simply 
@@ -1642,7 +1641,7 @@ sub get_marker_map_links {
     # query the database for maps and chromosome that any of the markers of the current chromosome lie on.
     #
     my $chr_nr = $self->get_ref_chr();
-    my $F2_2000 = CXGN::Cview::Map::SGN::Genetic->new($self, CXGN::Cview::Map::Tools::find_current_version( $self, CXGN::Cview::Map::Tools::current_tomato_map_id()));
+    my $F2_2000 = CXGN::Cview::Map::SGN::Genetic->new($self->get_dbh(), CXGN::Cview::Map::Tools::find_current_version( $self->get_dbh(), CXGN::Cview::Map::Tools::current_tomato_map_id()));
 
     my $F2_2000_version_id = $F2_2000->get_id();
 
@@ -1953,7 +1952,7 @@ sub display_toolbar {
 	$self->{hide_comparison} = "disabled=\"disabled\"";
     }
 
-    $self->{maps_select} = CXGN::Cview::Utils::get_maps_select($self, $self->get_ref_map()->get_id());
+    $self->{maps_select} = CXGN::Cview::Utils::get_maps_select($self->get_dbh(), $self->get_ref_map()->get_id());
 
     my $view_entire_map_link = "&nbsp;View entire comparative map";
     if ($self->get_comp_map_version_id()) {
@@ -1967,7 +1966,7 @@ sub display_toolbar {
     my $show_marker_link = "Show markers between 0 and 0 cM";
     if ($self->{show_zoomed} && $self->get_ref_map()->can_zoom()) { 
 	$show_marker_link= "<a href=\"/search/markers/markersearch.pl?
-w822_pos_start=".$self->get_cM_start()."&amp;w822_pos_end=".$self->get_cM_end()."&amp;w822_maps=".(CXGN::Cview::Map::Tools::find_map_id_with_version($self, $self->get_ref_map()->get_id()))."&amp;w822_confs=$self->{confidence}&amp;&amp;w822_submit=Search&amp;w822_chromos=".$self->get_ref_chr()."\"\n>Search markers between ".($self->get_cM_start())." and ".($self->get_cM_end())." ".$self->get_ref_map()->get_units()."</a>";
+w822_pos_start=".$self->get_cM_start()."&amp;w822_pos_end=".$self->get_cM_end()."&amp;w822_maps=".(CXGN::Cview::Map::Tools::find_map_id_with_version($self->get_dbh(), $self->get_ref_map()->get_id()))."&amp;w822_confs=$self->{confidence}&amp;&amp;w822_submit=Search&amp;w822_chromos=".$self->get_ref_chr()."\"\n>Search markers between ".($self->get_cM_start())." and ".($self->get_cM_end())." ".$self->get_ref_map()->get_units()."</a>";
     }
     $chromo_designation = "chr";
     if ($self->get_ref_chr()=~/[A-Za-z]/) { $chromo_designation = "linkage group"; }
@@ -2519,6 +2518,28 @@ sub set_basedir {
   $self->{basedir}=shift;
 }
 
+=head2 accessors get_db_backend, set_db_backend
+
+ Usage:        $v ->set_db_backend("cxgn");
+ Desc:         sets the db backend of the comparative viewer.
+               following values are allowed:
+               o cxgn - the cxgn database
+               o cmap - the cmap database
+               o cxgn_and_cmap - both databases are queried for maps.
+ Property      a string describing the database backend to be used.
+ Side Effects: the specified backend will be used
+
+=cut
+
+sub get_db_backend {
+  my $self = shift;
+  return $self->{db_backend}; 
+}
+
+sub set_db_backend {
+  my $self = shift;
+  $self->{db_backend} = shift;
+}
 
 
 
