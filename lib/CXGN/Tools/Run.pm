@@ -1,7 +1,6 @@
 package CXGN::Tools::Run;
 use strict;
 use warnings;
-use namespace::autoclean;
 use English;
 use Carp;
 use POSIX qw( :sys_wait_h strftime );
