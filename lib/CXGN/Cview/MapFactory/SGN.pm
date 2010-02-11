@@ -53,8 +53,6 @@ Refer to the L<CXGN::LICENSE> file.
 
 This class implements the following functions:
 
-(See the superclass, CXGN::Cview::Maps, for a definition of the class interface)
-
 =cut
 
 use strict;
@@ -64,7 +62,7 @@ package CXGN::Cview::MapFactory::SGN;
 use base qw| CXGN::DB::Object |;
 
 use CXGN::Cview::Map::SGN::Genetic;
-use CXGN::Cview::Map::SGN::User;
+#use CXGN::Cview::Map::SGN::User;
 use CXGN::Cview::Map::SGN::Fish;
 use CXGN::Cview::Map::SGN::Sequence;
 use CXGN::Cview::Map::SGN::IL;
@@ -77,7 +75,7 @@ use CXGN::Cview::Map::SGN::Contig;
 =head2 function new()
 
   Synopsis:	constructor
-  Arguments:	none
+  Arguments:	a database handle
   Returns:	a CXGN::Cview::MapFactory::SGN object
   Side effects:	none
   Description:	none
@@ -240,7 +238,8 @@ sub get_system_maps {
 
 
 =head2 get_user_maps
-
+ 
+ Status:       DEPRECATED. Does nothing now, as user maps have been disabled.
  Usage:
  Desc:         retrieves the current user maps of the logged in user.
  Ret:          a list of CXGN::Cview::Map objects
@@ -255,18 +254,18 @@ sub get_user_maps {
     # push the maps that are specific to that user and not public, if somebody is logged in...
     #
     my @maps = ();
-    my $login = CXGN::Login->new($self->get_dbh());
-    my $user_id = $login->has_session();
-    if ($user_id) { 
-	my $q3 = "SELECT user_map_id FROM sgn_people.user_map WHERE obsolete='f' AND sp_person_id=?";
-	my $h3 = $self->get_dbh()->prepare($q3);
-	$h3->execute($user_id);
-	while (my ($user_map_id) = $h3->fetchrow_array()) { 
-	    my $map = $self->create( {map_id=>"u".$user_map_id} );
+#     my $login = CXGN::Login->new($self->get_dbh());
+#     my $user_id = $login->has_session();
+#     if ($user_id) { 
+# 	my $q3 = "SELECT user_map_id FROM sgn_people.user_map WHERE obsolete='f' AND sp_person_id=?";
+# 	my $h3 = $self->get_dbh()->prepare($q3);
+# 	$h3->execute($user_id);
+# 	while (my ($user_map_id) = $h3->fetchrow_array()) { 
+# 	    my $map = $self->create( {map_id=>"u".$user_map_id} );
 	    
-	    if ($map) { push @maps, $map; }
-	}
-    }
+# 	    if ($map) { push @maps, $map; }
+# 	}
+#     }
     return @maps;
 }
 
