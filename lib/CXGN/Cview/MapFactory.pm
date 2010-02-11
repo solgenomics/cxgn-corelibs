@@ -68,6 +68,15 @@ use base qw| CXGN::DB::Object |;
 
   Synopsis:	constructor
   Arguments:	database handle, configuration variable hashref
+                the configuration hashref supports the following
+                hash keys:
+                o cview_db_backend
+
+                with the following values:
+                o cxgn_and_cmap
+                o cmap
+                o cxgn [DEFAULT]
+    
   Returns:	a CXGN::Cview::MapFactory object
   Side effects:	none
   Description:	none
