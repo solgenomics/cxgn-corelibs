@@ -76,7 +76,7 @@ use base qw| CXGN::DB::Object |;
 
 sub new {
     my $class  = shift;
-    my ($dbh, $db_backend) = @_;
+    my ($dbh, $conf_hash_ref) = @_;
 
     # if no config was passed, warn about it and try to load SGN::Config
    #  $config ||= do{
@@ -85,7 +85,7 @@ sub new {
 #         SGN::Config->load
 #       };
 
-    if (!$db_backend) { $db_backend="cxgn" ; }
+    my $db_backend = $conf_hash_ref->{cview_db_backend}; 
 
     # figure out what map factory class we need.  if cview_db_backend
     # conf var is set, use that, otherwise try to use the project_name
