@@ -6,6 +6,8 @@ use Data::Dumper;
 
 use CXGN::DB::Connection;
 
+use IPC::Cmd qw/ can_run /;
+
 use List::Util qw/ shuffle /;
 use List::MoreUtils qw/ all /;
 
@@ -178,10 +180,14 @@ foreach my $test (@test_tarballs) {
   #reports correct sequence count
   is( $submission->sequences_count, $test->{numseqs}, 'correct seqs count');
 
-  ##also test the portable validate_submission script on this
-  # artificially truncate its @INC to make sure it is not accessing any CXGN modules
-  my $val_sub = CXGN::Tools::Run->run('perl',
-				      -e => q|
+ SKIP: {
+      skip 'no validate_submission.pl in path, cannot test it', 2
+	  unless can_run('validate_submission.pl');
+
+      ##also test the portable validate_submission script on this
+      # artificially truncate its @INC to make sure it is not accessing any CXGN modules
+      my $val_sub = CXGN::Tools::Run->run('perl',
+					  -e => q|
 @INC=grep !(-d "$_/CXGN"),@INC;
 my $file = `which validate_submission.pl`;
 chomp $file;
@@ -192,27 +198,27 @@ unless (my $return = do $file) {
 }
 |,
 
-				      $test->{file},
-				     );
-  #count the number of validation errors it found
-  open my $outfile, $val_sub->out_file
-    or die "Could not open stdout file ".$val_sub->out_file.": $!";
-  my $val_sub_errcnt = 0;
-  my $got_errors_intro = 0;
-  while(my $line = <$outfile>) {
-    $val_sub_errcnt++
-      if $line =~ /^\s+-\s+[\w\d]+/;
-    $got_errors_intro = 1
-      if $line =~ /failed:/i;
+					  $test->{file},
+					 );
+      #count the number of validation errors it found
+      open my $outfile, $val_sub->out_file
+	  or die "Could not open stdout file ".$val_sub->out_file.": $!";
+      my $val_sub_errcnt = 0;
+      my $got_errors_intro = 0;
+      while (my $line = <$outfile>) {
+	  $val_sub_errcnt++
+	      if $line =~ /^\s+-\s+[\w\d]+/;
+	  $got_errors_intro = 1
+	      if $line =~ /failed:/i;
+      }
+      close $outfile;
+      my $port_errors = $test->{portable_errors};
+      $port_errors = $test->{errors} unless defined $port_errors;
+      is($val_sub_errcnt,$port_errors,'portable validate_submission.pl script gets the correct error count')
+	  or diag "validate_submission.pl stdout was: ".$val_sub->out."\n and its stderr was: ".$val_sub->err;
+      is($got_errors_intro,$port_errors ? 1 : 0,'portable validation script output looks correctly formed')
+	  or diag "validate_submission.pl stdout was: ".$val_sub->out."\n and its stderr was: ".$val_sub->err;
   }
-  close $outfile;
-  my $port_errors = $test->{portable_errors};
-  $port_errors = $test->{errors} unless defined $port_errors;
-  is($val_sub_errcnt,$port_errors,'portable validate_submission.pl script gets the correct error count')
-    or diag "validate_submission.pl stdout was: ".$val_sub->out."\n and its stderr was: ".$val_sub->err;
-  is($got_errors_intro,$port_errors ? 1 : 0,'portable validation script output looks correctly formed')
-    or diag "validate_submission.pl stdout was: ".$val_sub->out."\n and its stderr was: ".$val_sub->err;
-
   #reports correct is_finished
   is(!!$submission->is_finished,!!$test->{finished},'reports correct is_finished');
 
