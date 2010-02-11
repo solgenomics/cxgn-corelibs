@@ -1,7 +1,7 @@
 
 use strict;
 
-package CXGN::Cview::Chromosome_viewer;
+package CXGN::Cview::ChromosomeViewer;
 
 use CXGN::VHost;
 use CXGN::DB::Connection;
