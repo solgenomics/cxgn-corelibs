@@ -166,6 +166,7 @@ my $build = Module::Build->new(
         'DBIx::Class::Schema' => 0,
         'File::Temp' => 0,
         'IO::String' => 0,
+	'IPC::Cmd'   => 0,
         'List::MoreUtils' => 0,
         'List::Util' => 0,
         'Moose' => 0,
