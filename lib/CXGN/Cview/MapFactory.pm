@@ -76,27 +76,28 @@ use base qw| CXGN::DB::Object |;
 
 sub new {
     my $class  = shift;
-    my ($dbh, $config) = @_;
+    my ($dbh, $db_backend) = @_;
 
     # if no config was passed, warn about it and try to load SGN::Config
-    $config ||= do{
-        carp "WARNING: no config specified, trying to load SGN::Config";
-        require SGN::Config;
-        SGN::Config->load
-      };
+   #  $config ||= do{
+#         carp "WARNING: no config specified, trying to load SGN::Config";
+#         require SGN::Config;
+#         SGN::Config->load
+#       };
 
+    if (!$db_backend) { $db_backend="cxgn" ; }
 
     # figure out what map factory class we need.  if cview_db_backend
     # conf var is set, use that, otherwise try to use the project_name
     # conf var, and if that's not set then fall back to SGN
-    my $cview_backend = $config->{"cview_db_backend"} or die 'no cview_db_backend conf variable defined';
-    $cview_backend = lc $cview_backend;
-    my $mf_name = $cview_backend ?     $cview_backend eq 'cxgn_and_cmap' ? 'CviewAndCmap'
-                                     : $cview_backend eq 'cmap'          ? 'Cmap'
-                                     : $cview_backend eq 'cxgn'          ? 'SGN'
-                                     : croak "invalid cview backend '$cview_backend'"
-                                 : $config->{project_name} || 'SGN';
 
+     my $mf_name = $db_backend ?     $db_backend eq 'cxgn_and_cmap' ? 'CviewAndCmap'
+                                      : $db_backend eq 'cmap'          ? 'Cmap'
+                                      : $db_backend eq 'cxgn'          ? 'SGN'
+                                      : croak "invalid cview backend $db_backend"
+				      : 'SGN';
+
+    
     # try to load the mapfactory class
     my $mf_class = __PACKAGE__."::$mf_name";
     eval "require $mf_class";
@@ -110,4 +111,4 @@ sub new {
 
 
 
- return 1;
+return 1;
