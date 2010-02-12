@@ -169,7 +169,7 @@ sub create {
 	return CXGN::Cview::Map::SGN::User->new($self->get_dbh(), $id);
     }
     elsif ($id =~ /^c\d+$/i) { 
-	return CXGN::Cview::Map::SGN::Contig->new($self->get_dbh(), $id);
+	return CXGN::Cview::Map::SGN::Contig->new($self->get_dbh(), $id, { berkeley_db_path=>'/data/prod/public/tomato_genome/physical_mapping/fpc/SGN_2009/gbrowse/curr/' });
     }
 
     print STDERR "Map NOT FOUND!!!!!!!!!!!!!!!!!!\n\n";
