@@ -3,7 +3,7 @@ use strict;
 no strict 'refs'; #using symbolic refs
 use warnings;
 use English;
-use Carp::Clan qr/^CXGN::(Genomic|TomatoGenome)/;
+use Carp::Clan qr/^CXGN::Genomic/;
 
 use Data::Dumper;
 
