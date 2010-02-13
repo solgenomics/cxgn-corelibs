@@ -24,16 +24,16 @@ BEGIN {
 
 }
 ;
-use Test::More tests => 1 + $config{numtests}*$config{test_repeats};
+use Test::More;
 use_ok('CXGN::Genomic::Clone');
 
 my $chado = CXGN::DB::DBICFactory->open_schema('Bio::Chado::Schema');
+my $dbh = CXGN::Genomic::Clone->db_Main;
+foreach my $cid ( 2, 55724 ) {
+    test_random_clone( $dbh, $cid );
+}
 
-my $testsampler = CXGN::CDBI::Class::DBI::TestSampler->new;
-$testsampler->test_class($config{packagename},
-                         $config{test_repeats},
-                         \&test_random_clone);
-$testsampler->disconnect(42);
+done_testing;
 
 ############# SUBROUTINES #########
 
@@ -42,8 +42,8 @@ sub test_random_clone {
   my $id = shift;
 
   #test that we can retrieve it
-  my $clone = $config{packagename}->retrieve($id);
-  ok(isa($clone,$config{packagename}));
+  my $clone = CXGN::Genomic::Clone->retrieve($id);
+  isa_ok $clone, 'CXGN::Genomic::Clone';
 
   #diag 'testing with clone id '.$clone->clone_id;
 
@@ -94,7 +94,7 @@ sub test_random_clone {
   #test the chado_feature method
   my $features = $clone->chado_feature_rs( $chado );
   can_ok( $features, 'next', 'first', 'all' );
-  my $feature = $features->first; #< actually execute the query also
+  my $feature = $features->single; #< actually execute the query also
 
   #check that clone_type_object returns the right stuff
   ok(ref($clone->clone_type_object) eq ref($clone->clone_type_id));
@@ -118,8 +118,8 @@ sub test_random_clone {
   is( $clone->intl_clone_name, $clone->library_object->shortname.'-'.$clone->platenum.$clone->wellrow.$clone->wellcol,
       'intl_clone_name looks OK');
 
-  my $acc = $clone->genbank_accession;
-  my @acc = $clone->genbank_accession;
+  my $acc = $clone->genbank_accession( $chado );
+  my @acc = $clone->genbank_accession( $chado );
   if($acc) {
     ok(@acc == 1,'genbank_accession returns 1-element list if has genbank accession');
     like($acc,qr/^[\w\.]+$/,'genbank accession looks correctly formed');

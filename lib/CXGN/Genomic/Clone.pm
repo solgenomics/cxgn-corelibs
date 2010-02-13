@@ -9,7 +9,6 @@ use Memoize;
 use Bio::PrimarySeq;
 use Bio::Restriction::Analysis;
 
-use CXGN::TomatoGenome::BACPublish qw/seq_name_to_genbank_acc /;
 use CXGN::CDBI::SGNPeople::BacStatus;
 use CXGN::DB::Connection;
 use CXGN::Genomic::CloneIdentifiers qw/assemble_clone_ident parse_clone_ident/;
@@ -1116,7 +1115,7 @@ sub latest_sequence_version {
   Usage: my $acc = $clone->genbank_accession
   Desc : get the versioned genbank accession associated with the most
          recent SGN sequence of this clone
-  Args : none
+  Args : Bio::Chado::Schema (or other DBIx::Class::Schema) to use for lookup
   Ret  : the genbank accession,
          or undef if not found (in scalar context),
          or an empty list (in list context)
@@ -1126,12 +1125,27 @@ sub latest_sequence_version {
 
 memoize('genbank_accession');
 sub genbank_accession {
-  my ($self) = @_;
+  my ($self,$chado) = @_;
+  $chado or croak "must provide a Chado schema handle as argument to genbank_accession";
 
   my $seqname = $self->latest_sequence_name
     or return;
 
-  my $acc = seq_name_to_genbank_acc($seqname, $self->db_Main);
+  my $acc = $self->chado_feature_rs($chado)
+		 ->search_related('feature_dbxrefs')
+		 ->search_related('dbxref',
+				  { db_id => { IN => $chado->resultset('General::Db')
+					                   ->search({ name => 'DB:GenBank_Accession'},
+								    { limit => 1 },
+								   )
+                                                           ->get_column('db_id')
+							   ->as_query
+					     },
+				  },
+				 )
+		 ->get_column('name')
+		 ->first;
+
   return unless $acc;
   return $acc;
 }
@@ -1153,65 +1167,64 @@ sub genbank_accession {
 sub chado_feature_rs {
   my ( $self, $chado ) = @_;
 
-  $chado && $chado->can('load_classes')
-      or croak "must provide a DBIx::Class::Schema or similar object to chado_feature() method (got: $chado)";
-
-  ref($chado)->load_classes('CXGN::Genomic::Clone::CloneFeature'); #< class defined inline below
+  my $rs = $chado->resultset('Sequence::Feature');
 
   # if we have no sequence name, return a resultset with a query that
   # will never return any rows
   my $seqname = $self->latest_sequence_name
-      or return $chado->resultset('Sequence::Feature')->search(\"1 = 0");
+      or return $rs->search(\"1 = 0");
 
   # otherwise, actually construct the proper query
-  return $chado->resultset('CXGN::Genomic::Clone::CloneFeature')
-               ->search({ clone_id => $self->clone_id })
-               ->search_related('feature',{}, { order_by => 'name'});
+  return $rs->search({ 'me.feature_id' =>
+			 \["IN( select feature_id from genomic.clone_feature where clone_id = ?)",
+		           [ dummy => $self->clone_id ],
+		          ]
+		     });
 }
 
-# on-the-spot DBIC CloneFeature object.  this needs to be somewhere
-# other than just here, but for now here it is
-BEGIN {
-    package Bio::Chado::Schema::CXGN::Genomic::Clone::CloneFeature;
-    use base 'DBIx::Class';
-    __PACKAGE__->load_components("Core");
-    __PACKAGE__->table("clone_feature");
-    __PACKAGE__->add_columns(
-                             "clone_feature_id",
-                             {
-                              data_type => "integer",
-                              default_value => "nextval('clone_feature_clone_feature_id_seq'::regclass)",
-                              is_auto_increment => 1,
-                              is_nullable => 0,
-                              size => 4,
-                             },
-                             "feature_id",
-                             {
-                              data_type => "integer",
-                              default_value => undef,
-                              is_foreign_key => 1,
-                              is_nullable => 1,
-                              size => 4,
-                             },
-                             "clone_id",
-                             {
-                              data_type => "integer",
-                              default_value => undef,
-                              is_foreign_key => 1,
-                              is_nullable => 0,
-                              size => 4,
-                             },
-                            );
-    __PACKAGE__->set_primary_key("clone_feature_id");
-    __PACKAGE__->add_unique_constraint("clone_feature_clone_id_key", ["clone_id",'feature_id']);
-    __PACKAGE__->belongs_to(
-                            'feature',
-                            'Bio::Chado::Schema::Sequence::Feature',
-                            {
-                             'foreign.feature_id' => 'self.feature_id' },
-                           );
+# # on-the-spot DBIC CloneFeature object.  this needs to be somewhere
+# # other than just here, but for now here it is
+# BEGIN {
+#     package Bio::Chado::Schema::CXGN::Genomic::Clone::CloneFeature;
+#     use base 'DBIx::Class';
+#     __PACKAGE__->load_components("Core");
+#     __PACKAGE__->table("clone_feature");
+#     __PACKAGE__->add_columns(
+#                              "clone_feature_id",
+#                              {
+#                               data_type => "integer",
+#                               default_value => "nextval('clone_feature_clone_feature_id_seq'::regclass)",
+#                               is_auto_increment => 1,
+#                               is_nullable => 0,
+#                               size => 4,
+#                              },
+#                              "feature_id",
+#                              {
+#                               data_type => "integer",
+#                               default_value => undef,
+#                               is_foreign_key => 1,
+#                               is_nullable => 1,
+#                               size => 4,
+#                              },
+#                              "clone_id",
+#                              {
+#                               data_type => "integer",
+#                               default_value => undef,
+#                               is_foreign_key => 1,
+#                               is_nullable => 0,
+#                               size => 4,
+#                              },
+#                             );
+#     __PACKAGE__->set_primary_key("clone_feature_id");
+#     __PACKAGE__->add_unique_constraint("clone_feature_clone_id_key", ["clone_id",'feature_id']);
+#     __PACKAGE__->belongs_to(
+#                             'feature',
+#                             'Bio::Chado::Schema::Sequence::Feature',
+#                             {
+#                              'foreign.feature_id' => 'self.feature_id' },
+#                            );
 
-}
+# }
 
 
 =head2 in_vitro_restriction_fragment_sizes
