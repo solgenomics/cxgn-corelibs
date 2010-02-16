@@ -29,7 +29,7 @@ use_ok('CXGN::Genomic::Clone');
 
 my $chado = CXGN::DB::DBICFactory->open_schema('Bio::Chado::Schema');
 my $dbh = CXGN::Genomic::Clone->db_Main;
-foreach my $cid ( 2, 55724 ) {
+foreach my $cid ( 2, 55724,119416 ) {
     test_random_clone( $dbh, $cid );
 }
 
@@ -122,7 +122,7 @@ sub test_random_clone {
   my @acc = $clone->genbank_accession( $chado );
   if($acc) {
     ok(@acc == 1,'genbank_accession returns 1-element list if has genbank accession');
-    like($acc,qr/^[\w\.]+$/,'genbank accession looks correctly formed');
+    like($acc,qr/^[A-Z]{2}\d+\.\d+$/,'genbank accession looks correctly formed');
   } else {
     ok(! defined $acc, 'genbank_accession returns undef in scalar context if no accession');
     ok(@acc == 0,'genbank_accession returns empty list in list context if no accession');

@@ -1143,7 +1143,7 @@ sub genbank_accession {
 					     },
 				  },
 				 )
-		 ->get_column('name')
+		 ->get_column('accession')
 		 ->first;
 
   return unless $acc;
