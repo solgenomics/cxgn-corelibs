@@ -385,7 +385,7 @@ sub store_new_data
         $q=$dbh->prepare('insert into sgn.marker (marker_id) values (default)');
         $q->execute();
         $self->{marker_id}=$dbh->last_insert_id('marker') or croak "Unable to retrieve marker ID from database after insert";
-        print"INSERTING new marker SGN-M$self->{marker_id}.\n";
+        #print STDERR "INSERTING new marker SGN-M$self->{marker_id}.\n";
         push(@inserts,{marker=>$self->{marker_id}});
     
         #insert our preferred name
@@ -573,7 +573,7 @@ sub connect_experiment_to_location
         my $q2=$self->{dbh}->prepare($sql);
         $q2->execute($pcr_id,$rflp_id,$mxid);
         push(@changed_rows,$mxid);
-        print"Executing\n$sql\nwith values\n($pcr_id,$rflp_id,$mxid)\n";
+        #print STDERR "Executing\n$sql\nwith values\n($pcr_id,$rflp_id,$mxid)\n";
     }
 
     # if we've gotten this far and don't have some changed rows, figure out why
@@ -601,7 +601,7 @@ sub connect_experiment_to_location
         my $existing;
 
         while (my ($existing_id) = $sth->fetchrow_array()) {
-            print "marker_experiment row '$existing_id' already exists with a location-experiment association like the one described.\n";
+           # print "marker_experiment row '$existing_id' already exists with a location-experiment association like the one described.\n";
             $existing = 1;
         }
         unless ($existing) { die "I couldn't update any rows, but I don't know why." }

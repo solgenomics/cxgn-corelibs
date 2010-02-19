@@ -2,8 +2,6 @@ package CXGN::Genomic::Search::Clone::Result;
 use strict;
 use warnings;
 
-use CXGN::DB::DBICFactory;
-
 use CXGN::Page::FormattingHelpers qw/commify_number columnar_table_html info_section_html/;
 use CXGN::Tools::Identifiers qw/link_identifier/;
 
@@ -44,8 +42,6 @@ Specified in L<CXGN::Search::Result::WWWResultI>.
 sub to_html {
   my ($this) = @_;
 
-  my $chado = CXGN::DB::DBICFactory->open_schema('Bio::Chado::Schema');
-
   my $clonedatapage = '/maps/physical/clone_info.pl';
   my $readinfopage = '/maps/physical/clone_read_info.pl';
 
@@ -81,7 +77,7 @@ sub to_html {
 
     push @tabledata,[ map {$_ || '-'} ($linktag_first.($clone->clone_name_with_chromosome || $clone->clone_name).'</a>',
 				       (map {$_ && munge($_)} (abbrev_first_word($organism))),
-					link_identifier($clone->genbank_accession($chado),'genbank_accession') || undef,
+					link_identifier($clone->genbank_accession,'genbank_accession') || undef,
 				       readlinks_html($clone,$readinfopage),
 				       $overgo_hit,
 				      )

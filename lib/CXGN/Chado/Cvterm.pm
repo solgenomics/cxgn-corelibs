@@ -1436,14 +1436,28 @@ sub all_traits_with_qtl_data {
     my @pops = CXGN::Phenome::Population->has_qtl_data();
     my $dbh = CXGN::DB::Connection->new();
     my (@all_traits, @all_trait_ids);
+   
+    
     foreach my $pop (@pops) {
+
+	my ($table, $table_id, $name);
+	if ($pop->get_web_uploaded()) {
+	    $table = 'phenome.user_trait';
+	    $table_id  = 'user_trait_id';
+	    $name = 'user_trait.name';
+	} else {
+	    $table = 'public.cvterm';
+	    $table_id  = 'cvterm_id';
+	    $name = 'cvterm.name';
+	}
 	
-	my $sth = $dbh->prepare("SELECT DISTINCT(cvterm.name), cvterm_id 
-                                                  FROM public.cvterm 
-                                                  LEFT JOIN public.phenotype ON (cvterm.cvterm_id = phenotype.observable_id) 
-                                                  LEFT JOIN phenome.individual USING (individual_id) 
-                                                  WHERE population_id = ?"
+	my $sth = $dbh->prepare("SELECT DISTINCT($name), $table_id 
+                                        FROM $table
+                                        LEFT JOIN public.phenotype ON ($table_id = phenotype.observable_id) 
+                                        LEFT JOIN phenome.individual USING (individual_id) 
+                                        WHERE population_id = ?"
                                          );
+
 	$sth->execute($pop->get_population_id());
 	while (my ($trait, $trait_id) = $sth->fetchrow_array()) {
 	    push @all_traits, $trait;

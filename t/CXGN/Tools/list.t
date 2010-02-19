@@ -3,8 +3,7 @@ use strict;
 use warnings;
 use English;
 
-use Test::More tests => 39;
-use Test::Exception;
+use Test::More tests => 38;
 
 BEGIN { use_ok( 'CXGN::Tools::List',
 		qw(
@@ -70,38 +69,36 @@ is_deeply([distinct(qw/foo bar baz baz/)],
 	 );
 
 #test balanced_split
-is_deeply(balanced_split(2,[1..10]),
+is_deeply([balanced_split(2,1..10)],
 	  [[1..5],[6..10]],
 	  'test balanced_split 1');
-is_deeply(balanced_split(2,[1,2]),
+is_deeply([balanced_split(2,1,2)],
 	  [[1],[2]],
 	  'test balanced_split 2');
-is_deeply(balanced_split(2,[1]),
+is_deeply([balanced_split(2,1)],
 	  [[1]],
 	  'test balanced_split 3');
-is_deeply(balanced_split(3,[1]),
+is_deeply([balanced_split(3,1)],
 	  [[1]],
 	  'test balanced_split 4');
-is_deeply(balanced_split(1,[1]),
+is_deeply([balanced_split(1,1)],
 	  [[1]],
-	  'test balanced_split 5');
-is_deeply(balanced_split(3,[1..11]),
+	  'test balanced_split 4');
+is_deeply([balanced_split(3,1..11)],
 	  [[1..4],[5..8],[9..11]],
-	  'test balanced_split 6');
-is_deeply(balanced_split(3,[1..10]),
+	  'test balanced_split 5');
+is_deeply([balanced_split(3,1..10)],
 	  [[1..4],[5..7],[8..10]],
-	  'test balanced_split 7');
-throws_ok {
-  balanced_split(0,[1..10]);
-} qr/positive integer/, 'balanced_split with invalid requested pieces dies 1';
+	  'test balanced_split 6');
+eval {
+  balanced_split(0,1..10);
+};
+ok($EVAL_ERROR,'balanced_split with invalid requested pieces dies 1');
 
-throws_ok {
-  balanced_split(-10,[1..10]);
-} qr/positive integer/, 'balanced_split with invalid requested pieces dies 2';
-
-throws_ok {
-  balanced_split(3,1);
-} qr/arrayref/, 'balanced_split with invalid list dies';
+eval {
+  balanced_split(-10,1..10);
+};
+ok($EVAL_ERROR,'balanced_split with invalid requested pieces dies 2');
 
 
 #test evens and odds

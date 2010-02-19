@@ -84,7 +84,6 @@ BEGIN {
 		       str_in
                        distinct
 		       balanced_split
-		       balanced_split_sizes
 		       evens odds
 		       index_where
 		       list_join
@@ -251,74 +250,36 @@ sub distinct {
 
 =head2 balanced_split
 
-  Usage: my $lists = balanced_split( $num_pieces, \@list );
+  Usage: my @lists = balanced_split($num_pieces,@list);
   Desc : split the given list in to the given number of pieces,
          with the lengths of the pieces differing by at most
          1 element.  If the number of requested pieces is less
          than the number of elements in the input, returns a
          1-element array for each element in the input
   Args : number of pieces to split into, list to split
-  Ret  : ref to split array, as [ [piece 1], [piece 2], ... ]
+  Ret  : a list of arrayrefs, as ([piece 1],[piece 2], ...)
   Side Effects: croaks if num_pieces is not at least 1
   Example:
 
 =cut
 
-sub balanced_split {
-  my ($num_pieces,$input) = @_;
+sub balanced_split($@) {
+  my ($num_pieces,@input) = @_;
 
-  croak "balanced_split takes an arrayref as its second argument"
-    unless $input && ref $input eq 'ARRAY';
   croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
     unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
 
-  my $piece_sizes = balanced_split_sizes( $num_pieces, scalar(@$input) );
+  return map {[$_]} @input
+    if $num_pieces >= @input;
 
-  my @result;
-  my $offset = 0;
-  foreach my $piece_size (@$piece_sizes) {
-      push @result, [ @{$input}[$offset..($offset+$piece_size-1)] ];
-      $offset += $piece_size;
-  }
-  return \@result;
-}
+  my $base_jobsize = POSIX::floor(@input/$num_pieces);
+  my @piece_sizes = ($base_jobsize+0)x$num_pieces;
+  my $remainder = @input - @piece_sizes*$piece_sizes[0];
+  $_++ foreach @piece_sizes[0..($remainder-1)];
 
-=head2 balanced_split_sizes
-
-  Usage: my $pieces = balances_split_sizes( $num_elements )
-  Desc : get the piece sizes to use for a balanced split,
-         with the size of pieces differing by no more than 1
-  Args : number of elements in the set
-  Ret  : arrayref of piece sizes, e.g. [ 2, 2, 2, 1 ]
-  Side Effects: none
-  Example :
-
-=cut
-
-sub balanced_split_sizes {
-  my ( $num_pieces, $num ) = @_;
-
-  my @calc = balanced_split_calc( $num_pieces, $num );
-  return [ map {
-                 my ($count, $size) = @$_;
-		 ( $size )x$count
-           } @calc
-	 ];
-}
-sub balanced_split_calc {
-    my ( $num_pieces, $num ) = @_;
-
-    croak "balanced_split number of pieces must be a positive integer, not '$num_pieces'"
-	unless $num_pieces > 0 && $num_pieces =~ /^\d+$/;
-
-    return ( [0,2], [$num,1] )
-	if $num_pieces >= $num;
-
-    my $div = $num / $num_pieces;
-    my $base_jobsize = POSIX::floor( $div );
-    my $remainder    = POSIX::fmod( $num, $base_jobsize );
-
-    return ( [ $remainder, $base_jobsize+1 ], [ $num_pieces-$remainder, $base_jobsize ] );
+  return map {
+    [splice @input,0,$_]
+  } @piece_sizes;
 }
 
 =head2 odds
