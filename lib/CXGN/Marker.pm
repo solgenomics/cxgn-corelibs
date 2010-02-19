@@ -335,7 +335,7 @@ sub experiments
             where
                 marker_id=?
             order by
-                map_version_id desc,
+                marker_location.map_version_id desc,
                 subscript,
                 pcr_experiment_id,
                 rflp_experiment_id,

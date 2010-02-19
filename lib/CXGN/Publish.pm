@@ -277,7 +277,7 @@ sub publish {
 	  or next;
 	$published_as->{obsolete_timestamp}
 	  and next;
-	$published_as->{fullpath} && -f $published_as->{fullpath}
+	-f $published_as->{fullpath}
 	  or next;
  	dprint "rm -f removing $published_as->{fullpath}\n";
 	$self->_move_file_to_old($published_as,\@ops_for_rollback);

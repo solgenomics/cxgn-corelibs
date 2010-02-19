@@ -199,4 +199,58 @@ sub set_current {
     $sth->execute($self->{map_version_id});
 }
 
+
+
+sub map_version {
+    my $self = shift;
+    my $dbh = shift;
+    my $map_id = shift;
+
+    print STDERR "mapid from map_version func: $map_id\n";
+    my ($map_version_id_old, $map_version_id_new, $sth);
+    if ($map_id) {
+	$sth = $dbh->prepare("SELECT map_version_id 
+                                        FROM sgn.map_version 
+                                        WHERE map_id =?");
+	$sth->execute($map_id);
+	$map_version_id_old = $sth->fetchrow_array();
+    
+   
+	$sth = $dbh->prepare("INSERT INTO sgn.map_version (map_id, date_loaded) 
+                                          VALUES (?, current_timestamp)"
+                            );  
+  
+	$sth->execute($map_id);
+	$map_version_id_new = $dbh->last_insert_id("map_version", "sgn") ;
+	if (!$map_version_id_new) { die "did not insert new map version\n";
+	}
+	else {
+	    print STDERR "stored new map version id: $map_version_id_new\n";
+	}
+    } else { die "map_version function: I need a map id to create map version\n";}
+
+
+    if ($map_version_id_old) {
+	
+	my $sth = $dbh->prepare("UPDATE map_version 
+                                        SET current_version='f' 
+                                        WHERE map_version_id=?"
+                                );
+	$sth->execute($map_version_id_old);
+    }
+    if($map_version_id_new) {
+	    $sth=$dbh->prepare("UPDATE map_version 
+                                   SET current_version='t' 
+                                   WHERE map_version_id=?"
+                          );
+	    $sth->execute($map_version_id_new);
+	} else {die "I can't set myself to be current without knowing "
+	. "what my map_version_id is--insert me into the database first";
+	}
+    
+    return $map_version_id_new;
+
+}
+
+
 1;

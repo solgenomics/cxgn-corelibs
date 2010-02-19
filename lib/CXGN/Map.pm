@@ -1,7 +1,7 @@
 
 =head1 NAME
 
-CXGN::Map - classes to get information on SGN mapping information.
+CXGN::Map - classes to get information on SGN mapping information and to add new map and map version data (new_map, store, & map_version functions).
 
 =head1 DESCRIPTION
 
@@ -21,7 +21,7 @@ Note that much of the functionality of this class has been factored out into a C
 
 =head1 AUTHORS
 
-John Binns <zombieite@gmail.com> and Lukas Mueller (lam87@cornell.edu)
+John Binns <zombieite@gmail.com>, Lukas Mueller (lam87@cornell.edu) and Isaak Y Tecle (iyt2@cornell.edu)
 
 
 
@@ -33,7 +33,7 @@ This class defines the following functions to be implemented by the subclasses, 
 
 use strict;
 use CXGN::DB::Connection;
-
+use CXGN::Map::Version;
 package CXGN::Map;
 
 =head2 new
@@ -58,17 +58,24 @@ sub new {
     ref($map_info) eq 'HASH' or die"Must send in a dbh and hash ref with a map_id key or a map_version_id key";
     $self->{map_version_id}=$map_info->{map_version_id};
     $self->{map_id}=$map_info->{map_id};
+   
+    my $map_id_t = $self->{map_id};
+    print STDERR "map id: $map_id_t from map object\n";
     if($self->{map_id})
     {
         if($self->{map_version_id})
         {
             die"You must only send in a map_id or a map_version_id, not both";
         }
-        my $map_version_id_q=$dbh->prepare("select map_version_id from map_version where map_id=? and current_version='t'");
+        my $map_version_id_q=$dbh->prepare("SELECT map_version_id 
+                                                   FROM map_version 
+                                                   WHERE map_id=? 
+                                                   AND current_version='t'"
+                                           );
         $map_version_id_q->execute($self->{map_id});
         ($self->{map_version_id})=$map_version_id_q->fetchrow_array();
     }
-    $self->{map_version_id} or return undef;
+   $self->{map_version_id} or return undef;
     my $general_info_q=$dbh->prepare
     ('
         select 
@@ -80,6 +87,7 @@ sub new {
             long_name,
             abstract,
             map_type,
+            population_id,
             has_IL,
             has_physical
         from
@@ -98,11 +106,20 @@ sub new {
         $self->{long_name},
         $self->{abstract},
         $self->{map_type},
+        $self->{population_id},
         $self->{has_IL},
         $self->{has_physical}
+       
     )=$general_info_q->fetchrow_array();
     if(!$self->{map_version_id}){return undef;}
-    my $linkage_q=$dbh->prepare('select linkage_group.lg_id as lg_id,linkage_group.map_version_id as map_version_id,lg_order,lg_name, min(position) as north_centromere, max(position) as south_centromere from linkage_group left join marker_location on (north_location_id=location_id or south_location_id=location_id) where linkage_group.map_version_id=? group by linkage_group.lg_id, linkage_group.map_version_id, lg_order, lg_name order by lg_order');
+    my $linkage_q=$dbh->prepare('SELECT linkage_group.lg_id AS lg_id,linkage_group.map_version_id AS map_version_id,
+                                         lg_order,lg_name, min(position) AS north_centromere, MAX(position) AS south_centromere 
+                                        FROM linkage_group 
+                                        LEFT JOIN marker_location ON (north_location_id=location_id 
+                                             OR south_location_id=location_id) 
+                                        WHERE linkage_group.map_version_id=? 
+                                        GROUP BY linkage_group.lg_id, linkage_group.map_version_id, 
+                                                 lg_order, lg_name order by lg_order');
     $linkage_q->execute($self->{map_version_id});
     while(my $linkage_group=$linkage_q->fetchrow_hashref())
     {
@@ -110,6 +127,91 @@ sub new {
     }
     return $self;
 }
+
+sub store {
+    my $self = shift;
+    my $dbh = CXGN::DB::Connection->new();
+    my $map_id = $self->get_map_id();
+    print STDERR "map id from store: $map_id\n";
+    if ($map_id) {
+	my $sth = $dbh->prepare("UPDATE sgn.map SET 
+                                        short_name = ?,
+                                        long_name  = ?,
+                                        abstract   = ?,
+                                        map_type   = ?,
+                                        parent_1   = ?,
+                                        parent_2   = ?,
+                                        units       = ?,
+                                        population_id = ?
+				  WHERE map_id = ?"
+	    );
+	$sth->execute($self->{short_name},
+		      $self->{long_name},
+		      $self->{abstract},
+		      $self->{map_type},
+		      $self->{parent_1},
+		      $self->{parent_2},
+		      $self->get_units(),
+                      $self->{population_id},
+		      $map_id
+	    );
+
+	print STDERR "Storing map data... \n";
+	print STDERR "updated map id: $map_id\n";
+	 #$dbh->last_insert_id("map", "sgn");
+	return $map_id;
+
+    } else { 
+	print STDERR "No map id\n";
+	return 0;
+    }
+
+    
+}
+
+sub new_map {
+    my $self=shift;
+    my $dbh = shift;
+    my $name = shift;
+    my ($map_id, $sth);
+
+    print STDERR "Short map name: $name\n";
+    if ($name) {
+	$sth = $dbh->prepare("SELECT map_id 
+                                     FROM sgn.map 
+                                     WHERE short_name ILIKE ?"
+                           );
+	$sth->execute($name);
+	$map_id = $sth->fetchrow_array();
+      print STDERR "Map Id: $map_id\n";
+    }
+     else { 
+	print STDERR "Provide map name, please.\n";
+	die "No map name provided!\n";
+    }  
+
+    unless ($map_id) {
+	    $sth = $dbh->prepare("INSERT INTO sgn.map (short_name) VALUES (?)");
+	    $sth->execute($name);
+	    $map_id = $dbh->last_insert_id("map", "sgn");
+	    print STDERR "stored new Map Id: $map_id\n";
+    }
+    
+    my ($map, $map_version_id);
+    if ($map_id) {
+	$map_version_id = CXGN::Map::Version->map_version($dbh, $map_id);
+	#$map_version_id= $self->map_version($dbh, $map_id);
+	print STDERR "created map version_id: $map_version_id for map_id: $map_id\n";
+	$map = CXGN::Map->new($dbh, {map_id=>$map_id});
+	my $new_map_id = $map->{map_id};
+	print STDERR "new_map function with map_id = $new_map_id.\n";
+    
+    }
+    
+        
+    return $map;
+}
+
 
 
 =head2 accessors set_short_name, get_short_name
@@ -174,6 +276,70 @@ sub set_abstract {
     my $self=shift;
     $self->{abstract}=shift;
 }
+
+
+=head2 accessors get_parent_1, set_parent_1
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_parent_1 {
+  my $self = shift;
+  return $self->{parent_1}; 
+}
+
+sub set_parent_1 {
+  my $self = shift;
+  $self->{parent_1} = shift;
+}
+=head2 accessors get_population_id, set_population_id
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_population_id {
+  my $self = shift;
+  return $self->{population_id}; 
+}
+
+sub set_population_id {
+  my $self = shift;
+  $self->{population_id} = shift;
+}
+
+=head2 get_map_id
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+
+sub set_map_id {
+    my $self = shift;
+    $self->{map_id}=shift;
+}
+sub get_map_id {
+    my $self = shift;
+    return $self->{map_id};
+
+}
+
+
 
 =head2 accessors set_linkage_groups, get_linkage_groups
 
