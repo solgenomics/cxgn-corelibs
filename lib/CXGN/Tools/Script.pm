@@ -117,7 +117,7 @@ our $lockfile_name = File::Spec->catfile( File::Spec->tmpdir,
 sub lock_script {
   my %opts = @_;
   #check for a lockfile
-  if( -f $lockfile_name ) {
+  if( -s $lockfile_name ) {
     #if found, check if that PID is still running
     my $pid = _read_lockfile();
     -d '/proc' or confess "The way we do lockfiles depends on there being a /proc dir.  sorry.";

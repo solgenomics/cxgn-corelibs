@@ -64,25 +64,6 @@ sub find_map_id_with_version {
     $q->execute($map_version_id);
     my ($map_id) = $q->fetchrow_array();
     return $map_id;
-
-}
-
-
-
-sub population_map {
-    my $dbh  = shift;
-    my $pop_id = shift;
-
-    my $sth = $dbh->prepare("SELECT map_id 
-                                    FROM sgn.map 
-                                    WHERE population_id = ?"
-                           );
-
-    $sth->execute($pop_id);
-    my $map_id = $sth->fetchrow_array();
-
-    return $map_id;  
-
 }
 
 1;

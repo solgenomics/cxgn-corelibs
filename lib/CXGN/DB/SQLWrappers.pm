@@ -129,7 +129,7 @@ sub insert
     my $id=$self->{dbh}->last_insert_id($table);
     if($self->{verbose})
     {
-       # print STDERR "Executed\n$insert_statement;\nwith values\n(".CXGN::Tools::Text::list_to_string(values(%{$insert_hash})).")\ncreating new row with ID $id.\n\n";
+        print"Executed\n$insert_statement;\nwith values\n(".CXGN::Tools::Text::list_to_string(values(%{$insert_hash})).")\ncreating new row with ID $id.\n\n";
     }
     return $id;
 }

@@ -16,11 +16,7 @@ Note: will be soon deprecated in favor of the chado stock table.
 
 =head1 AUTHOR
 
-Takes an accession id or an accession name and returns a new accession object. 
-With no accession id or name, it creates an empty accession object.
-
 john binns - John Binns <zombieite@gmail.com>
-
 
 Code and POD style reformatting by Lukas.
 
@@ -50,39 +46,20 @@ sub new {
     if($accession) {
         my $id_query;
         if($accession=~/^\d+$/) {
-            $id_query=$self->{dbh}->prepare('SELECT accession_id FROM accession WHERE accession_id=?');
+            $id_query=$self->{dbh}->prepare('select accession_id from accession where accession_id=?');
         }
         else {
 	    $accession = '%'.$accession.'%';
-            $id_query=$self->{dbh}->prepare('SELECT accession_id FROM accession_names WHERE accession_name ilike ?');
+            $id_query=$self->{dbh}->prepare('select accession_id from accession_names where accession_name ilike ?');
         }
         $id_query->execute($accession);
         ($self->{accession_id})=$id_query->fetchrow_array();
         if($self->{accession_id}) {
-	    my $accession_query=$self->{dbh}->prepare('SELECT organism.organism_id,organism_name,common_name.common_name_id,
-                                          common_name.common_name,accession.common_name, accession.accession_name_id,
-                                          accession_names.accession_name, accession.chado_organism_id
-                                          FROM accession 
-                                          LEFT JOIN accession_names USING (accession_name_id) 
-                                          LEFT JOIN organism ON (accession.organism_id=organism.organism_id) 
-                                          LEFT JOIN common_name USING (common_name_id) 
-                                          WHERE accession.accession_id=?'
-                                        );
-
+            my $accession_query=$self->{dbh}->prepare('select organism.organism_id,organism_name,common_name.common_name_id,common_name.common_name,accession.common_name,accession.accession_name_id,accession_names.accession_name from accession inner join accession_names using (accession_name_id) inner join organism on (accession.organism_id=organism.organism_id) inner join common_name using (common_name_id) where accession.accession_id=?');
             $accession_query->execute($self->{accession_id});
-            ($self->{organism_id},
-	     $self->{organism_name},
-	     $self->{organism_common_name_id},
-	     $self->{organism_common_name},
-	     $self->{accession_common_name},
-	     $self->{preferred_name_id},
-	     $self->{preferred_name},
-	     $self->{chado_organism_id})=$accession_query->fetchrow_array();
+            ($self->{organism_id},$self->{organism_name},$self->{organism_common_name_id},$self->{organism_common_name},$self->{accession_common_name},$self->{preferred_name_id},$self->{preferred_name})=$accession_query->fetchrow_array();
             my @aliases;
-            my $aliases_query=$self->{dbh}->prepare('SELECT accession_name 
-                                                       FROM accession_names 
-                                                       WHERE accession_id=? AND  accession_name!=?'
-                                                   );
+            my $aliases_query=$self->{dbh}->prepare('select accession_name from accession_names where accession_id=? and accession_name!=?');
             $aliases_query->execute($self->{accession_id},$self->{preferred_name});
             while(my($alias)=$aliases_query->fetchrow_array)
             {
@@ -171,20 +148,6 @@ sub accession_common_name {
         ($self->{accession_common_name})=@_;
     }
     return $self->{accession_common_name};
-}
-
-=head2 chado_organism_id
-
-    my $acn=$accession->chado_organism_id();
-
-=cut
-
-sub chado_organism_id {
-    my $self=shift;
-    if(@_) {
-        ($self->{chado_organism_id})=@_;
-    }
-    return $self->{chado_organism_id};
 }
 
 =head2 organism_name

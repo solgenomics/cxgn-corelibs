@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use English;
 use Carp;
-use POSIX qw( :sys_wait_h);
+use POSIX qw( :sys_wait_h strftime );
 use Time::HiRes qw/time/;
 
 use IPC::Cmd ();
@@ -14,7 +14,6 @@ use File::Basename;
 use File::Spec;
 use Cwd;
 use UNIVERSAL qw/isa/;
-
 use File::NFSLock qw/uncache/;
 
 use constant DEBUG => $ENV{CXGNTOOLSRUNDEBUG} ? 1 : 0;
@@ -359,19 +358,18 @@ sub run_cluster {
 
   my $self = bless {},$class;
 
-  $self->_common_prerun(\@args);
+  my %options = $self->_common_prerun(\@args);
 
   # set our job destination from configuration if running under the website
-  { my %options = ref($args[-1]) ? %{pop @args} : ();
-    if( defined $options{queue} ) {
-	$self->_jobdest($options{queue});
-    }
-    elsif( defined $ENV{PROJECT_NAME} && $ENV{PROJECT_NAME} eq 'SGN' ) {
-	require SGN::Context;
-	if( my $q = SGN::Context->new->get_conf('web_cluster_queue') ) {
-	    $self->_jobdest( $q );
-	}
-    }
+  if( defined $options{queue} ) {
+      $self->_jobdest($options{queue});
+  }
+  # TODO: change all SGN code to pass in queue =>, then remove this!
+  elsif( defined $ENV{PROJECT_NAME} && $ENV{PROJECT_NAME} eq 'SGN' ) {
+      require SGN::Context;
+      if( my $q = SGN::Context->new->get_conf('web_cluster_queue') ) {
+	  $self->_jobdest( $q );
+      }
   }
 
   #check that qsub is actually in the path
@@ -383,19 +381,25 @@ sub run_cluster {
   sub cluster_accessible {
     my $path = shift;
 #    warn "relpath $path\n";
-    $path = File::Spec->rel2abs($path);
+    $path = File::Spec->rel2abs("$path");
 #    warn "abspath $path\n";
     return 1 if $path =~ m!(/net/[^/]+)?(/data/(shared|prod|trunk)|/(home|crypt))!;
     return 0;
   }
 
   my $tempdir = $self->tempdir;
-  foreach my $file ($self->out_file,$self->err_file) {
-    croak "tempdir ".$self->tempdir." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n"
-      unless cluster_accessible($tempdir);
+  $self->in_file
+      and croak "in_file not supported by run_cluster";
+  foreach my $acc ('out_file','err_file') {
+      my $file = $self->$acc;
+      $file = $self->$acc("$file"); #< stringify the argument
 
-    croak "filehandle or referential out_file, err_file, or in_file not supported by run_cluster"
-      if ref $file;
+      croak "tempdir ".$self->tempdir." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n"
+	unless cluster_accessible($tempdir);
+
+      croak "filehandle or non-stringifying out_file, err_file, or in_file not supported by run_cluster"
+	  if $file =~ /^([\w:]+=)?[A-Z]+\(0x[\da-f]+\)$/;
+      #print "file was $file\n";
 
     unless(cluster_accessible($file)) {
       if(index($file,$tempdir) != -1) {
@@ -422,7 +426,7 @@ sub run_cluster {
   ###submit the job with qsub in the form of a bash script that contains a perl script
   #we do this so we can use CXGN::Tools::Run to write
   my $working_dir = $self->_working_dir_isset ? "working_dir => '".$self->_working_dir."'," : '';
-  my $cmd_string = join(', ', map { my $s=$_;
+  my $cmd_string = join(",\n", map { my $s="$_"; #< stringify args
 				    $s=~s/'/\\'/g; #< quote for inserting into a single-quoted string
 				    "'$s'"
 				  } @args
@@ -430,7 +434,6 @@ sub run_cluster {
   my $outfile = $self->out_file;
   my $errfile = $self->err_file;
 
-  my $this_whole_module = $self->_file_contents( __FILE__ );
   $cmd_string = <<EOSCRIPT; #< we'll send a little shell script that runs a perl script
 #!/bin/bash
 #this is a shell script
@@ -443,12 +446,14 @@ cat <<'EOF' | perl
                           $working_dir
                         });
 
-  # also, include a copy of this very module!
-$this_whole_module
 EOSCRIPT
-  $cmd_string .= "EOF\n"; #< disguise the ending EOF so that it passes through the file inclusion
 
-  dbp "running cmd_string:\n".substr($cmd_string,0,1000)."<snip>...\n";
+  dbp "running cmd_string:\n$cmd_string\n";
+
+  # also, include a copy of this very module!
+  $cmd_string .= $self->_file_contents( __FILE__ );
+  # disguise the ending EOF so that it passes through the file inclusion
+  $cmd_string .= "EOF\n";
 
   #$self->dbp("cluster running command '$cmd_string'");
   my ($cmd_temp_fh,$cmd_temp_file) = tempfile( File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX' ) );
@@ -552,7 +557,7 @@ sub _common_prerun {
   #make sure all of our args are defined
   defined || croak "undefined argument passed to run method" foreach @$args;
 
-  my %options = ref($args->[-1]) ? %{pop @$args} : ();
+  my %options = ref($args->[-1]) eq 'HASH' ? %{pop @$args} : ();
 
   my @allowed_options = qw(
 			   in_file
@@ -633,6 +638,7 @@ sub _common_prerun {
       $self->_on_completion( $c );
   }
 
+  return %options;
 }
 
 =head2 tempdir
@@ -740,7 +746,24 @@ sub _die_if_error {
      && $self->_diefile_exists) {
     my $error_string = $self->_file_contents( $self->_diefile_name );
     if( $self->is_cluster ) {
-	$error_string = __PACKAGE__.': cluster job id: '.$self->job_id."\n$error_string";
+	# if it's a cluster job, look for warnings from the resource
+	# manager in the error file and include those in the error output
+	my $pbs_warnings = '';
+	if( -f $self->err_file ) {
+	    eval {
+		open my $e, $self->err_file or die "WARNING: $! opening err file ".$self->err_file;
+		while( <$e> ) {
+		    next unless m|^\=\>\> PBS:|;
+		    $pbs_warnings .= $_;
+		}
+		$pbs_warnings = __PACKAGE__.": resource manager output:\n$pbs_warnings" if $pbs_warnings;
+	    };
+	    $pbs_warnings .= $@ if $@;
+	}
+	# and also prepend the cluster job ID to aid troubleshooting
+	$error_string =  __PACKAGE__.': cluster job id: '.$self->job_id."\n"
+	               . $pbs_warnings
+		       . $error_string
     }
     #kill our child process's whole group if it's still running for some reason
     kill SIGKILL => -($self->pid) if $self->is_async;
@@ -777,7 +800,7 @@ sub _diefile_exists {
     #have to do the opendir dance instead of caching, because NFS caches the stats
     opendir my $tempdir, $self->tempdir;
     while(my $f = readdir $tempdir) {
-      dbp "is '$f' my diefile?\n";
+      #dbp "is '$f' my diefile?\n";
       return 1 if $f eq 'died';
     }
     return 0;
@@ -796,7 +819,7 @@ sub _file_contents {
 #then returns the new string
 sub _format_error_message {
   my $self = shift;
-  my $error = shift || 'unknown error';
+  my $error = shift || 'no error message';
   $error =~ s/[\.,\s]*$//; #chop off any ending punctuation or whitespace
   my $of = $self->out_file;
   my $ef = $self->err_file;
@@ -814,11 +837,13 @@ sub _format_error_message {
       ("(no stderr captured)")
     }
   };
-  return join '', map {chomp; __PACKAGE__.": $_\n"} ( "command failed: ".$self->_command,
-						      $error,
-						      @out_tail,
-						      @err_tail,
-						    );
+  return join '', map {chomp; __PACKAGE__.": $_\n"} ( 
+      "date: ".strftime('%Y-%m-%d %H:%M:%S %Z',localtime),
+      "command failed: ".$self->_command,
+      $error,
+      @out_tail,
+      @err_tail,
+  );
 }
 
 

@@ -1112,7 +1112,7 @@ sub latest_sequence_version {
 
 =head2 genbank_accession
 
-  Usage: my $acc = $clone->genbank_accession
+  Usage: my $acc = $clone->genbank_accession( $chado )
   Desc : get the versioned genbank accession associated with the most
          recent SGN sequence of this clone
   Args : Bio::Chado::Schema (or other DBIx::Class::Schema) to use for lookup
@@ -1143,7 +1143,7 @@ sub genbank_accession {
 					     },
 				  },
 				 )
-		 ->get_column('name')
+		 ->get_column('accession')
 		 ->first;
 
   return unless $acc;

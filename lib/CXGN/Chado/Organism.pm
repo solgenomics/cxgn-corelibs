@@ -23,6 +23,7 @@ package CXGN::Chado::Organism ; #
 
 
 use Carp;
+use CXGN::DB::DBICFactory;
 
 use base qw / CXGN::DB::Object / ;
 
@@ -692,11 +693,12 @@ sub get_genbank_taxon_id {
 
 =head2 new_with_common_name
 
- Usage:  my $organism = CXGN::Chado::Organism->new_with_common_name($dbh, $common_name)
- Desc:   create a new organism object using common_name instead of organism_id 
+ Usage:  my $organism = CXGN::Chado::Organism->new_with_common_name($schema, $common_name)
+ Desc:   create a new organism object using common_name instead of organism_id
+          Each common_name should have a 'default' organism asociated in the organismprop table 
  Ret:    a new organism object
  Args:   
- Side Effects: none
+ Side Effects: make a new Bio::Chado::Schema connection if $schema arg is a CXGN::DB::Connection object
  Example: 
 
 =cut
@@ -705,40 +707,25 @@ sub get_genbank_taxon_id {
 ###Need to figure out what to do with common names 
 sub new_with_common_name {
     my $self = shift;
-    my $dbh = shift;
+    my $schema = shift;
     my $common_name = shift;
-    my $schema;
-    
-    my @organisms;
-    
-    #this returns all the organisms in the common name group
-    my $query =  "SELECT organism_id FROM public.organism
-                  JOIN sgn.organismgroup_member USING(organism_id)
-                  JOIN sgn.organismgroup USING(organismgroup_id) 
-                  WHERE name ILIKE ? AND type =?";
-    my $sth= $dbh->prepare($query);
-    $sth->execute($common_name, 'common name');
-    
-    use Bio::Chado::Schema;
-    $schema= Bio::Chado::Schema->connect(  sub { $dbh->get_actual_dbh() },
-					   { on_connect_do => ['SET search_path TO public'],
-					   },);
-    while (my ($organism_id) = $sth->fetchrow_array() ) {
-	
-	my $organism= CXGN::Chado::Organism->new($schema, $organism_id);
-	push @organisms, $organism;
+    #this is for old-stype objects having only a dbh (See CXGN::Chado::Feature)
+    if ( $schema->isa("CXGN::DB::Connection")) { # it's a DBI object
+
+	$schema = CXGN::DB::DBICFactory
+	    ->open_schema( 'Bio::Chado::Schema',
+			   search_path => ['public'],
+	    );
 	
     }
     
-    #return @organisms;
-    
-    #or maybe :
-    
-    #my @organism= $self->get_resultset('Organism::Organism')->find(
-#	{ common_name => $common_name, 
-#	});
-    if (scalar(@organisms) > 1 ) { warn "new_with_common_name found more than one organism row for common_name $common_name!!"; }
-    return $organisms[0];
+    my ($organism)= $schema->resultset("Cv::Cvterm")->search(
+	{  name      =>  'common_name' }) ->
+	search_related('organismprops', { value => $common_name } )->
+	search_related('organism');
+
+    return CXGN::Chado::Organism->new($schema, $organism->get_column('organism_id') );
+ 
 }
 
 
