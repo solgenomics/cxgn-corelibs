@@ -216,15 +216,7 @@ sub get_system_maps {
 
     my @maps = ();
     
-    my $query = "SELECT map.map_id 
-                        FROM sgn.map 
-                        LEFT JOIN sgn.map_version USING(map_id) 
-                        LEFT JOIN sgn.accession on(parent_1=accession.accession_id) 
-                        LEFT JOIN sgn.organism USING(organism_id) 
-                        LEFT JOIN sgn.common_name USING(common_name_id) 
-                        WHERE current_version='t' 
-                        ORDER by common_name.common_name";
-
+    my $query = "SELECT map.map_id FROM sgn.map LEFT JOIN sgn.map_version USING(map_id) LEFT JOIN sgn.accession on(parent_1=accession.accession_id) LEFT JOIN sgn.organism USING(organism_id) LEFT JOIN common_name USING(common_name_id) WHERE current_version='t' ORDER by common_name.common_name";
     my $sth = $self->get_dbh()->prepare($query);
     $sth->execute();
 

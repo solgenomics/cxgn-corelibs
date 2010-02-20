@@ -288,7 +288,7 @@ sub exists
         where
             marker_id=?
             and lg_id=? 
-            and marker_location.map_version_id=? 
+            and map_version_id=? 
             and position=? 
             and confidence_id=?
             and not(subscript is distinct from ?)  
@@ -423,7 +423,7 @@ sub store_unless_exists
     my $statement='insert into sgn.marker_location (lg_id,map_version_id,position,confidence_id,subscript) values (?,?,?,?,?)';
     my @values=($self->{lg_id},$self->{map_version_id},$self->{position},$self->{confidence_id},$self->{subscript});
     my $q=$dbh->prepare($statement);
-    #print STDERR "$statement; (@values)\n";
+    print"$statement; (@values)\n";
     $q->execute(@values);
     $self->{location_id}=$dbh->last_insert_id('marker_location') or croak"Can't find last insert id for location ".$self->as_string();
     return($self->{location_id});

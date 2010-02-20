@@ -12,6 +12,8 @@ use Storable qw/retrieve/;
 use POSIX qw/:sys_wait_h/;
 use IO::Pipe;
 
+use Path::Class;
+
 use CXGN::Tools::File qw/file_contents/;
 
 use Test::More tests => 64;
@@ -180,7 +182,7 @@ is($cder->err,'bleh','err() function');
 my $testtemp = tempdir(CLEANUP=>1);
 system("echo foo foo foo > $testtemp/foo");
 my $completion_hook = 0;
-my $tempy = CXGN::Tools::Run->run_async('cat',"$testtemp/foo", { on_completion => sub { $completion_hook += 42 } });
+my $tempy = CXGN::Tools::Run->run_async('cat',file($testtemp,'foo'), { on_completion => sub { $completion_hook += 42 } });
 $tempy->wait;
 $tempy->alive for 1..10;
 is($tempy->out,"foo foo foo\n",'tempdir out 1');

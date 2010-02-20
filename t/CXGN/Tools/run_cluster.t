@@ -2,14 +2,16 @@ use strict;
 use warnings;
 use English;
 use Test::More;
+use Test::Exception;
 
 use File::Temp qw/ tempfile /;
+use Path::Class;
 
 use CXGN::Tools::File qw/ file_contents /;
 
 BEGIN {
     if( $ENV{CXGNTOOLSRUNTESTCLUSTER} ) {
-        plan tests => 23;
+        plan tests => 28;
     }
     else {
         plan skip_all => 'cluster job tests skipped by default, set environment var CXGNTOOLSRUNTESTCLUSTER=1 to test';
@@ -23,9 +25,9 @@ my @nodes = defined $ENV{FORCE_TORQUE_NODE} ? (nodes => $ENV{FORCE_TORQUE_NODE})
 my $complete_hook = 0;
 my $cjob = CXGN::Tools::Run->run_cluster( perl => -e => 'sleep 1; print "foofoofoo\n"',
                                          {
-                                          working_dir => '/data/shared',
+                                          working_dir => dir('/data/shared'),
                                           @nodes,
-                                          temp_base => '/data/shared/tmp',
+                                          temp_base => dir('/data/shared/tmp'),
 					  vmem => 400,
                                           on_completion => sub { $complete_hook += 42 },
 					  max_cluster_jobs => 1_000_000,
@@ -61,7 +63,7 @@ is( $complete_hook, 0, 'completion hook never ran');
 $cjob->cleanup;
 
 #test cluster jobs with different working directories
-$cjob = CXGN::Tools::Run->run_cluster("echo barbarbar > foo.out",{@nodes, working_dir => '/data/shared/tmp'});
+$cjob = CXGN::Tools::Run->run_cluster("echo barbarbar > foo.out",{@nodes, working_dir => dir('/data/shared/tmp')});
 $cjob->wait;
 is(file_contents("/data/shared/tmp/foo.out"),"barbarbar\n",'correct contents of test file');
 unlink "/data/shared/tmp/foo.out";
@@ -72,7 +74,7 @@ my (undef,$tempfile) = tempfile('/data/shared/tmp/cxgn-tools-run-XXXXXXXX',UNLIN
 eval {
     $cjob = CXGN::Tools::Run->run_cluster(qq|perl -e 'print "foo\\n"; exit 123;'|,
 					  { working_dir => '/data/shared/tmp',
-					    out_file => $tempfile,
+					    out_file => file("$tempfile"),
 					    vmem => 400,
                                             @nodes,
                                             on_completion => sub { $complete_hook = 'should not run if job died' },
@@ -91,3 +93,22 @@ is(file_contents($tempfile),"foo\n",'cluster job wrote to the correct file');
 $cjob->cleanup;
 
 
+#test Path::Class arguments to cluster jobs
+$tempfile = file("$tempfile");
+my $test_str = "the life and times of a fooish bar\n";
+$tempfile->openw->print( $test_str );
+foreach my $args( [$tempfile], [File::Spec->devnull, $tempfile], [$tempfile, File::Spec->devnull] ) {
+    $cjob = CXGN::Tools::Run->run_cluster( 'cat', @$args, { vmem => 200 } );
+    sleep 1 while $cjob->alive;
+    is( $cjob->out, $test_str, 'cluster jobs can take Path::Class arguments' );
+}
+
+
+#test error handling for referential out_file
+throws_ok {
+    CXGN::Tools::Run->run_cluster('echo foo', { out_file => bless {},'Foo1::BA2_r' } );
+} qr/not supported/, 'dies for invalid object out-file arg';
+throws_ok {
+    open my $null, '>', File::Spec->devnull or die "$! opening devnull device";
+    CXGN::Tools::Run->run_cluster('echo foo', { out_file => $null } );
+} qr/not supported/, 'dies for filehandle out_file arg';

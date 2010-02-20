@@ -213,7 +213,7 @@ sub _adjust_parameters {
 
     # if no map_id was supplied, we show the F2.2000 as default
     #
-    if (!$self->get_map_id()) { $self->set_map_id(CXGN::Map::Tools::current_tomato_map_id()); }
+    if (!$self->get_map_id()) { $self->set_map_id(CXGN::Cview::Map::Tools::current_tomato_map_id()); }
 
 #    @{$self->{chromo_names}} = $self->get_chr_names($self->{map_id});
     @{$self->{chromo_names}} = $self->get_ref_map()->get_chromosome_names();
