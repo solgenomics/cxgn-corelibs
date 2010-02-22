@@ -56,6 +56,7 @@ use Test::More tests => 58; #qw | no_plan |; # while developing the test
 use Test::Exception;
 
 use CXGN::DB::Connection;
+use CXGN::DB::DBICFactory;
 
 BEGIN {
     use_ok('CXGN::Biosource::Schema');               ## TEST1
@@ -75,18 +76,21 @@ CXGN::Biosource::Schema->can('connect')
 my $psqlv = `psql --version`;
 chomp($psqlv);
 
-my $schema_list = 'biosource,metadata,public';
+my @schema_list = ('biosource', 'metadata', 'public');
 if ($psqlv =~ /8\.1/) {
-    $schema_list .= ',tsearch2';
+    push @schema_list, 'tsearch2';
 }
 
-my $schema = CXGN::Biosource::Schema->connect( sub { CXGN::DB::Connection->new({ dbuser => 'postgres',
-										dbpass => 'Eise!Th9',
-									      })->get_actual_dbh() },
-                                              { 
-				       	         on_connect_do => ["SET search_path TO $schema_list;"],
-                                              },
-                                            );
+my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Biosource::Schema', 
+                                                 search_path => \@schema_list, 
+                                                 dbconn_args => 
+                                                                { 
+                                                                    dbuser => $ENV{GEMTEST_DBUSER},
+                                                                    dbpass => $ENV{GEMTEST_DBPASS},
+                                                                }
+                                               );
+
+$schema->txn_begin();
 
 
 ## Get the last values
@@ -488,10 +492,10 @@ throws_ok { CXGN::Biosource::ProtocolTool->new($schema)->set_file_id_by_name('/t
 
 
 
- ## RESTORING THE ORIGINAL STATE IN THE DATABASE
+## RESTORING THE ORIGINAL STATE IN THE DATABASE
 ## To restore the original state in the database, rollback (it is in a transaction) and set the table_sequence values. 
 
-$schema->storage->dbh->rollback();
+$schema->txn_rollback();
 
 ## The transaction change the values in the sequence, so if we want set the original value, before the changes
  ## we have two options:
@@ -502,4 +506,7 @@ $schema->storage->dbh->rollback();
       ##   The option 1 leave the seq information in a original state except if there aren't any value in the seq, that it is
        ##   more as the option 2 
 
-$schema->set_sqlseq_values_to_original_state(\%last_ids);
+if ($ENV{RESET_DBSEQ}) {
+    $schema->set_sqlseq_values_to_original_state(\%last_ids);
+}
+

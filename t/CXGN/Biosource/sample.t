@@ -19,7 +19,7 @@
 
 =head1 DESCRIPTION
 
- This script check 334 variables to test the right operation of the 
+ This script check 339 variables to test the right operation of the 
  CXGN::Biosource::Sample module:
 
   - TEST from 1 to 4 - use Modules.
@@ -39,7 +39,7 @@
   - TEST from 202 to 249 - TESTING all the SAMPLE_ELEMENT_FILE functions
   - TEST from 250 to 326 - TESTING all the SAMPLE_ELELEMNT RELATION functions
   - TEST from 327 to 334 - TESTING all the GENERAL STORE FUNCTION
-
+  - TEST from 335 to 338 - TESTING get_dbxref_related function
 
 =cut
 
@@ -55,10 +55,11 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Test::More tests => 334; # qw | no_plan |; # while developing the test
+use Test::More tests => 339; # qw | no_plan |; # while developing the test
 use Test::Exception;
 
 use CXGN::DB::Connection;
+use CXGN::DB::DBICFactory;
 
 BEGIN {
     use_ok('CXGN::Biosource::Schema');            ## TEST1
@@ -83,18 +84,22 @@ Bio::Chado::Schema->can('connect')
 my $psqlv = `psql --version`;
 chomp($psqlv);
 
-my $schema_list = 'biosource,metadata,public';
+my @schema_list = ('biosource', 'metadata', 'public');
 if ($psqlv =~ /8\.1/) {
-    $schema_list .= ',tsearch2';
+    push @schema_list, 'tsearch2';
 }
 
-my $schema = CXGN::Biosource::Schema->connect( sub { CXGN::DB::Connection->new({ dbuser => 'postgres',
-                                                                                dbpass => 'Eise!Th9',
-                                                                              })->get_actual_dbh() },
-                                              { 
-                                                 on_connect_do => ["SET search_path TO $schema_list;"],
-                                              },
-                                            );
+
+my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Biosource::Schema', 
+						 search_path => \@schema_list, 
+						 dbconn_args => 
+						                { 
+								    dbuser => $ENV{GEMTEST_DBUSER},
+								    dbpass => $ENV{GEMTEST_DBPASS},
+								}
+                                               );
+
+$schema->txn_begin();
 
 ## Get the last values
 my $all_last_ids_href = $schema->get_all_last_ids($schema);
@@ -213,6 +218,9 @@ throws_ok { CXGN::Biosource::Sample->new($schema)->set_contact_by_username('non 
      $sample2->set_contact_by_username('aure');
 
      $sample2->store_sample($metadbdata);
+
+     my $curr_metadata_id = $metadbdata->get_metadata_id();
+     
 
      ## Testing the protocol_id and protocol_name for the new object stored (TEST 22 to 26)
 
@@ -1299,7 +1307,7 @@ throws_ok { CXGN::Biosource::Sample->new($schema)->set_contact_by_username('non 
                                                               basename    => $filename, 
                                                               dirname     => '/dir/test/', 
                                                               filetype    => 'text', 
-                                                              metadata_id => $last_metadata_id+1
+                                                              metadata_id => $curr_metadata_id
                                                             }
 	                                                  );
 	 my $file_id = $file_row->insert()
@@ -1938,6 +1946,35 @@ throws_ok { CXGN::Biosource::Sample->new($schema)->set_contact_by_username('non 
      is($element_file21{'last test'}->[0], $fileids{'test3.txt'}, "TESTING GENERAL STORE FUNCTION, checking file_id")
 	 or diag "Looks like this failed";
      
+     ## Testing dbxref_related function (TEST 335 to 339)
+
+     my %dbxref_related = $sample21->get_dbxref_related();
+
+     foreach my $sample_el_namex (keys %dbxref_related) {
+	 my @related_data = @{ $dbxref_related{$sample_el_namex} };
+
+	 foreach my $related_el_href (@related_data) {
+	     my %related = %{$related_el_href};
+	 
+	     is($related{'dbxref.dbxref_id'}, $t_dbxref_id2, "TESTING GET_DBXREF_RELATED FUNCTION, checking dbxref_id")
+		 or diag "Looks like this failed";
+
+	     is($related{'dbxref.accession'}, 'TEST_DBXREFSTEP02', "TESTING GET_DBXREF_RELATED FUNCTION, checking dbxref_id")
+		 or diag "Looks like this failed";
+
+	     is($related{'cvterm.cvterm_id'}, $t_cvterm_id2, "TESTING GET_DBXREF_RELATED FUNCTION, checking dbxref_id")
+		 or diag "Looks like this failed";
+
+	     is($related{'cvterm.name'}, 'testingcvterm4', "TESTING GET_DBXREF_RELATED FUNCTION, checking cvterm.name")
+		 or diag "Looks like this failed";
+
+	     is($related{'db.name'}, 'dbtesting', "TESTING GET_DBXREF_RELATED FUNCTION, checking dbxref_id")
+		 or diag "Looks like this failed";
+	 }
+     }
+	
+     
+     
     
 
 };  ## End of the eval function
@@ -1951,7 +1988,7 @@ if ($@) {
  ## RESTORING THE ORIGINAL STATE IN THE DATABASE
 ## To restore the original state in the database, rollback (it is in a transaction) and set the table_sequence values. 
 
-$schema->storage->dbh->rollback();
+$schema->txn_rollback();
 
 ## The transaction change the values in the sequence, so if we want set the original value, before the changes
  ## we have two options:
@@ -1962,4 +1999,6 @@ $schema->storage->dbh->rollback();
       ##   The option 1 leave the seq information in a original state except if there aren't any value in the seq, that it is
        ##   more as the option 2 
 
-$schema->set_sqlseq_values_to_original_state(\%last_ids);
+if ($ENV{RESET_DBSEQ}) {
+    $schema->set_sqlseq_values_to_original_state(\%last_ids);
+}
