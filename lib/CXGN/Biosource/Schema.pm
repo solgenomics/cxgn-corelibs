@@ -1,3 +1,4 @@
+
 package CXGN::Biosource::Schema;
 
 use strict;
@@ -8,6 +9,56 @@ use Module::Find;
 use CXGN::Metadata::Schema;
 use Bio::Chado::Schema;
 use base 'DBIx::Class::Schema';
+
+
+###############
+### PERLDOC ###
+###############
+
+=head1 NAME
+
+CXGN::Biosource::Schema
+a DBIx::Class::Schema object to manipulate the biosource schema.
+
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
+
+=head1 SYNOPSIS
+
+ my $schema_list = 'biosource,metadata,public'; 
+
+ my $schema = CXGN::Biosource::Schema->connect( sub { $dbh }, 
+                                          { on_connect_do => ["SET search_path TO $schema_list"] }, );
+ 
+ ## Using DBICFactory:
+
+ my @schema_list = split(/,/, $schema_list); 
+ my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Biosource::Schema', search_path => \@schema_list, );
+
+
+=head1 DESCRIPTION
+
+ This class create a new DBIx::Class::Schema object and load the dependencies of other schema classes as
+ metadata, or chado.
+ 
+ It need set_path to be able to use all of them.
+
+ Also load the relations between schemas.
+
+=head1 AUTHOR
+
+Aureliano Bombarely <ab782@cornell.edu>
+
+
+=head1 CLASS METHODS
+
+The following class methods are implemented:
+
+=cut 
+
+
 
 ### The biosource schema use chado and metadata schemas, so it will load this classes
 
@@ -87,26 +138,32 @@ sub get_all_last_ids {
     foreach my $source_name (sort @source_names) {
 
         my $source = $schema->source($source_name);
-	my $table_name = $schema->class($source_name)->table();
+	my $table_name = $schema->class($source_name)
+	                        ->table();
 
-	if ( $schema->exists_dbtable($table_name) ) {
+	my ($seq_name, $last_value);
 
-	    my ($primary_key_col) = $source->primary_columns();
- 
-	    my $primary_key_col_info = $source->column_info($primary_key_col)
-		                              ->{'default_value'};
+	if ( $schema->exists_dbtable($table_name) == 1) {
 	    
-	    my $last_value = $schema->resultset($source_name)
-                                    ->get_column($primary_key_col)
-                                    ->max();
-	    my $seq_name;
-	    if (defined $primary_key_col_info) {
-		if ($primary_key_col_info =~ m/\'(\w+\..*?_seq)\'/) {
-		    $seq_name = $1;
+	    my ($primary_key_col) = $source->primary_columns();
+	    
+	    if (defined $primary_key_col) {
+	    
+		my $primary_key_col_info = $source->column_info($primary_key_col)
+		                                  ->{'default_value'};
+	    
+		$last_value = $schema->resultset($source_name)
+		                     ->get_column($primary_key_col)
+                                     ->max();
+		
+		if (defined $primary_key_col_info) {
+		    if ($primary_key_col_info =~ m/\'(\w+\..*?_seq)\'/) {
+			$seq_name = $1;
+		    }
+		} 
+		else {
+		    print STDERR "The source:$source_name ($source) with primary_key_col:$primary_key_col hasn't primary_key_col_info.\n";
 		}
-	    } 
-	    else {
-		print STDERR "The source:$source_name ($source) with primary_key_col:$primary_key_col hasn't any primary_key_col_info.\n";
 	    }
 	    if (defined $seq_name) {
 		$last_ids{$seq_name} = $last_value || 0;
@@ -186,29 +243,29 @@ sub exists_dbtable {
     my $tablename = shift;
     my $schemaname = shift;
 
-    my @schema_list;
-    unless (defined $schemaname) {
-	my ($search_path) = $schema->storage()
-	                           ->dbh()
-				   ->selectrow_array('SHOW search_path');
-	$search_path =~ s/\s+//g;
-	@schema_list = split(/,/, $search_path);
+    my $dbh = $schema->storage()
+	             ->dbh();
+
+    ## First get all the path setted for this object
+
+    my @schemalist;
+    if (defined $schemaname) {
+	push @schemalist, $schemaname;
     }
     else {
-	@schema_list = ($schemaname);
+	my ($path) = $dbh->selectrow_array("SHOW search_path");
+	@schemalist = split(/, /, $path);
     }
-
+    
     my $dbtrue = 0;
-    foreach my $schema_name (@schema_list) {
-	my ($count) = $schema->storage()
-	                     ->dbh()
-                             ->selectrow_array("SELECT COUNT(*) FROM pg_tables WHERE schemaname = ? AND tablename = ?", 
-				   	       undef, 
-					       ($schema_name, $tablename) );
-	if ($count == 1) {
-	    $dbtrue = $count;
+    foreach my $schema_name (@schemalist) {
+	my $query = "SELECT count(*) FROM pg_tables WHERE tablename = ? AND schemaname = ?";
+	my ($predbtrue) = $dbh->selectrow_array($query, undef, $tablename, $schema_name);
+	if ($predbtrue > $dbtrue) {
+	    $dbtrue = $predbtrue;
 	}
     }
+ 
     return $dbtrue;
 }
 

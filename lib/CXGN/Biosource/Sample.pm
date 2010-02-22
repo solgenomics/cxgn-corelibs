@@ -1,10 +1,31 @@
 
+package CXGN::Biosource::Sample;
+
+use strict;
+use warnings;
+
+use base qw | CXGN::DB::Object |;
+use Bio::Chado::Schema;
+use CXGN::Biosource::Schema;
+use CXGN::Biosource::Protocol;
+use CXGN::Metadata::Metadbdata;
+
+use Carp qw| croak cluck |;
+
+
+###############
+### PERLDOC ###
+###############
+
 =head1 NAME
 
 CXGN::Biosource::Sample
 a class to manipulate a sample data from the biosource schema.
 
-Version: 0.1
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
 
 =head1 SYNOPSIS
 
@@ -129,18 +150,6 @@ The following class methods are implemented:
 
 =cut 
 
-use strict;
-use warnings;
-
-package CXGN::Biosource::Sample;
-
-use base qw | CXGN::DB::Object |;
-use Bio::Chado::Schema;
-use CXGN::Biosource::Schema;
-use CXGN::Biosource::Protocol;
-use CXGN::Metadata::Metadbdata;
-
-use Carp qw| croak cluck |;
 
 
 ############################
@@ -293,7 +302,7 @@ sub new {
 
 	unless (defined $sample) {  ## If dbiref_id don't exists into the  db, it will warning with cluck and create an empty object
                 
-	    cluck("\nDATABASE WARNING: Protocol_id ($id) for $class->new() DON'T EXISTS INTO THE DB.\nIt'll be created an empty obj.\n" );
+	    cluck("\nDATABASE WARNING: Sample_id ($id) for $class->new() DON'T EXISTS INTO THE DB.\nIt'll be created an empty obj.\n" );
 	    
 	    $sample = $schema->resultset('BsSample')
 		             ->new({});
@@ -421,8 +430,8 @@ sub new_by_elements {
 
 	    ## Dbix::Class search to get an id in a group using the elements of the group
 
-	    my ($bssample_element_row) = $schema->resultset('BsSampleElement')
-                                                ->search( undef,
+	    my @bssample_element_rows = $schema->resultset('BsSampleElement')
+                                               ->search( undef,
                                                           { 
                                                             columns  => ['sample_id'],
                                                             where    => { sample_element_name => { -in  => $elements_aref } },
@@ -430,6 +439,20 @@ sub new_by_elements {
 							    having   => { 'count(sample_element_id)' => { '=', $elements_n } } 
                                                           }          
                                                         );
+	    ## This search will return all the platform_design that contains the elements specified, it will filter 
+            ## by the number of element to take only the rows where have all these elements
+
+            my $bssample_element_row;
+            foreach my $row (@bssample_element_rows) {
+                my $count = $schema->resultset('BsSampleElement')
+                                   ->search( sample_id => $row->get_column('sample_id') )
+                                   ->count();
+                if ($count == $elements_n) {
+                    $bssample_element_row = $row;
+                }
+            }
+
+
 
 	    unless (defined $bssample_element_row) {    
 		
@@ -1192,9 +1215,10 @@ sub add_publication {
     elsif (ref($pub) eq 'HASH') {
         my $pub_row; 
         if (exists $pub->{'title'}) {
+	    my $title = $pub->{'title'};
             ($pub_row) = $self->get_schema()
                               ->resultset('Pub::Pub')
-                              ->search( {title => $pub->{'title'} });
+                              ->search( {title => { 'ilike', '%'.$title.'%' } });
         }
         elsif (exists $pub->{'dbxref_accession'}) {
                 ($pub_row) = $self->get_schema()
@@ -1481,8 +1505,8 @@ sub get_sample_elements {
 
   Desc: Edit a sample element in the sample object. 
         It can not edit the sample_element_name. 
-        To add a new step use add_sample_element.
-        To obsolete a step use obsolete_sample_element.
+        To add a new element use add_sample_element.
+        To obsolete a element use obsolete_sample_element.
 
   Ret: None
 
@@ -1539,7 +1563,7 @@ sub edit_sample_element {
 	    }
 	}
 	else {
-	    croak("DATABASE COHERENCE ERROR for add_sample_element function: Organism_name=$organism_name don't exists in database.\n");
+	    croak("DATABASE COHERENCE ERROR for edit_sample_element function: Organism_name=$organism_name don't exists in database.\n");
 	}
     }
 
@@ -1555,7 +1579,7 @@ sub edit_sample_element {
 	    }
 	}
 	else {
-	    croak("DATABASE COHERENCE ERROR for add_sample_element: Protocol_name=$protocol_name don't exists in database.\n");
+	    croak("DATABASE COHERENCE ERROR for edit_sample_element: Protocol_name=$protocol_name don't exists in database.\n");
 	}
     }
 
@@ -2498,7 +2522,7 @@ sub is_sample_pub_obsolete {
 
   Usage: my $metadbdata = $sample->get_sample_element_metadbdata();
 
-  Desc: Get metadata object associated to protocol_step row 
+  Desc: Get metadata object associated to sample_element row 
         (see CXGN::Metadata::Metadbdata). 
 
   Ret:  A hash with key=element_name and value=metadbdata object 
@@ -2509,7 +2533,7 @@ sub is_sample_pub_obsolete {
   Side_Effects: none
 
   Example: my %metadbdata = $sample->get_sample_element_metadbdata();
-           my %metadbdata = $protocol->get_sample_element_metadbdata($metadbdata);
+           my %metadbdata = $sample->get_sample_element_metadbdata($metadbdata);
 
 =cut
 
@@ -2554,7 +2578,7 @@ sub get_sample_element_metadbdata {
   Usage: $sample->is_sample_element_obsolete($element_name);
   
   Desc: Get obsolete field form metadata object associated to 
-        protocol data (see CXGN::Metadata::Metadbdata). 
+        sample data (see CXGN::Metadata::Metadbdata). 
   
   Ret:  0 -> false (it is not obsolete) or 1 -> true (it is obsolete)
   
@@ -3224,7 +3248,7 @@ sub store_sample {
 
 =head2 obsolete_sample
 
-  Usage: my $sample = $sample->obsolete_protocol($metadata, $note, 'REVERT');
+  Usage: my $sample = $sample->obsolete_sample($metadata, $note, 'REVERT');
  
   Desc: Change the status of a data to obsolete.
         If revert tag is used the obsolete status will be reverted to 0 (false)
@@ -3239,7 +3263,7 @@ sub store_sample {
                 1- None metadata object is supplied.
                 2- The metadata supplied is not a CXGN::Metadata::Metadbdata 
   
-  Example: my $sample = $sample->store_protocol($metadata, 'change to obsolete test');
+  Example: my $sample = $sample->obsolete_sample($metadata, 'change to obsolete test');
 
 =cut
 
@@ -3256,7 +3280,7 @@ sub obsolete_sample {
     }
 
     my $obsolete_note = shift 
-	|| croak("OBSOLETE ERROR: None obsolete note was supplied to $self->obsolete_protocol().\n");
+	|| croak("OBSOLETE ERROR: None obsolete note was supplied to $self->obsolete_sample().\n");
 
     my $revert_tag = shift;
 
@@ -3567,7 +3591,7 @@ sub store_sample_elements {
         If revert tag is used the obsolete status will 
         be reverted to 0 (false)
  
-  Ret: $protocol, the protocol object updated with the db data.
+  Ret: $target, the target object updated with the db data.
   
   Args: $metadata, a metadata object (CXGN::Metadata::Metadbdata object).
         $note, a note to explain the cause of make this data obsolete
@@ -4485,6 +4509,85 @@ sub obsolete_element_relation {
     return $self;
 }
 
+
+#####################
+### Other Methods ###
+#####################
+
+=head2 get_dbxref_related
+
+  Usage: my %dbxref_related = $sample->get_dbxref_related();
+  
+  Desc: Get a hash where keys=dbxref_id and values=hash ref where
+           
+  
+  Ret:  %dbxref_related a HASH with KEYS=$sample_el_name 
+                                    VALUE= ARRAY_REF of HASH_REF ( type => value ) and 
+        types = (cvterm.cvterm_id, dbxref.dbxref_id, dbxref.accession, db.name, cvterm.name)
+  
+  Args: $dbname, if dbname is specified it will only get the dbxref associated with this dbname
+  
+  Side_Effects: none
+  
+  Example: my %dbxref_related = $sample->get_dbxref_related();
+           my %dbxref_po = $sample->get_dbxref_related('PO');
+
+=cut
+
+sub get_dbxref_related {
+    my $self = shift;
+    my $dbname = shift;
+
+    my %related = ();
+
+    my %samplelementsdbxref = $self->get_dbxref_from_sample_elements();
+
+    foreach my $sample_el_name (keys %samplelementsdbxref) {
+	my @dbxref_ids = @{ $samplelementsdbxref{$sample_el_name} };
+	
+	my @dbxref_rel_el = ();
+
+	foreach my $dbxref_id (@dbxref_ids) {
+
+	    my %related_el = ();
+	    
+	    my ($dbxref_row) = $self->get_schema()
+		                    ->resultset('General::Dbxref')
+		                    ->search( { dbxref_id => $dbxref_id } );
+	     
+	    my %dbxref_data = $dbxref_row->get_columns();
+	    
+	    my ($cvterm_row) = $self->get_schema
+		                    ->resultset('Cv::Cvterm')
+		                    ->search( { dbxref_id => $dbxref_id } );
+
+	    if (defined $cvterm_row) {
+		my %cvterm_data = $cvterm_row->get_columns();
+		     
+		my ($db_row) = $self->get_schema()
+                                    ->resultset('General::Db')
+ 		                    ->search( { db_id => $dbxref_data{'db_id'} } );
+
+		my $dbmatch = 1;
+		if (defined $dbname) {
+		    unless ( $db_row->get_column('name') eq $dbname ) {
+			$dbmatch = 0;
+		    }
+		}
+		if ($dbmatch == 1) {
+		    $related_el{'dbxref.dbxref_id'} = $dbxref_id;
+		    $related_el{'db.name'} = $db_row->get_column('name');
+		    $related_el{'dbxref.accession'} = $dbxref_data{'accession'};
+		    $related_el{'cvterm.name'} = $cvterm_data{'name'};
+		    $related_el{'cvterm.cvterm_id'} = $cvterm_data{'cvterm_id'};
+		}
+	    }
+	    push @dbxref_rel_el, \%related_el;
+	}
+	$related{$sample_el_name} = \@dbxref_rel_el;	
+    }
+    return %related;
+}
 
 
 
