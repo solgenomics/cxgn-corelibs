@@ -1,10 +1,31 @@
 
+package CXGN::Biosource::Protocol;
+
+use strict;
+use warnings;
+
+use base qw | CXGN::DB::Object |;
+use CXGN::Biosource::Schema;
+use CXGN::Biosource::ProtocolTool;
+use CXGN::Metadata::Metadbdata;
+
+use Carp qw| croak cluck |;
+
+
+
+###############
+### PERLDOC ###
+###############
+
 =head1 NAME
 
 CXGN::Biosource::Protocol
 a class to manipulate a protocol data.
 
-Version: 0.1
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
 
 =head1 SYNOPSIS
 
@@ -88,17 +109,6 @@ The following class methods are implemented:
 
 =cut 
 
-use strict;
-use warnings;
-
-package CXGN::Biosource::Protocol;
-
-use base qw | CXGN::DB::Object |;
-use CXGN::Biosource::Schema;
-use CXGN::Biosource::ProtocolTool;
-use CXGN::Metadata::Metadbdata;
-
-use Carp qw| croak cluck |;
 
 
 ############################
@@ -847,7 +857,7 @@ sub add_publication {
         if (exists $pub->{'title'}) {
             ($pub_row) = $self->get_schema()
                               ->resultset('Pub::Pub')
-                              ->search( {title => $pub->{'title'} });
+                              ->search( {title => { 'ilike', '%' . $pub->{'title'} . '%' } });
         }
         elsif (exists $pub->{'dbxref_accession'}) {
                 ($pub_row) = $self->get_schema()
@@ -860,7 +870,7 @@ sub add_publication {
         }
         
         unless (defined $pub_row) {
-            croak("DATABASE ARGUMENT ERROR: Publication data used as argument for $self->add_publication function don't exists in DB.\n");
+            croak("DATABASE ARGUMENT ERROR: Pub data ($pub) used as argument for $self->add_publication function don't exists in DB.\n");
         }
         $pub_id = $pub_row->get_column('pub_id');
         

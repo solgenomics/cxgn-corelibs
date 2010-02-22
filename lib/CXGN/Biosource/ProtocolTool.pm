@@ -1,10 +1,32 @@
 
+package CXGN::Biosource::ProtocolTool;
+
+use strict;
+use warnings;
+
+use base qw | CXGN::DB::Object |;
+use File::Basename;
+use CXGN::Biosource::Schema;
+use CXGN::Metadata::Schema;
+use CXGN::Metadata::Metadbdata;
+use Bio::Chado::Schema;
+
+use Carp qw| croak cluck |;
+
+
+###############
+### PERLDOC ###
+###############
+
 =head1 NAME
 
 CXGN::Biosource::ProtocolTool
 a class to manipulate a biosource tool data.
 
-Version: 0.1
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
 
 =head1 SYNOPSIS
 
@@ -56,18 +78,6 @@ The following class methods are implemented:
 
 =cut 
 
-use strict;
-use warnings;
-
-package CXGN::Biosource::ProtocolTool;
-
-use base qw | CXGN::DB::Object |;
-use File::Basename;
-use CXGN::Biosource::Schema;
-use CXGN::Metadata::Schema;
-use CXGN::Metadata::Metadbdata;
-use Bio::Chado::Schema;
-use Carp qw| croak cluck |;
 
 
 ############################
