@@ -10,6 +10,54 @@ use CXGN::Metadata::Schema;
 use Bio::Chado::Schema;
 use base 'DBIx::Class::Schema';
 
+###############
+### PERLDOC ###
+###############
+
+=head1 NAME
+
+CXGN::GEM::Schema
+a DBIx::Class::Schema object to manipulate the gem schema.
+
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
+
+=head1 SYNOPSIS
+
+ my $schema_list = 'gem,biosource,metadata,public'; 
+
+ my $schema = CXGN::GEM::Schema->connect( sub { $dbh }, 
+                                          { on_connect_do => ["SET search_path TO $schema_list"] }, );
+
+ ## Using DBICFactory:
+
+ my @schema_list = split(/,/, $schema_list); 
+ my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::GEM::Schema', search_path => \@schema_list, );
+
+
+=head1 DESCRIPTION
+
+ This class create a new DBIx::Class::Schema object and load the dependencies of other schema classes as
+ metadata, bioosource or chado.
+ 
+ It need set_path to be able to use all of them.
+
+ Also load the relations between schemas.
+
+=head1 AUTHOR
+
+Aureliano Bombarely <ab782@cornell.edu>
+
+
+=head1 CLASS METHODS
+
+The following class methods are implemented:
+
+=cut 
+
+
 ### The GEM schema use chado, biosource and metadata schemas, so it will load this classes
 
 my (@gem_classes, @biosource_classes, @metadata_classes, @chado_classes);
@@ -89,7 +137,7 @@ __PACKAGE__->source('GePlatformPub')
 __PACKAGE__->source('GePlatformDesign')
            ->add_relationship('sample_id', "CXGN::Biosource::Schema::BsSample", { 'foreign.sample_id' => 'self.sample_id' } );
 
-__PACKAGE__->source('GeTemplate')
+__PACKAGE__->source('GeTemplateDbiref')
            ->add_relationship('dbiref_id', "CXGN::Metadata::Schema::MdDbiref", { 'foreign.dbiref_id' => 'self.dbiref_id' } );
 
 __PACKAGE__->source('GeProbe')

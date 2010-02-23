@@ -1,4 +1,23 @@
 
+package CXGN::GEM::ExperimentalDesign;
+
+use strict;
+use warnings;
+
+use base qw | CXGN::DB::Object |;
+use Bio::Chado::Schema;
+use CXGN::GEM::Experiment;
+use CXGN::GEM::Target;
+use CXGN::Biosource::Schema;
+use CXGN::Metadata::Metadbdata;
+
+use Carp qw| croak cluck |;
+
+
+###############
+### PERLDOC ###
+###############
+
 =head1 NAME
 
 CXGN::GEM::ExperimentalDesign
@@ -11,7 +30,38 @@ $VERSION = eval $VERSION;
 
 =head1 SYNOPSIS
 
- 
+ use CXGN::GEM::ExperimentalDesign;
+
+ ## Constructor
+
+ my $expdesign = CXGN::GEM::ExperimentalDesign->new($schema, $expdesign_id); 
+
+ ## Simple accessors
+
+ my $expdesign_name = $expdesign->get_experimental_design_name();
+ $expdesign->set_experimental_design_name($new_name);
+
+ ## Extended accessors
+
+ my @pub_id_list = $expdesign->get_publication_list();
+ $expdesign->add_publication($pub_id); 
+
+ my @dbxref_id_list = $expdesign->get_dbxref_list();
+ $expdesign->add_dbxref($dbxref_id);
+
+ ## Metadata functions (aplicable to extended data as pub or dbxref)
+
+ my $metadbdata = $expdesign->get_experimental_design_metadbdata();
+
+ if ($expdesign->is_experimental_design_obsolete()) {
+    ## Do something
+ }
+
+ ## Store functions (aplicable to extended data as pub or dbxref)
+
+ $expdesign->store($metadbdata);
+
+ $expdesign->obsolete_experimental_design($metadata, 'change to obsolete test');
 
 
 =head1 DESCRIPTION
@@ -48,18 +98,6 @@ The following class methods are implemented:
 
 =cut 
 
-use strict;
-use warnings;
-
-package CXGN::GEM::ExperimentalDesign;
-
-use base qw | CXGN::DB::Object |;
-use Bio::Chado::Schema;
-use CXGN::Biosource::Schema;
-use CXGN::Metadata::Metadbdata;
-
-use Carp qw| croak cluck |;
-
 
 ############################
 ### GENERAL CONSTRUCTORS ###
@@ -75,7 +113,7 @@ use Carp qw| croak cluck |;
   Ret: a CXGN::GEM::ExperimentalDesign object
 
   Args: a $schema a schema object, preferentially created using:
-        CXGN::Biosource::Schema->connect(
+        CXGN::GEM::Schema->connect(
                    sub{ CXGN::DB::Connection->new()->get_actual_dbh()}, 
                    %other_parameters );
         A $expdesign, a scalar.
@@ -103,7 +141,7 @@ sub new {
     $self->set_schema($schema);                                   
 
     ### Second, check that ID is an integer. If it is right go and get all the data for 
-    ### this row in the database and after that get the data for dbipath. 
+    ### this row in the database and after that get the data for expdesign. 
     ### If don't find any, create an empty oject.
     ### If it is not an integer, die
 
@@ -117,21 +155,30 @@ sub new {
 	    croak("\nDATA TYPE ERROR: The experimental_design_id ($id) for $class->new() IS NOT AN INTEGER.\n\n");
 	}
 
-	## Get the bs_sample_row object using a search based in the sample_id 
+	## Get the ge_expdesign_row object using a search based in the expdesign_id 
 
 	($expdesign) = $schema->resultset('GeExperimentalDesign')
 	                      ->search( { experimental_design_id => $id } );
 	
-	## Search experimenatl_design_pub associations (ge_experimental_design_pub_row objects) based in the expdesign_id
+
+	## If is not defined the $expdesign (the id does not exist in the db), it will create an empty object
+
+	if (defined $expdesign) {
+
+	    ## Search experimenatl_design_pub associations (ge_experimental_design_pub_row objects) based in the expdesign_id
 	
-	@expdesign_pubs = $schema->resultset('GeExperimentalDesignPub')
-	                          ->search( { experimental_design_id => $id } );
+	    @expdesign_pubs = $schema->resultset('GeExperimentalDesignPub')
+	                             ->search( { experimental_design_id => $id } );
 	
-	## Search experimental_design_dbxref associations
+	    ## Search experimental_design_dbxref associations
 	
-	@expdesign_dbxrefs = $schema->resultset('GeExperimentalDesignDbxref')
-	                            ->search( { experimental_design_id => $id } );
-	
+	    @expdesign_dbxrefs = $schema->resultset('GeExperimentalDesignDbxref')
+	                                ->search( { experimental_design_id => $id } );
+	}
+	else {
+	    $expdesign = $schema->resultset('GeExperimentalDesign')
+	                        ->new({});                              ### Create an empty object;
+	}
     }
     else {
 	$expdesign = $schema->resultset('GeExperimentalDesign')
@@ -156,7 +203,7 @@ sub new {
   Ret: a CXGN::GEM::ExperimentalDesign object
  
   Args: a $schema a schema object, preferentially created using:
-        CXGN::Biosource::Schema->connect(
+        CXGN::GEM::Schema->connect(
                    sub{ CXGN::DB::Connection->new()->get_actual_dbh()}, 
                    %other_parameters );
         a $experimental_design_name, a scalar
@@ -194,7 +241,7 @@ sub new_by_name {
             ## object with the exprimental design name set in it.
 
 	    $expdesign = $class->new($schema);
-	    $expdesign->set_sample_name($name);
+	    $expdesign->set_experimental_design_name($name);
 	}
 	else {
 
@@ -675,12 +722,12 @@ sub add_dbxref {
         $dbxref_id = $dbxref;
     }
     elsif (ref($dbxref) eq 'HASH') { 
-        if (exists $dbxref->{'dbname'}) {
+        if (exists $dbxref->{'dbxname'}) {
             my ($db_row) = $self->get_schema()
                                  ->resultset('General::Db')
                                  ->search( { name => $dbxref->{'dbxname'} });
 	    if (defined $db_row) {
-		my $db_id = $db_row->get_column('name');
+		my $db_id = $db_row->get_column('db_id');
 
 		my ($dbxref_row) = $self->get_schema()
 		                        ->resultset('General::Dbxref')
@@ -724,7 +771,7 @@ sub add_dbxref {
 
 =head2 get_dbxref_list
 
-  Usage: my @pub_list = $expdesign->get_publication_list();
+  Usage: my @dbxref_id_list = $expdesign->get_dbxref_list();
 
   Desc: Get a list of dbxref_id associated to this experimental design.
 
@@ -995,11 +1042,11 @@ sub get_experimental_design_dbxref_metadbdata {
   
   Ret:  0 -> false (it is not obsolete) or 1 -> true (it is obsolete)
   
-  Args: $pub_id, a publication_id
+  Args: $dbxref_id, a dbxref_id
   
   Side_Effects: none
   
-  Example: unless ($expdesign->is_experimental_design_pub_obsolete($dbxref_id)){
+  Example: unless ($expdesign->is_experimental_design_dbxref_obsolete($dbxref_id)){
                 ## do something 
            }
 
@@ -1549,9 +1596,9 @@ sub obsolete_dbxref_association {
 #####################
 
 
-=head2 get_experiments
+=head2 get_experiment_list
 
-  Usage: my @experiments = $expdesign->get_experiments();
+  Usage: my @experiments = $expdesign->get_experiment_list();
   
   Desc: Get a list of CXGN::GEM::Experiment objects.
   
@@ -1562,33 +1609,82 @@ sub obsolete_dbxref_association {
   Side_Effects: die if the experiment_design_object have not any 
                 experimental_design_id
   
-  Example: my @experiments = $expdesign->get_experiments();
+  Example: my @experiments = $expdesign->get_experiment_list();
 
 =cut
 
-# sub get_experiments {
-#   my $self = shift;
+sub get_experiment_list {
+   my $self = shift;
 
-#   my @experiments = ();
+   my @experiments = ();
 
-#   my $experimental_design_id = $seld->get_experimental_design_id();
+   my $experimental_design_id = $self->get_experimental_design_id();
 
-#   unless (defined $experimental_design_id) {
-#       croak("OBJECT MANIPULATION ERROR: The $self object haven't any experimental_design_id. Probably it hasn't store yet.\n");
-#   }
+   unless (defined $experimental_design_id) {
+       croak("OBJECT MANIPULATION ERROR: The $self object haven't any experimental_design_id. Probably it hasn't store yet.\n");
+   }
   
-#   my @exp_rows = $self->get_schema()
-#                       ->resultset('GeExperiment')
-# 		      ->search( { experiment_design_id => $experimental_design_id } );
+   my @exp_rows = $self->get_schema()
+                       ->resultset('GeExperiment')
+   		       ->search( { experimental_design_id => $experimental_design_id } );
 
-#   foreach my $exp_row (@exp_rows) {
-#       my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $exp_row->get_column('experiment_id'));
+   foreach my $exp_row (@exp_rows) {
+       my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $exp_row->get_column('experiment_id'));
       
-#       push @experiments, $experiment;
-#   }
+       push @experiments, $experiment;
+   }
+   
+   return @experiments;
+}
+
+=head2 get_target_list
+
+  Usage: my @targets = $expdesign->get_target_list();
   
-#   return @experiments;
-# }
+  Desc: Get a list of CXGN::GEM::Target objects.
+  
+  Ret:  An array with a list of CXGN::GEM::Target objects.
+  
+  Args: none
+  
+  Side_Effects: die if the experiment_design_object have not any 
+                experimental_design_id
+  
+  Example: my @targets = $expdesign->get_target_list();
+
+=cut
+
+sub get_target_list {
+   my $self = shift;
+
+   my @targets = ();
+
+   my $experimental_design_id = $self->get_experimental_design_id();
+
+   unless (defined $experimental_design_id) {
+       croak("OBJECT MANIPULATION ERROR: The $self object haven't any experimental_design_id. Probably it hasn't store yet.\n");
+   }
+  
+   my @exp_rows = $self->get_schema()
+                       ->resultset('GeExperiment')
+   		       ->search( { experimental_design_id => $experimental_design_id } );
+
+   foreach my $exp_row (@exp_rows) {
+       my $experiment_id = $exp_row->get_column('experiment_id');
+
+       my @target_rows = $self->get_schema()
+                       ->resultset('GeTarget')
+   		       ->search( { experiment_id => $experiment_id } );
+       
+       foreach my $target_row (@target_rows) {
+	   my $target = CXGN::GEM::Target->new($self->get_schema(), $target_row->get_column('target_id') );
+
+	   push @targets, $target;
+       }
+   }
+   
+   return @targets;
+}
 
 
 

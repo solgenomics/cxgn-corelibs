@@ -40,11 +40,6 @@ __PACKAGE__->has_many(
   "CXGN::GEM::Schema::GeHybridization",
   { "foreign.target_id" => "self.target_id" },
 );
-__PACKAGE__->has_many(
-  "ge_probe_expressions",
-  "CXGN::GEM::Schema::GeProbeExpression",
-  { "foreign.target_element_id" => "self.target_id" },
-);
 __PACKAGE__->belongs_to(
   "experiment_id",
   "CXGN::GEM::Schema::GeExperiment",
@@ -62,8 +57,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04005 @ 2009-11-24 17:00:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:88RHz+KyF5fnFC0Ugji/eQ
+# Created by DBIx::Class::Schema::Loader v0.04005 @ 2010-02-01 11:35:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:M422nSgXBmrlUYBDuIB+fA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
