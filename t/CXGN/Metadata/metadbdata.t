@@ -48,6 +48,7 @@ use Data::Dumper;
 use Test::More tests=>53;  # use  qw | no_plan | while developing the tests
 
 use CXGN::DB::Connection;
+use CXGN::DB::DBICFactory;
 
 BEGIN {
     use_ok('CXGN::Metadata::Schema');                  ## Test1
@@ -58,12 +59,28 @@ BEGIN {
 CXGN::Metadata::Schema->can('connect')
     or BAIL_OUT('could not load the CXGN::Metadata::Schema module');
 
-my $schema = CXGN::Metadata::Schema->connect( sub { CXGN::DB::Connection->new({ dbuser => 'postgres',
-                                                                            dbpass => 'Eise!Th9',
-                                                                          })->get_actual_dbh() },
-                                          { on_connect_do => ['SET search_path TO metadata,sgn_people;'],
-                                          },
-                                        );
+
+## The triggers need to set the search path to tsearch2 in the version of psql 8.1
+my $psqlv = `psql --version`;
+chomp($psqlv);
+
+my @schema_list = ('biosource', 'metadata', 'public');
+if ($psqlv =~ /8\.1/) {
+    push @schema_list, 'tsearch2';
+}
+
+my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Biosource::Schema', 
+                                                 search_path => \@schema_list, 
+                                                 dbconn_args => 
+                                                                { 
+                                                                    dbuser => $ENV{GEMTEST_DBUSER},
+                                                                    dbpass => $ENV{GEMTEST_DBPASS},
+                                                                }
+                                               );
+
+$schema->txn_begin();
+
+
 
 ## It will create some predefined times to use by the script
 
@@ -359,10 +376,11 @@ if ($@) {
 
 
 
+
  ## RESTORING THE ORIGINAL STATE IN THE DATABASE
 ## To restore the original state in the database, rollback (it is in a transaction) and set the table_sequence values. 
 
-$schema->storage->dbh->rollback();
+$schema->txn_rollback();
 
 ## The transaction change the values in the sequence, so if we want set the original value, before the changes
  ## we have two options:
@@ -373,4 +391,12 @@ $schema->storage->dbh->rollback();
       ##   The option 1 leave the seq information in a original state except if there aren't any value in the seq, that it is
        ##   more as the option 2 
 
-$schema->set_sqlseq_values_to_original_state(\%last_ids);
+if ($ENV{RESET_DBSEQ}) {
+    $schema->set_sqlseq_values_to_original_state(\%last_ids);
+}
+
+
+#####
+1; ##
+#####
+
