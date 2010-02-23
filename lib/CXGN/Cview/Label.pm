@@ -34,7 +34,7 @@ vertical orientation for labels
 
 =back
 
-The idea of the label class is that it points to a reference point, which is set using set_reference_point(). Then you specify the distance on the side of the label, and the label will be drawn with a line to the reference point. The actual placement of the label occurs through the set_horizontal_offset and set_vertical_offset routines of the ImageObject interface from which Label inherits. You can also use set_align_right to force the text label to align on the right side of the connector line, and set_align_left to force the text to align on the left. The default is if the horizontal coordinate of the reference point is smaller than the horizontal offset of the text label, the text label is aligned right, and left otherwise.
+The idea of the label class is that it points to a reference point, which is set using set_reference_point(). Then you specify the distance on the side of the label, and the label will be drawn with a line to the reference point. The actual placement of the label occurs through the set_horizontal_offset and set_vertical_offset routines of the ImageObject interface from which Label inherits. You can also use align_right() to force the text label to align on the right side of the connector line, and set_align_left to force the text to align on the left. The default is if the horizontal coordinate of the reference point is smaller than the horizontal offset of the text label, the text label is aligned right, and left otherwise.
 
 Inherits from L<CXGN::Cview::ImageObject>. 
 
@@ -247,7 +247,7 @@ sub set_reference_point {
     @{$self->{reference_point}}=@_;
 }
 
-=head2 function set_align_right()
+=head2 function align_right()
 
   Synopsis:	
   Arguments:	
