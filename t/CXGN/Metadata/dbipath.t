@@ -68,6 +68,10 @@ BEGIN {
 CXGN::Metadata::Schema->can('connect')
     or BAIL_OUT('could not load the CXGN::Metadata::Schema module');
 
+## Prespecified variable
+
+my $metadata_creation_user = $ENV{GEMTEST_METALOADER};
+
 
 ## The triggers need to set the search path to tsearch2 in the version of psql 8.1
 my $psqlv = `psql --version`;
@@ -100,7 +104,7 @@ my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'};
 my $last_dbipath_id = $last_ids{'metadata.md_dbipath_dbipath_id_seq'};
 
 ## Create a empty metadata object to use in the database store functions
-my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, 'aure');
+my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $metadata_creation_user);
 my $creation_date = $metadbdata->get_object_creation_date();
 my $creation_user_id = $metadbdata->get_object_creation_user_by_id();
 
