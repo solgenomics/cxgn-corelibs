@@ -61,6 +61,7 @@ package CXGN::Cview::MapFactory::SGN;
 
 use base qw| CXGN::DB::Object |;
 
+use SGN::Context;
 use CXGN::Cview::Map::SGN::Genetic;
 #use CXGN::Cview::Map::SGN::User;
 use CXGN::Cview::Map::SGN::Fish;
@@ -105,6 +106,7 @@ sub create {
     my $self = shift;
     my $hashref = shift;
     
+    my $c = SGN::Context->new();
     #print STDERR "Hashref = map_id => $hashref->{map_id}, map_version_id => $hashref->{map_version_id}\n";
     
     if (!exists($hashref->{map_id}) && !exists($hashref->{map_version_id})) { 
@@ -148,7 +150,26 @@ sub create {
 	return CXGN::Cview::Map::SGN::User->new($self->get_dbh(), $id);
     }
     elsif ($id =~ /^il/i) { 
-	return CXGN::Cview::Map::SGN::IL->new($self->get_dbh(), $id);
+	my $abstract = 
+	"The tomato Introgression lines (ILs) are a set of nearly isogenic lines (NILs) developed by Dani Zamir through a succession of backcrosses, where each line carries a single genetically defined chromosome segment from a divergent genome. The ILs, representing whole-genome coverage of S. pennellii in overlapping segments in the genetic background of S. lycopersicum cv. M82, were first phenotyped in 1993, and presently this library consists of 76 genotypes. ";
+	
+	my ($population_id, $map_id) = $self->get_db_ids($id);
+	if ($map_id == 9) { 
+	    $abstract .= " This IL map is based on markers of the F2-2000 map. ILs have also been mapped <a href=\"map.pl?map_id=il6.5&amp;show_ruler=1&amp;show_offsets=1\" >with the ExPEN1992 map as a reference</a>.";
+	}
+	elsif ($map_id ==5) { 
+	    $abstract .= " The IL lines on this map have been characterized based on the markers on the 1992 tomato map. ILs have also been mapped <a href=\"map.pl?map_id=il6.9&amp;show_ruler=1&amp;show_offsets=1\" >with the ExPEN2000 map as a reference</a>. ";
+	}
+	
+	my $ref_map = "ExPEN2000";
+	if ($id==5) { $ref_map = "ExPEN1992";}
+	my $long_name =qq | <i>Solanum lycopersicum</i> Zamir Introgression Lines (IL) based on $ref_map |;
+
+	return CXGN::Cview::Map::SGN::IL->new($self->get_dbh(), $id, 
+					      { short_name => "Tomato IL map",
+						long_name => $long_name,
+						abstract => $abstract 
+					      });
     }
     elsif ($id =~ /^\//) { 
 	#return CXGN::Cview::Map::SGN::File->new($dbh, $id);
@@ -157,21 +178,54 @@ sub create {
 	return CXGN::Cview::Map::SGN::Physical->new($self->get_dbh(), $id);
     }
     elsif ($id =~ /^o$/i) { 
-	return CXGN::Cview::Map::SGN::ProjectStats->new($self->get_dbh(), $id);
+	
+	return CXGN::Cview::Map::SGN::ProjectStats->new($self->get_dbh(), { 
+	    short_name=>"Tomato Sequencing Progress",
+	    long_name=>"Tomato Sequencing Statistics by Chromosome", 
+	    abstract => $self->get_abstract(),
+	    
+	});
     }
+    
     elsif ($id =~ /^agp$/i) { 
-	return CXGN::Cview::Map::SGN::AGP->new($self->get_dbh(), $id);
+	return CXGN::Cview::Map::SGN::AGP->new($self->get_dbh(), $id, {
+					       short_name => "Tomato AGP map",
+					       long_name => "Tomato (Solanum lycopersicum) Accessioned Golden Path map",
+					       abstract => "<p>The AGP map shows the sequencing progress of the international tomato genome sequencing project by listing all finished clones by estimated physical map position . Each sequencing center generates one or more AGP (Accessioned Golden Path) files and uploads them to SGN. These files contain all the sequenced BACs, their position on the chromosome, the overlaps with other BACs and other information. For a complete specification, please refer to the <a href=\"http://www.sanger.ac.uk/Projects/C_elegans/DOCS/agp_files.shtml\">Sanger AGP specification</a>. The AGP files can also be downloaded from the SGN FTP site, at <a href=\"ftp://ftp.sgn.cornell.edu/tomato_genome/agp/\">ftp://ftp.sgn.cornell.edu/tomato_genome/agp/</a>.</p> <p>Note that this map is in testing (beta), and not all features may be functional.</p>" ,
+					       temp_dir => File::Spec->catfile($c->get_conf('basepath'), $c->get_conf('tempfiles_subdir'), 'cview') } );
     }
     elsif ($id =~ /^itag$/i) { 
 	return CXGN::Cview::Map::SGN::ITAG->new($self->get_dbh(), $id);
     }
-    elsif ($id =~ /^u\d+$/i) {
-	return CXGN::Cview::Map::SGN::User->new($self->get_dbh(), $id);
-    }
+#    elsif ($id =~ /^u\d+$/i) {
+#	return CXGN::Cview::Map::SGN::User->new($self->get_dbh(), $id);
+#    }
     elsif ($id =~ /^c\d+$/i) { 
-	return CXGN::Cview::Map::SGN::Contig->new($self->get_dbh(), $id, { berkeley_db_path=>'/data/prod/public/tomato_genome/physical_mapping/fpc/SGN_2009/gbrowse/curr/' });
+	return CXGN::Cview::Map::SGN::Contig->new($self->get_dbh(), $id, { 
+	    berkeley_db_path=>'/data/prod/public/tomato_genome/physical_mapping/fpc/SGN_2009/gbrowse/curr/',
+	    short_name => "Tomato FPC map SGN2009",
+	    long_name => "Solanum lycopersicum Contig Map SGN2009",
+	    temp_dir => File::Spec->catfile($c->get_conf('basepath'), $c->get_conf('tempfiles_subdir'), 'cview'),
+	    marker_link => "/gbrowse/gbrowse/fpc_tomato_sgn_2009/?name=",
+	    
+	    abstract => qq|
+	    
+<p>This map shows the contig positions of the SGN2009 physical map constructed at the Arizona Genome Institute in late 2009. The marker positions shown are from the latest <a href="/cview/map.pl?map_id=9">EXPEN2000 map</a>.</p>
+    
+    <p>This physical map contains clones from the HindIII, EcoRI, MboI and sheared BAC library.</p>
+    
+    <p>This overview shows the counts of contigs along the chromosome. Click on any chromosome to view the individual contigs. More information on each contig can be obtained by by clicking on a specific contig.
+    
+    <p>Specific contig IDs, including contigs that are not mapped, can be searched on the <a href="/gbrowse/gbrowse/fpc_tomato_sgn_2009/">FPC viewer page</a>.</p>
+    <br />
+    
+    
+|
+						  
+						  }
+	    );
     }
-
+    
     print STDERR "Map NOT FOUND!!!!!!!!!!!!!!!!!!\n\n";
     return undef;
 
@@ -270,5 +324,22 @@ sub get_user_maps {
 }
 
 
+sub get_db_ids { 
+    my $self = shift;
+    my $id = shift;
+
+    my $population_id = 6;
+    my $reference_map_id=5;
+
+    if ($id=~/il(\d+)\.?(\d*)?/) { 
+	$population_id=$1;
+	$reference_map_id=$2;
+    }
+    if (!$reference_map_id) { $reference_map_id=5; }
+    if (!$population_id) { $population_id=6; }
+    print STDERR "Population ID: $population_id, reference_map_id = $reference_map_id\n";
+
+    return ($population_id, $reference_map_id);
+}
 
 return 1;
