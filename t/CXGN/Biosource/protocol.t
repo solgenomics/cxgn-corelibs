@@ -84,6 +84,9 @@ CXGN::Biosource::Schema->can('connect')
 CXGN::Metadata::Schema->can('connect')
     or BAIL_OUT('could not load the CXGN::Metadata::Schema module');
 
+## Prespecified variable
+
+my $metadata_creation_user = $ENV{GEMTEST_METALOADER};
 
 ## The biosource schema contain all the metadata classes so don't need to create another Metadata schema
 
@@ -116,7 +119,7 @@ my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'};
 my $last_protocol_id = $last_ids{'biosource.bs_protocol_protocol_id_seq'};
 
 ## Create a empty metadata object to use in the database store functions
-my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, 'aure');
+my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $metadata_creation_user);
 my $creation_date = $metadbdata->get_object_creation_date();
 my $creation_user_id = $metadbdata->get_object_creation_user_by_id();
 
@@ -228,7 +231,8 @@ eval {
 	or diag "Looks like this failed";
     is($obj_metadbdata->get_create_date(), $creation_date, "TESTING GET_METADATA FUNCTION, checking create_date")
 	or diag "Looks like this failed";
-    is($obj_metadbdata->get_create_person_id_by_username, 'aure', "TESING GET_METADATA FUNCTION, checking create_person by username")
+    is($obj_metadbdata->get_create_person_id_by_username, $metadata_creation_user, 
+       "TESING GET_METADATA FUNCTION, checking create_person by username")
 	or diag "Looks like this failed";
     
     ## Testing die for store function (TEST 23 and 24)
