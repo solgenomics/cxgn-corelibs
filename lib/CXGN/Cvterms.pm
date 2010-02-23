@@ -131,7 +131,7 @@ sub to_html {
      <tr><td colspan="2" ><b>Search by trait name</b> (<a href="../help/qtl_cvterm_search_help.pl" />help<a />)</td></tr>
      <tr><td>$cvterm_search</td>
         <td><input type="submit" value="Search"/></td> 
-        <td><a href="../phenome/submit_qtl_data.pl">[Submit new QTL data]</a></td>       
+        <td><a href="../phenome/qtl_form.pl">[Submit new QTL data]</a></td>       
      </tr>
    </table>   
     
