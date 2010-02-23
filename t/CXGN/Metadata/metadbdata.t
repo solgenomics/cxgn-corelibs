@@ -59,6 +59,9 @@ BEGIN {
 CXGN::Metadata::Schema->can('connect')
     or BAIL_OUT('could not load the CXGN::Metadata::Schema module');
 
+## Prespecified variable
+
+my $metadata_creation_user = $ENV{GEMTEST_METALOADER};
 
 ## The triggers need to set the search path to tsearch2 in the version of psql 8.1
 my $psqlv = `psql --version`;
@@ -152,9 +155,9 @@ eval {
 
  ## Create a new empty object with object_creation_user argument
 
-   my $metadata_s = CXGN::Metadata::Metadbdata->new($schema, 'Aubombarely');
+    my $metadata_s = CXGN::Metadata::Metadbdata->new($schema, $metadata_creation_user);
 
- ## Other option is use $metadata_s->set_create_person_id_by_username('Aubombarely');
+ ## Other option is use $metadata_s->set_create_person_id_by_username($creation_user_name);
  ## The module check if exists the sp_person_id in the sgn_people.sp_person table      
  ## Use the same to test the get_create_person_id_by_username
  ## Tests from 12 to 14
@@ -162,7 +165,7 @@ eval {
    is ($metadata_s->get_create_person_id_by_username(), undef, 'undefined create_person_id_by_username before store test')
        or diag "Looks like this failed.";
    my $stored_metadata = $metadata_s->store(); ## During the store the create_person_id should be set with the value by default
-   is ($stored_metadata->get_create_person_id_by_username(), 'Aubombarely', 'create_person_id_by_username test')
+   is ($stored_metadata->get_create_person_id_by_username(), $metadata_creation_user, 'create_person_id_by_username test')
        or diag "Looks like this failed.";
    my $store_metadata_id = $stored_metadata->get_metadata_id();
    my $expected_metadata_id = $last_metadata_id+1;
@@ -174,7 +177,7 @@ eval {
    $stored_metadata->set_modified_date($future);
 
  ## We do not set the modification_person_by_username to see if it get the object_creation_user by default.
- ## An alternative is use $stored_metadata->set_modified_person_id_by_username('Aubombarely');
+ ## An alternative is use $stored_metadata->set_modified_person_id_by_username($creation_user_name);
  ## Test 15 and 16
 
    $stored_metadata->set_modification_note('set_data');
@@ -227,14 +230,14 @@ eval {
    
    my $query_for_person_id = "SELECT sp_person_id FROM sgn_people.sp_person WHERE username=?";
    my $sth_p=$schema->storage->dbh->prepare($query_for_person_id);
-   $sth_p->execute('Aubombarely');
-   my ($sp_person_id_for_Aubombarely) = $sth_p->fetchrow_array();
+   $sth_p->execute($metadata_creation_user);
+   my ($sp_person_id_for_creation_user) = $sth_p->fetchrow_array();
 
    my %third_expected_metadata = (  metadata_id => $last_metadata_id+3,
 				    create_date => $general_create_date,
 				    create_person_id => $general_create_person_id,
 				    modified_date => $far_future,
-				    modified_person_id => $sp_person_id_for_Aubombarely, 
+				    modified_person_id => $sp_person_id_for_creation_user, 
 				    modification_note => 'set_other_data',
 				    obsolete => 0,
 				    obsolete_note => 'undefined',
@@ -246,7 +249,7 @@ eval {
 				    create_date => $general_create_date,
 				    create_person_id => $general_create_person_id,
 				    modified_date => $future,
-				    modified_person_id => $sp_person_id_for_Aubombarely, 
+				    modified_person_id => $sp_person_id_for_creation_user, 
 				    modification_note => 'set_data',
 				    obsolete => 0,
 				    obsolete_note => 'undefined',
@@ -303,12 +306,12 @@ eval {
 ## and we are going to use the same function. Now should insert a new metadata_id.
 ## Test 44 and 45
 
-   my $fos_metadata = CXGN::Metadata::Metadbdata->new($schema, 'Aubombarely');
+   my $fos_metadata = CXGN::Metadata::Metadbdata->new($schema, $metadata_creation_user);
    $fos_metadata->set_object_creation_date($general_create_date);          ## Now have the same object_create_date and object_create_user
    $fos_metadata->set_metadata_by_rows({ create_date          => $general_create_date,              ## We set the same values than the 
 					 create_person_id     => $general_create_person_id,         ## third metadata object
 					 modified_date        => $far_future,
-					 modified_person_id   => $sp_person_id_for_Aubombarely, 
+					 modified_person_id   => $sp_person_id_for_creation_user, 
 					 modification_note    => 'set_other_data',
 					 previous_metadata_id => $last_metadata_id+2,
 					 obsolete             => 0,
@@ -350,7 +353,7 @@ eval {
 
    my $f_metadata_object = CXGN::Metadata::Metadbdata->new($schema);
    $f_metadata_object->set_create_date($future);
-   $f_metadata_object->set_create_person_id_by_username('Aubombarely');
+   $f_metadata_object->set_create_person_id_by_username($metadata_creation_user);
    my $new_f_metadata_object = $f_metadata_object->force_insert();
    my $new_f_metadata_id = $new_f_metadata_object->get_metadata_id();
    my $new_f_metadata_id_expected = $last_metadata_id+5;
