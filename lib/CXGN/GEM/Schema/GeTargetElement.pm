@@ -41,6 +41,11 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("target_element_id");
 __PACKAGE__->add_unique_constraint("ge_target_element_target_id_key", ["target_id", "dye"]);
 __PACKAGE__->add_unique_constraint("ge_target_element_pkey", ["target_element_id"]);
+__PACKAGE__->has_many(
+  "ge_probe_expressions",
+  "CXGN::GEM::Schema::GeProbeExpression",
+  { "foreign.target_element_id" => "self.target_element_id" },
+);
 __PACKAGE__->belongs_to(
   "target_id",
   "CXGN::GEM::Schema::GeTarget",
@@ -48,8 +53,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04005 @ 2009-11-24 17:00:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:F2u0Ew0qKa2vHn44IE451Q
+# Created by DBIx::Class::Schema::Loader v0.04005 @ 2010-02-01 11:35:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CVBmdycf7Mhq5GNUUKdN8A
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

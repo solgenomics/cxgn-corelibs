@@ -31,8 +31,6 @@ __PACKAGE__->add_columns(
   },
   "platform_id",
   { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
-  "dbiref_id",
-  { data_type => "bigint", default_value => undef, is_nullable => 1, size => 8 },
   "metadata_id",
   { data_type => "bigint", default_value => undef, is_nullable => 1, size => 8 },
 );
@@ -69,6 +67,11 @@ __PACKAGE__->belongs_to(
   { platform_id => "platform_id" },
 );
 __PACKAGE__->has_many(
+  "ge_template_dbirefs",
+  "CXGN::GEM::Schema::GeTemplateDbiref",
+  { "foreign.template_id" => "self.template_id" },
+);
+__PACKAGE__->has_many(
   "ge_template_dbxrefs",
   "CXGN::GEM::Schema::GeTemplateDbxref",
   { "foreign.template_id" => "self.template_id" },
@@ -85,8 +88,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04005 @ 2009-11-24 17:00:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:M8UK1nrY6kj9JuAo2yFoSw
+# Created by DBIx::Class::Schema::Loader v0.04005 @ 2010-02-01 11:35:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JR2Zb5ABMn5ut3ibrRyhzA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

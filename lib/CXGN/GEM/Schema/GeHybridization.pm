@@ -19,6 +19,13 @@ __PACKAGE__->add_columns(
   { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
   "platform_id",
   { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
+  "platform_batch",
+  {
+    data_type => "character varying",
+    default_value => undef,
+    is_nullable => 1,
+    size => 250,
+  },
   "protocol_id",
   { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
   "metadata_id",
@@ -48,8 +55,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04005 @ 2009-11-24 17:00:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:a0wzyybHtNFScNPmyP3DRA
+# Created by DBIx::Class::Schema::Loader v0.04005 @ 2010-02-01 11:35:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:h9AUnQ1eBJWoVOUWk0rgcg
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
