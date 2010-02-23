@@ -1,6 +1,5 @@
-package CXGN::Tools::Organism;
-use strict;
-use warnings;
+
+
 
 =head1 NAME
 
@@ -27,6 +26,15 @@ Functions for accessing ogranism names and their identifiers
  Example:
 
 =cut
+
+package CXGN::Tools::Organism;
+
+use strict;
+use warnings;
+
+
+
+
 
 sub get_all_organisms {
     my $dbh = shift;
@@ -108,6 +116,39 @@ sub get_all_populations {
     }
     return (\@names, \@ids);
 }
+
+
+=head2 organism_id_specie
+
+ Usage: $id = CXGN::Tools::Organism::organism_id_specie($dbh, $specie);
+ Desc: retrieves the organism id from sgn.organism
+ Ret: organism id
+ Args: db handle, specie name (eg. solanum lycopersicum)
+ Side Effects: access db
+ Example:
+
+=cut
+
+sub organism_id_specie {
+    my $dbh = shift;
+    my $specie = shift;
+
+    print STDERR "specie_tax: $specie\n";
+
+    my $sth = $dbh->prepare("SELECT organism_id 
+                                    FROM sgn.organism
+                                    WHERE specie_tax ILIKE ?"
+                           );
+    $sth->execute($specie);
+    my $id;
+    while (my $id_1 = $sth->fetchrow_array()) {
+	$id = $id_1;
+    }
+    return $id;
+    
+}
+
+
 
 
 return 1;
