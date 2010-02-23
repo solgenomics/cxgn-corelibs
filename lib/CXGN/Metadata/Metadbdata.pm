@@ -1,3 +1,18 @@
+
+package CXGN::Metadata::Metadbdata;
+
+use strict;
+use warnings;
+
+use base qw | CXGN::DB::Object |;
+use CXGN::Metadata::Schema;
+use Carp;
+
+
+###############
+### PERLDOC ###
+###############
+
 =head1 NAME
 
 CXGN::Metadata::Metadbdata
@@ -238,14 +253,6 @@ All the SQL searches related with sgn_people should be replaced by the methods
 
 =cut
 
-use strict;
-use warnings;
-
-package CXGN::Metadata::Metadbdata;
-
-use base qw | CXGN::DB::Object |;
-use CXGN::Metadata::Schema;
-use Carp;
 
 =head2 constructor: new
 
@@ -1295,8 +1302,6 @@ sub store {
     my $self = shift;
     my $modify_data_href = shift;
 
-    my $umetadata;
-
     ## Check the database user (only the postgres user have permission to insert/update data)
 
     my ($user)= $self->get_schema
@@ -1316,7 +1321,7 @@ sub store {
     if (defined $metadata_id) {
 
         ## It can be a modified data
-	$umetadata = $self->modified_data_store($modify_data_href);
+	$self->modified_data_store($modify_data_href);
 
     } 
     else {
@@ -1333,18 +1338,17 @@ sub store {
 	    if (defined $metadata_from_db) {	    
 		
 		$self->set_mdmetadata_row($metadata_from_db);
-		$umetadata = $self;
 	    }
 	} 
 	else {
 	    
             ## It will create a new metadata id. It will not check the creation_user because it was checked during the
 	    ## the creation of the object
-	    $umetadata = $self->new_data_store();
+	    $self->new_data_store();
 	}
     }
 
-    return $umetadata;    
+    return $self;    
 }
 
 =head2 new_data_store

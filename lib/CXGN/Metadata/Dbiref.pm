@@ -1,10 +1,29 @@
 
+package CXGN::Metadata::Dbiref;
+
+use strict;
+use warnings;
+
+use base qw | CXGN::DB::Object |;
+use CXGN::Metadata::Schema;
+use CXGN::Metadata::Dbipath;
+use CXGN::Metadata::Metadbdata;
+use Carp qw(croak cluck);
+
+
+###############
+### PERLDOC ###
+###############
+
 =head1 NAME
 
 CXGN::Metadata::Dbiref 
 a class to manipulate a internal database reference (Dbiref).
 
-Version: 0.1
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
 
 =head1 SYNOPSIS
 
@@ -69,16 +88,6 @@ The following class methods are implemented:
 
 =cut 
 
-use strict;
-use warnings;
-
-package CXGN::Metadata::Dbiref;
-
-use base qw | CXGN::DB::Object |;
-use CXGN::Metadata::Schema;
-use CXGN::Metadata::Dbipath;
-use CXGN::Metadata::Metadbdata;
-use Carp qw(croak cluck);
 
 
 ###########################

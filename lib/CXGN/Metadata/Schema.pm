@@ -5,6 +5,51 @@ use warnings;
 
 use base 'DBIx::Class::Schema';
 
+
+###############
+### PERLDOC ###
+###############
+
+=head1 NAME
+
+CXGN::GEM::Schema
+a DBIx::Class::Schema object to manipulate the gem schema.
+
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
+
+=head1 SYNOPSIS
+
+ my $schema_list = 'metadata'; 
+
+ my $schema = CXGN::Metadata::Schema->connect( sub { $dbh }, 
+                                          { on_connect_do => ["SET search_path TO $schema_list"] }, );
+
+ ## Using DBICFactory:
+
+ my @schema_list = split(/,/, $schema_list); 
+ my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Metadata::Schema', search_path => \@schema_list, );
+
+
+=head1 DESCRIPTION
+
+ This class create a new DBIx::Class::Schema object and load the all the metadata classes.
+
+
+=head1 AUTHOR
+
+Aureliano Bombarely <ab782@cornell.edu>
+
+
+=head1 CLASS METHODS
+
+The following class methods are implemented:
+
+=cut 
+
+
 __PACKAGE__->load_classes;
 
 
