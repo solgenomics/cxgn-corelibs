@@ -71,7 +71,7 @@ CXGN::Metadata::Schema->can('connect')
 my $psqlv = `psql --version`;
 chomp($psqlv);
 
-my @schema_list = ('biosource', 'metadata', 'public');
+my @schema_list = ('metadata', 'public');
 if ($psqlv =~ /8\.1/) {
     push @schema_list, 'tsearch2';
 }
