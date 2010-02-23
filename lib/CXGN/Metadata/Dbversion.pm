@@ -1,10 +1,30 @@
 
+
+package CXGN::Metadata::Dbversion;
+
+use strict;
+use warnings;
+
+use base qw | CXGN::DB::Object |;
+use CXGN::Metadata::Schema;
+use CXGN::Metadata::Metadbdata;
+use Carp qw| croak cluck |;
+
+
+
+###############
+### PERLDOC ###
+###############
+
 =head1 NAME
 
 CXGN::Metadata::Dbversion
 a class to manipulate data from the metadata.md_dbversion table.
 
-Version: 0.1
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
 
 =head1 SYNOPSIS
 
@@ -109,15 +129,6 @@ The following class methods are implemented:
 
 =cut 
 
-use strict;
-use warnings;
-
-package CXGN::Metadata::Dbversion;
-
-use base qw | CXGN::DB::Object |;
-use CXGN::Metadata::Schema;
-use CXGN::Metadata::Metadbdata;
-use Carp qw| croak cluck |;
 
 
 ############################

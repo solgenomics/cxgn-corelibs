@@ -1,10 +1,29 @@
 
+package CXGN::Metadata::Groups;
+
+use strict;
+use warnings;
+
+use base qw | CXGN::DB::Object |;
+use CXGN::Metadata::Schema;
+use CXGN::Metadata::Metadbdata;
+use CXGN::Metadata::Dbiref;
+use Carp qw | croak cluck |;
+
+
+###############
+### PERLDOC ###
+###############
+
 =head1 NAME
 
 CXGN::Metadata::Groups 
 a class to manipulate a database groups.
 
-Version: 0.1
+=cut
+
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;
 
 =head1 SYNOPSIS
 
@@ -113,16 +132,6 @@ The following class methods are implemented:
 
 =cut 
 
-use strict;
-use warnings;
-
-package CXGN::Metadata::Groups;
-
-use base qw | CXGN::DB::Object |;
-use CXGN::Metadata::Schema;
-use CXGN::Metadata::Metadbdata;
-use CXGN::Metadata::Dbiref;
-use Carp qw | cluck |;
 
 
 ###########################
@@ -321,8 +330,8 @@ sub new_by_members {
 
 	my $members_n = scalar(@{$members_aref});
 
-	my ($groupmember_row) = $schema->resultset('MdGroupmembers')
-	                               ->search( undef,
+	my @groupmember_rows = $schema->resultset('MdGroupmembers')
+	                              ->search( undef,
 				                { 
 					  	  columns  => ['group_id'],
 						  where    => { group_id => { -in  => $members_aref } },
@@ -330,6 +339,20 @@ sub new_by_members {
 						  having   => { 'count(dbiref_id)' => { '=', $members_n } } 
 					        } 
 				               );
+
+	## This search will return all the platform_design that contains the elements specified, it will filter 
+	## by the number of element to take only the rows where have all these elements
+
+	my $groupmember_row;
+	foreach my $row (@groupmember_rows) {
+	    my $count = $schema->resultset('MdGroupmembers')
+	                       ->search( group_id => $row->get_column('group_id') )
+		               ->count();
+	    if ($count == $members_n) {
+		$groupmember_row = $row;
+	    }
+	}
+
 
 	unless (defined $groupmember_row) {    
             
