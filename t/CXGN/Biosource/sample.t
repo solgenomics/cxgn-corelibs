@@ -76,6 +76,9 @@ CXGN::Metadata::Schema->can('connect')
 Bio::Chado::Schema->can('connect')
     or BAIL_OUT('could not load the Bio::Chado::Schema module');
 
+## Prespecified variable
+
+my $metadata_creation_user = $ENV{GEMTEST_METALOADER};
 
 ## The biosource schema contain all the metadata classes so don't need to create another Metadata schema
 
@@ -108,7 +111,7 @@ my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'};
 my $last_sample_id = $last_ids{'biosource.bs_sample_sample_id_seq'};
 
 ## Create a empty metadata object to use in the database store functions
-my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, 'aure');
+my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $metadata_creation_user);
 my $creation_date = $metadbdata->get_object_creation_date();
 my $creation_user_id = $metadbdata->get_object_creation_user_by_id();
 
@@ -162,9 +165,9 @@ foreach my $rootfunction (@function_keys) {
 
 ## Test the set_contact_by_username (TEST 10)
 
-$sample->set_contact_by_username('aure');
+$sample->set_contact_by_username($metadata_creation_user);
 my $contact = $sample->get_contact_by_username();
-is($sample->get_contact_by_username(), 'aure', "BASIC SET/GET FUNCTION for contact_by_username, checking username")
+is($sample->get_contact_by_username(), $metadata_creation_user, "BASIC SET/GET FUNCTION for contact_by_username, checking username")
     or diag "Looks like this failed";
 
 ## Testing the die results (TEST 11 to 21)
@@ -215,7 +218,7 @@ throws_ok { CXGN::Biosource::Sample->new($schema)->set_contact_by_username('non 
      $sample2->set_sample_name('sample_test');
      $sample2->set_sample_type('test');
      $sample2->set_description('This is a description test');
-     $sample2->set_contact_by_username('aure');
+     $sample2->set_contact_by_username($metadata_creation_user);
 
      $sample2->store_sample($metadbdata);
 
@@ -232,7 +235,7 @@ throws_ok { CXGN::Biosource::Sample->new($schema)->set_contact_by_username('non 
 	 or diag "Looks like this failed";
      is($sample2->get_description(), 'This is a description test', "TESTING STORE_SAMPLE FUNCTION, checking description")
 	 or diag "Looks like this failed";
-     is($sample2->get_contact_by_username(), 'aure', "TESTING STORE_SAMPLE FUNCTION, checking contact by username")
+     is($sample2->get_contact_by_username(), $metadata_creation_user, "TESTING STORE_SAMPLE FUNCTION, checking contact by username")
 	 or diag "Looks like this failed";
 
      ## Testing the get_medatata function (TEST 27 to 29)
@@ -242,7 +245,8 @@ throws_ok { CXGN::Biosource::Sample->new($schema)->set_contact_by_username('non 
  	or diag "Looks like this failed";
      is($obj_metadbdata->get_create_date(), $creation_date, "TESTING GET_METADATA FUNCTION, checking create_date")
  	or diag "Looks like this failed";
-     is($obj_metadbdata->get_create_person_id_by_username, 'aure', "TESING GET_METADATA FUNCTION, checking create_person by username")
+     is($obj_metadbdata->get_create_person_id_by_username, $metadata_creation_user, 
+	"TESING GET_METADATA FUNCTION, checking create_person by username")
  	or diag "Looks like this failed";
     
      ## Testing die for store function (TEST 30 and 31)
