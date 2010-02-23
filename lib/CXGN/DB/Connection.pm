@@ -67,7 +67,7 @@ BEGIN {
 		      /;
   foreach my $forward_method (@dbh_methods) {
       no strict 'refs';
-      *{$forward_method} = sub { eval { local $SIG{__DIE__} = \&Carp::confess; shift->_dbh->$forward_method(@_)} };
+      *{$forward_method} = sub { shift->_dbh->$forward_method(@_) };
   }
 }
 
