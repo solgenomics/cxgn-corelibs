@@ -216,7 +216,8 @@ throws_ok { CXGN::GEM::ExperimentalDesign->new($schema)->set_design_type() } qr/
   	or diag "Looks like this failed";
       is($obj_metadbdata->get_create_date(), $creation_date, "TESTING GET_METADATA FUNCTION, checking create_date")
   	or diag "Looks like this failed";
-      is($obj_metadbdata->get_create_person_id_by_username, 'aure', "TESING GET_METADATA FUNCTION, checking create_person by username")
+      is($obj_metadbdata->get_create_person_id_by_username, $metadata_creation_user, 
+	 "TESING GET_METADATA FUNCTION, checking create_person by username")
   	or diag "Looks like this failed";
     
       ## Testing die for store function (TEST 25 and 26)
