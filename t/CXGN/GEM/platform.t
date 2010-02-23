@@ -100,7 +100,7 @@ my $last_pub_id = $last_ids{'public.pub_pub_id_seq'} || 0;
 my $last_contact_id = $last_ids{'sgn_people.sp_person_sp_person_id_seq'} || 0;
 
 ## Create a empty metadata object to use in the database store functions
-my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, 'aure');
+my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $creation_user_name);
 my $creation_date = $metadbdata->get_object_creation_date();
 my $creation_user_id = $metadbdata->get_object_creation_user_by_id();
 

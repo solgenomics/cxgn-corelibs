@@ -355,7 +355,7 @@ eval {
     $sample->set_sample_name('sample_test');
     $sample->set_sample_type('test');
     $sample->set_description('This is a description test');
-    $sample->set_contact_by_username('aure');
+    $sample->set_contact_by_username($metadata_creation_user);
 
     $sample->store_sample($metadbdata);
     my $sample_id = $sample->get_sample_id();
