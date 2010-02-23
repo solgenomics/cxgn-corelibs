@@ -79,6 +79,7 @@ sub new {
     $self -> {curved_height} = $self->get_width();
 
     $self->{chr_nr}=$chr_nr;
+    $self->set_name($chr_nr);
 
     $self -> {font} = GD::Font->Small();
     # set default colors
