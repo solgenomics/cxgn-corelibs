@@ -76,7 +76,7 @@ if ($psqlv =~ /8\.1/) {
     push @schema_list, 'tsearch2';
 }
 
-my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Biosource::Schema', 
+my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Metadata::Schema', 
                                                  search_path => \@schema_list, 
                                                  dbconn_args => 
                                                                 { 
