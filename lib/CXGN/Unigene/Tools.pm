@@ -24,7 +24,7 @@ Coffee unigenes can now be found in SGN. However if you have their old ID you mu
 sub cgn_id_to_sgn_id
 {
     my($dbh,$cgn_id)=@_;
-    my $q="select unigene_id from unigene where database_name='CGN' and sequence_name=?";
+    my $q="select unigene_id from sgn.unigene where database_name='CGN' and sequence_name=?";
     my $sth=$dbh->prepare($q);
     $sth->execute($cgn_id);
     my($sgn_id)=$sth->fetchrow_array();
@@ -34,7 +34,7 @@ sub cgn_id_to_sgn_id
 sub sgn_id_to_cgn_id
 {
     my($dbh,$sgn_id)=@_;
-    my $q="select sequence_name from unigene where database_name='CGN' and unigene_id=?";
+    my $q="select sequence_name from sgn.unigene where database_name='CGN' and unigene_id=?";
     my $sth=$dbh->prepare($q);
     $sth->execute($sgn_id);
     my($cgn_id)=$sth->fetchrow_array();
