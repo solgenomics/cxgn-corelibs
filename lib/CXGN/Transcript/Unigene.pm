@@ -1204,7 +1204,13 @@ sub get_unigene_member_count_in_library {
 sub get_member_library_ids {
     my $self = shift;
     my $sgn = $self->get_dbh()->qualify_schema("sgn");
-    my $query = "SELECT library_id, count(*) as c FROM sgn.unigene_member JOIN sgn.est using(est_id) join sgn.seqread using(read_id) JOIN sgn.clone using(clone_id) WHERE unigene_id=? group by library_id order by c desc";
+    my $query = "SELECT library_id, count(*) as c FROM sgn.unigene_member 
+                  JOIN sgn.est USING(est_id) 
+                  JOIN sgn.seqread USING(read_id) 
+                  JOIN sgn.clone using(clone_id) 
+                  WHERE unigene_id=? 
+                  GROUP BY library_id 
+                  ORDER BY c desc";
     my $sth = $self->get_dbh()->prepare($query);
     $sth->execute($self->get_unigene_id());
     my @library_ids = ();
