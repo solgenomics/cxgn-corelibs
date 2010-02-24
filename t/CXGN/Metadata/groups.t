@@ -464,7 +464,8 @@ eval {
      my $obtained_non_obs = join(',', sort {$a <=> $b} @non_obsolete_acc);
      my $expected_non_obs = join(',', sort {$a <=> $b} ($last_metadata_id+3, $last_metadata_id+4, $last_metadata_id+1 ) );
      
-     is($obtained_non_obs, $expected_non_obs, "GET MEMBERS FUNCTION with NON OBSOLETE TAG, checking accessions for members")
+     is($obtained_non_obs, $expected_non_obs, 
+	"GET MEMBERS FUNCTION with NON OBSOLETE TAG, checking accessions for members")
 	 or diag "Looks like this failed";
 
 
@@ -481,9 +482,20 @@ eval {
 	 push @members12, $m_dbiref_id;
      }
 
+     ## Now it will add a new member ($last_metadata_id+2)
+
+     my $other_dbiref = CXGN::Metadata::Dbiref->new( $schema );
+     $other_dbiref->set_accession($last_metadata_id+2);
+     $other_dbiref->set_dbipath_id_by_dbipath_elements( ['metadata', 'md_metadata', 'metadata_id'] );
+     
+     my $other_dbiref_id = $other_dbiref->store($metadbdata)
+				    ->get_dbiref_id();
+
+     push @members12, $other_dbiref_id;
+
      my $group12;
      warning_like { $group12 = CXGN::Metadata::Groups->new_by_members($schema, \@members12);  } qr/DATABASE COHERENCE/, 
-    'TESTING WARNING ERROR when do not existsa group with the specified elements into the database';
+    'TESTING WARNING ERROR when does not exist group with the specified elements into the database';
 
      my $group12_id = $group12->get_group_id();
      
