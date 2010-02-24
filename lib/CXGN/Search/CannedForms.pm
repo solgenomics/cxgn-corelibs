@@ -13,6 +13,9 @@ use CXGN::Phenotypes;
 use CXGN::Cvterms;
 use CXGN::Publication;
 use CXGN::Chado::Cvterm;
+use CXGN::Searches::GemTemplate;
+use CXGN::Searches::GemExperiment;
+use CXGN::Searches::GemPlatform;
 use CXGN::Page::FormattingHelpers
   qw/blue_section_html info_table_html simple_selectbox_html/;
 
@@ -47,6 +50,98 @@ search form.
 ###############################
 ##   SEARCH FORM FUNCTIONS   ##
 ###############################
+
+
+=head2 expr_template_search_form
+
+  Desc: canned html for the SGN expr_template search form
+  Args: CXGN::Page object
+  Ret : string of HTML that will make an expr_template search form
+
+=cut
+
+sub expr_template_search_form {
+    my $page = shift;
+    my $q    = shift;
+    $q ||= CXGN::Searches::GemTemplate->new()->new_query();
+
+    return <<EOH
+  <table class="search_form_title"><tr><td>
+    <span class="search_form_title">Expression search by template</span>
+  </td>
+  </tr>
+  </table>
+
+<form action="/search/gem_template_search.pl" method="get">
+  <div class="indentedcontent">
+EOH
+      . $q->to_html() . <<EOH;
+  </div>
+</form>
+EOH
+
+}
+
+=head2 expr_experiment_search_form
+
+  Desc: canned html for the SGN expr_experiment search form
+  Args: CXGN::Page object
+  Ret : string of HTML that will make an expr_experiment search form
+
+=cut
+
+sub expr_experiment_search_form {
+    my $page = shift;
+    my $q    = shift;
+    $q ||= CXGN::Searches::GemExperiment->new()->new_query();
+
+    return <<EOH
+  <table class="search_form_title"><tr><td>
+    <span class="search_form_title">Expression search by experiment</span>
+  </td>
+  </tr>
+  </table>
+
+<form action="/search/gem_experiment_search.pl" method="get">
+  <div class="indentedcontent">
+EOH
+      . $q->to_html() . <<EOH;
+  </div>
+</form>
+EOH
+
+}
+
+=head2 expr_platform_search_form
+
+  Desc: canned html for the SGN expr_platform search form
+  Args: CXGN::Page object
+  Ret : string of HTML that will make an expr_platform search form
+
+=cut
+
+sub expr_platform_search_form {
+    my $page = shift;
+    my $q    = shift;
+    $q ||= CXGN::Searches::GemPlatform->new()->new_query();
+
+    return <<EOH
+  <table class="search_form_title"><tr><td>
+    <span class="search_form_title">Expression search by platform</span>
+  </td>
+  </tr>
+  </table>
+
+<form action="/search/gem_platform_search.pl" method="get">
+  <div class="indentedcontent">
+EOH
+      . $q->to_html() . <<EOH;
+  </div>
+</form>
+EOH
+
+}
+
 
 =head2 image_search_form
 
@@ -532,6 +627,8 @@ EOHTML
 
 }
 
+
+
 =head1 AUTHORS
 
   Robert Buels and Beth Skwarecki
@@ -877,6 +974,7 @@ sub species_select {
 # call uniqify_name() to make a name
 
 #required by Perl convention - modules must return something
+
 ###
 1;    #do not remove
 ###
