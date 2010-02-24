@@ -109,6 +109,8 @@ sub create {
     my $c = SGN::Context->new();
     #print STDERR "Hashref = map_id => $hashref->{map_id}, map_version_id => $hashref->{map_version_id}\n";
     
+    my $temp_dir =  File::Spec->catfile($c->get_conf('basepath'), $c->get_conf('tempfiles_subdir'), 'cview'); 
+
     if (!exists($hashref->{map_id}) && !exists($hashref->{map_version_id})) { 
 	die "[CXGN::Cview::MapFactory] Need either a map_id or map_version_id.\n"; 
     }
@@ -192,13 +194,14 @@ sub create {
 					       short_name => "Tomato AGP map",
 					       long_name => "Tomato (Solanum lycopersicum) Accessioned Golden Path map",
 					       abstract => "<p>The AGP map shows the sequencing progress of the international tomato genome sequencing project by listing all finished clones by estimated physical map position . Each sequencing center generates one or more AGP (Accessioned Golden Path) files and uploads them to SGN. These files contain all the sequenced BACs, their position on the chromosome, the overlaps with other BACs and other information. For a complete specification, please refer to the <a href=\"http://www.sanger.ac.uk/Projects/C_elegans/DOCS/agp_files.shtml\">Sanger AGP specification</a>. The AGP files can also be downloaded from the SGN FTP site, at <a href=\"ftp://ftp.sgn.cornell.edu/tomato_genome/agp/\">ftp://ftp.sgn.cornell.edu/tomato_genome/agp/</a>.</p> <p>Note that this map is in testing (beta), and not all features may be functional.</p>" ,
-					       temp_dir => File::Spec->catfile($c->get_conf('basepath'), $c->get_conf('tempfiles_subdir'), 'cview') } );
+					       temp_dir => $temp_dir } );
     }
     elsif ($id =~ /^itag$/i) { 
 	return CXGN::Cview::Map::SGN::ITAG->new($self->get_dbh(), $id, { 
 						short_name => "Tomato ITAG map",
 						long_name=>"Tomato (Solanum lycopersicum) ITAG map",
-						abstract=>"<p>The ITAG map shows the contig assembly and the corresponding BACs as used by the most recent annotation from the International Tomato Annotation Group (ITAG, see <a href=\"http://www.ab.wur.nl/TomatoWiki\">ITAG Wiki</a>). Clicking on the contigs will show the ITAG annotation in the genome browser."}
+						abstract=>"<p>The ITAG map shows the contig assembly and the corresponding BACs as used by the most recent annotation from the International Tomato Annotation Group (ITAG, see <a href=\"http://www.ab.wur.nl/TomatoWiki\">ITAG Wiki</a>). Clicking on the contigs will show the ITAG annotation in the genome browser.",
+						temp_dir => $temp_dir }
 	    );
     }
 #    elsif ($id =~ /^u\d+$/i) {
@@ -209,7 +212,7 @@ sub create {
 	    berkeley_db_path=>'/data/prod/public/tomato_genome/physical_mapping/fpc/SGN_2009/gbrowse/curr/',
 	    short_name => "Tomato FPC map SGN2009",
 	    long_name => "Solanum lycopersicum Contig Map SGN2009",
-	    temp_dir => File::Spec->catfile($c->get_conf('basepath'), $c->get_conf('tempfiles_subdir'), 'cview'),
+	    temp_dir => $temp_dir,
 	    marker_link => "/gbrowse/gbrowse/fpc_tomato_sgn_2009/?name=",
 	    
 	    abstract => qq|
