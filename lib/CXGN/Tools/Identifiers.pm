@@ -105,6 +105,10 @@ still partially assembled) like 'LE_HBa0123A12.1-4'
 
 An ITAG gene model name, like CU123456_2.1
 
+=item tomato_bac_contig
+
+A tomato BAC contig
+
 =item sgn_marker
 
 SGN marker names like 'TG23'.  Good luck with this one.
@@ -179,7 +183,7 @@ our @namespace_list = qw/
 			 bac
 			 itag_coding_sequence
 			 itag_gene_model
-			 tomato_contig
+			 tomato_bac_contig
 			 tair_gene_model
 			 tair_locus
 			 interpro_accession
@@ -793,24 +797,24 @@ sub _get_curr_itag_release {
       }
   };
 }
-#tomato_contig
-sub is_tomato_contig {
+#tomato_bac_contig
+sub is_tomato_bac_contig {
   my ($ident) = @_;
   return 1 if $ident =~ /^C\d+\.\d+[^a-z\d]?contig\d+$/i;
   return 0;
 }
-sub url_tomato_contig {
+sub url_tomato_bac_contig {
   my ($ident) = @_;
   return;
 }
-sub clean_tomato_contig {
+sub clean_tomato_bac_contig {
   my ($ident) = @_;
   $ident = uc $ident;
   $ident =~ s/CONTIG/contig/;
   $ident =~ s/[^a-z\d]?contig/_contig/;
   return $ident;
 }
-sub parse_tomato_contig {
+sub parse_tomato_bac_contig {
   my ($ident)  = @_;
   $ident =~ /^C(\d+)\.(\d+)[^a-z\d]?contig(\d+)$/i
     or return;
