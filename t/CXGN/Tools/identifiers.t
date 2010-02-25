@@ -167,6 +167,8 @@ BEGIN {
      'ipr023339'       => ['interpro_accession', 'IPR023339', qr/www\.ebi\.ac\.uk\/interpro\/IEntry\?ac=IPR023339/],
      'C12.4_contig0'   => ['tomato_bac_contig', 'C12.4_contig0', qr//, { chr => 12, chr_ver => 4, ctg_num => 0, ver => 4 }],
      'c02.42coNTig0'   => ['tomato_bac_contig', 'C02.42_contig0', qr//, { chr => 2, chr_ver => 42, ctg_num => 0, ver => 42 }],
+     'scaffold234'     => ['generic_scaffold', 'scaffold234', qr//, { scaffold_num => 234 } ],
+     'scaFFOld0'       => ['generic_scaffold', 'scaffold0', qr//, { scaffold_num => 0 } ],
      'SSR222'          => ['sgn_marker', 'SSR222', qr//],
      'ac186290_17.1'   => ['itag_gene_model', 'AC186290_17.1', qr/gbrowse.+name=gene:AC186290_17.1$/, { index => 17, ver => 1, accession => 'AC186290'}],
      'cds:ac186290_17.1'   => ['itag_coding_sequence', 'CDS:AC186290_17.1', qr/gbrowse.+name=AC186290_17.1$/, { index => 17, ver => 1, accession => 'AC186290'}],

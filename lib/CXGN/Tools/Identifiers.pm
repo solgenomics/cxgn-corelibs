@@ -107,7 +107,11 @@ An ITAG gene model name, like CU123456_2.1
 
 =item tomato_bac_contig
 
-A tomato BAC contig
+A tomato BAC contig, e.g. C12.4_contig1
+
+=item generic_scaffold
+
+A generic scaffold identifier, e.g. scaffold12345
 
 =item sgn_marker
 
@@ -184,6 +188,7 @@ our @namespace_list = qw/
 			 itag_coding_sequence
 			 itag_gene_model
 			 tomato_bac_contig
+			 generic_scaffold
 			 tair_gene_model
 			 tair_locus
 			 interpro_accession
@@ -823,6 +828,27 @@ sub parse_tomato_bac_contig {
 	   ver        => $2+0,
 	   ctg_num    => $3+0,
 	 };
+}
+#generic_scaffold
+sub is_generic_scaffold {
+  return 1 if $_[0] =~ /^scaffold\d+$/i;
+  return 0;
+}
+sub url_generic_scaffold {
+  my ($ident) = @_;
+  return;
+}
+sub clean_generic_scaffold {
+  my ($ident) = @_;
+  my ($d) = $ident =~ /(\d+)/;
+  $d ||= 0;
+  return 'scaffold'.($d+0);
+}
+sub parse_generic_scaffold {
+  my ($ident)  = @_;
+  $ident =~ /^scaffold(\d+)$/i
+    or return;
+  return { scaffold_num    => $1 };
 }
 #bac_sequence
 sub is_bac_sequence {
