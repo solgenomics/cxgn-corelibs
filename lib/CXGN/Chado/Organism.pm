@@ -723,9 +723,9 @@ sub new_with_common_name {
 	{  name      =>  'common_name' }) ->
 	search_related('organismprops', { value => $common_name } )->
 	search_related('organism');
-
+    return undef if !$organism;
     return CXGN::Chado::Organism->new($schema, $organism->get_column('organism_id') );
- 
+    
 }
 
 
