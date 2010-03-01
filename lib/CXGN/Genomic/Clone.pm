@@ -15,6 +15,7 @@ use CXGN::Genomic::CloneIdentifiers qw/assemble_clone_ident parse_clone_ident/;
 use CXGN::Metadata;
 
 use CXGN::People::BACStatusLog;
+use CXGN::People::Project;
 
 use CXGN::Tools::Text qw/parse_pg_arraystr/;
 use CXGN::Tools::List qw/max flatten collate/;
