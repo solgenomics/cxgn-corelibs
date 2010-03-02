@@ -17,6 +17,18 @@
 
  prove protocol.t
 
+ this test needs some environment variables:
+    export GEMTEST_METALOADER= 'metaloader user'
+    export GEMTEST_DBUSER= 'database user with insert permissions'
+    export GEMTEST_DBPASS= 'database password'
+
+ also is recommendable set the reset dbseq after run the script
+    export RESET_DBSEQ=1
+
+ if it is not set, after one run all the test that depends of a primary id
+ (as metadata_id) will fail because it is calculated based in the last
+ primary id and not in the current sequence for this primary id
+
 =head1 DESCRIPTION
 
  This script check 133 variables to test the right operation of the 
@@ -76,6 +88,14 @@ BEGIN {
     use_ok('CXGN::Biosource::Protocol');             ## TEST2
     use_ok('CXGN::Biosource::ProtocolTool');         ## TEST3
     use_ok('CXGN::Metadata::Metadbdata');            ## TEST4
+}
+
+## Check the environment variables
+my @env_variables = ('GEMTEST_METALOADER', 'GEMTEST_DBUSER', 'GEMTEST_DBPASS', 'RESET_DBSEQ');
+foreach my $env (@env_variables) {
+    unless ($ENV{$env} =~ m/^\w+/) {
+	print STDERR "ENVIRONMENT VARIABLE WARNING: Environment variable $env was not set for this test. Use perldoc for more info.\n";
+    }
 }
 
 #if we cannot load the CXGN::Metadata::Schema module, no point in continuing
