@@ -57,7 +57,7 @@ Class::Accessor
 
 =cut
 
-use base qw/ Class::Accessor /;
+use base qw/ Class::Accessor::Fast /;
 
 =head1 SUBCLASSES
 
@@ -191,10 +191,11 @@ at the existing files and sets this
 =cut
 
 sub type {
-    my ($self,$type) = @_;
+    my $self = shift;
 
-    if( defined $type ) {
-        $type eq 'nucleotide' || $type eq 'protein'
+    if( @_ ) {
+        my $type = shift;
+        !defined $type || $type eq 'nucleotide' || $type eq 'protein'
             or croak "invalid type '$type'";
         $self->{type} = $type;
     }
@@ -710,6 +711,9 @@ sub _read_fastacmd_info {
     ### set our data
     $self->type( $self->_guess_type )
         or confess 'could not determine db type';
+
+    ### type: $self->type
+
     $self->format_time( _parse_datestr($datestr) ); #< will die on failure
     $title =~ s/\s+$//;
     $self->title( $title );
@@ -720,7 +724,7 @@ sub _guess_type {
     my ($self) = @_;
     my $saved_type = $self->type;
 
-    foreach my $guess ('protein','nucleotide') {
+    foreach my $guess (qw( protein nucleotide )) {
         $self->type( $guess );
         if( $self->files_are_complete ) {
             $self->type( $saved_type );
@@ -728,6 +732,7 @@ sub _guess_type {
         }
     }
 
+    $self->type( $saved_type );
     return;
 }
 sub _parse_datestr {

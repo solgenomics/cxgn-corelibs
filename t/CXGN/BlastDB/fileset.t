@@ -12,9 +12,13 @@ use File::Temp qw/ tempdir tempfile /;
 use Fatal qw/ open mkdir chmod /;
 
 use Test::More;
+use Test::Exception;
+
+use IPC::Cmd qw/ can_run /;
+
 BEGIN {
-    if( `which fastacmd` ) {
-        plan tests => 293;
+    if( can_run('fastacmd') ) {
+        plan tests => 295;
     }
     else {
         plan skip_all => 'fastacmd is not installed, required to test CXGN::BlastDB::FileSet';
@@ -36,13 +40,13 @@ my $tempdir = tempdir( CLEANUP => 1);
 
 
 ###  test die cases
-eval {
+throws_ok {
     CXGN::BlastDB::FileSet->open( full_file_basename => catfile( $tempdir, 'testy', 'blowup' ),
                                   type => 'protein',
                                   write => 1,
                                  );
-};
-like( $@, qr/create_dirs must be set/, 'creation in nonexistent dir without create flag dies' );
+} qr/create_dirs must be set/,
+  'creation in nonexistent dir without create flag dies';
 
 my $intheway;
 my @t = (['nin','nucleotide'], ['pin','protein']);
@@ -63,8 +67,17 @@ foreach my $type ('nucleotide','protein') {
 
     my $test_seq_file = catfile( $DATADIR, "blastdb_test.$type.seq" );
 
-    ### test new creation
+    #use Smart::Comments;
+    ### test new creation...
     my $test_ffbn = catfile( $tempdir, "testdb_$type" );
+
+    throws_ok {
+        CXGN::BlastDB::FileSet->open( full_file_basename => $test_ffbn,
+                                      write => 1,
+                                     );
+    } qr/type.+could not guess/,
+      'de novo creation dies without type';
+
     my $fs = CXGN::BlastDB::FileSet->open( full_file_basename => $test_ffbn,
                                            type => $type,
                                            write => 1,
@@ -148,8 +161,9 @@ foreach my $type ('nucleotide','protein') {
     ok( ! $fs2->is_split, 'returns false for is_split');
 
     # get_sequence should die since test db not indexed
-    eval { $fs2->get_sequence('whatever') };
-    like $@, qr/not.+indexed/i, 'get_sequence dies if db not indexed';
+    throws_ok {
+        $fs2->get_sequence('whatever')
+    } qr/not.+indexed/i, 'get_sequence dies if db not indexed';
 
     # test to_fasta
     my $from_db = Bio::SeqIO->new( -fh => $fs2->to_fasta, -format => 'fasta' );
@@ -174,18 +188,19 @@ sub same_seqs {
 # test check_format_permissions
 my $permdir = catdir( $tempdir, 'permdir' );
 mkdir $permdir;
-my $fs3 = CXGN::BlastDB::FileSet->open( full_file_basename => catfile( $permdir, 'foo'), write => 1);
+my $fs3 = CXGN::BlastDB::FileSet->open( full_file_basename => catfile( $permdir, 'foo'), type => 'nucleotide', write => 1);
 ok(! $fs3->check_format_permissions, 'check_format_permissions OK for ffbn in new dir' );
 ok( ! $fs3->is_split, 'returns false for is_split');
 chmod 0444,$permdir;
 my $perr = $fs3->check_format_permissions;
 ok($perr, 'check_format_permissions returns bad for ffbn in non-writable' );
 like( $perr, qr/directory/i, 'permissions error mentions directory');
-eval { CXGN::BlastDB::FileSet->open( full_file_basename => catfile( $permdir, 'foo' ),
-                                     write => 1,
-                                   );
-   };
-like($@, qr/writable/, 'new() should die if ffbn is not writable');
+throws_ok {
+    CXGN::BlastDB::FileSet->open( full_file_basename => catfile( $permdir, 'foo' ),
+                                  type => 'nucleotide',
+                                  write => 1,
+                                 );
+} qr/writable/, 'new() should die if ffbn is not writable';
 chmod 0744,$permdir;
 ok(! $fs3->check_format_permissions, 'check_format_permissions OK again' );
 
