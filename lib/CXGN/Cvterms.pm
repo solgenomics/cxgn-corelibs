@@ -1,4 +1,6 @@
 use strict;
+use CXGN::Phenome::Qtl::Tools;
+
 
 package CXGN::Cvterms;
 use base qw/CXGN::Search::DBI::Simple CXGN::Search::WWWSearch/;
@@ -102,12 +104,10 @@ sub _to_scalars {
 sub to_html {
     my $self = shift;
     my $dbh=_cached_dbh();
-    my $fake_pop = CXGN::Phenome::Population->new($dbh, 12);
-    my @pop_objs = $fake_pop->has_qtl_data();
-    
-#qq |<br>List of traits and their QTLs by population:<br /> |;
+    my @qtl_pops = CXGN::Phenome::Qtl::Tools->new()->has_qtl_data();
+   
     my  $pop_links;
-    foreach my $pop_obj (@pop_objs) {
+    foreach my $pop_obj (@qtl_pops) {
 	my $pop_id = $pop_obj->get_population_id();
 	my $pop_name = $pop_obj->get_name();
 	$pop_links .= qq |<a href="../phenome/population.pl?population_id=$pop_id">$pop_name</a> <br /> |;     
