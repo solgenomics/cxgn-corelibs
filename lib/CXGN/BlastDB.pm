@@ -533,6 +533,7 @@ sub _fileset {
   my ($self,$write) = @_;
   my $ffbn = $self->full_file_basename;
   return CXGN::BlastDB::FileSet->open( full_file_basename => $ffbn,
+				       type => $self->type,
                                        ($write ? ( write => 1,
 						   create_dirs => 1,
                                                  )
