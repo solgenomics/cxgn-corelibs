@@ -22,6 +22,7 @@ use CXGN::Phenome::Population;
 use CXGN::Chado::Cvterm::CvtermRanking;
 use CXGN::Phenome::Locus;
 use CXGN::Phenome::Individual;
+use CXGN::Phenome::Qtl::Tools;
 use List::MoreUtils qw /uniq/;
 use strict;
 
@@ -1381,9 +1382,9 @@ sub get_all_populations_cvterm {
 
 }
 
-=head2 has_qtl_data
+=head2 is_from_qtl
 
- Usage: my $has_qtl = $cvterm->has_qtl_data();
+ Usage: my $has_qtl = $cvterm->is_from_qtl();
  Desc: returns 0 or 1 depending on whether a trait has been assayed in a 
        population for genetic and phenotypic data (qtl data). 
        The assumption is if a trait has a genetic and phenotype data, 
@@ -1395,7 +1396,7 @@ sub get_all_populations_cvterm {
 
 =cut
 
-sub has_qtl_data {
+sub is_from_qtl {
     my $self = shift;
     my $query = "SELECT DISTINCT (population_id) FROM phenome.genotype
                         LEFT JOIN phenome.individual USING (individual_id)
@@ -1422,7 +1423,7 @@ sub has_qtl_data {
 
 =head2 all_traits_with_qtl_data
 
- Usage: my ($traits, trait_ids) = CXGN::Chado::Cvterm->all_traits_with_qtl_data();
+ Usage: my ($traits, trait_ids) = CXGN::Chado::Cvterm::all_traits_with_qtl_data();
  Desc: returns a list of all traits and their ids from all qtl populations
  Ret: array refs for trait names and their ids
  Args: none
@@ -1433,13 +1434,12 @@ sub has_qtl_data {
 
 sub all_traits_with_qtl_data {
     my $self = shift;
-    my @pops = CXGN::Phenome::Population->has_qtl_data();
+    my @pops = CXGN::Phenome::Qtl::Tools->new()->has_qtl_data();
     my $dbh = CXGN::DB::Connection->new();
     my (@all_traits, @all_trait_ids);
    
     
     foreach my $pop (@pops) {
-
 	my ($table, $table_id, $name);
 	if ($pop->get_web_uploaded()) {
 	    $table = 'phenome.user_trait';
