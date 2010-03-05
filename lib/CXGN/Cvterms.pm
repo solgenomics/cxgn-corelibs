@@ -50,20 +50,17 @@ __PACKAGE__->join_root("$public.cvterm");
 
 __PACKAGE__->uses_joinpath("cvtermsynonym_path", ["$public.cvtermsynonym", "$public.cvterm.cvterm_id = $public.cvtermsynonym.cvterm_id"]);
 
-__PACKAGE__->has_parameter(name    => 'cvterm_name',
-			   columns => ["$public.cvterm.name", "$public.cvtermsynonym.synonym"],
-			   sqlexpr => "$public.cvterm.name || $public.cvtermsynonym.synonym",
-			  );
+ __PACKAGE__->has_parameter(name    => 'cvterm_name',
+ 			   columns => ["$public.cvterm.name"],			 
+ 			   );
 
-__PACKAGE__->has_parameter(name   =>'cvterm_synonym',
- 	                   columns=> "$public.cvtermsynonym.synonym",
-			   group  =>1,
-			   );
+ __PACKAGE__->has_parameter(name   =>'synonym',
+   	                    columns=> "$public.cvtermsynonym.synonym",
+			    group => 1
+  			   );
 
 
-__PACKAGE__->has_parameter(name   =>'has_db_name',
- 	                           columns=>"$public.db.name",
-	                           );
+	                         
 
 ###### NOW WWW STUFF ###
 
@@ -77,10 +74,11 @@ sub request_to_params {
 	  $params{$key} =~ s/[;\'\",]//g;
       }
   }
- # $self->cvterm_obsolete("='f'");
-  my $cvterm_name_result;
+  
   if($params{cvterm_name}) {
       $self->cvterm_name('ILIKE ?', "%$params{cvterm_name}%");
+      $self->synonym('ILIKE ?', "%$params{cvterm_name}%");
+      $self->compound('&t OR &t', 'synonym', 'cvterm_name');
   }
 
   
@@ -95,9 +93,8 @@ sub _to_scalars {
     
     #this part defines the mapping from get/post data to search params 
     ($params{cvterm_name}) = $self->param_bindvalues('cvterm_name');
-    $params{cvterm_name} =~ s/%//g;
+    $params{cvterm_name} =~ s/%//g;   
    
-       
     return %params;
 } 
 
@@ -122,7 +119,7 @@ sub to_html {
     
     my $cvterm_search =  qq|<input name="$cvterm_name" value="$scalars{cvterm_name}" size="30" >|;
   
-   $pop_links = "<table align=center cellpadding=20px><tr><td><b>Browse traits/QTLs by population:<br/>$pop_links<b></td></tr></table>";
+    $pop_links = "<table align=center cellpadding=20px><tr><td><b>Browse traits/QTLs by population:<br/>$pop_links<b></td></tr></table>";
 
       
     my $html_ret = <<EOHTML;
