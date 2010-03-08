@@ -125,7 +125,6 @@ my $build = Module::Build->new(
         'Moose' => 0,
         'Moose::Role' => 0,
         'Moose::Util::TypeConstraints' => 0,
-        'MooseX::Method::Signatures' => 0,
         'namespace::autoclean' => 0,
         'Params::Validate' => 0,
         'Path::Class' => 0,
