@@ -34,6 +34,9 @@ identifiers, like SGN-E23412
 This module contains easy-to-use functions for working with the often
 malformed strings of text that purport to be identifiers of some sort.
 
+Note that support for identification of SGN marker names like 'TG23' has been removed. The only marker identifiers supported now are SGN-M type identifiers.
+
+
 =head2 Supported Namespaces
 
 =over 12
@@ -113,9 +116,6 @@ A tomato BAC contig, e.g. C12.4_contig1
 
 A generic scaffold identifier, e.g. scaffold12345
 
-=item sgn_marker
-
-SGN marker names like 'TG23'.  Good luck with this one.
 
 =item tair_locus
 
@@ -245,7 +245,7 @@ use CXGN::DB::Connection;
 use CXGN::Genomic::Clone;
 use CXGN::Genomic::CloneIdentifiers qw/ parse_clone_ident assemble_clone_ident /;
 use CXGN::Genomic::GSS;
-use CXGN::Marker::Tools qw/clean_marker_name marker_name_to_ids/;
+#use CXGN::Marker::Tools qw/clean_marker_name marker_name_to_ids/;
 use CXGN::Tools::Text qw/trim/;
 
 
@@ -506,7 +506,7 @@ our $sgn_db;
 #write an accessor routine that makes sure our connection does
 #not go away due to timeouts or whatever
 sub _sgn_db {
-  $sgn_db ||= CXGN::DB::Connection->new('sgn');
+  $sgn_db ||= CXGN::DB::Connection->new();
   unless($sgn_db->ping) {
     $sgn_db = undef;
     $sgn_db = _sgn_db();
@@ -929,29 +929,29 @@ sub parse_bac_fragment {
   parse_clone_ident(shift,qw/ versioned_bac_seq / );
 }
 #sgn_marker
-sub is_sgn_marker {
-  my $ident = shift;
-  $ident = clean_sgn_marker($ident);
-  my @ids = marker_name_to_ids(_sgn_db,$ident);
-  return 1 if @ids == 1;
-  return 0;
-}
-sub url_sgn_marker {
-  my $ident = shift;
-  $ident = clean_sgn_marker($ident);
-  my @ids = marker_name_to_ids(_sgn_db,$ident);
-  return unless @ids == 1;
-  return "/search/markers/markerinfo.pl?marker_id=$ids[0]"
-}
-sub clean_sgn_marker {
-  my $ident = shift;
-  $ident =~ s/-(FPRIMER|RPRIMER|F|R)$//;
-  return clean_marker_name($ident);
-}
-sub parse_sgn_marker {
-  warn 'parsing sgn_marker not implemented';
-  return;
-}
+# sub is_sgn_marker {
+#   my $ident = shift;
+#   $ident = clean_sgn_marker($ident);
+#   my @ids = marker_name_to_ids(_sgn_db,$ident);
+#   return 1 if @ids == 1;
+#   return 0;
+# }
+# sub url_sgn_marker {
+#   my $ident = shift;
+#   $ident = clean_sgn_marker($ident);
+#   my @ids = marker_name_to_ids(_sgn_db,$ident);
+#   return unless @ids == 1;
+#   return "/search/markers/markerinfo.pl?marker_id=$ids[0]"
+# }
+# sub clean_sgn_marker {
+#   my $ident = shift;
+#   $ident =~ s/-(FPRIMER|RPRIMER|F|R)$//;
+#   return clean_marker_name($ident);
+# }
+# sub parse_sgn_marker {
+#   warn 'parsing sgn_marker not implemented';
+#   return;
+# }
 #tair_locus
 sub is_tair_locus {
   return 1 if shift =~ /^AT[1-5MC]G\d{5}$/i;
