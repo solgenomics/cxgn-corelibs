@@ -568,8 +568,7 @@ sub cvterm_search_form {
     $q ||= CXGN::Cvterms->new->new_query;
 
     my $form = $q->to_html;    
-   
-    my $links = CXGN::Chado::Cvterm->browse_traits();
+    my $links = CXGN::Phenome::Qtl::Tools->new()->browse_traits();
     my $trait_browser = "<table align=center cellpadding=20px><tr><td><b>Browse Traits: $links<b></td></tr></table>";
    
     return <<EOHTML;
