@@ -131,16 +131,27 @@ sub store {
     if ( $self->get_sp_person_id() ) {
         $action='updated';
         #print STDERR "Updating login record.\n";
-        my $sth = $self->get_sql("update");
-	  $sth->execute(
-			$self->get_username(),      $self->get_private_email(),
-			$self->get_pending_email(), $self->get_password(),
-			$self->get_confirm_code(),  $self->get_disabled(),
-			$self->get_user_type(),     $self->get_sp_person_id()
-		       );
-#print STDERR "VALUES: ".$self->get_username(), $self->get_private_email(), $self->get_pending_email(), $self->get_password(), $self->get_confirm_code(), $self->get_disabled()."\n";
-#        if ( $sth->state() ) { return 0; }
-#        else { return 1; }
+	$self->get_dbh->do( <<EOQ, undef,
+                           UPDATE sgn_people.sp_person
+                           SET   username      = ?
+                               , private_email = ?
+                               , pending_email = ?
+                               , password      = ?
+                               , confirm_code  = ?
+                               , disabled      = ?
+                               , user_type     = ?
+                           WHERE
+                               sp_person_id = ?
+EOQ
+                           $self->get_username,
+                           $self->get_private_email,
+                           $self->get_pending_email,
+                           $self->get_password,
+                           $self->get_confirm_code,
+                           $self->get_disabled,
+                           $self->get_user_type,
+                           $self->get_sp_person_id,
+                          );
 
     }
     else {
@@ -150,7 +161,7 @@ sub store {
         my $prive=$self->get_private_email();
         my $pende=$self->get_pending_email();
         my $pwd=$self->get_password();
-        my $cc=$self->get_confirm_code();  
+        my $cc=$self->get_confirm_code();
         my $dsa=$self->get_disabled();
         my $ut=$self->get_user_type();
         my $fn='<a href=\"/solpeople/contact-info.pl\">[please update</a>';
@@ -368,17 +379,6 @@ sub set_sql {
 				password, confirm_code, disabled, user_type 
 			FROM sgn_people.sp_person 
 			WHERE sp_person_id=?
-		",
-
-	update =>
-
-		"
-			UPDATE sgn_people.sp_person 
-			SET 
-				username=?, private_email=? , pending_email=?, password=?, 
-				confirm_code=?, disabled=?, user_type=? 
-			WHERE 
-				sp_person_id = ?
 		",
 
 	insert =>
