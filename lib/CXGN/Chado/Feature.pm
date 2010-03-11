@@ -66,7 +66,7 @@ use warnings;
 package CXGN::Chado::Feature;
 
 use CXGN::Chado::Organism;
-use base qw / CXGN::Chado::Main /;
+use base qw / CXGN::DB::Object /;
 
 =head2 new
 
@@ -120,7 +120,6 @@ sub new_with_name {
     my @features = ();
     while (my ($feature_id) = $sth->fetchrow_array()) { 
 	push @features, CXGN::Chado::Feature->new($dbh, $feature_id);
-	print STDERR "Feature.pm:new_with name found feature_id '$feature_id for name $name!\n'";
     }
     if (scalar(@features) == 0) {push @features, CXGN::Chado::Feature->new($dbh); }
     if (scalar(@features) == 1) { return $features[0]; } 
@@ -235,14 +234,13 @@ sub store {
 	    $dbxref->set_db_name($self->get_db_name());
 	   
 	    $dbxref->set_accession($self->get_accession());
-	    #print STDERR "accession = " . $self->{accessions}->[0] . "\n";
-
+	    
 	    $dbxref->set_description($self->get_description());
 	    $dbxref->set_version($self->get_version());
 	    
 	    $dbxref_id=$dbxref->store();
 	    $self->set_dbxref_id($dbxref_id);
-	} else { 	#print STDERR "^^^ dbxref ID $dbxref_id already exists...\n"; 
+	} else { 	#$self->d("^^^ dbxref ID $dbxref_id already exists...\n"); 
 	}
 	####
 	
@@ -259,7 +257,6 @@ sub store {
 	    
 	    #this statement is for inserting into the feature_dbxref table 
 	    $feature_dbxref_sth->execute($feature_id, $dbxref_id);
-	    #print STDERR "*** Inserting new feature feature_id=$feature_id dbxref ID= $dbxref_id\n";
 	    ####
 	} else {
 	    my $query= "UPDATE public.feature SET SET dbxref_id = ?, uniquename=?  where feature_id=?";
@@ -608,16 +605,13 @@ sub set_feature_id {
 sub get_feature_by_uniquename {
     my $self=shift;
     my $uniquename=shift;
-   
-   # print STDERR "uniquename: $uniquename\n";
-    
+       
     my $query = "SELECT feature_id FROM public.feature WHERE uniquename=? " ;
     my $sth = $self->get_dbh->prepare($query);
-    #print STDERR "uniquename: $uniquename\n";
-    
+       
     $sth->execute($uniquename);
     my ($feature_id) = $sth->fetchrow_array();
-   # print STDERR "uniquename: $uniquename, feature_id: $feature_id\n";
+   
     if ($feature_id) {    return $feature_id; }
     else {return undef ; }
 }

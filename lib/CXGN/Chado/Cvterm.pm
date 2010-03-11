@@ -26,7 +26,7 @@ use CXGN::Phenome::Qtl::Tools;
 use List::MoreUtils qw /uniq/;
 use strict;
 
-use base qw / CXGN::Chado::Main CXGN::Chado::Cvterm::CvtermRanking / ;
+use base qw / CXGN::DB::Object CXGN::Chado::Cvterm::CvtermRanking / ;
 
 
 =head1 IMPLEMENTATION OF THE Bio::Ontology::TermI INTERFACE
@@ -148,7 +148,7 @@ sub comment {
     my $comment = shift;
     my $type_id=CXGN::Chado::Cvterm::get_cvterm_by_name($self->get_dbh(), "comment")->get_cvterm_id();
     if (!$type_id) { 
-	print STDERR "WARNING. Cvterm has not yet been stored. Skipping the comment update.\n";
+	$self->d("WARNING. Cvterm has not yet been stored. Skipping the comment update.\n");
 	return undef;
     }
     if ($comment) { 
@@ -346,7 +346,7 @@ sub new_with_accession  {
 	$name_space = 'InterPro';
 	$id= $accession;
     }
-    #print STDERR "Cvterm.pm:new_with_accession found namespace:$name_space, id:$id\n";
+
     my $query = "SELECT cvterm_id FROM cvterm join dbxref using(dbxref_id) JOIN db USING (db_id)  WHERE db.name=? AND dbxref.accession ilike ?";
     $query .= " AND cv_id = $cv_id" if $cv_id; 
 
@@ -400,7 +400,7 @@ sub store {
 	#check if exists:
 	my $existing_cvterm_id=$self->cvterm_exists();
 	if ($existing_cvterm_id) {
-	    print STDERR "Cvterm.pm found existing cvterm_id $existing_cvterm_id.. can't update term " .$self->get_cvterm_id() . "! \n";
+	    $self->d( "Cvterm.pm found existing cvterm_id $existing_cvterm_id.. can't update term " .$self->get_cvterm_id() . "! \n");
 	}else {
 	    # update
 	    my $query = "UPDATE cvterm set cv_id=?, name=?, dbxref_id=?, definition=?, is_obsolete=? WHERE cvterm_id=?";
@@ -420,7 +420,7 @@ sub store {
 	    
 	    my $dbxref_id = $dbxref->store();
 	    $self->set_dbxref_id($dbxref_id);
-	    print STDERR "Inserted new dbxref for accession " . $self->get_db_name() . ":" . $self->get_accession ."\n";
+	    $self->d("Inserted new dbxref for accession " . $self->get_db_name() . ":" . $self->get_accession ."\n");
 	}
 	
 	my $query = "INSERT INTO cvterm (cv_id, name, dbxref_id, definition, is_obsolete, is_relationshiptype) VALUES (?, ?, ?, ?,?,?)";
@@ -652,11 +652,11 @@ sub recursive_ancestors {
     my %ancestors = @_;
     my %a = ();
     foreach my $p ($self->get_parents()) { 
-	print STDERR "ANCESTOR LIST: adding ".($p->[0]->get_db_name().":".$p->[0]->get_accession() . "rel_type:" . $p->[1]->get_cvterm_name())."\n";
+	$self->d( "ANCESTOR LIST: adding ".($p->[0]->get_db_name().":".$p->[0]->get_accession() . "rel_type:" . $p->[1]->get_cvterm_name())."\n" );
 	$ancestors{$p->[0]->get_accession()} =  [ $p->[0], $p->[1] ];
         %a = $p->[0]->recursive_ancestors(%ancestors);
 	foreach my $k (keys(%a)) { 
-	    #print STDERR "key= $k, value = ". $a{$k}->[0]->get_cvterm_name() . "--". $a{$k}->[1]->get_cvterm_name() . "\n"; 
+	    
 	    $ancestors{$k} = [ $a{$k}->[0], $a{$k}->[1] ];
 	}
     }
@@ -684,10 +684,10 @@ sub get_children {
     my $children_sth = $self->get_dbh()->prepare("SELECT distinct(cvterm_relationship.subject_id), cvterm_relationship.type_id, cvterm.name FROM cvterm_relationship join cvterm ON (cvterm.cvterm_id=cvterm_relationship.subject_id) JOIN public.dbxref USING (dbxref_id) JOIN public.db USING (db_id) WHERE cvterm_relationship.object_id= ?  and cvterm.is_obsolete = 0 AND db.name =? order by cvterm.name asc");
 #SELECT cvterm_relationship.subject_id, cvterm_relationship.type_id, cvterm.name FROM cvterm_relationship join cvterm ON cvterm.cvterm_id=cvterm_relationship.subject_id left join cvtermsynonym on cvtermsynonym.synonym=cvterm.name WHERE cvterm_relationship.object_id= ? and cvtermsynonym.synonym is null and cvterm.is_obsolete = 0 order by cvterm.name asc");
     $children_sth->execute($self-> get_cvterm_id() , $self->get_db_name() );
-    print STDERR "Parent cvterm id = ".$self->get_cvterm_id()."\n";
+    $self->d( "Parent cvterm id = ".$self->get_cvterm_id()."\n" );
     my @children = ();
     while (my ($child_term_id, $type_id, $cvterm_name) = $children_sth->fetchrow_array()) { 
-	print STDERR "retrieved child $child_term_id, $type_id\n";
+	$self->d( "retrieved child $child_term_id, $type_id\n" );
 	my $child_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $child_term_id);
 	my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
 	
@@ -808,7 +808,7 @@ sub get_synonym_name {
                Note that in order to call add_synonym(), the 
                term needs to be stored in the database, otherwise
                an error will occur.
- Side Effects: accesses the database. Messages to STDERR.
+ Side Effects: accesses the database. Debug message.
  Example:
 
 =cut
@@ -820,10 +820,10 @@ sub add_synonym {
 	my $query = "INSERT INTO cvtermsynonym (cvterm_id, synonym) VALUES (?, ?)";
 	my $sth = $self->get_dbh()->prepare($query);
 	$sth->execute($self->get_cvterm_id(), $synonym);
-	print STDERR "Cvterm.pm: adding synonym '$synonym' to cvterm ". $self->get_cvterm_name() ."\n" ;
+	$self->d( "Cvterm.pm: adding synonym '$synonym' to cvterm ". $self->get_cvterm_name() ."\n") ;
     }
     else { 
-	#print STDERR "$synonym is already a synonym of term ".($self->get_cvterm_name())."\n";
+	$self->d("$synonym is already a synonym of term ".($self->get_cvterm_name())."\n");
     }
 }
 
@@ -969,13 +969,13 @@ sub add_secondary_dbxref {
     my $db=CXGN::Chado::Db->new_with_name($self->get_dbh(), $db_name);
     if ( !($db->get_db_id()) ) {
 	$db->set_db_name($db_name);
-	print STDERR "Cvterm.pm: Storing a new DB: $db_name\n";
+	$self->d( "Cvterm.pm: Storing a new DB: $db_name\n");
 	$db->store();
     }
     #check is $accession exists:
     my $dbxref_id= CXGN::Chado::Dbxref::get_dbxref_id_by_db_id($self->get_dbh(), $acc, $db->get_db_id());
     if (!$dbxref_id) { 
-	print STDERR "No dbxref_id found for db_name '$db_name' accession '$acc' adding new dbxref...\n";
+        $self->d("No dbxref_id found for db_name '$db_name' accession '$acc' adding new dbxref...\n");
 	my $dbxref=CXGN::Chado::Dbxref->new($self->get_dbh());
 	$dbxref->set_accession($acc);
 	$dbxref->set_db_name($db->get_db_name());
@@ -986,9 +986,9 @@ sub add_secondary_dbxref {
 	my $query = "INSERT INTO cvterm_dbxref (cvterm_id, dbxref_id) VALUES (?,?)";
 	my $sth=$self->get_dbh()->prepare($query);
 	$sth->execute($self->get_cvterm_id(), $dbxref_id);
-	print STDERR "Cvterm.pm: adding secondary id '$accession' to cvterm ". $self->get_cvterm_name() . "\n";
+	$self->d( "Cvterm.pm: adding secondary id '$accession' to cvterm ". $self->get_cvterm_name() . "\n");
     }else { 
-	print STDERR "Cvterm.pm: $dbxref_id ($accession) is already a secondary id of term '".($self->get_cvterm_name())."'\n";
+	$self->d("Cvterm.pm: $dbxref_id ($accession) is already a secondary id of term '".($self->get_cvterm_name())."'\n");
     }
 }
  
@@ -1084,7 +1084,7 @@ sub add_def_dbxref {
     my $db=CXGN::Chado::Db->new_with_name($self->get_dbh(), $dbname);
     if ( !($db->get_db_id()) ) {
 	$db->set_db_name($dbname);
-	print STDERR "Cvterm.pm: Storing a new DB: $dbname\n";
+	$self->d( "Cvterm.pm: Storing a new DB: $dbname\n");
 	$db->store();
     }
     #check is $accession exists:
@@ -1093,7 +1093,7 @@ sub add_def_dbxref {
 	my $dbxref=CXGN::Chado::Dbxref->new($self->get_dbh());
 	$dbxref->set_db_name($db->get_db_name());
 	$dbxref->set_accession($accession);
-	print STDERR "Cvterm.pm: Storing a new Dbxref for db $dbname: $accession\n";
+	$self->d( "Cvterm.pm: Storing a new Dbxref for db $dbname: $accession\n");
 
 	$dbxref_id=$dbxref->store();
     }
@@ -1102,14 +1102,14 @@ sub add_def_dbxref {
                  VALUES (?,?,1)";
 	my $sth=$self->get_dbh()->prepare($query);
 	$sth->execute($self->get_cvterm_id(), $dbxref_id);
-	print STDERR "Cvterm.pm: Storing a new definition dbxref ($dbname:$accession) for cvterm". $self->get_cvterm_name() . "\n";
+	$self->d( "Cvterm.pm: Storing a new definition dbxref ($dbname:$accession) for cvterm". $self->get_cvterm_name() . "\n");
     }
     else { 
 	my $query = "UPDATE cvterm_dbxref set is_for_definition=1 
                  WHERE cvterm_id=? and dbxref_id=?";
 	my $sth=$self->get_dbh()->prepare($query);
 	$sth->execute($self->get_cvterm_id(), $dbxref_id);
-	#print STDERR "Cvterm.pm: Updating is_for_def=1 for definition dbxref ($dbname:$accession) for cvterm". $self->get_cvterm_name() . "\n";
+	
     }
 }
 
@@ -1227,7 +1227,7 @@ sub obsolete {
 	my $sth=$self->get_dbh()->prepare($query);
 	$sth->execute($self->get_cvterm_id() );
     }else {
-	print STDERR "Trying to obsolete a term that hasn't been stored yet! \n";
+	$self->d( "Trying to obsolete a term that hasn't been stored yet! \n");
     }
 }
 
@@ -1281,8 +1281,7 @@ sub map_to_slim {
 	# strip db name off id
 	#
 	$slim[$i]=~s/.*?(\d+).*/$1/;
-	#print STDERR "SLIM TERM: $slim[$i]\n";
-	
+		
 	# make a unique list of slim terms
 	#
 	$slim_counts{$slim[$i]}=0;
@@ -1323,7 +1322,7 @@ sub get_slim_counts {
     
 #     foreach my $p ($self->get_parents()) { 
 # 	my $id = $p->[0]->identifier();
-# 	#print STDERR "Checking $id\n";
+# 	$self->d("Checking $id\n");
 # 	if (exists($slim_counts->{$id}) && defined($slim_counts->{$id})) { 
 # 	    $slim_counts->{$id}++; 
 # 	}

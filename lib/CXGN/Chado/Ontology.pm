@@ -403,7 +403,7 @@ sub get_child_terms {
     $children_sth->execute($term->identifier());
     my @children = ();
     while (my ($child_term_id, $type_id) = $children_sth->fetchrow_array()) { 
-	print STDERR "retrieved child $child_term_id, $type_id\n";
+	$self->d( "retrieved child $child_term_id, $type_id\n");
 	my $child_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $child_term_id);
 	#my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
 	

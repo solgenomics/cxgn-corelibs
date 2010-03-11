@@ -18,7 +18,7 @@ package CXGN::Chado::Publication;
 
 use CXGN::Chado::Dbxref;
 use CXGN::Chado::Pubauthor;
-use base qw / CXGN::Chado::Main  /;
+use base qw / CXGN::DB::Object  /;
 
 
 =head2 new
@@ -164,13 +164,13 @@ sub store {
 	    #this statement is for inserting into pub_dbxref table 
 	    my $pub_dbxref_sth= $self->get_dbh()-> prepare("INSERT INTO pub_dbxref (pub_id, dbxref_id) VALUES (?, ?)");
 	    $pub_dbxref_sth->execute($pub_id, $dbxref_id);
-	    print STDERR "*** Inserting new publication dbxref ID= $dbxref_id\n";
+	    $self->d("*** Inserting new publication dbxref ID= $dbxref_id\n");
 	}
 	#insert the abstract of the publication
 	my $abstract_sth= $self->get_dbh()->prepare("INSERT INTO pubabstract (pub_id, abstract) VALUES (?,?)");
 	$abstract_sth->execute($pub_id, $self->get_abstract());
     }else {
-	print STDERR "Publication " . $self->get_uniquename() . " already exists in db with pub_id $existing_pub_id ! \n"; 
+	$self->d( "Publication " . $self->get_uniquename() . " already exists in db with pub_id $existing_pub_id ! \n"); 
 	$self->set_pub_id($existing_pub_id);
 	return $existing_pub_id;
     }
@@ -536,7 +536,7 @@ sub remove_existing_authors {
     my $query="DELETE FROM pubauthor WHERE pub_id=?";
     my $sth=$self->get_dbh()->prepare($query);
     if (@authors) { $sth->execute($self->get_pub_id()); }
-    else { print STDERR "No authors were added to this object... Nothing was changed in the database!"; }
+    else { $self->d( "No authors were added to this object... Nothing was changed in the database!"); }
 }
 
 

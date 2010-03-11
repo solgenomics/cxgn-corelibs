@@ -134,7 +134,7 @@ sub store {
 	
 	my $query = "INSERT INTO public.db (name, description, urlprefix,url) VALUES(?,?,?,?)";
 	my $sth= $self->get_dbh()->prepare($query);
-	print STDERR "Db.pm: storing * " . $self->get_db_name() . "\n\n";
+	$self->d( "Db.pm: storing * " . $self->get_db_name() . "\n\n");
 	$sth->execute($self->get_db_name, $self->get_description, $self->get_urlprefix, $self->get_url());
 	$db_id=  $self->get_dbh()->last_insert_id("db", "public");
 	$self->set_db_id($db_id);

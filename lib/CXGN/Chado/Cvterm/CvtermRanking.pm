@@ -20,7 +20,7 @@ use CXGN::DB::Connection;
 
 package CXGN::Chado::Cvterm::CvtermRanking;
 
-use base qw / CXGN::Chado::Main CXGN::Tools::Tsearch/;
+use base qw / CXGN::DB::Object CXGN::Tools::Tsearch/;
 
 
 =head2 new
@@ -360,7 +360,7 @@ sub cvterm_pub_rank_exists {
     my $sth=$self->get_dbh()->prepare($query);
     $sth->execute($self->get_cvterm_id(), $self->get_pub_id(), $self->get_match_type());
     my ($result) = $sth->fetchrow_array();
-    #print STDERR "cvterm_id = " . $self->get_cvterm_id() . " pub_id= " .  $self->get_pub_id() ."match_type= " .  $self->get_match_type() . "\n\n\n";
+   
     return $result; 
 }
 
