@@ -183,8 +183,8 @@ sub store {
 	$self->identifier($identifier);
     }
     if ($self->identifier()) {
-	print STDERR "Relationship.pm: identifier exists!\n";
-	print STDERR "Updating relationship ".$self->identifier() ." subject= " . $self->subject_term() . "object= " . $self->object_term() . " \n";
+	$self->d("Relationship.pm: identifier exists!\n");
+	$self->d("Updating relationship ".$self->identifier() ." subject= " . $self->subject_term() . "object= " . $self->object_term() . " \n");
 	my $query = "UPDATE cvterm_relationship SET 
                        subject_id = ?,
                        object_id = ?,
@@ -200,7 +200,7 @@ sub store {
 	return $self->identifier();
     }
     else { 
-	print STDERR "Inserting new relationship...\n";
+	$self->d("Inserting new relationship...\n");
 	my $query = "INSERT INTO cvterm_relationship (subject_id, object_id, type_id ) VALUES (?, ?, ?)";
 	my $sth = $self->get_dbh()->prepare($query);
 	$sth->execute($self->subject_term()->get_cvterm_id(),
@@ -209,8 +209,6 @@ sub store {
 		      );
 	my $id = $self->get_currval("cvterm_relationship_cvterm_relationship_id_seq");
 	$self->identifier($id);
-
-	#print STDERR "New id = $id\n";
 
 	return $self->identifier();
     }

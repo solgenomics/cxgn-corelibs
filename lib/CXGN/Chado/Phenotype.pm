@@ -101,10 +101,8 @@ sub store {
          
     }
     else { 
-	print STDERR "STORE FUNCTION TO.... ";
-       
+	       
 	my $query = "INSERT INTO public.phenotype (uniquename, observable_id, attr_id, value, cvalue_id, assay_id, individual_id, sp_person_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-	#print STDERR "$query\n";
 	my $sth = $self->get_dbh()->prepare($query);
 	$sth->execute( $self->get_unique_name(),
 		       $self->get_observable_id(),
