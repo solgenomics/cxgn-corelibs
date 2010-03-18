@@ -950,7 +950,7 @@ sub get_phenotype_count {
 
 =head2 get_organism_by_species
 
- Usage: CXGN::Chado::Oganism::get_organism_by_species($species, $schema)
+ Usage: CXGN::Chado::Organism::get_organism_by_species($species, $schema)
  Desc:  
  Ret:   Organism object or undef
  Args: species name and a schema object
@@ -963,9 +963,9 @@ sub get_phenotype_count {
 sub get_organism_by_species {
     my $species=shift;
     my $schema= shift;
-    my $organism=$schema->resultset("Organism::Organism")->find(
+    my ($organism)=$schema->resultset("Organism::Organism")->find(
 	{ species => $species }
-	)->first(); #should be just one species... 
+	); #should be just one species... 
     
     return $organism || undef ;
 }
