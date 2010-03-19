@@ -35,12 +35,10 @@ use Bio::Tools::Run::StandAloneBlast;
 use MOBY::Client::OntologyServer;
 use MOBY::CommonSubs qw(:all);
 
-use CXGN::VHost;
-
 use CXGN::Tools::List qw/all/;
 
 use CXGN::DB::Connection;
-use CXGN::Genomic::Search;
+use CXGN::Genomic::Search::GSS;
 
 use CXGN::MOBY::XML::Generator;
 
@@ -267,7 +265,7 @@ EOR
   return responseHeader('sgn.cornell.edu') . $MOBY_RESPONSE . responseFooter;
 }
 sub get_unigene_sequence { #used in unigene fetch above
-  my $dbh = connect_db;
+   my $dbh = CXGN::DB::Connection->new;
    my $query = "SELECT unigene.unigene_id AS unigene_id,
                 unigene_consensi.seq FROM unigene, unigene_consensi
                 WHERE unigene.consensi_id = unigene_consensi.consensi_id
