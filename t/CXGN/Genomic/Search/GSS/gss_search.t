@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 use strict;
-use CXGN::Genomic;
 use CXGN::Genomic::Search::GSS;
 
 use CXGN::DB::Connection;
