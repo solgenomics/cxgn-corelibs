@@ -250,11 +250,29 @@ eval {
 
     my %check_previous1 = $dbversion6->check_previous_dbpatches('9999_patch_test');
     my $key_n1 = scalar(keys %check_previous1); 
-    
+
+    ## It can have more than one patch with the same number, to fix that.
+
+    my %rep;
+    my $same_c = 0;
+    foreach my $p (keys %check_previous1) {
+	if ($p =~ m/^(\d+)/) {
+	    my $number = $1;
+	
+	    if (exists $rep{$number}) {
+		$same_c++;
+	    }
+	    else {
+		$rep{$number} = 1;
+	    }
+	}
+    }
+
     my $expected_key_n = 9998;
     if ($last_dbversion_id > 9998) {
-	$expected_key_n = 9999;
+   	$expected_key_n = 9999;
     }
+    $expected_key_n += $same_c;
 
     is($key_n1, $expected_key_n, 'CHECKING PREVIOUS DBPATCHES METHOD, checking number of previous patch numbers (for 9999_patch_test)')
 	or diag "Looks like this failed";
