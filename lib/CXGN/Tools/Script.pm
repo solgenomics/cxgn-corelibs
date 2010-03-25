@@ -122,7 +122,7 @@ sub lock_script {
     my $pid = _read_lockfile();
     -d '/proc' or confess "The way we do lockfiles depends on there being a /proc dir.  sorry.";
 
-    if( -d "/proc/$pid" ) {
+    if( $pid && -d "/proc/$pid" ) {
       warn "Script still running with pid $pid.\n"
 	unless $opts{quiet};
       return 0;
@@ -145,8 +145,7 @@ sub _read_lockfile {
     or return;
   my $pid = <$lock_fh>;
   chomp $pid;
-  $pid =~ /^\d+$/ or croak "invalid PID found in '$lockfile_name': $pid\n";
-  close $lock_fh;
+  $pid =~ /^\d+$/ or return 0;
   return $pid;
 }
 
