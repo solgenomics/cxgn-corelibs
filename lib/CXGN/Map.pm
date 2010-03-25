@@ -58,9 +58,9 @@ sub new {
     ref($map_info) eq 'HASH' or die"Must send in a dbh and hash ref with a map_id key or a map_version_id key";
     $self->{map_version_id}=$map_info->{map_version_id};
     $self->{map_id}=$map_info->{map_id};
-   
+
     my $map_id_t = $self->{map_id};
-    print STDERR "map id: $map_id_t from map object\n";
+    #print STDERR "map id: $map_id_t from map object\n";
     if($self->{map_id})
     {
         if($self->{map_version_id})
