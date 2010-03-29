@@ -1093,9 +1093,14 @@ use constant MIN_QSTAT_WAIT => 3;
 		    next if $key =~ /[=:]/;
 		    $jobstate->{$current_jobid}->{lc($key)} = lc $val;
 		} elsif ( $qs =~ /qstat: (.+)/ ) { #< probably some kind of error
-		    return '' if $opt{no_recurse};
-		    sleep 1;	#< wait a second and try a second time
-		    return $self->_global_qstat( no_recurse => 1 );
+		    if( $opt{no_recurse} ) {
+			warn $qs;
+			warn $_ while <$qstat>;
+			return {};
+		    } else {
+			sleep 3;	#< wait a bit and try a second time
+			return $self->_global_qstat( no_recurse => 1 );
+		    }
 		}
 	    }
 	    $last_qstat_time = time();
