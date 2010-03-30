@@ -313,7 +313,7 @@ $defaults =
 
      #path to our production ftp site
      ftpsite_root             => '/data/prod/public',
-     ftpsite_url              => 'ftp://ftp.sgn.cornell.edu',
+     ftpsite_url              => 'ftp://ftp.solgenomics.net',
 
      #path to the pucebaboon temperature sensor file:
      pucebaboon_file	      => '/data/prod/public/digitemp.out',
