@@ -23,7 +23,7 @@ For faster access of individual nodes, the tree object keeps a hash of nodes key
 The tree object also provides the layout and rendering functions. The both layout and rendering are defined by L<CXGN::Phylo::Layout> and L<CXGN::Phylo::Renderer> objects, of which several versions exist that provide different tree layouts and renderings. 
 
 
-=head1 AUTHOR
+=head1 AUTHORS
 
  Lukas Mueller (lam87@cornell.edu)
  Tom York (tly2@cornell.edu)
@@ -231,7 +231,7 @@ sub set_alignment {
 	}
 }
 
-=head2 standard_alignment_leaf_association
+=head2 function standard_alignment_leaf_association()
 
  Associate alignment members to leaf nodes based
  on id/name equality
@@ -276,13 +276,14 @@ sub get_root {
   Returns:	nothing
   Side effects:	the node $node will be defined as the root of the tree.
                 Note that $node->is_root() must evaluate to true, 
-                set_root() will therefore set the parent of the root to undef.
-  See also:     prune_to_subtree() -  takes a node as a parameter and will create a 
-                sub-branch of the tree. It throws away all other nodes that 
-                are not part of the sub-branch.
+                set_root() will therefore set the parent of the root 
+                to undef.
+  See also:     prune_to_subtree() -  takes a node as a parameter and 
+                will create a sub-branch of the tree. It throws away all 
+                other nodes that are not part of the sub-branch.
                 reset_root() - resets the root to the specified node and 
-                inverts the parent child relationships from the specified node
-                upwards to the root.
+                inverts the parent child relationships from the 
+                specified node upwards to the root.
 
 =cut
 
@@ -296,7 +297,8 @@ sub set_root {
 
 =head2 function delete_node() and del_node()
 
-  Synopsis:	$tree->delete_node($node->get_node_key()); $tree->del_node($node);
+  Synopsis:	$tree->delete_node($node->get_node_key()); 
+                $tree->del_node($node);
   Arguments:	delete_node: a unique node key, del_node: a node object.
   Returns:	nothing if operation is successful, 1 if operation 
                 not succesful (because it was attempted to delete 
@@ -357,8 +359,9 @@ sub recalculate_tree_data {
   Arguments:	 a node object, the root of the subtree to be kept.
   Returns:	
   Side effects:	 Prunes the tree.
-  Description:	 Prune the tree so that only $node and its subtree is left, with $node as the new root.
-     (sub_branch is synonymous)
+  Description:	 Prune the tree so that only $node and its subtree 
+                 is left, with $node as the new root.
+                 (sub_branch is synonymous)
 
 =cut
 
@@ -394,11 +397,12 @@ sub prune_to_subtree {
   Synopsis:	$tree->reset_root($node);
   Arguments:	a node object that will be the new root node
   Returns:	nothing
-  Side effects:	recalculates the tree parameters using the new root node
-  Description:	reverses all the parent-child relationships between the 
-                node $node and the old root node, then sets the tree root
-                node to $node.
-Author: Lukas Mueller, Tom York.
+  Side effects:	recalculates the tree parameters using the new 
+                root node
+  Description:	reverses all the parent-child relationships 
+                between the node $node and the old root node, 
+                then sets the tree root node to $node.
+  Authors:      Lukas Mueller, Tom York.
 
 =cut
 
@@ -489,15 +493,16 @@ sub set_unique_node_key {
 
 =head2 function get_unique_node_key()
 
-  Synopsis:	$node->set_node_key($node->get_tree()->get_unique_node_key());
+  Synopsis:	$node->set_node_key(
+                  $node->get_tree()->get_unique_node_key() );
   Arguments:	none
   Returns:	a unique node key
   Side effects:	
   Description:	
   Note:         it should not be necessary to call this method, because 
-                new nodes should always be added using the $node->add_child()
-                function, which assures that the node_key property is filled
-                in correctly.
+                new nodes should always be added using the 
+                $node->add_child() function, which assures that the 
+                node_key property is filled in correctly.
 
 =cut
 
@@ -531,7 +536,8 @@ sub clear_node_hash {
   Arguments:	a node, most conveniently the root node.
   Returns:	nothing
   Side effects:	regenerates the node hash from the current root.
-  Description:	it uses the predefined ...? Recursive. Adds node to hash and then calls itself on each child
+  Description:	it uses the predefined ...? Recursive. Adds node 
+                to hash and then calls itself on each child
 
 =cut
 
@@ -660,8 +666,7 @@ sub incorporate_nodes {
 
 =head2 function incorporate_tree()
 
- Given a tree, incorporate that tree's nodes into this tree.  This does not
- affect parent/child relationships; you have to set those yourself
+Given a tree, incorporate that tree's nodes into this tree.  This does not affect parent/child relationships; you have to set those yourself
 
 =cut
 
@@ -674,9 +679,7 @@ sub incorporate_tree {
 
 =head2 function make_binary() 
 
- Inserts joint nodes at polyphetic points so that the tree is biphetic or monophetic.
- The joint nodes have branch-length 0, so this should not affect analysis, but it
- allows the tree to conform to certain standards in external programs.
+Inserts joint nodes at polyphetic points so that the tree is biphetic or monophetic. The joint nodes have branch-length 0, so this should not affect analysis, but it allows the tree to conform to certain standards in external programs.
 
 =cut
 
@@ -694,12 +697,13 @@ sub make_binary {
 
 =head2 function traverse()
 
-   Synopsis:	$tree->traverse( sub{ my $node = shift; $node->set_hidden() } );
-   Arguments:	a function to be performed on each node, taking that node as its
-                only argument
-   Returns:	nothing
-   Side effects:	the function will be executed on each node object.
-   Description:	not yet implemented... UPDATE: C. Carpita attempts....
+   Synopsis:	 $tree->traverse( sub{ my $node = shift; 
+                                      $node->set_hidden() } );
+   Arguments:	 a function to be performed on each node, taking 
+                 that node as its only argument
+   Returns:	 nothing
+   Side effects: the function will be executed on each node object.
+   Description:	 not yet implemented... UPDATE: C. Carpita attempts
 
 =cut
 
@@ -797,14 +801,17 @@ sub generate_newick {
 
 =head2 function get_orthologs()
 
-  Synopsis:	 my $ortho_trees_ref = $tree->get_orthologs();
-  Arguments:	 none.
-  Returns:	a reference to a list of trees in which the leaves are all orthologs.
-  Side effects:	 Sets some node attributes, but deletes at end.
-  Description:	 This version uses the number of leaves and the number of leaf species in a subtree to decide
-      if that subtree's leaves are all orthologs. (The topology is not used, subroutine orthologs compares
-the topology to a species_tree.)
-  Author: Tom York
+  Synopsis:	my $ortho_trees_ref = $tree->get_orthologs();
+  Arguments:	none.
+  Returns:	a reference to a list of trees in which the leaves are all 
+                orthologs.
+  Side effects:	Sets some node attributes, but deletes at end.
+  Description:	This version uses the number of leaves and the number of 
+                leaf species in a subtree to decide if that subtree's 
+                leaves are all orthologs. (The topology is not used, 
+                subroutine orthologs compares the topology to a 
+                species_tree.)
+  Author:       Tom York
 
 =cut
 
@@ -959,9 +966,9 @@ sub set_name {
 
 =head2 function get_longest_root_leaf_length()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	my $longest = $tree->get_longest_root_leaf_length()
+  Arguments:	none
+  Returns:	the longest distance from the root to any leaf [real]
   Side effects:	
   Description:	
 
@@ -978,10 +985,12 @@ sub get_longest_root_leaf_length {
 
 =head2 function set_longest_root_leaf_length()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
+  Synopsis:	$tree->set_longest_root_leaf_length($distance)
+  Arguments:	the distance from root to the furthest leaf.
+  Returns:	nothing
+  Side effects:	This value is used for the scaling of the tree in the
+                horizontal dimension. Normally it should be calculated
+                using get_longest_root_leaf_length().
   Description:	
 
 =cut
@@ -1026,9 +1035,9 @@ sub retrieve_longest_branch_node {
 
 =head2 function get_show_labels()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	my $flag = $tree->get_show_lables();
+  Arguments:	none
+  Returns:	a boolean if the labels are currently visible.
   Side effects:	
   Description:	
 
@@ -1041,9 +1050,10 @@ sub get_show_labels {
 
 =head2 function set_show_labels()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	$tree->set_show_lables(1);
+  Arguments:	a boolean value representing the visibility
+                of the labels.
+  Returns:	nothing
   Side effects:	
   Description:	
 
@@ -1056,21 +1066,22 @@ sub set_show_labels {
 
 
 sub get_show_species_in_label{
-my $self = shift;
-return $self->{show_species_in_labels};
+    my $self = shift;
+    return $self->{show_species_in_labels};
 }
 
 sub set_show_species_in_label{
-my $self = shift;
-$self->{show_species_in_labels} = shift;
+    my $self = shift;
+    $self->{show_species_in_labels} = shift;
 }
 
 
-=head2 function get_line_color()
+=head2 accessors get_line_color(), set_line_color()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	my ($r, $g, $b) = $tree->get_line_color();
+  
+  Property:	a list of (red, gree, blue) components of the
+                color used to draw the tree lines.
   Side effects:	
   Description:	
 
@@ -1081,27 +1092,17 @@ sub get_line_color {
     return @{$self->{line_color}};
 }
 
-=head2 function set_line_color()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
-
 sub set_line_color { 
     my $self=shift;
     @{$self->{line_color}}=@_;
 }
 
 
-=head2 function get_bgcolor()
+=head2 accessors get_bgcolor(), set_bgcolor()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	$tree->set_bgcolor(255, 255, 255);
+  Property:     a list of (red, green, blue) components for the 
+                tree background color.
   Side effects:	
   Description:	
 
@@ -1112,27 +1113,17 @@ sub get_bgcolor {
     return @{$self->{bgcolor}};
 }
 
-=head2 function set_bgcolor()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
-
 sub set_bgcolor { 
     my $self=shift;
     @{$self->{bgcolor}}=@_;
 }
 
-=head2 function get_hilite_color()
+=head2 accessors get_hilite_color(), set_hilite_color()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
+  Synopsis:	$tree->set_hilite_color(0, 255, 255);
+  Property:     a list of color components for the hilite color
+  Side effects:	this color is used to hilite labels of nodes that
+                have the hilite propery set to a true value.
   Description:	
 
 =cut
@@ -1142,80 +1133,10 @@ sub get_hilite_color {
     return @{$self->{hilite_color}};
 }
 
-=head2 function set_hilite_color()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
-
 sub set_hilite_color { 
     my $self=shift;
     @{$self->{hilite_color}}=@_;
 }
-
-=head2 function get_image_width()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
-
-# sub get_image_width { 
-#     my $self=shift;
-#     return $self->{image_width};
-# }
-
-# =head2 function set_image_width()
-
-#   Synopsis:	
-#   Arguments:	
-#   Returns:	
-#   Side effects:	
-#   Description:	
-
-# =cut
-
-# sub set_image_width { 
-# my $self=shift;
-# $self->{image_width}=shift;
-# }
-
-# =head2 function get_image_height()
-
-#   Synopsis:	
-#   Arguments:	
-#   Returns:	
-#   Side effects:	
-#   Description:	
-
-# =cut
-
-# sub get_image_height { 
-# my $self=shift;
-# return $self->{image_height};
-# }
-
-# =head2 function set_image_height()
-
-#   Synopsis:	
-#   Arguments:	
-#   Returns:	
-#   Side effects:	
-#   Description:	
-
-# =cut
-
-# sub set_image_height { 
-# my $self=shift;
-# $self->{image_height}=shift;
-# }
 
 =head2 function get_node_by_name()
 
@@ -1279,18 +1200,21 @@ sub search_label_name {
 
   Synopsis:	$this_tree->compare($another_tree);
   Arguments:	a tree object
-  Returns:	1 if the tree is identical in topology to $another_tree, 
+  Returns:	1 if the tree is identical in topology to 
+                $another_tree, 
                 0 if the trees have a different topology.
   Side effects:	
-  Description:	compare() works by comparing the node names and the topology of 
-                the tree. Because not all nodes usually have explicit names, it 
-                derives implicit names for each node (it assumes the leaf nodes
-                have unique names). The implicit names are defined by an array
-                containing all the names of the subnodes. The names are sorted
-                by alphabetical order and then compared.
+  Description:	compare() works by comparing the node names and 
+                the topology of the tree. Because not all nodes 
+                usually have explicit names, it derives implicit 
+                names for each node (it assumes the leaf nodes have 
+                unique names). The implicit names are defined by an 
+                array containing all the names of the subnodes. The 
+                names are sorted by alphabetical order and then compared.
 
-  Note:    This is a synonym for compare_rooted. There is also a compare_unrooted routine to test whether trees
-        are the same aside from being rooted in different places.
+  Note:         This is a synonym for compare_rooted. There is also a 
+                compare_unrooted routine to test whether trees
+                are the same aside from being rooted in different places.
 
 =cut
 
@@ -1306,13 +1230,17 @@ sub search_label_name {
 
 =head2 function compare_rooted
 
-  Synopsis:	 $tree1->compare_rooted($tree2);
-  Arguments:	 A tree object.
-  Returns:	1 if $tree1 and $tree2 are topologically the same when regarded as rooted trees, 0 otherwise.
-  Side effects:	 None.
-  Description:	 Works with copies of trees; collapses them, gets implicit names, then recursively compares trees using implicit names.
-  Note: Now synonymous with compare. Can compare subtrees with Node->compare_subtrees
-Author: Tom York
+  Synopsis:	$tree1->compare_rooted($tree2);
+  Arguments:	A tree object.
+  Returns:	1 if $tree1 and $tree2 are topologically the same 
+                when regarded as rooted trees, 0 otherwise.
+  Side effects:	None.
+  Description:	Works with copies of trees; collapses them, gets 
+                implicit names, then recursively compares trees 
+                using implicit names.
+  Note:         Now synonymous with compare. Can compare subtrees 
+                with Node->compare_subtrees
+Author:         Tom York
 
 =cut
 
@@ -1326,15 +1254,18 @@ my $compare_field = shift;
 
 =head2 function compare_unrooted
 
-  Synopsis:	 $tree1->compare_unrooted($tree2);
-  Arguments:	 A tree object.
-  Returns:	1 if $tree1 and $tree2 are topologically the same when regarded as unrooted trees, 0 otherwise.
-  Side effects:	 None.
-  Description:	 Copies the 2 trees, finds a leaf common to both (if one exists) and resets roots
-          of both trees to those leaves. Then recursively compares trees using implicit names in same way as 
-          compare_rooted.
-  Note: In its present form, assumes uniqueness of leaf names. Otherwise, if may return 0 when it should return 1.
- Author: Tom York.
+  Synopsis:	$tree1->compare_unrooted($tree2);
+  Arguments:	A tree object.
+  Returns:	1 if $tree1 and $tree2 are topologically the same 
+                when regarded as unrooted trees, 0 otherwise.
+  Side effects:	None.
+  Description:	Copies the 2 trees, finds a leaf common to both
+                (if one exists) and resets roots of both trees to those 
+                leaves. Then recursively compares trees using implicit 
+                names in same way as compare_rooted().
+  Note:         In its present form, assumes uniqueness of leaf names. 
+                Otherwise, if may return 0 when it should return 1.
+  Author:       Tom York.
 
 =cut
 
@@ -1367,12 +1298,13 @@ sub compare_unrooted {
 }
 
 
-=head2 function get_layout
+=head2 function get_layout(), set_layout()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
+  Synopsis:	$tree->set_layout($layout)
+  Arguments:	a CXGN::Phylo::Layout object or subclass
+  Returns:	nothing
+  Side effects:	the layout object will be used to lay out the 
+                tree in the rendering process.
   Description:	
 
 =cut
@@ -1382,16 +1314,6 @@ sub get_layout {
     return $self->{layout};
 }
 
-=head2 function set_layout
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
-
 sub set_layout { 
     my $self=shift;
     $self->{layout}=shift;
@@ -1400,7 +1322,7 @@ sub set_layout {
 
 =head2 function layout()
 
-  Synopsis:	
+  Synopsis:	$tree->layout()
   Arguments:	
   Returns:	
   Side effects:	
@@ -1416,12 +1338,12 @@ sub layout {
 }
 
 
-=head2 function get_renderer()
+=head2 accessors get_renderer(), set_renderer()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
+  Synopsis:	$tree->set_renderer($renderer)
+  Arguments:	a CXGN::Phylo::Renderer object or subclass
+  Returns:	nothing
+  Side effects:	the $renderer is used for rendering the tree
   Description:	
 
 =cut
@@ -1430,16 +1352,6 @@ sub get_renderer {
     my $self=shift;
     return $self->{renderer};
 }
-
-=head2 function set_renderer()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
 
 sub set_renderer { 
     my $self=shift;
@@ -1553,11 +1465,14 @@ sub  collapse_unique_species_subtrees {
 
 =head2 function find_point_furthest_from_leaves()
 
-  Synopsis:	 $t->find_point_furthest_from_leaves()
-  Arguments:	 None.
-  Returns:	A list containing a node object, and the distance above that node of the point furthest from the leaves.
-  Side effects:	 Calls recursive_find_point_furthest_from_leaves, which sets some attributes.
-  Description:	 For each point there is a nearest leaf at distance dnear. This returns the point which maximizes dnear.
+  Synopsis:	$t->find_point_furthest_from_leaves()
+  Arguments:	None.
+  Returns:	A list containing a node object, and the distance 
+                above that node of the point furthest from the leaves.
+  Side effects:	Calls recursive_find_point_furthest_from_leaves, 
+                which sets some attributes.
+  Description:	For each point there is a nearest leaf at distance 
+                dnear. This returns the point which maximizes dnear.
 
 =cut					
 
@@ -1571,11 +1486,14 @@ sub find_point_furthest_from_leaves{
 
 =head2 function find_point_closest_to_furthest_leaf()
 
-  Synopsis:	 $t->find_point_closest_to_furthest_leaf();
-  Arguments:	 None.
-  Returns:	A list containing a node object, and the distance above that node of the point closest to furthest leaf.
-  Side effects:	 Calls recursive_set_max_dist_to_leaf_in_subtree, which sets some attributes.
-  Description:	 For each point there is a furthest leaf at distance dfar. This returns the point which minimizes dfar.
+  Synopsis:	$t->find_point_closest_to_furthest_leaf();
+  Arguments:	None.
+  Returns:	A list containing a node object, and the distance 
+                above that node of the point closest to furthest leaf.
+  Side effects:	Calls recursive_set_max_dist_to_leaf_in_subtree, 
+                which sets some attributes.
+  Description:	For each point there is a furthest leaf at distance 
+                dfar. This returns the point which minimizes dfar.
 
 =cut					
 
@@ -1613,12 +1531,15 @@ sub find_point_closest_to_furthest_leaf{
 
 =head2 function reset_root_to_point_on_branch()
 
-  Synopsis:	 $t->reset_root_to_point_on_branch($anode, $distance)
-  Arguments:	 First arg is a node, the second a distance above that node. Together they define a point which will be new root.
+  Synopsis:	$t->reset_root_to_point_on_branch($anode, $distance)
+  Arguments:	First arg is a node, the second a distance above that 
+                node. Together they define a point which will be new 
+                root.
   Returns:	Nothing.
-  Side effects:	 Resets root to a point specified by arguments, and deletes old root node.
-  Description:	 Use this to reset the root to a point along a branch.
-  Author: Tom York.
+  Side effects:	Resets root to a point specified by arguments, and 
+                deletes old root node.
+  Description:	Use this to reset the root to a point along a branch.
+  Author:       Tom York.
 
 =cut
 sub reset_root_to_point_on_branch{
@@ -1635,12 +1556,14 @@ sub reset_root_to_point_on_branch{
 
 =head2 function set_min_dist_to_leaf()
 
-  Synopsis:	 $t->set_min_dist_to_leaf()
-  Arguments:	 None.
+  Synopsis:	$t->set_min_dist_to_leaf()
+  Arguments:	None.
   Returns:	Nothing.
-  Side effects:	 Sets the following attributes for every node in tree: min_dist_to_leaf, near_leaf_path_direction, near_leaf_path_next_node
+  Side effects:	Sets the following attributes for every node 
+                in tree: min_dist_to_leaf, near_leaf_path_direction, 
+                near_leaf_path_next_node
   Description:	 
-  Author: Tom York.
+  Author:       Tom York.
 
 =cut
 
@@ -1653,12 +1576,17 @@ sub set_min_dist_to_leaf{
 
 =head2 function min_leaf_dist_variance_point()
 
-  Synopsis:	 $t->min_leaf_dist_variance_point()
-  Arguments:	 None.
-  Returns:	List ($n, $d) specifying the desired point as lying at a distance $d above the node $n.
-  Side effects:	 Calls recursive_set_dl_dlsqr_sums_down(), and recursive_set_dl_dlsqr_sums_up(), which set several node attributes
-  Description:	 Returns the point in the tree such that the variance of the distances from the point to the leaves is minimized.
-  Author: Tom York.
+  Synopsis:	$t->min_leaf_dist_variance_point()
+  Arguments:	None.
+  Returns:	List ($n, $d) specifying the desired point as 
+                lying at a distance $d above the node $n.
+  Side effects:	Calls recursive_set_dl_dlsqr_sums_down(), and 
+                recursive_set_dl_dlsqr_sums_up(), which set 
+                several node attributes
+  Description:	Returns the point in the tree such that the 
+                variance of the distances from the point to the 
+                leaves is minimized.
+  Author:       Tom York.
 
 =cut
 
@@ -1687,18 +1615,25 @@ sub min_leaf_dist_variance_point{
 
 =head2 function test_tree_node_hash()
 
-  Synopsis:	 $t->test_tree_node_hash()
-  Arguments:	 None.
+  Synopsis:	$t->test_tree_node_hash()
+  Arguments:	None.
   Returns:	1 if test is passed, 0 otherwise.
-  Side effects:	 None.
-  Description:	 Tests that the nodes in the tree as found by  recursive_subtree_node_list() agree
-      with the node hash. Specifically tests that 
-      1) the key of each node (found by recursive_subtree_node_list()) is found in the node hash, 
-      2) no two nodes have the same key,
-      3) each key in the node hash is the key of some node.
-      It is possible for parts of the tree to become disconnected,  so that it would not be possible to get from one to the other 
-      by at each step going from a node to a parent or child node, although all nodes would be in the node hash.
-  Author: Tom York.
+  Side effects:	None.
+  Description:	Tests that the nodes in the tree as found by  
+                recursive_subtree_node_list() agree
+                with the node hash. Specifically tests that 
+                1) the key of each node (found by 
+                   recursive_subtree_node_list()) is found in 
+                   the node hash, 
+                2) no two nodes have the same key,
+                3) each key in the node hash is the key of some node.
+      
+                It is possible for parts of the tree to become 
+                disconnected,  so that it would not be possible to 
+                get from one to the other by at each step going from 
+                a node to a parent or child node, although all nodes 
+                would be in the node hash.
+  Author:       Tom York.
 
 =cut
 
@@ -1733,12 +1668,13 @@ sub test_tree_node_hash{
 
 =head2 function test_tree_parents_and_children()
 
-  Synopsis:	 $t->test_tree_parents_and_children()
-  Arguments:	 None.
+  Synopsis:	$t->test_tree_parents_and_children()
+  Arguments:	None.
   Returns:	1 if test is passed, 0 otherwise.
-  Side effects:	 None.
-  Description:	 Tests that node $a is a child of $b, if and only iff $b is the parent of $a.
-  Author: Tom York.
+  Side effects:	None.
+  Description:	Tests that node $a is a child of $b, 
+                if and only iff $b is the parent of $a.
+  Author:       Tom York.
 
 =cut
 
@@ -1807,15 +1743,20 @@ sub test_tree_nodes_are_children_of_their_parents{
 
 =head2 function orthologs()
 
-  Synopsis:	 $ortho_grp = $ortho_tree->orthologs($species_tree, $cssst)
-  Arguments:	 a tree object, and an argument which, if non-zero, causes
-   single-species trees to be collapsed to a single node.
+  Synopsis:	$ortho_grp = $ortho_tree->
+                    orthologs($species_tree, $cssst)
+  Arguments:	a tree object, and an argument which, if non-zero, 
+                causes single-species trees to be collapsed to a 
+                single node.
   Returns:	An list of ortholog groups.
   Side effects:	
-  Description: Calls get_orthologs to get the ortholog_trees  defined without using a species tree,
-i.e. maximal subtrees in which all leaves are of distinct species.
-  Then for each ortholog group compare its tree to the species tree (if present), 
-  to see if topologies are the same, and if not, get a "distance " from ortholog tree to species tree topology.
+  Description:  Calls get_orthologs to get the ortholog_trees 
+                defined without using a species tree, i.e. maximal 
+                subtrees in which all leaves are of distinct species.
+                Then for each ortholog group compare its tree to 
+                the species tree (if present), to see if topologies 
+                are the same, and if not, get a "distance " from 
+                ortholog tree to species tree topology.
   See also:
 
 =cut
@@ -1848,12 +1789,16 @@ sub orthologs{
 
 =head2 function set_missing_species_from_names()
 
-  Synopsis:	 $atree->set_missing_species_from_names()
-  Arguments:	 none
+  Synopsis:	$atree->set_missing_species_from_names()
+  Arguments:	none
   Returns:	nothing
-  Side effects:	 For any leaf nodes with species undefined, sets the species to something derived from node name
-  Description: Try to come up with a species for each leaf node if not already defined. So will not overwrite species names
-coming from, e.g., the [species='tomato'] type specification in a newick file.
+  Side effects:	For any leaf nodes with species undefined, 
+                sets the species to something derived from 
+                node name
+  Description:  Try to come up with a species for each leaf node 
+                if not already defined. So will not overwrite 
+                species names coming from, e.g., the [species='tomato'] 
+                type specification in a newick file.
   See also:
 
 =cut
@@ -1870,12 +1815,14 @@ sub set_missing_species_from_names{
 
 =head2 function impose_branch_length_minimum()
 
-  Synopsis:	 $atree->impose_branch_length_minimum($bl_min)
-  Arguments:	 The minimum branch length.
+  Synopsis:	$atree->impose_branch_length_minimum($bl_min)
+  Arguments:	The minimum branch length.
   Returns:	nothing
-  Side effects:	 Set branch lengths < $bl_min to $bl_min. (Root branch length remains 0)
-  Description: Zero branch lengths may possibly cause problems in some cases; use this to establish
-     a small non-zero minimum branch length;
+  Side effects:	Set branch lengths < $bl_min to $bl_min. 
+                (Root branch length remains 0)
+  Description:  Zero branch lengths may possibly cause problems 
+                in some cases; use this to establish a small 
+                non-zero minimum branch length;
 
 =cut
 
@@ -1914,11 +1861,12 @@ sub get_species_standardizer{
 
 =head2 function update_label_names()
 
-  Synopsis:	 $atree->update_label_names()
-  Arguments:	 none
+  Synopsis:	$atree->update_label_names()
+  Arguments:	none
   Returns:	nothing
-  Side effects:	 Sets all the node labels to the node name with or without the species appended,
-	    as specified by $self->get_show_species_in_labels()
+  Side effects:	Sets all the node labels to the node name 
+                with or without the species appended,
+	        as specified by $self->get_show_species_in_labels()
 
 =cut
 
@@ -1940,10 +1888,11 @@ sub update_label_names{
 
 =head2 function prune_nameless_leaves()
 
-  Synopsis:	 $atree->prune_nameless_leaves()
-  Arguments:	 none
+  Synopsis:	$atree->prune_nameless_leaves()
+  Arguments:	none
   Returns:	nothing
-  Side effects:	 Deletes from the tree all leaves whose names are empty or undefined. 
+  Side effects:	Deletes from the tree all leaves whose 
+                names are empty or undefined. 
 
 =cut
 
@@ -1997,20 +1946,33 @@ my $str = "species,     standard species \n";
 
 =head2 function quasiRF_distance
 
-  Synopsis:	 $tree1->quasiRF_distance($tree2), or $node1->quasiRF_distance($tree2, "species");
-  Arguments:	 A tree object; and optionally a string specifying whether to compare node name or species. (Default is name)
-  Returns:	Compares tree1 and tree2. If they are topologically the same, 0 is returned. Otherwise
-returns a "distance" describing how different the two trees are.
-  Side effects:	 Sets "subtree_leaves_match" field for each node, and (by calling recursive_quasiRF_distance) sets "qRF_distance" 
-      field for each node.
-  Description:	 Tree1, tree2 should be collapsed before calling this function. For each node in tree1 add 
-      branch length to distance if a node with the same implicit name 
-      (or implicit species, depending on value of second argument) is not present in tree2. 
-      This is somewhat like the Robinson-Foulds distance, but is not symmetric (hence not a true distance), 
-      as the topologies of both subtrees are used, but only the tree1 branch lengths are used.
-      Think of it as a measure of how much tree1 much be changed to reach the topology of tree2.
-      We are typically going to use it to compare an ortholog tree with a species tree, in which case the implicit species
-      should be used in the comparison, i.e. it should be called with the optional 2nd arg having value "species"
+  Synopsis:	$tree1->quasiRF_distance($tree2), or 
+                $node1->quasiRF_distance($tree2, "species");
+  Arguments:	A tree object; and optionally a string specifying 
+                whether to compare node name or species. 
+                (Default is name)
+  Returns:	Compares tree1 and tree2. If they are topologically 
+                the same, 0 is returned. Otherwise returns a "distance" 
+                describing how different the two trees are.
+  Side effects:	Sets "subtree_leaves_match" field for each node, and 
+                (by calling recursive_quasiRF_distance) sets 
+                "qRF_distance" field for each node.
+  Description:	Tree1, tree2 should be collapsed before calling this 
+                function. For each node in tree1 add branch length to 
+                distance if a node with the same implicit name 
+                (or implicit species, depending on value of second 
+                argument) is not present in tree2. 
+                This is somewhat like the Robinson-Foulds distance, but 
+                is not symmetric (hence not a true distance), 
+                as the topologies of both subtrees are used, but only 
+                the tree1 branch lengths are used. Think of it as a 
+                measure of how much tree1 much be changed to reach the 
+                topology of tree2.
+                We are typically going to use it to compare an ortholog 
+                tree with a species tree, in which case the implicit 
+                species should be used in the comparison, i.e. it 
+                should be called with the optional 2nd arg having value 
+                "species"
 
 =cut
 
@@ -2107,16 +2069,24 @@ sub RF_distance {
 
 =head2 function RF_distance_inner
 
-  Synopsis:	 $tree1->RF_distance($tree2), or $node1->RF_distance($tree2, "species");
-  Arguments:	 A tree object; and optionally a string specifying whether to compare node name or species. (Default is name)
-  Returns:	Compares tree1 and tree2. If they are topologically the same, 0 is returned. Otherwise
-returns a "distance" describing how different the two trees are.
-  Side effects:	 Sets "subtree_leaves_match" field for each node
-  Description:	 Tree1, tree2 should be collapsed before calling this function. For each node in tree1 add 
-      branch length to distance if a node with the same implicit name 
-      (or implicit species, depending on value of second argument) is not present in tree2. 
-      This computes the Robinson-Foulds distance. Topologies and branch lengths of both trees are used
-      Think of it as a measure of how much tree1 much be changed to become tree2.
+  Synopsis:	$tree1->RF_distance($tree2),
+                or $node1->RF_distance($tree2, "species");
+  Arguments:	A tree object; and optionally a string specifying 
+                whether to compare node name or species. 
+                (Default is name)
+  Returns:	Compares tree1 and tree2. If they are topologically 
+                the same, 0 is returned. Otherwise returns a "distance" 
+                describing how different the two trees are.
+  Side effects:	Sets "subtree_leaves_match" field for each node
+  Description:	Tree1, tree2 should be collapsed before calling this 
+                function. For each node in tree1 add branch length to 
+                distance if a node with the same implicit name 
+                (or implicit species, depending on value of second 
+                argument) is not present in tree2. 
+                This computes the Robinson-Foulds distance. Topologies 
+                and branch lengths of both trees are used
+                Think of it as a measure of how much tree1 much be 
+                changed to become tree2.
      
 
 =cut
