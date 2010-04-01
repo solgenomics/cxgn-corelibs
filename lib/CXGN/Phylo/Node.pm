@@ -203,11 +203,11 @@ sub set_children {
 
 =head2 function add_child()
 
-  Synopsis:	$n->add_child($c);
-  Arguments:	a Node object
+  Synopsis:	$n->add_child();
+  Arguments:	none
   Returns:	ref to newly added child
-  Side effects:	adds $c to the list of children for node $n
-                adds $c to the node hash, using the unique id
+  Side effects:	adds a new CXGN::Phylo::Node object  to the list of children for node $n
+                adds the new node to the node hash, using the unique id
                 that add_child obtains through $tree->get_unique_node_key().
   Description:	
 
