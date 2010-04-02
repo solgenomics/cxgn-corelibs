@@ -5,14 +5,13 @@ CXGN::Phylo::Node - a package that handles nodes in a CXGN::Phylo::Tree object.
 
 =head1 DESCRIPTION
 
-This class deals with a node of a tree. The nodes can have children nodes, which can in turn have children, etc, to form a tree structure. Note that the tree need not be a binominal tree. However, it is a directed structure in the sense that the parent-child relationship is directional. The tree data structure will therefore always have an implicit root, which may not be the actual root. The root can be reset to any node in the tree by calling the reset_root() function in the Tree object. 
+This class deals with a node of a tree (see L<CXGN::Phylo::Tree>). The nodes can have children nodes, which can in turn have children, etc, to form a tree structure. Note that the tree need not be a binominal tree. However, it is a directed structure in the sense that the parent-child relationship is directional. The tree data structure will therefore always have an implicit root, which may not be the actual root. The root can be reset to any node in the tree by calling the reset_root() function in the Tree object. 
 
 In addition to child information, a node object also contains a link to its parent node, which is undef in the case of the tree\'s root. Every node object also contains a pointer to the tree object it belongs to. The tree object contains additional data structures for rapidly identifying nodes in the tree. The node object also stores the name of the node, the species, hiliting information, and other data. Some of the data associated with nodes have their own accessors, while other data can be stored in the each node object using the set_attribute() and get_attribute() calls.
 
 =head1 AUTHOR
 
-Lukas Mueller (lam87@cornell.edu)
-Tom York (tly2@cornell.edu)
+Lukas Mueller (lam87@cornell.edu) and Tom York (tly2@cornell.edu)
 
 =head1 FUNCTIONS
 
@@ -67,11 +66,12 @@ $self->set_attribute("leaf_count", 0);
 =head2 function print_node()
 
   Synopsis:	 $node->print_node();
-  Arguments:	 Optionally a string which will be appended after the node_string, "\n" by default.
-  Returns:	nothing.
+  Arguments:	 Optionally a string which will be appended after the 
+                 node_string, "\n" by default.
+  Returns:	 nothing.
   Side effects:	 none.
   Description:	 Prints node name, key, etc on one line. See sub node_string.
-  Author: Tom York (tly2@cornell.edu)
+  Author:        Tom York (tly2@cornell.edu)
 
 =cut
 
@@ -86,9 +86,10 @@ sub print_node{
 
 =head2 function node_string()
 
-  Synopsis:	 $node->node_string();
-  Returns:	A string describing the node, with name, key, branch_length, species. No newline at end.
-  Author: Tom York (tly2@cornell.edu)
+  Synopsis:	$node->node_string();
+  Returns:	A string describing the node, with name, key, 
+                branch_length, species. No newline at end.
+  Author:       Tom York (tly2@cornell.edu)
 
 =cut
 
@@ -118,10 +119,14 @@ sub node_string{
 
 =head2 function recursive_subtree_string()
 
-  Synopsis:	 $node->recursive_subtree_string($nl_string, $indent) 
-  Arguments:	 First arg is string to appear after each node (optional, default is "\n"); second arg is indent string (optional, default is "")
-  Returns: A string describing the subtree with by default each node on its own line, and indented proportional to depth in tree.
-  Author: Tom York
+  Synopsis:	$node->recursive_subtree_string($nl_string, $indent) 
+  Arguments:	First arg is string to appear after each node (optional, 
+                default is "\n"); second arg is indent string (optional, 
+                default is "")
+  Returns:      A string describing the subtree with by default each node
+                on its own line, and indented proportional to depth in 
+                tree.
+  Author:       Tom York
 
 =cut
 
@@ -139,10 +144,13 @@ sub recursive_subtree_string{
 
 =head2 function print_subtree()
 
-  Synopsis:	 $node->print_subtree()  or   $node->print_subtree("<br>") 
-  Arguments:	 Optionally a string which will be printed after each node. This will be "\n" by default, but could use "<br>" if using as html.
-  Description:	 Prints the subtree with indentation indicating depth in subtree. 
-  Author: Tom York
+  Synopsis:	 $node->print_subtree() or $node->print_subtree("<br>") 
+  Arguments:	 Optionally a string which will be printed after each 
+                 node.  This will be "\n" by default, but could use 
+                 "<br>" if using as html.
+  Description:	 Prints the subtree with indentation indicating depth 
+                 in subtree. 
+  Author:        Tom York
 
 =cut
 
@@ -206,9 +214,10 @@ sub set_children {
   Synopsis:	$n->add_child();
   Arguments:	none
   Returns:	ref to newly added child
-  Side effects:	adds a new CXGN::Phylo::Node object  to the list of children for node $n
-                adds the new node to the node hash, using the unique id
-                that add_child obtains through $tree->get_unique_node_key().
+  Side effects:	adds a new CXGN::Phylo::Node object  to the list of 
+                children for node $n adds the new node to the node 
+                hash, using the unique id that add_child obtains 
+                through $tree->get_unique_node_key().
   Description:	
 
 =cut
@@ -221,7 +230,8 @@ sub add_child {
 	$child->set_tree($tree);
 
 	# add the child node to the node_hash,
-	# using the unique_node_key property of the corresponding tree object.
+	# using the unique_node_key property of the corresponding tree 
+        # object.
 	#
 	my $key = $tree->get_unique_node_key();
 	$child->set_node_key($key);
@@ -234,10 +244,11 @@ sub add_child {
 
 =head2 function add_child_node()
 
-  Synopsis:	 $node->add_child_node($child)
+  Synopsis:	$node->add_child_node($child)
   Arguments:	a node to be added as child of invocant node.
   Returns:	nothing
-  Side effects:	Adds $child to $node's children list, and sets the parent of $child to $node
+  Side effects:	Adds $child to $node's children list, and sets the parent 
+                of $child to $node
   Description:	to construct a tree, generally use add_child(),
                 which has more side effects. add_child_node()
                 is useful in cases where the child node already
@@ -266,10 +277,11 @@ sub add_child_node {
 
 =head2 function remove_child()
 
-  Synopsis:	 $a_node->remove_child($child)
-  Arguments:	 a node object, which should be a child of the invocant.
+  Synopsis:	$a_node->remove_child($child)
+  Arguments:	a node object, which should be a child of the invocant.
   Returns:	nothing
-  Side effects: Remove a node from another node's list of children.  $child's parent.
+  Side effects: Remove a node from another node's list of children.  
+                $child's parent.
   Description:	 
 
 =cut
@@ -308,15 +320,21 @@ sub remove_child {
 
 =head2 function add_parent()
 
- Synopsis:	$n->add_parent(distance);
- Arguments: a distance.
+  Synopsis:	$n->add_parent(distance);
+  Arguments:    a distance.
   Returns:	Reference to new node object.
-  Side effects:	 Constructs a new node object $p, make $p the parent of $n, and the only child of $n's former parent. 
-                adds $p to the node hash, using the unique id obtained through $tree->get_unique_node_key().
-  Description:	 Adds a node above the node specified as first argument, at the distance specified as second argument.
-               The new node has as its parent the parent of the original node, which is its only child. So we are adding a node
-              somewhere in the middle of a branch. Might want to do this and then reset root to the new node.
-  Author: Tom York
+  Side effects:	Constructs a new node object $p, make $p the parent of 
+                $n, and the only child of $n's former parent. Adds $p 
+                to the node hash, using the unique id obtained through 
+                $tree->get_unique_node_key().
+  Description:	Adds a node above the node specified as first argument, 
+                at the distance specified as second argument. The new
+                node has as its parent the parent of the original node, 
+                which is its only child.
+                So we are adding a node somewhere in the middle of a 
+                branch. 
+                Might want to do this and then reset root to the new node.
+  Author:       Tom York
 
 =cut
 
@@ -337,12 +355,9 @@ sub add_parent{
 
 =head2 function binarify_children()
 
- Some analysis programs, such as BayesTraits, requires that a tree be binary,
- meaning that each node has no more than two children.
+Some analysis programs, such as BayesTraits, requires that a tree be binary, meaning that each node has no more than two children.
 
- This function creates new nodes (branch_length zero) recursively so this node
- will only have two children.  The distance relationships to the existing
- children will remain the same.
+This function creates new nodes (branch_length zero) recursively so this node will only have two children.  The distance relationships to the existing children will remain the same.
 
  Example
 
@@ -551,8 +566,8 @@ sub set_parent {
 
   Synopsis:	my $parent_nodes = $node->get_all_parents();
   Arguments:	none
-  Returns:      a list of parent nodes in order as seen from the node $node,
-                including the root node.
+  Returns:      a list of parent nodes in order as seen from the node 
+                $node, including the root node.
   Side effects:	none
   Description:	
 
@@ -563,7 +578,8 @@ sub get_all_parents {
 	my @parents = ();
 	my $p = $self;
 
-	# get all parents, including the root node (i.e. parent, parent's parent, etc. up to root)
+	# get all parents, including the root node (i.e. parent, parent's 
+        #  parent, etc. up to root)
 	#
 	while (!$p->is_root()) { 
 
@@ -581,7 +597,7 @@ sub get_all_parents {
   Arguments:	a CXGN::Phylo::Tree object
   Returns:	nothing
   Side effects:	replaces the $node object with the root of the given tree,
-    and incorporates the subtree into the current tree
+                and incorporates the subtree into the current tree
 
 =cut
 
@@ -628,11 +644,13 @@ sub add_subtree {
 
   Synopsis:	my $species = $node->get_species();
   Arguments:	none
-  Returns:	the species of this node (set using set_species). The returned value may be a standardized form of the value
-set with set_species (if the tree's show_standard_species is true)
+  Returns:	the species of this node (set using set_species). The 
+                returned value may be a standardized form of the value 
+                set with set_species (if the tree's 
+                show_standard_species is true)
   Side effects:	none
   Description:
-  See also:    get_standard_species, get_shown_species
+  See also:     get_standard_species, get_shown_species
 
 =cut
 
@@ -643,12 +661,16 @@ sub get_species {
 
 =head2 function get_standard_species()
 
-  Synopsis:	my $species = $node->get_standard_species();
-  Arguments:	none
-  Returns:	The standardized form of the species name.
-Description: This gives the standardized form of the species, which is used in implicit species, which are used in ortholog finding
-  See also:    get_standard_species, get_shown_species  See also: CXGN::Phylo::Species_name_map which implements the mapping between
-     species names and their standardized forms. 
+  Synopsis:    my $species = $node->get_standard_species();
+  Arguments:   none
+  Returns:     The standardized form of the species name.
+  Description: This gives the standardized form of the species, which 
+               is used in implicit species, which are used in ortholog 
+               finding
+  See also:    get_standard_species, get_shown_species  
+  See also:    CXGN::Phylo::Species_name_map which implements the 
+               mapping between species names and their standardized 
+               forms. 
 
 =cut
 
@@ -671,8 +693,9 @@ sub get_standard_species {
 
   Synopsis:	my $species = $node->get_shown_species();
   Arguments:	none
-  Returns:	The species name as returned by either get_species or get_standard_species, depending on the value returned by
-the tree's get_show_standard_species() method.
+  Returns:	The species name as returned by either get_species or 
+                get_standard_species, depending on the value returned by the 
+                tree's get_show_standard_species() method.
 
 =cut
 
@@ -692,11 +715,12 @@ sub get_shown_species{
 =head2 function set_species()
 
   Synopsis:	$species->set_species("Solanum lycopersicum");
-  Arguments:	a species name. In order for orthology calculation to work,
-we need to do recursive_set_implicit_species(), to store implicit species for each node
-based on the leaf species names.
+  Arguments:	a species name. In order for orthology calculation to 
+                work, we need to do recursive_set_implicit_species(), 
+                to store implicit species for each node based on the 
+                leaf species names.
   Returns:	nothing
-  Side effects:	 Sets the species attribute to the argument
+  Side effects:	Sets the species attribute to the argument
   Description:	
   See also:     $tree->get_orthologs()
 
@@ -778,10 +802,11 @@ sub set_branch_length {
 
 =head2 function get_transformed_branch_length()
 
-  Synopsis:	 $a_node->get_transformed_branch_length($bltype, $addbl)
-  Arguments:	 First argument is one of "equal", "branch_length", "proportion_different". 
-  Returns:	Some function of the branch length, depending on the 1st argument, of if no arguments,
-then on 
+  Synopsis:	$a_node->get_transformed_branch_length($bltype, $addbl)
+  Arguments:	First argument is one of "equal", "branch_length", 
+                "proportion_different". 
+  Returns:	Some function of the branch length, depending on the 1st 
+                argument, of if no arguments, then on (???) 
   Side effects:	
   Description:	
 
@@ -957,7 +982,7 @@ sub recursive_clear_properties {
 	}
 }
 
-=head2 function get_hilited()
+=head2 accessors get_hilited(), set_hilited()
 
   Synopsis:	$hilite_flag = $node->get_hilited();
   Arguments:	none
@@ -976,27 +1001,16 @@ sub get_hilited {
 	return $self->{hilited};
 }
 
-=head2 function set_hilited()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
-
 sub set_hilited { 
 	my $self=shift;
 	$self->{hilited}=shift;
 }
 
-=head2 function get_hide_label()
+=head2 accessors get_hide_label(), set_hide_label()
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
+  Synopsis:	$n->set_hide_label(1);
+  Property:	a boolean value representing the hide state of the label
+  Side effects:	labels with a true value will not be drawn.
   Description:	
 
 =cut
@@ -1006,20 +1020,21 @@ sub get_hide_label {
 	return $self->get_label()->is_hidden();
 }
 
-=head2 function set_hide_label()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
-
 sub set_hide_label { 
 	my $self=shift;
 	$self->get_label()->set_hidden(1);
 }
+
+=head2 accessors get_line_color(), set_line_color()
+
+ Usage:        $node->set_line_color(255, 0, 0);
+ Property:     the line color
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
 
 
 sub get_line_color {
@@ -1039,7 +1054,7 @@ sub set_line_color {
 
 =head2 function get_name()
 
-  Synopsis:	 my $name_string = $a_node->get_name()
+  Synopsis:	my $name_string = $a_node->get_name()
   Returns:	The string stored in the nodes name
 
 =cut
@@ -1053,8 +1068,11 @@ sub get_name {
 
   Synopsis:	$n->set_name("At1g01010");
   Arguments:	a name for the node
-  Side effects:	The node's label also gets its name set here - Nope now in update_label_names (?)
-The species is also incorporated into the label name, if the tree's show_species_in_label is true. (Where?)
+  Side effects:	The node's label also gets its name set here - Nope now 
+                in update_label_names (?). The species is also 
+                incorporated into the label name, if the tree's 
+                show_species_in_label is true. 
+                (Where?)
                 CXGN::Phylo::Node::search searches the name property.
   Description:	
 
@@ -1066,11 +1084,11 @@ sub set_name {
 #	$self->get_label()->set_name($self->{name});
 }
 
-=head2 function get_link()
+=head2 accessors get_link(), set_link()
 
   Synopsis:	my $url = $n->get_link();
-  Arguments:	none
-  Returns:	the url this node should link to 
+  Property:     the url to link to when clicking on the label for this 
+                node
   Side effects:	get_html_image_map() will include the url for linking on
                 images embedded in html pages.
   Description:	
@@ -1082,26 +1100,16 @@ sub get_link {
 	return $self->{link};
 }
 
-=head2 function set_link()
-
-  Synopsis:	$n->set_link("http://sgn.cornell.edu/");
-  Arguments:	the url this node should link to
-  Returns:	
-  Side effects:	the url will be the link obtained through get_html_image_map().
-  Description:	
-
-=cut
-
 sub set_link { 
 	my $self=shift;
 	$self->{link}=shift;
 }
 
-=head2 function get_horizontal_coord()
+=head2 accessors get_horizontal_coord(), set_horizontal_coord()
 
   Synopsis:	
-  Arguments:	
-  Returns:	
+  Property:     the horizontal offset of the node on the image object, in 
+                pixels
   Side effects:	
   Description:	
   Synonym:      get_X()
@@ -1118,16 +1126,6 @@ sub get_X {
 	return $self->{horizontal_coord};
 }
 
-=head2 function set_horizontal_coord()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-
-=cut
-
 sub set_horizontal_coord { 
 	my $self=shift;
 	$self->{horizontal_coord}=shift;
@@ -1139,13 +1137,13 @@ sub set_X {
 	$self->set_horizontal_coord(shift);
 }
 
-=head2 function get_vertical_coord()
+=head2 accessors get_vertical_coord(), set_vertical_coord()
 
   Synopsis:	
-  Arguments:	
-  Returns:	
+  Property:     the vertical offset of the node in the image, in pixels.
   Side effects:	
   Description:	
+  Synonyms:     get_Y(), set_Y()
 
 =cut
 
@@ -1163,17 +1161,6 @@ sub get_Y {
 #return sqrt($Y);
 	return $self->get_vertical_coord();
 }
-
-=head2 function set_vertical_coord()
-
-  Synopsis:	
-  Arguments:	
-  Returns:	
-  Side effects:	
-  Description:	
-  Synonym:      set_Y
-
-=cut
 
 sub set_vertical_coord { 
 	my $self=shift;
@@ -1263,7 +1250,7 @@ sub set_dist_from_root {
 =cut
 
 =head2 function calculate_distances_from_root()
-il
+
   Synopsis:	$node->calculate_distances_from_root
   Arguments:	none
   Returns:	the distance of this node all the way up to the root.
@@ -1301,8 +1288,8 @@ $dist_type ||= $self->get_tree()->get_shown_branch_length_transformation();  #{s
  Synopsis:	$node->rotate_node();
  Arguments:	none
  Returns:	nothing
- Side effects:	Rotates the node 180 degrees. The formerly topmost child node
-     will be the lowest child node and vice versa. 
+ Side effects:	Rotates the node 180 degrees. The formerly topmost child 
+                node will be the lowest child node and vice versa. 
  Description:	
 
 =cut
@@ -1454,11 +1441,12 @@ sub set_leaf_species_count {
 
 =head2 function get_comp_leaf_species_count()
 
-  Synopsis:	 my $count = $a_node->get_comp_leaf_species_count();
-  Arguments:	 none
-  Returns:	$self->{comp_leaf_species_count} the number of species in the leaves of the complement of $a_node's subtree.
-  Side effects:	 none
-  Description:	 just returns stored value. 
+  Synopsis:	my $count = $a_node->get_comp_leaf_species_count();
+  Arguments:	none
+  Returns:	$self->{comp_leaf_species_count} the number of species in 
+                the leaves of the complement of $a_node's subtree.
+  Side effects:	none
+  Description:	just returns stored value. 
 
 =cut
 
@@ -1469,12 +1457,13 @@ sub get_comp_leaf_species_count {
 
 =head2 function set_comp_leaf_species_count()
 
-  Synopsis:	 $anode->set_leaf_species_count($count);
+  Synopsis:	$anode->set_leaf_species_count($count);
   Arguments:	 
   Returns:	
   Side effects:	
-  Description:	Set this field, which is the number of species represented in the leaves of the
-complement of the subtree defined by $anode
+  Description:	Set this field, which is the number of species 
+                represented in the leaves of the complement of the 
+                subtree defined by $anode
 
 =cut
 
@@ -1488,8 +1477,10 @@ sub set_comp_leaf_species_count {
 
   Synopsis:	
   Arguments:	
-  Returns:	Number of nodes in subtree, excluding this one (so 0 for leaves)
-  Side effects:	 Calls set_subtree_node_count for this node and all nodes in subtree.
+  Returns:	Number of nodes in subtree, excluding this one (so 0 
+                for leaves)
+  Side effects:	Calls set_subtree_node_count for this node and all 
+                nodes in subtree.
   Description:	
 
 =cut
@@ -1507,12 +1498,14 @@ sub calculate_subtree_node_count {
 
 =head2 function collect_orthologs()
 
-  Synopsis:	 my $ortho_trees = $a_node->collect_orthologs()
-  Arguments:	 Optionally a reference to a list of trees; if absent just starts with empty list.
-  Returns:	Reference to list of ortholog trees.
-  Description:	 Recursively looks in $a_node's subtree for subtrees with all leaves of distinct species.
-  Author: Tom York (tly2@cornell.edu)
-
+  Synopsis:    my $ortho_trees = $a_node->collect_orthologs()
+  Arguments:   Optionally a reference to a list of trees; if absent just 
+               starts with empty list.
+  Returns:     Reference to list of ortholog trees.
+  Description: Recursively looks in $a_node's subtree for subtrees with 
+               all leaves of distinct species.
+  Author:      Tom York (tly2@cornell.edu)
+ 
 =cut
 
 sub collect_orthologs { 
@@ -1535,12 +1528,14 @@ sub collect_orthologs {
 
 =head2 function copy_subtree
 
-  Synopsis:	 my $new_tree = $a_node->copy_subtree()
-  Arguments:	 none.
-  Returns:	A new tree object which is a copy of the subtree of $a_node.
-  Description:	 Returns a new tree which is a copy of the subtree. The tree's fields such as show_species_in_labels, are
-      copied from $a_node's tree.
-  Author: Tom York (tly2@cornell.edu)
+  Synopsis:	my $new_tree = $a_node->copy_subtree()
+  Arguments:	none.
+  Returns:	A new tree object which is a copy of the subtree of 
+                $a_node.
+  Description:	Returns a new tree which is a copy of the subtree. The 
+                tree's fields such as show_species_in_labels, are copied 
+                from $a_node's tree.
+  Author:       Tom York (tly2@cornell.edu)
 
 =cut
 
@@ -1581,14 +1576,17 @@ sub to_string {
 
 =head2 function recursive_implicit_names()
 
-  Synopsis:	 my @name = $anode->recursive_implicit_names();
+  Synopsis:	my @name = $anode->recursive_implicit_names();
   Arguments:	none
-  Returns:	A list representing the implicit name of $anode, i.e. a sorted list whose elements are 
-      the leaf names of the subtree.
-  Side effects:	 recursively calls itself and calls set_implicit_names and set_name for each node in subtree, 
-  Description:	 Use to define implicit names from leaf names. get_implicit_names() gives a sorted list of leaf names,
-      and set_name() to the string obtained by joining members of that list with tab.
-  Author: Lukas Mueller. (lam87@cornell.edu)
+  Returns:	A list representing the implicit name of $anode, i.e. a sorted 
+                list whose elements are the leaf names of the subtree.
+  Side effects:	recursively calls itself and calls set_implicit_names and 
+                set_name for each node in subtree, 
+  Description:	Use to define implicit names from leaf names. 
+                get_implicit_names() gives a sorted list of leaf names,
+                and set_name() to the string obtained by joining members of 
+                that list with tab.
+  Author:       Lukas Mueller. (lam87@cornell.edu)
 
 =cut
 
@@ -1625,14 +1623,17 @@ sub recursive_implicit_names {
 
 =head2 function recursive_implicit_species()
 
-  Synopsis:	 my @species = $anode->recursive_implicit_species();
+  Synopsis:	my @species = $anode->recursive_implicit_species();
   Arguments:	
-  Returns:	A list representing the implicit species of $anode, i.e. a sorted list whose elements are 
-      the leaf species of the subtree.
-  Side effects:	 recursively calls itself and calls set_implicit_species and set_name for each node in subtree, 
-  Description:	 Use to define implicit species from leaf species. get_implicit_species() gives a sorted list of standardized leaf species names
-
-  Author: Lukas Mueller. (lam87@cornell.edu)
+  Returns:	A list representing the implicit species of $anode, i.e. 
+                a sorted list whose elements are the leaf species of the 
+                subtree.
+  Side effects:	recursively calls itself and calls set_implicit_species 
+                and set_name for each node in subtree
+  Description:	Use to define implicit species from leaf species. 
+                get_implicit_species() gives a sorted list of 
+                standardized leaf species names
+  Author:       Lukas Mueller. (lam87@cornell.edu)
 
 =cut
 
@@ -1735,8 +1736,9 @@ sub recursive_compare {
 =head2 function get_implicit_names()
 
   Synopsis:	
-  Arguments:	 none.
-  Returns:	Reference to a list of implicit names, as defined by recursive_implicit_names.
+  Arguments:	none.
+  Returns:	Reference to a list of implicit names, as defined by 
+                recursive_implicit_names.
   Side effects:	
   Description:	
 
@@ -1766,8 +1768,9 @@ sub set_implicit_names {
 =head2 function get_implicit_species()
 
   Synopsis:	
-  Arguments:	 none.
-  Returns:	Reference to a list of implicit species, as defined by recursive_implicit_species.
+  Arguments:	none.
+  Returns:	Reference to a list of implicit species, as defined by 
+                recursive_implicit_species.
   Side effects:	
   Description:	
 
@@ -1781,7 +1784,8 @@ sub get_implicit_species {
 =head2 function set_implicit_species()
 
   Synopsis:	
-  Arguments:	a pointer to an array containing a list of implicit species
+  Arguments:	a pointer to an array containing a list of implicit 
+                species
   Returns:	
   Side effects:	
   Description:	
@@ -1820,9 +1824,10 @@ sub recursive_copy {
 
 =head2 function copy()
 
-  Synopsis:	 my $node_copy = $a_node->copy($new_parent, $new_tree)
-  Arguments:	 First arg is a node to be set as the copies parent (or is undef, e.g. for root),
-    and second arg is the tree to which the copied node will belong
+  Synopsis:	my $node_copy = $a_node->copy($new_parent, $new_tree)
+  Arguments:	First arg is a node to be set as the copies parent (or is 
+                undef, e.g. for root), and second arg is the tree to 
+                which the copied node will belong
   Returns:	A node object
   Description:	
 
@@ -1861,7 +1866,8 @@ $new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_cou
 
 =head2 function recursive_generate_newick()
 
-  Synopsis:	my $newick_string = $tree->get_root()->recursive_generate_newick();
+  Synopsis:	my $newick_string = $tree->get_root()
+                    ->recursive_generate_newick();
   Arguments:	none
   Returns:	a string with a newick representation of the tree
   Side effects:	none
@@ -1898,8 +1904,8 @@ sub recursive_generate_newick {
 
   Synopsis:	
   Arguments:	none
-  Returns:	a string, representing the tree's shown attributes, and their values for this node.
-   e.g. [name=g47788;species=potato]
+  Returns:	a string, representing the tree's shown attributes, and their 
+                values for this node. e.g. [name=g47788;species=potato]
   Side effects:	none
   Description:	
 
@@ -2001,10 +2007,11 @@ sub write_nex {
   Side effects:	collapses nodes that have only one child into one
                 node. The names and other node properties from the 
                 child node are propagated to the parent node, whose
-                information is lost. The collapsed node keeps its original
-                node_key.
+                information is lost. The collapsed node keeps its 
+                original node_key.
   Description:	
-  Author: Lukas Mueller (lam87@cornell.edu), Tom York (tly2@cornell.edu)
+  Authors:      Lukas Mueller (lam87@cornell.edu), 
+                Tom York (tly2@cornell.edu)
 
 =cut
 
@@ -2114,7 +2121,8 @@ sub _recursive_longest_branch_node {
   Arguments:	
   Returns:	
   Side effects:	
-  Description:	 If subtree
+  Description:	If subtree contains only one species, it is collapsed 
+                into a single node. Labels are concatenated.
 
 =cut
 
@@ -2172,7 +2180,9 @@ sub recursive_collapse_unique_species_subtrees {
   Arguments:	 none
   Returns:	
   Side effects:	
-  Description:	 If node is leaf, delete siblings with same species and smaller key, and join names of deleted sibs to node's name
+  Description:	 If node is leaf, delete siblings with same species and 
+                 smaller key, and join names of deleted sibs to node's 
+                 name
 
 =cut
 
@@ -2260,7 +2270,8 @@ sub recursive_subtree_node_list {
   Arguments:	the name of the attribute
   Returns:	the value of the attribute named foo.
   Side effects:	none
-  Description:	used for temporary storage of information relating to a node.
+  Description:	used for temporary storage of information relating to a 
+                node.
 
 =cut
 
@@ -2308,10 +2319,12 @@ sub delete_attribute {
 
 =head2 function  recursive_set_leaf_count()
 
-  Synopsis:	 my $leaf_count = recursive_set_leaf_count($a_node);
+  Synopsis:	my $leaf_count = recursive_set_leaf_count($a_node);
   Arguments:	ref to node object.
-  Returns:	the number of leaves in subtree, including this node, i.e. it is 1 for leaves.
-  Side effects:	 sets the leaf_count attribute in each node of the subtree.
+  Returns:	the number of leaves in subtree, including this node, 
+                i.e. it is 1 for leaves.
+  Side effects:	sets the leaf_count attribute in each node of the 
+                subtree.
   Description:	
   See also:     $tree->get_orthologs()
 
@@ -2336,11 +2349,14 @@ sub recursive_set_leaf_count{
 
 =head2 function  recursive_set_leaf_species_count()
 
-  Synopsis:	 my $leaf_species_hash_ref = $a_node->recursive_set_leaf_species_count();
-  Arguments:	Optionally a ref. to a hash with the species and counts for the whole tree.
+  Synopsis:	my $leaf_species_hash_ref = $a_node->
+                    recursive_set_leaf_species_count();
+  Arguments:	Optionally a ref. to a hash with the species and counts 
+                for the whole tree.
   Returns:	ref to hash whose keys are leaf species in subtree
-  Side effects:	 sets the leaf_species_count attribute in each node of the subtree, to number of distinct species in leaves of $a_node,
-    so leaves have leaf_species_count set to 1.
+  Side effects:	sets the leaf_species_count attribute in each node of 
+                the subtree, to number of distinct species in leaves 
+                of $a_node, so leaves have leaf_species_count set to 1.
   Description:	
   See also:     $tree->get_orthologs()
 
@@ -2388,15 +2404,20 @@ sub recursive_set_leaf_species_count{
 	return $species_hash_ref;
 }
 
-=head2 function  recursive_set_min_dist_to_leaf()
+=head2 function recursive_set_min_dist_to_leaf()
 
-  Synopsis:	 my $min_distance_to_leaf = recursive_set_min_dist_to_leaf($a_node);
+  Synopsis:     $min_distance_to_leaf = 
+                   recursive_set_min_dist_to_leaf($a_node)
   Arguments:	ref to node object.
-  Returns:	The minimum length (sum of branch lengths) of paths from this node to leaves in its subtree
-  Side effects:	 sets the min_dist_to_leaf attribute in this node and each node of the subtree.
-  Description:	 Note that this only looks in the subtree. There may be a shorter path to a leaf 
-            by sometimes moving toward the root. Use recursive_propagate_mdtl after calling
-            recursive_set_min_dist_to_leaf to get the true min dist to leaf for each node.
+  Returns:	The minimum length (sum of branch lengths) of paths 
+                from this node to leaves in its subtree
+  Side effects:	sets the min_dist_to_leaf attribute in this node and 
+                each node of the subtree.
+  Description:	Note that this only looks in the subtree. There may 
+                be a shorter path to a leaf by sometimes moving toward 
+                the root. Use recursive_propagate_mdtl after calling 
+                recursive_set_min_dist_to_leaf to get the true min 
+                dist to leaf for each node.
 
 =cut
 
@@ -2429,17 +2450,21 @@ sub recursive_set_min_dist_to_leaf{
 
 =head2 function  recursive_propagate_mdtl()
 
-  Synopsis:	 my $min_distance_to_leaf = recursive_propoagate_mdtl($a_node);
+  Synopsis:	my $min_distance_to_leaf = 
+                   recursive_propoagate_mdtl($a_node);
   Arguments:	ref to node object.
   Returns:	Nothing.
-  Side effects:	 sets the min_dist_to_leaf attribute in this node and each node of the subtree.
-  Description:	 Recursively propagates min distance to leaf (mdtl) through tree, starting with
-            tree which has min_dist_to_leaf attribute set at each node to
-            the min distance through the node's subtree. So the root starts with
-            the correct mdtl since all leaves are in its subtree; we want to 
-            propagate that downward through tree so all min_dists_to_leaf values
-            consider distances to all the leaves, not just those in a subtree
-            wrt to particular root.
+  Side effects:	sets the min_dist_to_leaf attribute in this node and 
+                each node of the subtree.
+  Description:	Recursively propagates min distance to leaf (mdtl) 
+                through tree, starting with tree which has 
+                min_dist_to_leaf attribute set at each node to the 
+                min distance through the node's subtree. So the root 
+                starts with the correct mdtl since all leaves are in 
+                its subtree; we want to propagate that downward through 
+                tree so all min_dists_to_leaf values consider distances 
+                to all the leaves, not just those in a subtree wrt to 
+                particular root.
 
 =cut
 
@@ -2471,16 +2496,25 @@ sub recursive_propagate_mdtl{
 
 =head2 function  recursive_find_point_furthest_from_leaves()
 
-  Synopsis:	 my ($out_node, $dist) = (recursive_find_point_furthest_from_leaves($in_node);
-  Arguments:	ref to node object defining the subtree within which this subroutine will work.
-  Returns:	A list of a node and a distance. The point furthest from leaves will lie between $out_node and its parent, 
-          and its distance from leaves is $dist.
-  Side effects:	 None.
-  Description:	 Subroutines recursive_set_min_dist_to_leaf and recursive_propagate_mdtl should have been called already,
-          to set attributes min_dist_to_leaf, near_leaf_path_direction, and near_leaf_path_next_node. Nodes with 
-          near_leaf_path_direction eq "both" may have (a long the branch to the parent) a local maximum of the distance to leaves.
-          So check all such branches and return the global maximizing point, specified as the node below the branch, and the distance
-          of that point from the nearest leaf.
+  Synopsis:     ($out_node, $dist) = 
+                   (recursive_find_point_furthest_from_leaves($in_node)
+  Arguments:	ref to node object defining the subtree within which 
+                this subroutine will work.
+  Returns:	A list of a node and a distance. The point furthest 
+                from leaves will lie between $out_node and its parent,  
+                and its distance from leaves is $dist.
+  Side effects:	None.
+  Description:	Subroutines recursive_set_min_dist_to_leaf and 
+                recursive_propagate_mdtl should have been called 
+                already, to set attributes min_dist_to_leaf, 
+                near_leaf_path_direction, and near_leaf_path_next_node. 
+                Nodes with near_leaf_path_direction eq "both" may have 
+                (a long the branch to the parent) a local maximum of 
+                the distance to leaves.
+                So check all such branches and return the global 
+                maximizing point, specified as the node below the 
+                branch, and the distance of that point from the 
+                nearest leaf.
 
 =cut
 
@@ -2512,22 +2546,38 @@ sub recursive_find_point_furthest_from_leaves{
 
 =head2 function  recursive_set_max_dist_to_leaf_in_subtree()
 
-  Synopsis:	 my $max_leaf_leaf_pathlength_through_node_in_subtree = recursive_set_min_dist_to_leaf_in_subtree($a_node);
+  Synopsis:	my $max_leaf_leaf_pathlength_through_node_in_subtree = 
+                   recursive_set_min_dist_to_leaf_in_subtree($a_node);
   Arguments:	ref to node object.
-  Returns: The maximum length of leaf to leaf paths through this node which lie entirely in this subtree (i.e. it can't
-            visit parent) and which traverse each branch at most once (can't double back).
-  Side effects:	 sets the attributes dist_to_leaf_longest,  dist_to_leaf_next_longest,  and  lptl_child for this node
-            (and, recursively, its child nodes). 
-            dist_to_leaf_longest   is the length of longest path downward throught the tree to a leaf.
-            dist_to_leaf_next_longest   is the length of next longest path, considering only first moving to any of the children, 
-                        and then taking longest path downward through the tree to a leaf. (The second longest path could start
-                        by going to same child as the longest, but that is excluded here, because we are interested in finding 
-                        the longest leaf to leaf path by putting together the longest and next_longest, and no doubling back is allowed.)
-            lptl_child  is the child node object which lies on the longest path downward throught the tree to a leaf.
-  Description:	 The idea here is to find for each node the length of the longest path lying in the node's subtree which starts
-            at a leaf, goes up through the subtree to the node, then back down (no doubling back allowed) to a leaf. If we call this for 
-     es       a tree's root node (and for any choice of root), then the longest leaf to leaf path will necessarily have been found by this 
-            procedure and we will have its length. We just need to look at all the
+  Returns:      The maximum length of leaf to leaf paths through this 
+                node which lie entirely in this subtree (i.e. it can't 
+                visit parent) and which traverse each branch at most 
+                once (can't double back).
+  Side effects:	sets the attributes dist_to_leaf_longest,  
+                dist_to_leaf_next_longest,  and  lptl_child for this 
+                node (and, recursively, its child nodes). 
+                dist_to_leaf_longest   is the length of longest path 
+                downward throught the tree to a leaf. 
+                dist_to_leaf_next_longest is the 
+                length of next longest path, considering only first 
+                moving to any of the children, and then taking longest 
+                path downward through the tree to a leaf. (The second  
+                longest path could start by going to same child as the 
+                longest, but that is excluded here, because we are 
+                interested in finding the longest leaf to leaf path by 
+                putting together the longest and next_longest, and no 
+                doubling back is allowed.)
+                lptl_child  is the child node object which lies on the
+                longest path downward throught the tree to a leaf.
+  Description:	The idea here is to find for each node the length of 
+                the longest path lying in the node's subtree which 
+                starts at a leaf, goes up through the subtree to the 
+                node, then back down (no doubling back allowed) to a 
+                leaf. If we call this for es a tree's root node (and 
+                for any choice of root), then the longest leaf to leaf
+                path will necessarily have been found by this procedure 
+                and we will have its length. We just need to look at 
+                all the (...???)
 
 =cut
 
@@ -2567,20 +2617,29 @@ sub get_max_leaf_leaf_pathlength_in_subtree_thru_node{
 
 =head2 function  recursive_set_dl_dlsqr_sums_down()
 
-  Synopsis:	 $anode->recursive_set_dl_dlsqr_sums_down();
+  Synopsis:	$anode->recursive_set_dl_dlsqr_sums_down();
   Arguments:	none.
   Returns:	nothing.
-  Side effects:	 Sets several attributes, n_leaf_down, sum_d_leaf_top_down, etc.  
-  Description:	 For anode, (and recursively for nodes in its subtree), finds
+  Side effects:	Sets several attributes, n_leaf_down, 
+                sum_d_leaf_top_down, etc.  
+  Description:	For anode, (and recursively for nodes in its subtree), 
+                finds
       1) the number of leaf nodes in the subtree; ( n_leaf_down)
-      2) the sum of the distances from $anode to the leaves in its subtree; ( sum_d_leaf_bottom_down )
-      3) the sum of the squares of the distances from $anode to the leaves in its subtree; (sum_d_leaf_sqr_bottom_down )
-      4) the sum of the distances from $anode's parent downward through $anode to the leaves in $anode's subtree; ( sum_d_leaf_top_down )
-      5) the sum of the squares of the distances from $anode's parent downward through $anode 
-            to the leaves in $anode's subtree; ( sum_d_leaf_sqr_top_down)
-     These are stored in attributes, and together with other attributes set in recursive_set_dl_dlsqr_sums_up,
-      this information is used in min_leaf_dist_variance_point
-  Author: Tom York (tly2@cornell.edu)
+      2) the sum of the distances from $anode to the leaves in its 
+         subtree; ( sum_d_leaf_bottom_down )
+      3) the sum of the squares of the distances from $anode to the 
+         leaves in its subtree; (sum_d_leaf_sqr_bottom_down )
+      4) the sum of the distances from $anode's parent downward through 
+         $anode to the leaves in $anode's subtree; 
+         ( sum_d_leaf_top_down )
+      5) the sum of the squares of the distances from $anode's parent 
+         downward through $anode to the leaves in $anode's subtree; 
+         ( sum_d_leaf_sqr_top_down)
+     These are stored in attributes, and together with other attributes
+     set in recursive_set_dl_dlsqr_sums_up,
+     this information is used in min_leaf_dist_variance_point
+
+  Author:       Tom York (tly2@cornell.edu)
 
 =cut
 
@@ -2625,20 +2684,30 @@ sub recursive_set_dl_dlsqr_sums_down{
 
 =head2 function  recursive_set_dl_dlsqr_sums_up()
 
-  Synopsis:	 $anode->recursive_set_dl_dlsqr_sums_up();
+  Synopsis:	$anode->recursive_set_dl_dlsqr_sums_up();
   Arguments:	none.
   Returns:	nothing.
-  Side effects:	 Sets several attributes, n_leaf_up, sum_d_leaf_top_up, etc.  
-  Description:	 For $anode, (and recursively for nodes in its subtree), stores various info for the complement, C, 
-      of $anode's subtree, i.e. the part of the tree not in $anodes subtree. 
-      1) the number of leaf nodes in C, the complement of $anode's subtree; ( n_leaf_up)
-      2) the sum of the distances from $anode's parent to the leaves in C; ( sum_d_leaf_top_up )
-      3) the sum of the squares of the distances from $anode's parent to the leaves in C; ( sum_d_leaf_sqr_top_up)
-      4) the sum of the distances from $anode to the leaves in C; ( sum_d_leaf_bottom_up )
-      5) the sum of the squares of the distances from $anode to the leaves in C; (sum_d_leaf_sqr_bottom_up )
-     These are stored in attributes, and together with other attributes set in recursive_set_dl_dlsqr_sums_down,
-      this information is used in min_leaf_dist_variance_point.
-  Author: Tom York (tly2@cornell.edu)
+  Side effects:	Sets several attributes, n_leaf_up, sum_d_leaf_top_up, 
+                etc.  
+  Description:	For $anode, (and recursively for nodes in its subtree), 
+                stores various info for the complement, C, of $anode's
+                subtree, i.e. the part of the tree not in $anodes 
+                subtree. 
+      1) the number of leaf nodes in C, the complement of $anode's 
+         subtree; ( n_leaf_up)
+      2) the sum of the distances from $anode's parent to the leaves 
+         in C; ( sum_d_leaf_top_up )
+      3) the sum of the squares of the distances from $anode's parent 
+         to the leaves in C; ( sum_d_leaf_sqr_top_up)
+      4) the sum of the distances from $anode to the leaves in C; 
+         ( sum_d_leaf_bottom_up )
+      5) the sum of the squares of the distances from $anode to the 
+         leaves in C; (sum_d_leaf_sqr_bottom_up )
+     These are stored in attributes, and together with other attributes  
+     set in recursive_set_dl_dlsqr_sums_down, this information is used 
+     in min_leaf_dist_variance_point.
+
+  Author:      Tom York (tly2@cornell.edu)
 
 =cut
 
@@ -2696,15 +2765,22 @@ sub recursive_delete_dl_dlsqr_attributes{
 
 =head2 function  min_leaf_dist_variance_point()
 
-  Synopsis:	 $anode->min_leaf_dist_variance_point();
+  Synopsis:	$anode->min_leaf_dist_variance_point();
   Arguments:	none.
-  Returns:	A list ($da, $var). $da is the distance above $anode, which of all points along the branch (from $anode
-     to its parent) minimizes the variance in the distances from the point to the leaves; $var is that minimal variance.
-  Side effects:	 none.
-  Description:	 Phylo::Tree::min_leaf_dist_variance_point() calls this for each node to find the tree's overall min variance point.
-      This routine can find that the optimum along a branch is either at the bottom, ($da = 0), the top ($da = branch length),
-      or somewhere in between (the more interesting case).
-  Author: Tom York (tly2@cornell.edu)
+  Returns:	A list ($da, $var). $da is the distance above $anode, 
+                which of all points along the branch (from $anode to 
+                its parent) minimizes the variance in the distances 
+                from the point to the leaves; $var is that minimal 
+                variance.
+  Side effects:	none.
+  Description:	Phylo::Tree::min_leaf_dist_variance_point() calls this 
+                for each node to find the tree's overall min variance 
+                point.
+                This routine can find that the optimum along a branch is
+                either at the bottom, ($da = 0), the top 
+                ($da = branch length), or somewhere in between (the more 
+                interesting case).
+  Author:       Tom York (tly2@cornell.edu)
 
 =cut
 
@@ -2767,11 +2843,16 @@ sub recursive_get_a_leaf{
 
 =head2 function compare_subtrees
 
-  Synopsis:	 $node1->compare_subtrees($node2), or $node1->compare_subtrees($node2, "species");
-  Arguments:	 A node object, and optionally .
-  Returns:	1 if subtrees below $node1 and $node2 are topologically the same when regarded as rooted trees, 0 otherwise.
-  Side effects:	 None.
-  Description:	 Copies subtrees into new trees; collapses them, gets implicit names, then recursively compares trees using implicit names. If the second argument is "species", then gets implicit species, and compares using them.
+  Synopsis:	$node1->compare_subtrees($node2), or 
+                $node1->compare_subtrees($node2, "species");
+  Arguments:	A node object, and optionally .
+  Returns:	1 if subtrees below $node1 and $node2 are topologically 
+                the same when regarded as rooted trees, 0 otherwise.
+  Side effects:	None.
+  Description:	Copies subtrees into new trees; collapses them, gets 
+                implicit names, then recursively compares trees using 
+                implicit names. If the second argument is "species", 
+                then gets implicit species, and compares using them.
 
 =cut
 
@@ -2811,18 +2892,29 @@ sub compare_subtrees{
 
 =head2 function quasiRF_distance
 
-  Synopsis:	 $node1->quasiRF_distance($node2), or $node1->quasiRF_distance($node2, "species");
+  Synopsis:	 $node1->quasiRF_distance($node2), or 
+                 $node1->quasiRF_distance($node2, "species");
   Arguments:	 A node object, whose subtree is the speci
-  Returns:	Compares the subtrees with roots $node1 and $node2. If they are topologically the same, 0 is returned. Otherwise
-returns a "distance" describing how different the two subtrees are.
+  Returns:	 Compares the subtrees with roots $node1 and $node2. If 
+                 they are topologically the same, 0 is returned. 
+                 Otherwise returns a "distance" describing how different
+                 the two subtrees are.
   Side effects:	 None.
-  Description:	 Copies subtrees into new trees; collapses them, gets implicit names or species. For each node in subtree1 add 
-branch length to distance if a node with the same implicit name is not present in subtree2. 
-This is somewhat like the Robinson-Foulds distance, but is not symmetric (hence not a true distance), 
-as the topologies of both subtrees are used, but only the subtree1 branch lengths are used.
-Think of it as a measure of how much subtree1 much be changed to reach the topology of subtree2.
-We are typically going to use it to compare an ortholog tree with a species tree, in which case the implicit species
-should be used in the comparison, i.e. it should be called with the optional 2nd arg having value "species"
+  Description:	 Copies subtrees into new trees; collapses them, gets 
+                 implicit names or species. For each node in subtree1 
+                 add branch length to distance if a node with the same 
+                 implicit name is not present in subtree2. 
+                 This is somewhat like the Robinson-Foulds distance, 
+                 but is not symmetric (hence not a true distance), as 
+                 the topologies of both subtrees are used, but only the 
+                 subtree1 branch lengths are used.
+                 Think of it as a measure of how much subtree1 much be 
+                 changed to reach the topology of subtree2.
+                 We are typically going to use it to compare an ortholog
+                 tree  with a species tree, in which case the implicit
+                 species should be used in the comparison, i.e. it 
+                 should be called with the optional 2nd arg having 
+                 value "species"
 
 =cut
 
@@ -2858,15 +2950,19 @@ sub recursive_quasiRF_distance{
 
 =head2 function robinson_foulds_distance
 
-  Synopsis:	 $node1->robinson_foulds_distance($node2);
-  Arguments:	 A node object.
-  Returns:	Compares the subtrees with roots $node1 and $node2. Returns the Robinson-Foulds distance 
-describing how different the two subtrees are.
-  Side effects:	 None.
-  Description:	 Copies subtrees into new trees; collapses them, gets implicit names. Pairs of nodes with the same
-implicit name contribute abs(bl1 - bl2) to the distance, nodes in either tree with no matching node (same implicit name)
-in the other tree contribute their branch length. This is the Robinson-Foulds distance between the
-two subtrees with the rest of both trees ignored.
+  Synopsis:	$node1->robinson_foulds_distance($node2);
+  Arguments:	A node object.
+  Returns:	Compares the subtrees with roots $node1 and $node2. 
+                Returns the Robinson-Foulds distance describing how 
+                different the two subtrees are.
+  Side effects:	None.
+  Description:	Copies subtrees into new trees; collapses them, gets
+                implicit names. Pairs of nodes with the same implicit 
+                name contribute abs(bl1 - bl2) to the distance, nodes 
+                in either tree with no matching node (same implicit 
+                name) in the other tree contribute their branch length. 
+                This is the Robinson-Foulds distance between the two 
+                subtrees with the rest of both trees ignored.
 
 =cut
 
@@ -2929,19 +3025,21 @@ print("in robinson-foulds, root bls: ", $root1->get_branch_length(), "   ", $roo
 
 =head2 function determine_species_from_name
 
-  Synopsis:	 $node1->determine_species_from_name()
-  Arguments:	 Optionally a string.
-  Returns:	A string containing a species name obtained from the node name, or from the optional
-string argument instead if present.
-  Side effects:	 None.
-  Description:	 Starting with the node's name (or the argument if present), obtain a species string
-to return as follows:
-	1) At ->Arabidopsis
-	2) SGN-U followed by digits, get species from digits (each species has its range of values)
-	3) Bradi -> Brachypodium
-     4) LOC_Os -> Rice (Oryza sativa)
-     5) 1234_Eggplant.x3 -> Eggplant.x3
-
+  Synopsis:	$node1->determine_species_from_name()
+  Arguments:	Optionally a string.
+  Returns:	A string containing a species name obtained from the 
+                node name, or from the optional string argument 
+                instead if present.
+  Side effects:	None.
+  Description:	Starting with the node's name (or the argument if 
+                present), obtain a species string to return as 
+                follows:
+	        1) At ->Arabidopsis
+	        2) SGN-U followed by digits, get species from digits 
+                   (each species has its range of values)
+	        3) Bradi -> Brachypodium
+                4) LOC_Os -> Rice (Oryza sativa)
+                5) 1234_Eggplant.x3 -> Eggplant.x3
 
 =cut
 
@@ -3004,6 +3102,15 @@ sub determine_species_from_name{
 	return $species;
 }
 
+=head2 recursive_subtree_newick
+
+  Usage:        my $newick = $node->recursive_subtree_newick()
+  Desc:         generates a newick string representing the tree structure 
+               below this node.
+  Side Effects:
+  Example:
+
+=cut
 
 sub recursive_subtree_newick{		#recursive_generate_newick does the same thing & is more general (using make_newick_attributes() )
 	my $self = shift;
@@ -3031,15 +3138,18 @@ sub recursive_subtree_newick{		#recursive_generate_newick does the same thing & 
 
 =head2 function delete_self
 
-  Synopsis:	 $node->delete_self();
-  Arguments:	 A node object.
-  Returns:	nothing if deletion succeeded, 1 if failed (because node was root).
-  Side effects:	 Deletes the node.
-  Description:	 Sets any children of the node as children of its parent, and the parent
-as parent of the children, adds node's branch length to childrens branch length, and
-deletes the node.
-See also: Tree::delete_node, Tree::del_node, which check the node exists, then if it does
-call this subroutine, and then Tree::recalculate_tree_data().
+  Synopsis:	$node->delete_self();
+  Arguments:	A node object.
+  Returns:	nothing if deletion succeeded, 1 if failed (because 
+                node was root).
+  Side effects:	Deletes the node.
+  Description:	Sets any children of the node as children of its parent, 
+                and the parent as parent of the children, adds node's 
+                branch length to childrens branch length, and deletes 
+                the node.
+  See also:     Tree::delete_node, Tree::del_node, which check the 
+                node exists, then if it call this subroutine, and then 
+                Tree::recalculate_tree_data().
 
 =cut
 
@@ -3080,6 +3190,8 @@ sub delete_self{
 	$self->set_label(undef);
 	$self = undef;								# really, really delete the node
 }
+
+
 
 
 
@@ -3138,14 +3250,21 @@ sub recursive_divide_subtree_into_small_trees{
 
 =head2 function recursive_set_levels_above_distinct_species_subtrees
 
- Synopsis:	 my $levels_above = $a_node->recursive_set_levels_above_distinct_species_subtrees()
- Arguments:	 None.
- Returns:	The number of levels $a_node is above an ortholog group candidate subtree (distinct species tree with > 1 leaf); 
-returns $big_levels (a large number) if there is no ortho group candidate subtree in the subtree below $a_node.
- Description:	 Recursively looks in $a_node's subtree for subtrees with >1 leaves, and all leaves having distinct species;
-such trees get their levels_above_... field set to 0, otherwise it gets set to the number of branches above such a subtree,
-	or to $big_levels if $a_nodes subtree doesnt contain such a subtree.
-  Author: Tom York (tly2@cornell.edu)
+ Synopsis:     my $levels_above = $a_node->
+                  recursive_set_levels_above_distinct_species_subtrees()
+ Arguments:    None.
+ Returns:      The number of levels $a_node is above an ortholog group 
+               candidate subtree (distinct species tree with > 1 leaf); 
+               returns $big_levels (a large number) if there is no 
+               ortho group candidate subtree in the subtree below 
+               $a_node.
+ Description:  Recursively looks in $a_node's subtree for subtrees 
+               with >1 leaves, and all leaves having distinct species; 
+               such trees get their levels_above_... field set to 0, 
+               otherwise it gets set to the number of branches above 
+               such a subtree, or to $big_levels if $a_nodes subtree 
+               doesnt contain such a subtree.
+  Author:      Tom York (tly2@cornell.edu)
 
 =cut
 
@@ -3177,15 +3296,24 @@ sub recursive_set_levels_above_distinct_species_subtree{
 
 =head2 function recursive_ortholog_group_candidate_subtrees
 
-  Synopsis:	 my $levels_above = $a_node->recursive_ortholog_group_candidate_subtrees($ortho_cand_array, $desired_levels_above)
-  Arguments:	 A reference to an array in which the candidate trees will be stored, and optionally the number of levels to keep above
-      the distinct species subtrees (default = 0).
-  Returns:	The number of levels $a_node is above an ortholog group candidate subtree (distinct species tree with > 1 leaf); 
-       returns $big_levels (a large number) if there is no ortho group candidate subtree in the subtree below $a_node.
-  Description:	 Recursively looks in $a_node's subtree for subtrees with >1 leaves, and all leaves having distinct species;
-such trees get their levels_above_... field set to 0, otherwise it gets set to the number of branches above such a subtree,
-	or to $big_levels if $a_nodes subtree doesn't contain such a subtree.
-  Author: Tom York (tly2@cornell.edu)
+  Synopsis:	my $levels_above = $a_node->
+                  recursive_ortholog_group_candidate_subtrees(
+                  $ortho_cand_array, $desired_levels_above)
+  Arguments:	A reference to an array in which the candidate trees 
+                will be stored, and optionally the number of levels to 
+                keep above the distinct species subtrees (default = 0).
+  Returns:	The number of levels $a_node is above an ortholog group 
+                candidate subtree (distinct species tree with > 1 leaf); 
+                returns $big_levels (a large number) if there is no 
+                ortho group candidate subtree in the subtree below 
+                $a_node.
+  Description:	Recursively looks in $a_node's subtree for subtrees 
+                with >1 leaves, and all leaves having distinct species; 
+                such trees get their levels_above_... field set to 0, 
+                otherwise it gets set to the number of branches above 
+                such a subtree, or to $big_levels 
+                if $a_nodes subtree doesn't contain such a subtree.
+  Author:       Tom York (tly2@cornell.edu)
 
 =cut
 
