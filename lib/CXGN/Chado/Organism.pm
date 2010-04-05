@@ -429,6 +429,45 @@ sub get_parent {
     return undef;
 }
 
+
+=head2 get_direct_children
+
+ Usage: $self->get_direct_children()
+ Desc:  get the child organisms of this object
+ Ret:   list of CXGN::Chado::Organism objects or an empty list if organism has no children (i.e. is a leaf in the tree)
+ Args:  none 
+ Side Effects: accesses the phylonode table
+ Example:
+
+=cut
+
+sub get_direct_children {
+    my $self=shift;
+    my $organism_id = $self->get_organism_id();
+    
+    my @children=();
+    
+    my ($phylonode)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
+	{ organism_id =>$self->get_organism_id() })->search_related('phylonode');
+    
+    if ($phylonode) {
+
+	#my $parent_phylonode_id= $phylonode->get_column('parent_phylonode_id');
+	
+	my @child_phylonodes = $self->get_resultset("Phylogeny::Phylonode")->search(
+	    { parent_phylonode_id => $phylonode->phylonode_id() } );
+
+	foreach my $d (@child_phylonodes) {
+	    my ($phylonode_organism)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
+		{ phylonode_id => $d->get_column('phylonode_id') } );
+	    
+	    my $child_organism= CXGN::Chado::Organism->new($self->get_schema(), $phylonode_organism->organism_id() );
+	    push @children, $child_organism;
+	}
+    }
+    return @children;
+}
+
 =head2 get_taxon
 
  Usage: $sef->get_taxon()
