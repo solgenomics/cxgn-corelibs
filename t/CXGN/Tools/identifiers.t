@@ -174,8 +174,6 @@ BEGIN {
      'scaffold234'     => ['generic_scaffold', 'scaffold234', qr//, { scaffold_num => 234 } ],
      'scaFFOld0'       => ['generic_scaffold', 'scaffold0', qr//, { scaffold_num => 0 } ],
 ###     'SSR222'          => ['sgn_marker', 'SSR222', qr//],
-     'ac186290_17.1'   => ['itag_gene_model', 'AC186290_17.1', qr/gbrowse.+name=gene:AC186290_17.1$/, { index => 17, ver => 1, accession => 'AC186290'}],
-     'cds:ac186290_17.1'   => ['itag_coding_sequence', 'CDS:AC186290_17.1', qr/gbrowse.+name=AC186290_17.1$/, { index => 17, ver => 1, accession => 'AC186290'}],
      'sp|Q4U9M9|104K_THEAN' => ['swissprot_accession', 'Q4U9M9', qr/www\.uniprot\.org\/uniprot\/Q4U9M9/],
      'sp|O48626|ZW10_ARATH' => ['swissprot_accession', 'O48626', qr/www\.uniprot\.org\/uniprot\/O48626/],
      'UniRef90_Q4U9M9' => ['uniref_accession', 'Q4U9M9', qr/www\.uniprot\.org\/uniprot\/Q4U9M9/],
