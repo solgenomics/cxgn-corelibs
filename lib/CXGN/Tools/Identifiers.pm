@@ -104,10 +104,6 @@ BAC sequence identifiers like 'LE_HBa0123A12.1'
 BAC fragment identifiers (identifies contigs in a bac that is
 still partially assembled) like 'LE_HBa0123A12.1-4'
 
-=item itag_gene_model
-
-An ITAG gene model name, like CU123456_2.1
-
 =item tomato_bac_contig
 
 A tomato BAC contig, e.g. C12.4_contig1
@@ -185,8 +181,6 @@ our @namespace_list = qw/
 			 bac_fragment
 			 bac_sequence
 			 bac
-			 itag_coding_sequence
-			 itag_gene_model
 			 tomato_bac_contig
 			 generic_scaffold
 			 tair_gene_model
@@ -738,71 +732,7 @@ sub clean_bac {
 sub parse_bac {
   parse_clone_ident(shift,qw/agi_bac agi_bac_with_chrom old_cornell sanger_bac/);
 }
-#itag_coding_sequence
-sub is_itag_coding_sequence {
-  my ($ident) = @_;
-  return 0 unless $ident =~ s/^cds://i;
-  return is_itag_gene_model($ident);
-}
-sub url_itag_coding_sequence {
-  my ($ident) = @_;
-  my $curr_release = _get_curr_itag_release()
-    or return;
-  $ident =~ s/^cds://i;
-  return "/gbrowse/gbrowse/".$curr_release->release_tag."_proteins/?name=$ident";
-}
-sub clean_itag_coding_sequence {
-  my ($ident) = @_;
-  return uc $ident;
-}
-sub parse_itag_coding_sequence {
-  my ($ident)  = @_;
-  $ident =~ /^cds:([A-Z]{2}\d{4,})_(\d+)\.(\d+)$/i
-    or return;
 
-  return { accession => uc $1,
-	   index => $2+0,
-	   ver => $3+0,
-	 };
-}
-#itag_gene_model
-sub is_itag_gene_model {
-  my ($ident) = @_;
-  return 1 if $ident =~ /^[A-Z]{2}\d{4,}_\d+\.\d+$/i;
-  return 0;
-}
-sub url_itag_gene_model {
-  my ($ident) = @_;
-  my $curr_release = _get_curr_itag_release()
-    or return;
-
-  return "/gbrowse/gbrowse/".$curr_release->release_tag."_genomic/?name=gene:$ident";
-}
-sub clean_itag_gene_model {
-  my ($ident) = @_;
-  return uc $ident;
-}
-sub parse_itag_gene_model {
-  my ($ident)  = @_;
-  $ident =~ /^([A-Z]{2}\d{4,})_(\d+)\.(\d+)$/i
-    or return;
-
-  return { accession => uc $1,
-	   index => $2+0,
-	   ver => $3+0,
-	 };
-}
-sub _get_curr_itag_release {
-  our $curr_release ||= do {
-      eval 'require CXGN::ITAG::Release';
-      if( $@ ) {
-	  undef
-      } else {
-	  my ($r) = CXGN::ITAG::Release->find( current => 1 );
-	  $r
-      }
-  };
-}
 #tomato_bac_contig
 sub is_tomato_bac_contig {
   my ($ident) = @_;
