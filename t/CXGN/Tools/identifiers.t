@@ -169,10 +169,10 @@ BEGIN {
      'ctog:5:K:15'     => ['est','cTOG-5-K15',qr/est\.pl/],
      'cLED-10_L1'      => ['est','cLED-10-L1',qr/est\.pl/],
      'ipr023339'       => ['interpro_accession', 'IPR023339', qr/www\.ebi\.ac\.uk\/interpro\/IEntry\?ac=IPR023339/],
-     'C12.4_contig0'   => ['tomato_bac_contig', 'C12.4_contig0', qr//, { chr => 12, chr_ver => 4, ctg_num => 0, ver => 4 }],
-     'c02.42coNTig0'   => ['tomato_bac_contig', 'C02.42_contig0', qr//, { chr => 2, chr_ver => 42, ctg_num => 0, ver => 42 }],
-     'scaffold234'     => ['generic_scaffold', 'scaffold234', qr//, { scaffold_num => 234 } ],
-     'scaFFOld0'       => ['generic_scaffold', 'scaffold0', qr//, { scaffold_num => 0 } ],
+     'C12.4_contig0'   => ['tomato_bac_contig', 'C12.4_contig0', undef, { chr => 12, chr_ver => 4, ctg_num => 0, ver => 4 }],
+     'c02.42coNTig0'   => ['tomato_bac_contig', 'C02.42_contig0', undef, { chr => 2, chr_ver => 42, ctg_num => 0, ver => 42 }],
+     'scaffold234'     => ['generic_scaffold', 'scaffold234', undef, { scaffold_num => 234 } ],
+     'scaFFOld0'       => ['generic_scaffold', 'scaffold0', undef, { scaffold_num => 0 } ],
 ###     'SSR222'          => ['sgn_marker', 'SSR222', qr//],
      'sp|Q4U9M9|104K_THEAN' => ['swissprot_accession', 'Q4U9M9', qr/www\.uniprot\.org\/uniprot\/Q4U9M9/],
      'sp|O48626|ZW10_ARATH' => ['swissprot_accession', 'O48626', qr/www\.uniprot\.org\/uniprot\/O48626/],
@@ -221,9 +221,10 @@ while( my($ident,$tests) = each our %tests) {
   my ($correct_ns,$cleaned,$urlmatch,$parsed) = @$tests;
   $parsed->{namespace} = $correct_ns if $parsed;
   my $url = identifier_url($ident);
-  is(identifier_namespace($ident),$correct_ns,"$ident is in namespace '$correct_ns'");
-  is(clean_identifier($ident),$cleaned,"$ident is cleaned to '$cleaned'");
-  if($urlmatch) {
+  is(identifier_namespace($ident),$correct_ns,"$ident is in namespace '".($correct_ns||'undef')."'");
+  is(clean_identifier($ident),$cleaned,"$ident is cleaned to '".($cleaned||'undef')."'");
+  if( $urlmatch ) {
+    no warnings 'uninitialized';
     like($url,$urlmatch,"$ident url ($url) matches $urlmatch");
   } else {
     is($url,undef,"$ident has undef for url");
