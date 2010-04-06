@@ -1196,7 +1196,7 @@ sub is_go_term {
 sub url_go_term {
   my ($ident) = @_;
   $ident = clean_go_term($ident) or return;
-  return "http://www.geneontology.org/cgi-bin/chooser.cgi?search=terms;query=$urlencode{$ident}";
+  return "http://www.geneontology.org/cgi-bin/chooser.cgi?query=$urlencode{$ident}&search=terms";
 }
 sub clean_go_term {
   my ($ident) = @_;
