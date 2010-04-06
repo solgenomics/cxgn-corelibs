@@ -178,7 +178,6 @@ our @namespace_list = qw/
                          sgn_s
 			 sgn_m
 			 sgn_t
-                         go_term
 			 sgn_locus_sequence
 			 microarray_spot
 			 est
@@ -192,6 +191,7 @@ our @namespace_list = qw/
 			 generic_scaffold
 			 tair_gene_model
 			 tair_locus
+                         go_term
 			 interpro_accession
                          swissprot_accession
                          uniref_accession
