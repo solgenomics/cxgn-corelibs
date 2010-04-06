@@ -23,6 +23,8 @@ BEGIN {
      'sgn|E123215'  => ['sgn_e', 'SGN-E123215', qr/est\.pl/, {id => 123215} ],
      'SGN-M1232'  => ['sgn_m', 'SGN-M1232', qr/markerinfo/, {id => 1232}],
      'SGN-T123401'  => ['sgn_t', 'SGN-T123401', qr/est\.pl/, {id => 123401}],
+     'GO:0000000021344'     => ['go_term', 'GO:0021344', qr/geneontology/, {id => 21344}],
+     'GO2344'     => ['go_term', 'GO:0002344', qr/geneontology/, {id => 2344}],
      'SGN-T75301'   => ['sgn_t', 'SGN-T75301',  qr/est\.pl/, {id => 75301}],
      'SGNS1231'     => ['sgn_s','SGN-S1231',qr/est\.pl/, {id => 1231} ],
      'SGN-M1091'    => ['sgn_m', 'SGN-M1091', qr/markerinfo.pl/, {id=>1091} ],

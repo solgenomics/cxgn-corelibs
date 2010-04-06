@@ -178,6 +178,7 @@ our @namespace_list = qw/
                          sgn_s
 			 sgn_m
 			 sgn_t
+                         go_term
 			 sgn_locus_sequence
 			 microarray_spot
 			 est
@@ -1253,6 +1254,30 @@ sub parse_interpro_accession {
   my ($ident) = @_;
   return unless $ident =~ /^IPR(\d+)$/;
   return { id => $1+0 };
+}
+
+
+#go term
+sub is_go_term {
+  my ($ident) = @_;
+  return 1 if $ident =~ /^GO[^a-zA-Z\d]?\d{3,}$/i;
+  return 0;
+}
+sub url_go_term {
+  my ($ident) = @_;
+  $ident = clean_go_term($ident) or return;
+  return "http://www.geneontology.org/cgi-bin/chooser.cgi?search=terms;query=$urlencode{$ident}";
+}
+sub clean_go_term {
+  my ($ident) = @_;
+  my @d = $ident =~ /\d+/g;
+  return sprintf('GO:%07d',join('',@d));
+}
+sub parse_go_term {
+  my ($ident) = @_;
+  return unless $ident =~ /^GO/;
+  my @d = $ident =~ /(\d+)/g;
+  return { id => join('',@d)+0 };
 }
 
 
