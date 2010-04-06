@@ -229,9 +229,14 @@ while( my($ident,$tests) = each our %tests) {
   } else {
     is($url,undef,"$ident has undef for url");
   }
-  my $p = parse_identifier($ident,$correct_ns);
-  is_deeply($p,$parsed,"$ident was parsed correctly")
-    or diag Dumper $p;
+
+ SKIP: {
+      skip "skip parse test for '$ident'",1 unless $parsed;
+
+      my $p = parse_identifier($ident,$correct_ns);
+      is_deeply($p,$parsed,"$ident was parsed correctly")
+          or diag Dumper $p;
+  }
 }
 
 while(my($ident,$match) = each our %link_tests) {
