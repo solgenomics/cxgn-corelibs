@@ -6,7 +6,7 @@ use warnings;
 use Carp 'croak';
 use English;
 use POSIX;
-use List::Util qw/sum/;
+use List::Util qw/sum min/;
 #use base qw/CXGN::Class::DBI/;
 
 use base qw | CXGN::DB::Object |;
@@ -299,16 +299,19 @@ sub get_chromosomes_percent_finished {
     my $in_progress_weight = 0.5;
     my @phase_weights   = ( 0.7, 0.7, 0.8, 1 ); #first one is for no phase info
 
-    return map { my $i = $_;
-      if( $to_do[$i] <= 0 ) {
-    100
-      } else {
-    my $complete_but_not_available = $reported_complete[$i]-$available[$i];
-    my $completed_number = sum ( $reported_weight*($reported_in_progress[$i]*$in_progress_weight+$complete_but_not_available),
-                     ( map {$phase_weights[$_]*$phases[$_][$i]} 0..3 ),
-                   );
-    POSIX::floor( 100 * $completed_number/$to_do[$i] )
-      }
+    return map {
+        my $i = $_;
+        if( $to_do[$i] <= 0 ) {
+            100
+        } else {
+            my $complete_but_not_available = $reported_complete[$i]-$available[$i];
+            my $completed_number = sum ( $reported_weight*($reported_in_progress[$i]*$in_progress_weight+$complete_but_not_available),
+                                         ( map {$phase_weights[$_]*$phases[$_][$i]} 0..3 ),
+                                        );
+            min( 100,
+                 POSIX::floor( 100 * $completed_number/$to_do[$i] )
+                );
+       }
     } (0..12);
 }
 
