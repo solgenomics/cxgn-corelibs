@@ -237,7 +237,6 @@ sub add_child {
 	$child->set_node_key($key);
 
 	$tree->add_node_hash($child, $key);
-
 	return $child;
 }
 
@@ -272,6 +271,9 @@ sub add_child_node {
 		}
 	}
 	push @{$self->{children}}, $child;
+	my $i=1;
+	#foreach my $c (@{$self->{children}}) { print STDERR "!!!!!!Child name " . $i++ . ":"  . $c->get_name() . "!!!!!!!!!!!!!!\n"; }
+	#print STDERR "adding child " . $child->get_name() . " to parent " . $self->get_name() . "...........\n" ;
 	$child->set_parent($self);
 }
 
@@ -1864,11 +1866,15 @@ $new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_cou
 	return $new;
 }
 
-=head2 function recursive_generate_newick()
+=head2 function recursive_generate_newick("", $make_attribs, $show_root)
 
   Synopsis:	my $newick_string = $tree->get_root()
                     ->recursive_generate_newick();
-  Arguments:	none
+  Arguments:	first should be undef (this is a Node object that is passed to the function from the inner loop for each recursive child node.
+                optional= $make_attribs - boolean. Will call  $self->make_newick_attributes() on the root node.
+                 (defaults to '1' in Tree->generate_newick() ) 
+                optional= $show_root - boolean for printing the root node in the newick string.
+
   Returns:	a string with a newick representation of the tree
   Side effects:	none
   Description:	
@@ -1879,22 +1885,32 @@ sub recursive_generate_newick {
 	my $self = shift;
 	my $s = shift;
 	my $make_attribs = shift;
-#$make_attribs = 1;
-	my @children = $self->get_children();
+	my $show_root = shift;
+
+	my @children = @{$self->{children}};
+	
 	if (@children) { 
-		$s.="(";	
-		for (my $i=0; $i<@children; $i++) {
-			$s =$children[$i]->recursive_generate_newick($s);	   
-			$s .= $children[$i]->get_name() if($children[$i]->is_leaf());
-			$s .= $children[$i]->make_newick_attributes().":".$children[$i]->get_branch_length();
-			if ($i<(@children-1)) {
-				$s.=",";
-			}
+	    print STDERR "Found children for node " . $self->get_name() . "\n";
+	    $s.="(";	
+	    for (my $i=0; $i<@children; $i++) {
+		$s =$children[$i]->recursive_generate_newick($s,'',$show_root);	   
+		$s .= $children[$i]->get_name() if($children[$i]->is_leaf() || $show_root ) ;
+		$s .= $children[$i]->make_newick_attributes().":".$children[$i]->get_branch_length();
+		if ($i<(@children-1)) {
+		    $s.=",";
 		}
-		$s.=")";
+	    }
+	    $s.=")";
 	}
-	if ($make_attribs) {
-		$s .= $self->make_newick_attributes();
+	if ($make_attribs ) {
+	    
+	    if (!$show_root) { $s .= $self->make_newick_attributes(1); }
+	    else {
+		$s = "(" . $s;
+		$s .= $self->get_name();
+		$s .= $self->make_newick_attributes(1).":".$self->get_branch_length() || 0 ;
+	    }
+	    $s .=")";
 	}
 	return $s; 
 }
@@ -1912,26 +1928,27 @@ sub recursive_generate_newick {
 =cut
 
 sub make_newick_attributes {
-	my $self = shift;
-	my $string = "";
-	foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {	
-		my $value = "";
-		if ($attr eq "species") {
-			$value = $self->get_shown_species();
-			if ($self->is_leaf()) {
-				$string .= "$attr=$value;" # don't show attribute if value is 0
-			}
-		} else {
-			$value = $self->get_attribute($attr);
-			#	print("in make_newick_attributes. newick_shown_attributes: ", $attr, "  value: ", $value, "\n");
-			$string .= "$attr=$value;" unless($self->is_leaf() && ($attr eq "speciation")); # don't show speciation attr for leaves
-		}
+    my $self = shift;
+    my $show_all = shift;
+    my $string = "";
+    foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {	
+	my $value = "";
+	if ($attr eq "species") {
+	    $value = $self->get_shown_species();
+	    if ($self->is_leaf() || $show_all ) {
+		$string .= "$attr=$value;" # don't show attribute if value is 0
+	    }
+	} else {
+	    $value = $self->get_attribute($attr);
+	    #	print("in make_newick_attributes. newick_shown_attributes: ", $attr, "  value: ", $value, "\n");
+	    $string .= "$attr=$value;" unless($self->is_leaf() && ($attr eq "speciation")); # don't show speciation attr for leaves
+	}
 	
-	}
-	if ($string) {
-		chop($string); return ("[" . $string . "]");
-	}
-	return "";
+    }
+    if ($string) {
+	chop($string); return ("[" . $string . "]");
+    }
+    return "";
 }
 
 

@@ -788,16 +788,21 @@ sub shown_branch_length_transformation_reset{
 =head2 function generate_newick()
 
  Args: (optional) node, defaults to root node
+        (optional) $show_root - boolean, will show the root node in the newick string  
  Returns: Newick expression from the given node, or for the whole
           tree if no argument is provided
 
 =cut
 
 sub generate_newick {
-	my $self = shift;
-	my $node = shift;
-	$node ||= $self->get_root();
-	return $node->recursive_generate_newick("", 1);}
+    my $self = shift;
+    my $node = shift;
+    my $show_root = shift;
+    
+    $node ||= $self->get_root();
+    return $node->recursive_generate_newick("", 1, $show_root);
+    
+}
 
 =head2 function get_orthologs()
 
@@ -1402,16 +1407,16 @@ sub standard_layout {
 sub render_png { 
     my $self = shift;
     my $file = shift;
-	$self->layout();
+    $self->layout();
     my $png_string = $self->render();
-	if(defined $file){
-	    open (F, ">$file") || die "PNG_tree_renderer: render_png(): Can't open file $file.";
-	    print F $png_string;
-    	close(F);
-	}
-	else {
-		return $png_string;
-	}
+    if(defined $file){
+	open (my $T, ">$file") || die "PNG_tree_renderer: render_png(): Can't open file $file.";
+	print $T $png_string; 
+	close $T ;
+    }
+    else {
+	return $png_string;
+    }
 }
 
 =head2 function collapse_tree()

@@ -587,14 +587,13 @@ sub get_model_color {
 }
 
 =head2 function get_html_image_map()
-
-  Synopsis:	my $image_map=$renderer->get_html_image_map();
-  Arguments:	none
-  Returns:	a html imagemap that can be used to embed links into the 
-                tree image.
-  Side effects:	
-  Description:	use $node->set_link($url) to set the link to $url.
-
+    
+ Synopsis:	my $image_map=$renderer->get_html_image_map($name, $temp_filename, $hilite_temp, $align_type );
+ Arguments:	image_map name, filename
+ Returns:	a html imagemap that can be used to embed links into the tree image.
+ Side effects:	
+ Description:	use $node->set_link($url) to set the link to $url.
+    
 =cut
 
 sub get_html_image_map { 
