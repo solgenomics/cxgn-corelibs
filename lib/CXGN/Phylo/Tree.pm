@@ -1366,7 +1366,7 @@ sub set_renderer {
 =head2 function render()
 
   Synopsis:	$tree->render();
-  Arguments:	none
+  Arguments:	(optional) a boolean for printing all node names, and  not only the leaf labels
   Returns:	
   Side effects:	
   Description:	a convenience function that calls the render() 
@@ -1378,7 +1378,8 @@ sub set_renderer {
 
 sub render   { 
     my $self = shift;
-    $self->get_renderer()->render();
+    my $print_all_labels=shift;
+    $self->get_renderer()->render($print_all_labels);
 }
 
 sub standard_layout {
@@ -1394,8 +1395,8 @@ sub standard_layout {
 
 =head2 function render_png()
 
-  Synopsis:	$r->render_png($filename);
-  Arguments:	a filename
+  Synopsis:	$r->render_png($filename, $print_all_labels);
+  Arguments:	a filename, (optional) a boolean for printing the labels for all nodes in the tree.
   Returns:	nothing
   Side effects:	creates (or overwrites) file $filename
                 which contains the png graphics representing 
@@ -1407,8 +1408,9 @@ sub standard_layout {
 sub render_png { 
     my $self = shift;
     my $file = shift;
+    my $print_all_labels= shift; ## Boolean for printing non-leaf node labels
     $self->layout();
-    my $png_string = $self->render();
+    my $png_string = $self->render($print_all_labels);
     if(defined $file){
 	open (my $T, ">$file") || die "PNG_tree_renderer: render_png(): Can't open file $file.";
 	print $T $png_string; 
