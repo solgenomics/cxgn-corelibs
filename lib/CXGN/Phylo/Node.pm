@@ -1890,7 +1890,6 @@ sub recursive_generate_newick {
 	my @children = @{$self->{children}};
 	
 	if (@children) { 
-	    print STDERR "Found children for node " . $self->get_name() . "\n";
 	    $s.="(";	
 	    for (my $i=0; $i<@children; $i++) {
 		$s =$children[$i]->recursive_generate_newick($s,'',$show_root);	   

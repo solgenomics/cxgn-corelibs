@@ -271,7 +271,7 @@ sub get_transparent {
 =head2 function render()
 
   Synopsis:	
-  Arguments:	
+  Arguments:    (optional) a boolean for printing labels for all nodes (default- label is printed only for leaves, unless get_hide_label() = true )	
   Returns:      a png image
   Side effects:	creates a GD::Image object and renders the tree on it.
   Description:	draws the tree
@@ -280,7 +280,7 @@ sub get_transparent {
 
 sub render { 
 	my $self = shift;
-
+	my $print_all_labels=shift;
 #	GD::Image->trueColor(1);
 	# initialize image   
 	my $tree = $self->get_tree;
@@ -369,7 +369,7 @@ sub render {
 		#Render the alignment on the set image
 		$alignment->render();	
 	}
-	$self->recursive_draw($tree->get_root(), $image, $color);
+	$self->recursive_draw($tree->get_root(), $image, $color, "", $print_all_labels );
 	return $image->png();
 }
 
@@ -381,7 +381,7 @@ sub recursive_draw {
 	my $image = shift;
 	my $color = shift;
 	my $parent_hilited = shift;
-
+	my $print_all_labels=shift;
 
 	my $line_color = $color;
 
@@ -444,15 +444,15 @@ sub recursive_draw {
 			$line_color = $color if $node->get_hilited();	 
 		#	print STDERR "line color: ", join(";", @line_color), "\n";
 			$self->connect_nodes($node, $c, $image, $line_color);
-			$self->recursive_draw($c, $image, $color,$node->get_hilited());
+			$self->recursive_draw($c, $image, $color,$node->get_hilited(), $print_all_labels);
 		}
 	}
 	
 	if (!($node->is_leaf() || ($node->is_hidden()))) {
-		$image -> filledRectangle(($node->get_X()-2), ($node->get_Y()-2), 
-															($node->get_X()+2), ($node->get_Y+2), $node_color);
+	    $image -> filledRectangle(($node->get_X()-2), ($node->get_Y()-2), 
+				      ($node->get_X()+2), ($node->get_Y+2), $node_color);
 	} elsif ($node->is_leaf()) { 
-		$image -> filledArc(($node->get_X()), ($node->get_Y()), 7, 7, 0, 360, $node_color);
+	    $image -> filledArc(($node->get_X()), ($node->get_Y()), 7, 7, 0, 360, $node_color);
 		#	my $label = $node->get_label;
 		#		my $layout = $self->get_tree()->get_layout();
 		#		my $begin_x = $label->{font}->width()*length($label->get_name()) + $node->get_X + 5;
@@ -460,7 +460,7 @@ sub recursive_draw {
 		#		$image->line($begin_x, $node->get_Y, $begin_x+50, $node->get_Y, $node_color);
 
 	}
-
+	
 	# if the node is hidden, draw the hidden symbol
 	#
 	if ($node->get_hidden()) {
@@ -475,10 +475,10 @@ sub recursive_draw {
 
 	# draw the label if it it visible
 	#
-	if (!$node->get_hide_label() and $node->is_leaf()) { 	
-		$node->get_label()->set_reference_point(($node->get_X()), ($node->get_Y()));
-		$node->get_label()->set_orientation_horizontal();
-		$node->get_label()->render($image);	
+	if ( (!$node->get_hide_label() and $node->is_leaf()) || $print_all_labels ) { 	
+	    $node->get_label()->set_reference_point(($node->get_X()), ($node->get_Y()));
+	    $node->get_label()->set_orientation_horizontal();
+	    $node->get_label()->render($image);	
 	}
 }
 
