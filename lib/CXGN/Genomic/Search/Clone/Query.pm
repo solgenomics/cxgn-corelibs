@@ -545,7 +545,6 @@ EOH
 							 __sub        => 1,
 							 __multicol   => 2,
 							 __tableattrs => 'width="100%"',
-							'Full Genomic Clone Sequences' => '<a href="/gbrowse/gbrowse/tomato">search in genome browser</a>',
 						       ),
 					'Overgo match to marker <a class="context_help" href="/maps/physical/overgo_process_explained.pl">what\'s this?</a>' =>
 					info_table_html ('Map' => $mapselect,
