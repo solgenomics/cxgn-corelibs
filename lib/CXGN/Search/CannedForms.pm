@@ -470,12 +470,6 @@ Full-text search of unigene annotations, either automatic (BLAST) or manually cu
   </td></tr></table>
 </div>
 </form>
-
-<br />
-<dl><dt>Tomato BAC Sequences</dt>
-<dd><a href="/gbrowse/gbrowse/tomato">Search annotations on full BAC sequences</a></dd>
-</dl>
-
 EOH
 
 }
