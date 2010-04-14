@@ -336,7 +336,7 @@ sub _parse_clone_ident_intl_clone {
   return
     unless $name =~ /^([a-z]{2}
 		     _
-		     [a-z]{2,}
+		     [a-z]+
                      ) #library name
 		     -
 		     (\d{1,3})      #plate number
@@ -367,7 +367,7 @@ sub _parse_clone_ident_agi_bac {
     return
       unless $name =~ /^([A-Za-z]{0,2}
 			 $sep
-			 [A-Za-z]{2,}
+			 [A-Za-z]+
                         ) #library name
 			$sep
 		       (\d{1,5})      #plate number

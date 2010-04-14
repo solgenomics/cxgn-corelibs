@@ -385,7 +385,7 @@ BEGIN {
 
 }
 
-use Test::More tests => 155;
+use Test::More;
 
 BEGIN {
   use_ok(  'CXGN::Genomic::CloneIdentifiers',
@@ -449,3 +449,5 @@ foreach my $test (our @parse_tests) {
 ok(clone_ident_glob('agi_bac_with_chrom'),'clone_ident_glob exists for agi_bac_with_chrom');
 eval{ clone_ident_glob('nonexistentthing') };
 ok($EVAL_ERROR,'clone_ident_glob dies for nonexistent name type');
+
+done_testing;
