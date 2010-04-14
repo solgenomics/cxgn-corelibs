@@ -92,6 +92,18 @@ BEGIN {
 			},
 			'RH100A20',
 		      ],
+		      [ 'SL_s01A01' =>
+			agi_bac =>
+			{
+			 lib => 'SL_s',
+			 plate => 1,
+			 row => 'A',
+			 col => 1,
+			 clonetype => 'bac',
+			 match => 'SL_s01A01',
+			},
+			'SL_s0001A01',
+		      ],
 		      [ 'RHpotKEY0100A20' =>
 			agi_bac =>
 			{
