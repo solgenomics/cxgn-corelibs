@@ -172,7 +172,7 @@ foreach my $test (@agptests) {
 
   #extract the features and check them
   my @features = agp_to_features( $tf, source_name => 'testy');
-  is($features[20]->source, 'testy');
+  is($features[20]->source->value, 'testy', 'agp_to_features');
 }
 
 # sub fetch_bac_seq {
