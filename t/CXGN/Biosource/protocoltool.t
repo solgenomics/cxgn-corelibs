@@ -64,11 +64,26 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Test::More tests => 58; #qw | no_plan |; # while developing the test
+use Test::More;
 use Test::Exception;
 
 use CXGN::DB::Connection;
 use CXGN::DB::DBICFactory;
+
+BEGIN {
+    eval { CXGN::DB::Connection->new };
+    if ($@ =~ m/DBI connect/) {
+        plan skip_all => "Could not connect to database";
+    }
+    die $@ if $@;
+    my @env_variables = qw/GEMTEST_METALOADER GEMTEST_DBUSER GEMTEST_DBPASS RESET_DBSEQ/;
+    for my $env (@env_variables) {
+        unless (defined $ENV{$env}) {
+            plan skip_all => "Environment variable $env not set, aborting";
+        }
+    }
+    plan tests => 58;
+}
 
 BEGIN {
     use_ok('CXGN::Biosource::Schema');               ## TEST1
@@ -76,13 +91,6 @@ BEGIN {
     use_ok('CXGN::Metadata::Metadbdata');            ## TEST3
 }
 
-## Check the environment variables
-my @env_variables = ('GEMTEST_METALOADER', 'GEMTEST_DBUSER', 'GEMTEST_DBPASS', 'RESET_DBSEQ');
-foreach my $env (@env_variables) {
-    unless ($ENV{$env} =~ m/^\w+/) {
-	print STDERR "ENVIRONMENT VARIABLE WARNING: Environment variable $env was not set for this test. Use perldoc for more info.\n";
-    }
-}
 
 #if we cannot load the CXGN::Biosource::Schema module, no point in continuing
 CXGN::Biosource::Schema->can('connect')
@@ -93,25 +101,10 @@ CXGN::Biosource::Schema->can('connect')
 my $metadata_creation_user = $ENV{GEMTEST_METALOADER};
 
 ## The biosource schema contain all the metadata classes so don't need to create another Metadata schema
-
-
-## The triggers need to set the search path to tsearch2 in the version of psql 8.1
-my $psqlv = `psql --version`;
-chomp($psqlv);
-
-my @schema_list = ('biosource', 'metadata', 'public');
-if ($psqlv =~ /8\.1/) {
-    push @schema_list, 'tsearch2';
-}
-
-my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Biosource::Schema', 
-                                                 search_path => \@schema_list, 
-                                                 dbconn_args => 
-                                                                { 
+my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Biosource::Schema', dbconn_args => {
                                                                     dbuser => $ENV{GEMTEST_DBUSER},
                                                                     dbpass => $ENV{GEMTEST_DBPASS},
-                                                                }
-                                               );
+                                                                });
 
 $schema->txn_begin();
 
