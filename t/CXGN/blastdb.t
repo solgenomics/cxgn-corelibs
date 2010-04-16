@@ -24,9 +24,9 @@ BEGIN {
     eval { CXGN::BlastDB->retrieve_all };
     if ($@ =~ m/DBI connect/) {
         plan skip_all => "Could not connect to database";
-    } else {
-        plan tests => 52;
     }
+    die $@ if $@;
+    plan tests => 52;
 }
 BEGIN { use_ok('CXGN::BlastDB'); }
 

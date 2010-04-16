@@ -71,7 +71,7 @@ sub create_new {
 # 	$dbh->do("BEGIN create_list");
 	my $create_q = $dbh->prepare("INSERT INTO list (owner, name, description) VALUES (?, ?, ?)");
 	$create_q->execute($sp_person_id, $name, $description) or confess("Could not create new list in database");
-	my $self->{list_id} = $dbh->last_insert_id("list", "sgn_people");
+	$self->{list_id} = $dbh->last_insert_id("list", "sgn_people");
 # 	$dbh->do("COMMIT create_list"); 
 	$self->{dbh} = $dbh;
 	$self->{owner} = $sp_person_id;

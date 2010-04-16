@@ -95,7 +95,7 @@ sub fetch {
 	}
 	else {
 		my @double_id = $checkq->fetchrow_array();
-		if(defined @double_id) { warn "User $self->{owner} has multiple hotlists, check into this"; }
+		if(@double_id) { warn "User $self->{owner} has multiple hotlists, check into this"; }
 		$self->{list_id} = $hotlist_id[0];
 	}	
 	my $itemq = $dbh->prepare("SELECT list_item_id FROM list_item WHERE list_id=?");
