@@ -1,11 +1,20 @@
-
+#!perl
 use strict;
-
-use Test::More qw / no_plan /;
+use warnings;
+use Test::More;
 
 use CXGN::DB::InsertDBH;
 use CXGN::DB::Connection;
 use CXGN::Chado::Phenotype;
+
+BEGIN {
+    eval { CXGN::DB::Connection->new };
+    if ($@ =~ m/DBI connect/) {
+        plan skip_all => "Could not connect to database";
+    }
+    die $@ if $@;
+    plan tests => 5;
+}
 
 my $dbh = CXGN::DB::Connection->new({ dbargs => { AutoCommit => 0 }});
 
