@@ -10,16 +10,26 @@ use File::Copy;
 use File::Path;
 use File::Basename;
 
-use Test::More tests => 52;
+use Test::More;
 
 use Bio::SeqIO;
 
 use CXGN::DB::Connection;
+use CXGN::BlastDB;
 
 use List::MoreUtils qw/all/;
 use CXGN::Publish qw/copy_or_print/;
 
+BEGIN {
+    eval { CXGN::BlastDB->retrieve_all };
+    if ($@ =~ m/DBI connect/) {
+        plan skip_all => "Could not connect to database";
+    } else {
+        plan tests => 52;
+    }
+}
 BEGIN { use_ok('CXGN::BlastDB'); }
+
 
 #get some dbs
 my @dbs = CXGN::BlastDB->retrieve_all;
