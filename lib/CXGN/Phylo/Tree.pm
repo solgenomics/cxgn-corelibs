@@ -1386,7 +1386,7 @@ sub standard_layout {
 	my $self = shift;
 	my $layout = CXGN::Phylo::Layout->new($self);
 	$layout->set_top_margin(20);
-    $layout->set_bottom_margin(20);
+	$layout->set_bottom_margin(20);
 	$layout->set_image_height(400);
 	$layout->set_image_width(700);
 	$self->set_layout($layout);
