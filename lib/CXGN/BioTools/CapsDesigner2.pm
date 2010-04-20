@@ -21,7 +21,6 @@ use Bio::SeqIO;
 use Bio::AlignIO;
 use Getopt::Long;
 use File::Temp;
-use CXGN::VHost;
 use Bio::Restriction::Analysis;
 use Bio::PrimarySeq;
 
@@ -143,11 +142,6 @@ sub format_input_file {
   my $input = shift or die "Missing parameter(s)!";
   my $fasta;
   if ($format eq 'fasta'){
-      my $vhost = CXGN::VHost->new();
-
-      # we remove $bin_dir because clustalw is installed in /usr/bin
-      # by default using the debian package. 
-      #my $bin_dir = $vhost->get_conf("data_shared_path")."/bin";
 
     # unaligned sequences    
       print STDERR "CALLING clustalw -INFILE=$input -OUTPUT=CLUSTAL\n\n";
@@ -264,7 +258,7 @@ sub find_caps {
 	for my $id (sort keys %info){
 	    $seq->seq($info{$id});
 	    $analyzer->seq($seq);
-	    (my @positions = qw{}) unless (my @positions = $analyzer->positions($current_enzyme)); 
+	    my @positions = $analyzer->positions($current_enzyme);
 	    $pos{$current_enzyme}{$id} = \@positions;
 	}
 
@@ -285,12 +279,12 @@ sub find_caps {
 	}
 
 	@cut_site_list = sort @cut_site_list;
-	my $previous;
+	my $previous = 0;
 	for(@cut_site_list){
 	    if($_ == $previous){
-		$_ = undef;
+            undef $_;
 	    }else{
-		$previous = $_;
+            $previous = $_;
 	    }
 	}
 	#cut site list now contains only undef values and one copy of each cut site
@@ -328,7 +322,10 @@ sub find_caps {
 		for my $id (keys %info) {
 		    my $substr = lc (substr($info{$id}, 0, 25));
 		    substr($substr, $ind, $enzymelength) =~ tr/actg/ACTG/;
-		    (($has_n = 1) and next) if substr($substr, $ind, $enzymelength) =~/n|N/;
+            if (substr($substr, $ind, $enzymelength) =~/n|N/) {
+                $has_n = 1;
+                next;
+            }
 		    $substrings{$current_enzyme}{$cut_site}{$id} = $substr;
 		}
 	    }elsif ($cut_site > ((length $info{$ids_with_site[0]}) - 10) ) {
@@ -336,7 +333,10 @@ sub find_caps {
 		for my $id (keys %info){
 		    my $substr = lc (substr($info{$id}, $cut_site -10));
 		    substr($substr, $ind, $enzymelength) =~ tr/actg/ACTG/;
-		    (($has_n = 1) and next) if substr($substr, $ind, $enzymelength) =~/n|N/;
+            if (substr($substr, $ind, $enzymelength) =~/n|N/) {
+                $has_n = 1;
+                next;
+            }
 		    $substrings{$current_enzyme}{$cut_site}{$id} = $substr;
 		}
 	    }else{
@@ -344,7 +344,10 @@ sub find_caps {
 		for my $id (keys %info) {
 		    my $substr = lc(substr($info{$id}, $cut_site - 10, 20));
 		    substr($substr, $ind, $enzymelength) =~ tr/actg/ACTG/;
-		    (($has_n = 1) and next) if substr($substr, $ind, $enzymelength) =~/n|N/;
+            if (substr($substr, $ind, $enzymelength) =~/n|N/) {
+                $has_n = 1;
+                next;
+            }
 		    $substrings{$current_enzyme}{$cut_site}{$id} = $substr;
 		}
 	    }
