@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-#use strict;
+use strict;
 
-use Test::More qw /no_plan/;
+use Test::More  tests => 80;
 use CXGN::BioTools::CapsDesigner2;
 use Cwd 'realpath';
 
@@ -20,7 +20,7 @@ my $seq_test = CXGN::BioTools::CapsDesigner2::check_seqs({'id1' => 'aaaaaaaatttt
 my $seq_test2 = CXGN::BioTools::CapsDesigner2::check_seqs({'id1' => 'aaaaatttttgggggc', 'id2' => 'NNNNNNNNTTTTTTGGGGGGG', 'id3' => 'cccczzzzzzzzz'});
 my ($seqlength, $parent_info_ref) = CXGN::BioTools::CapsDesigner2::get_seqs("$curdir/data/FASTAtest4.txt");
 my %par_info = %$parent_info_ref;
-my ($cost_ref, $cut_ref) = CXGN::BioTools::CapsDesigner2::read_enzyme_file("$curdir/../../../../sgn/support_data/caps_designer/allENZYME");
+my ($cost_ref, $cut_ref) = CXGN::BioTools::CapsDesigner2::read_enzyme_file("$curdir/data/caps_designer.txt");
 my %cost = %$cost_ref;
 my %cut = %$cut_ref;
 my ($substrings_ref, $cutsites_ref, $uniques_ref) = CXGN::BioTools::CapsDesigner2::find_caps($parent_info_ref, $seqlength, $cut_ref, 3, 2, $cost_ref, 0);
