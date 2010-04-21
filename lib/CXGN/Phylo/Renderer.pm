@@ -477,7 +477,7 @@ sub recursive_draw {
 	#
 	if ( (!$node->get_hide_label() and $node->is_leaf()) || $print_all_labels ) { 	
 	    $node->get_label()->set_reference_point(($node->get_X()), ($node->get_Y()));
-	    if (!$node->is_leaf() && $self->get_tree->get_leaf_count() > 1 ) {
+	    if (!$node->is_leaf() && $node->get_children() % 2 > 0) { 
 		$node->get_label()->set_reference_point(($node->get_X()), ($node->get_Y()-1-$node->get_label()->get_font()->height/2));
 	    }
 	    $node->get_label()->set_orientation_horizontal();
