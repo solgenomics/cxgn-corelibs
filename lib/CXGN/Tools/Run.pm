@@ -434,10 +434,25 @@ sub run_cluster {
   my $outfile = $self->out_file;
   my $errfile = $self->err_file;
 
-  $cmd_string = <<EOSCRIPT; #< we'll send a little shell script that runs a perl script
-#!/bin/bash
-#this is a shell script
-cat <<'EOF' | perl
+  $cmd_string = <<'EOSCRIPT'
+#!/usr/bin/env perl
+
+  # take PBS_O_* environment variables as our own, overriding local
+  # node settings
+  %ENV = ( %ENV,
+	   map {
+	       my $orig = $_;
+	       if(s/PBS_O_//) {
+		   $_ => $ENV{$orig}
+	       } else {
+		   ()
+	       }
+	   }
+	   keys %ENV
+          );
+
+EOSCRIPT
+  .<<EOSCRIPT;
   #and this is a perl script
   CXGN::Tools::Run->run($cmd_string,
                         { out_file => '$outfile',
@@ -447,13 +462,12 @@ cat <<'EOF' | perl
                         });
 
 EOSCRIPT
-
+    
   dbp "running cmd_string:\n$cmd_string\n";
 
   # also, include a copy of this very module!
   $cmd_string .= $self->_file_contents( __FILE__ );
   # disguise the ending EOF so that it passes through the file inclusion
-  $cmd_string .= "EOF\n";
 
   #$self->dbp("cluster running command '$cmd_string'");
   my ($cmd_temp_fh,$cmd_temp_file) = tempfile( File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX' ) );

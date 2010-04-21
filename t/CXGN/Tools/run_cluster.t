@@ -11,7 +11,7 @@ use CXGN::Tools::File qw/ file_contents /;
 
 BEGIN {
     if( $ENV{CXGNTOOLSRUNTESTCLUSTER} ) {
-        plan tests => 28;
+        plan tests => 29;
     }
     else {
         plan skip_all => 'cluster job tests skipped by default, set environment var CXGNTOOLSRUNTESTCLUSTER=1 to test';
@@ -19,6 +19,7 @@ BEGIN {
 
     use_ok('CXGN::Tools::Run');
 }
+
 
 my @nodes = defined $ENV{FORCE_TORQUE_NODE} ? (nodes => $ENV{FORCE_TORQUE_NODE}) : ();
 
@@ -103,7 +104,6 @@ foreach my $args( [$tempfile], [File::Spec->devnull, $tempfile], [$tempfile, Fil
     is( $cjob->out, $test_str, 'cluster jobs can take Path::Class arguments' );
 }
 
-
 #test error handling for referential out_file
 throws_ok {
     CXGN::Tools::Run->run_cluster('echo foo', { out_file => bless {},'Foo1::BA2_r' } );
@@ -112,3 +112,12 @@ throws_ok {
     open my $null, '>', File::Spec->devnull or die "$! opening devnull device";
     CXGN::Tools::Run->run_cluster('echo foo', { out_file => $null } );
 } qr/not supported/, 'dies for filehandle out_file arg';
+
+
+# test environment variable propagation to cluster jobs
+{ local $ENV{PATH} = "faketestpath:$ENV{PATH}";
+  CXGN::Tools::Run->temp_base('/data/shared/tmp');
+  my $j = CXGN::Tools::Run->run_cluster('echo $PATH');
+  $j->wait;
+  like( $j->out, qr/^faketestpath:/, 'env variable propagation working' );
+}
