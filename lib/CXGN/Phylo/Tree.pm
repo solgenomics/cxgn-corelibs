@@ -43,6 +43,8 @@ use CXGN::Phylo::Ortholog_group;
 
 package CXGN::Phylo::Tree;
 
+use base qw / CXGN::DB::Object / ;
+
 =head2 function new()
 
   Synopsis:	my $t = CXGN::Phylo::Tree->new()
