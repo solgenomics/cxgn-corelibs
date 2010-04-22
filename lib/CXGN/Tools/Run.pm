@@ -2,7 +2,7 @@ package CXGN::Tools::Run;
 use strict;
 use warnings;
 use English;
-use Carp;
+use Carp qw/ carp confess croak /;
 use POSIX qw( :sys_wait_h strftime );
 use Time::HiRes qw/time/;
 
@@ -532,6 +532,8 @@ EOSCRIPT
   $jobid =~ /^\d+(\.[a-zA-Z0-9-]+)+$/
     or die "Error running qsub, output was: $jobid\n";
 
+  dbp( "got jobid $jobid" );
+
   $self->_jobid($jobid); #< remember our job id
 
   unlink $cmd_temp_file;
@@ -825,7 +827,7 @@ sub _file_contents {
   my ($self,$file) = @_;
   uncache($file) if $self->is_cluster;
   local $/;
-  open my $f, $file or die "$! reading $file";
+  open my $f, $file or confess "$! reading $file";
   return scalar <$f>;
 }
 
