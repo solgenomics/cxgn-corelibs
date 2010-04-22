@@ -2,11 +2,10 @@
 use strict;
 use warnings;
 
-use English;
-
 use File::Temp qw/tempfile/;
 
 use Test::More tests => 13;
+use Test::Exception;
 
 use CXGN::Tools::File qw/file_contents/;
 
@@ -16,29 +15,22 @@ BEGIN {
 
 my (undef,$tempfile) = tempfile(UNLINK => 1);
 
-eval { wget_filter( 'http://www.sgn.cornell.edu/' => $tempfile ); };
-ok( ! $EVAL_ERROR, 'fetched http without error' );
+lives_ok( sub { wget_filter( 'http://www.sgn.cornell.edu/' => $tempfile ); }, 'fetched http without error' );
 ok( -f $tempfile, 'download target exists');
-
 ok( file_contents($tempfile) =~ /solanaceae/i, 'download worked');
 
-eval { wget_filter( 'http://www.sgn.cornell.edu/' => $tempfile,
-		    sub {
-		      my $line = shift;
-		      $line =~ s/solanaceae/monkeys in the middle of the desert/i;
-		      return $line;
-		    }
-		  );
-     };
-ok( !$EVAL_ERROR, 'fetched http without error' );
+lives_ok( sub { wget_filter( 'http://www.sgn.cornell.edu/' => $tempfile,
+            sub {
+                my $line = shift;
+                $line =~ s/solanaceae/monkeys in the middle of the desert/i;
+                return $line;
+            }
+        );
+},'fetched http without error' );
 ok( file_contents($tempfile) =~ /monkeys in the middle of the desert/, 'download filters work');
 
 #test downloading from ftp
-eval {
-  wget_filter( 'ftp://ftp.sgn.cornell.edu/tomato_genome/bacs/validate_submission.v*.pl' => $tempfile );
-};
-
-ok( !$EVAL_ERROR, 'fetch from ftp ' . $EVAL_ERROR );
+lives_ok( sub { wget_filter( 'ftp://ftp.sgn.cornell.edu/tomato_genome/bacs/validate_submission.v*.pl' => $tempfile ); },'fetch from ftp ' . $@ );
 ok( file_contents($tempfile) =~ /BACSubmission/, 'ftp download worked');
 
 SKIP: {
@@ -47,8 +39,7 @@ SKIP: {
         skip "Could not connect to database", 3;
     }
     #try to get a nonexistent cxgn-resource url
-    eval { wget_filter( 'cxgn-resource://no-existe!'); };
-    like( $EVAL_ERROR, qr/no cxgn-resource found/, 'wget of nonexistent resource dies');
+    throws_ok( sub { wget_filter( 'cxgn-resource://no-existe!'); }, qr/no cxgn-resource found/,  'wget of nonexistent resource dies');
 
     #try to get one that exists
     my $file = wget_filter( 'cxgn-resource://test' );
