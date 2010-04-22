@@ -408,7 +408,7 @@ sub get_organismprop {
 sub get_parent {
     my $self=shift;
     my $organism_id = $self->get_organism_id();
-    
+   
     my ($phylonode)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
 	{ organism_id =>$self->get_organism_id() })->search_related('phylonode');
     
@@ -422,7 +422,6 @@ sub get_parent {
 		{ phylonode_id => $parent_phylonode->get_column('phylonode_id') } );
 	    
 	    my $parent_organism= CXGN::Chado::Organism->new($self->get_schema(), $phylonode_organism->organism_id );
-	    
 	    return $parent_organism;
 	}
     }
