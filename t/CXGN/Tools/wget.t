@@ -4,13 +4,15 @@ use warnings;
 
 use File::Temp qw/tempfile/;
 
-use Test::More tests => 13;
+use Test::More tests => 15;
 use Test::Exception;
+use IO::Pipe;
 
+use POSIX;
 use CXGN::Tools::File qw/file_contents/;
 
 BEGIN {
-  use_ok(  'CXGN::Tools::Wget', 'wget_filter'  );
+  use_ok(  'CXGN::Tools::Wget', 'wget_filter', 'clear_cache'  );
 }
 
 my (undef,$tempfile) = tempfile(UNLINK => 1);
@@ -65,3 +67,63 @@ unlike(`diff -q $tempfile $tempfile2`,qr/differ/,'caching works');
 wget_filter( 'http://tycho.usno.navy.mil/cgi-bin/timer.pl' => $tempfile2, {max_age => 1} );
 like(`diff -q $tempfile $tempfile2`, qr/differ/, 'caching expiry works');
 
+package TestWebServer;
+use HTTP::Server::Simple::CGI;
+use base qw(HTTP::Server::Simple::CGI);
+use strict;
+use warnings;
+my $hits = 0;
+$|++;
+
+sub handle_request {
+    my $self = shift;
+    my $cgi  = shift;
+
+    print "HTTP/1.0 200 OK\r\n";
+    respond($cgi);
+}
+
+sub respond {
+    my $cgi = shift;
+    return if !ref $cgi;
+
+    $hits++;
+    print $cgi->header(), "$hits\n";
+}
+package main;
+
+TEST_WGET_FILTER_CONCURRENCY();
+
+sub TEST_WGET_FILTER_CONCURRENCY {
+    # We don't want to use any previously-generated cache
+    clear_cache();
+
+    my $webpid  = TestWebServer->new(8080)->background();
+    diag "Starting a test web server on port 8080, pid = $webpid";
+
+    my $pipe = IO::Pipe->new;
+
+    if (my $testpid = fork()) { # parent
+        $pipe->reader;
+        my $file = wget_filter( 'http://localhost:8080' );
+        my ($hits) = split /\n/, file_contents($file);
+        is($hits,1,'wget_filter concurrency');
+
+        # We don't need the webserver anymore
+        kill 9, $webpid;
+
+        # Read from the child
+        while( <$pipe> ) {
+            is($_,1,'wget_filter concurrency');
+        }
+
+    } elsif (defined $testpid) { # child
+        $pipe->writer;
+        my $file = wget_filter( 'http://localhost:8080' );
+        my ($hits) = split /\n/, file_contents($file);
+        print $pipe $hits;
+
+        # Don't run END/DESTROY blocks
+        POSIX::exit(0);
+    }
+}

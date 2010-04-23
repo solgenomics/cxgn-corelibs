@@ -165,7 +165,8 @@ my $build = Module::Build->new(
         'DBIx::Class::Schema' => 0,
         'File::Temp' => 0,
         'IO::String' => 0,
-	'IPC::Cmd'   => 0,
+        'IO::Pipe' => 0,
+        'IPC::Cmd'   => 0,
         'List::MoreUtils' => 0,
         'List::Util' => 0,
         'Moose' => 0,
@@ -178,6 +179,7 @@ my $build = Module::Build->new(
         'Test::XML::Simple' => 0,
         'Text::Glob' => 0,
         'Tie::Function' => 0,
+        'HTTP::Server::Simple' => 0,
     },
 );
 $build->create_build_script;
