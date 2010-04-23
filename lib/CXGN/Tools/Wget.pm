@@ -75,7 +75,8 @@ All functions are @EXPORT_OK.
 
 =cut
 
-BEGIN { our @EXPORT_OK = qw/   wget_filter / }
+BEGIN { our @EXPORT_OK = qw/   wget_filter clear_cache / }
+
 our @EXPORT_OK;
 use base 'Exporter';
 
@@ -133,7 +134,7 @@ sub wget_filter {
   #get our options hash if present
   my %options = (ref($args[-1]) eq 'HASH') ? %{pop @args} : ();
 
-  $options{cache} = 1   unless exists $options{cache};
+  $options{cache}  = 1 unless exists $options{cache};
   $options{unlink} = 1 unless exists $options{unlink};
 
   $options{cache} = 0 if $options{test_only};
@@ -317,8 +318,10 @@ sub cache_filename {
 sub clear_cache {
   my ($class) = @_;
   my @delete_us = glob cache_root_dir().'/*';
-  unlink @delete_us == scalar @delete_us
-    or croak "could not delete all files in the cache root directory (".cache_root_dir().") : $OS_ERROR";
+  my $num_deleted = unlink @delete_us;
+  unless ($num_deleted == @delete_us) {
+    croak "could not delete all files in the cache root directory (".cache_root_dir().") : $OS_ERROR";
+  }
 }
 
 =head2 vacuum_cache
