@@ -184,7 +184,7 @@ sub new {
  
   Side_Effects: accesses the database,
                 check if the dbipath is schema.table.column. If it is false die.
-                Die if the schema.table.column do not exists into the database.
+                Die if the schema.table.column does not exist
  
   Example: my $dbipath = CXGN::Metadata::Dbipath->new_by_path( $schema, 
                                                                ['schema', 
