@@ -87,8 +87,6 @@ use List::MoreUtils qw/ uniq /;
 
 use Memoize;
 
-use IO::Pipe;
-
 use CXGN::BlastDB::Config;
 use CXGN::Tools::List qw/any min all max/;
 use CXGN::Tools::File qw/file_contents/;
