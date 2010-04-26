@@ -11,7 +11,7 @@ use CXGN::Tools::File qw/ file_contents /;
 
 BEGIN {
     if( $ENV{CXGNTOOLSRUNTESTCLUSTER} ) {
-        plan tests => 29;
+        plan tests => 30;
     }
     else {
         plan skip_all => 'cluster job tests skipped by default, set environment var CXGNTOOLSRUNTESTCLUSTER=1 to test';
@@ -102,6 +102,7 @@ foreach my $args( [$tempfile], [File::Spec->devnull, $tempfile], [$tempfile, Fil
     $cjob = CXGN::Tools::Run->run_cluster( 'cat', @$args, { vmem => 200 } );
     sleep 1 while $cjob->alive;
     is( $cjob->out, $test_str, 'cluster jobs can take Path::Class arguments' );
+    $cjob->cleanup;
 }
 
 #test error handling for referential out_file
@@ -120,4 +121,19 @@ throws_ok {
   my $j = CXGN::Tools::Run->run_cluster('echo $PATH');
   $j->wait;
   like( $j->out, qr/^faketestpath:/, 'env variable propagation working' );
+  $j->cleanup;
+}
+
+
+#test run_cluster_perl
+{
+    CXGN::Tools::Run->temp_base('/data/shared/tmp');
+    my $job = CXGN::Tools::Run->run_cluster_perl({ class => 'CXGN::Tools::Run',
+                                                   method_name => '_run_cluster_perl_test',
+                                                   method_args => ['foo', 'bar','baz'],
+                                                   load_packages => 'Carp',
+                                               });
+    $job->wait;
+    is( $job->out, 'a string for use by the test suite (CXGN::Tools::Run,foo,bar,baz)', 'got right output for run_cluster_perl' );
+    $job->cleanup;
 }
