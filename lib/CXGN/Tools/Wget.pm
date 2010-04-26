@@ -3,10 +3,10 @@ package CXGN::Tools::Wget;
 use strict;
 use warnings;
 use Carp::Clan qr/^CXGN::Tools::Wget/;
-use English;
 
-use File::Temp qw/tempfile/;
 use File::Copy;
+use File::Temp qw/tempfile/;
+use File::Flock;
 use Digest::MD5 qw/ md5_hex /;
 use URI;
 
@@ -149,114 +149,159 @@ sub wget_filter {
     }
   };
 
-
   #and the rest of the arguments must be our filters
   my @filters = @args;
   !@filters || all map ref $_ eq 'CODE', @filters
     or confess "all filters must be subroutine refs or anonymous subs (".join(',',@filters).")";
 
-  #warn "got filters ".join(',',@filters) if @filters;
+  my $do_actual_fetch = sub {
+      _wget_filter({ filters  => \@filters,
+                     destfile => $destfile,
+                     url      => $url,
+                     options  => \%options,
+                   })
+  };
+
+  # if we are filtering, just do the fetch without caching
+  return $do_actual_fetch->() if @filters || !$options{cache};
+
+  # otherwise, we are caching, and we need to do locking
 
   # only do caching if we don't have any filters (we can't represent
   # these in a persistent way in a hash key, because the CODE(...)
   # will be different at every program run
   my $cache_key = $url.' WITH OPTIONS '.join('=>',%options);
-  unless(@filters || !$options{cache}) {
-      my $cache_filename = cache_filename( $cache_key );
-      if( -r $cache_filename && (time-(stat($cache_filename))[9]) <= ($options{max_age} || DEFAULT_CACHE_MAX_AGE) ) {
-	  my $gunzip_error = system qq!gunzip -c '$cache_filename' > '$destfile'!;
-	  # if there was an error unzipping the cache file, don't use
-	  # it.  download the original and overwrite it
-          return $destfile unless $gunzip_error;
+  my $cache_filename = cache_filename( $cache_key );
+  my $lock_filename = "$cache_filename.lock";
+  my $try_read_lock  = sub { File::Flock->new( $lock_filename, 'shared', 'nonblocking' ) };
+  my $try_write_lock = sub { File::Flock->new( $lock_filename,  undef,   'nonblocking' ) };
+
+  my $cache_file_looks_valid = sub {
+      -r $cache_filename
+      && (time-(stat($cache_filename))[9]) <= ($options{max_age} || DEFAULT_CACHE_MAX_AGE)
+  };
+
+  my $copy_from_cache = sub {
+      my $gunzip_error = system qq!gunzip -c '$cache_filename' > '$destfile'!;
+      if( $gunzip_error ) {
+          # if there was an error unzipping, unlink the corrupt files and return failure
+          unlink $destfile;
+          return 0;
+      }
+      return 1;
+  };
+
+  my $read_cache = sub {
+      my $read_lock;
+      sleep 1 until $read_lock = $try_read_lock->();
+      return $destfile if $cache_file_looks_valid->() && $copy_from_cache->();
+      return;
+  };
+
+  # OK, the cache file needs updating or is corrupt, so try to get an
+  # exclusive write lock
+  my $dest_from_cache;
+  until ( $dest_from_cache = $read_cache->() ) {
+      if( my $write_lock = $try_write_lock->() ) {
+          $do_actual_fetch->();
+
+          # write the destfile into the cache
+          system qq!gzip -c '$destfile' > '$cache_filename'!
+              and confess "$! writing downloaded file to CXGN::Tools::Wget persistent cache (gzip $destfile -> $cache_filename.gz)";
+
+          return $destfile;
+
       }
   }
 
-  #properly form the gunzip command
-  $options{gunzip} = $options{gunzip} ? ' gunzip -c |' : '';
+  return $dest_from_cache;
 
-  my $parsed_url = URI->new($url)
-    or croak "could not parse uri '$url'";
+}
 
-  ### file urls
-  if( $parsed_url->scheme && $parsed_url->scheme eq 'file' ) {
-    return $parsed_url->path; #< the rest of the URI is just a full path
-  }
-  ### http and ftp urls
-  elsif( str_in( $parsed_url->scheme, qw/ http ftp / ) ) {
+# the get, minus caching
+sub _wget_filter {
+    my $args = shift;
+    my %options = %{$args->{options}};
+    my $url = $args->{url};
+    my $destfile = $args->{destfile} or die 'pass destfile stupid';
+    my @filters = @{ $args->{filters} };
 
-  #try to use ncftpget for fetching from ftp with no wildcards, since
-  #wget suffers from some kind of bug with large ftp transfers.
-  #use wget for everything else, since it's a little more flexible
-    my $fetchcommand = $url =~ /^ftp:/ && $url !~ /[\*\?]/
-      ? "ncftpget -cV"
-	: "wget -q -O -";
+    #properly form the gunzip command
+    $options{gunzip} = $options{gunzip} ? ' gunzip -c |' : '';
 
-    #check that all of the given filters are code refs
-    @filters = grep {$_} @filters; #just ignore false things in the filters
-    foreach (@filters) {
-      ref eq 'CODE' or croak "Invalid filter argument '$_', must be a code ref";
+    my $parsed_url = URI->new($url)
+        or croak "could not parse uri '$url'";
+
+    if ( str_in( $parsed_url->scheme, qw/ file http ftp / ) ) {
+
+        #try to use ncftpget for fetching from ftp with no wildcards, since
+        #wget suffers from some kind of bug with large ftp transfers.
+        #use wget for everything else, since it's a little more flexible
+        my $fetchcommand =
+            $parsed_url->scheme eq 'file'                      ? 'cat'           :
+            $parsed_url->scheme eq 'ftp' && $url !~ /[\*\?]/   ? "ncftpget -cV"  :
+                                                                 "wget -q -O -"  ;
+
+
+        $url = $parsed_url->path if $parsed_url->scheme eq 'file';
+
+        #check that all of the given filters are code refs
+        @filters = grep {$_} @filters; #just ignore false things in the filters
+        foreach (@filters) {
+            ref eq 'CODE' or croak "Invalid filter argument '$_', must be a code ref";
+        }
+
+        #open the output filehandle if our argument isn't already a filehandle
+        my $out_fh;
+        my $open_out = ! is_filehandle($destfile);
+        if ($open_out) {
+            open $out_fh, '>', $destfile
+                or croak "Could not write to destination file $destfile: $!";
+        } else {
+            $out_fh = $destfile;
+        }
+
+        my $testhead = $options{test_only} ?  'head -c 30 |' : '';
+        #warn "testhead is $testhead\n";
+
+        #run wget to download the file
+        open my $urlpipe,"cd /tmp; $fetchcommand '$url' |$options{gunzip}$testhead"
+            or croak "Could not use wget to fetch $url: $!";
+        while (my $line = <$urlpipe>) {
+            #if we were given filters, run them on it
+            foreach my $filter (@filters) {
+                $line = $filter->($line);
+            }
+            print $out_fh $line;
+        }
+        close $urlpipe;
+
+        #close the output filehandle if it was us who opened it
+        close $out_fh if $open_out;
+        (stat($destfile))[7] > 0 || croak "Could not download $url using command '$fetchcommand'";
+        #  print "done.\n";
     }
+    ### cxgn-resource urls
+    elsif ( $parsed_url->scheme eq 'cxgn-resource' ) {
 
-    #open the output filehandle if our argument isn't already a filehandle
-    my $out_fh;
-    my $open_out = ! is_filehandle($destfile);
-    if ($open_out) {
-      open $out_fh,">$destfile"
-	or croak "Could not write to destination file $destfile: $!";
+        confess 'filters do not work with cxgn-resource urls' if @filters;
+
+        #look for a resource with that name
+        my $resource_name = $parsed_url->authority;
+
+        my ($resource_file,$multiple_resources) = CXGN::Tools::Wget::ResourceFile->search( name => $resource_name );
+        $resource_file or croak "no cxgn-resource found with name '$resource_name'";
+        $multiple_resources and croak "multiple cxgn-resource entries found with name '$resource_name'";
+
+        if ( $options{test_only} ) {
+            #warn "test fetch\n";
+            $resource_file->test_fetch();
+        } else {
+            $resource_file->fetch($destfile);
+        }
     } else {
-      $out_fh = $destfile;
+        croak "unable to handle URIs with scheme '".($parsed_url->scheme || '')."', URI is '$url'";
     }
-
-    my $testhead = $options{test_only} ?  'head -c 30 |' : '';
-    #warn "testhead is $testhead\n";
-
-    #run wget to download the file
-    open my $urlpipe,"cd /tmp; $fetchcommand '$url' |$options{gunzip}$testhead"
-      or croak "Could not use wget to fetch $url: $!";
-    while (my $line = <$urlpipe>) {
-      #if we were given filters, run them on it
-      foreach my $filter (@filters) {
-	$line = $filter->($line);
-      }
-      print $out_fh $line;
-    }
-    close $urlpipe;
-
-    #close the output filehandle if it was us who opened it
-    close $out_fh if $open_out;
-    (stat($destfile))[7] > 0 || croak "Could not download $url using command '$fetchcommand'";
-    #  print "done.\n";
-  }
-  ### cxgn-resource urls
-  elsif( $parsed_url->scheme eq 'cxgn-resource' ) {
-
-    #look for a resource with that name
-    my $resource_name = $parsed_url->authority;
-
-    my ($resource_file,$multiple_resources) = CXGN::Tools::Wget::ResourceFile->search( name => $resource_name );
-    $resource_file or croak "no cxgn-resource found with name '$resource_name'";
-    $multiple_resources and croak "multiple cxgn-resource entries found with name '$resource_name'";
-
-    if( $options{test_only} ) {
-      #warn "test fetch\n";
-      $resource_file->test_fetch();
-    } else {
-      $resource_file->fetch($destfile);
-    }
-  }
-  else {
-    croak "unable to handle URIs with scheme '".($parsed_url->scheme || '')."', URI is '$url'";
-  }
-
-
-  #if we're doing caching, copy the destination file into the cache
-  unless(@filters || !$options{cache}) {
-    my $cache_filename = cache_filename( $cache_key );
-    system qq!gzip -c '$destfile' > '$cache_filename'!
-        and confess "$! writing downloaded file to CXGN::Tools::Wget persistent cache (gzip $destfile -> $cache_filename.gz)";
-  }
-
-  return $destfile;
 }
 
 
@@ -290,7 +335,7 @@ sub cache_filename {
         my ($class,$new_root) = @_;
         $cache_root = $new_root if defined $new_root;
         return $cache_root ||=  do {
-            my $username = getpwuid $EUID;
+            my $username = getpwuid $>;
             my $dir_name = File::Spec->catdir( File::Spec->tmpdir, "cxgn-tools-wget-$username" );
             system 'mkdir', -p => $dir_name;
             -w $dir_name or die "could not make and/or write to cache dir $dir_name\n";
@@ -320,7 +365,7 @@ sub clear_cache {
   my @delete_us = glob cache_root_dir().'/*';
   my $num_deleted = unlink @delete_us;
   unless ($num_deleted == @delete_us) {
-    croak "could not delete all files in the cache root directory (".cache_root_dir().") : $OS_ERROR";
+    croak "could not delete all files in the cache root directory (".cache_root_dir().") : $!";
   }
 }
 
@@ -340,7 +385,7 @@ sub vacuum_cache {
                   glob cache_root_dir().'/*';
 
   unlink @delete_us == scalar @delete_us
-    or croak "could not vacuum files in the cache root directory (".cache_root_dir().") : $OS_ERROR";
+    or croak "could not vacuum files in the cache root directory (".cache_root_dir().") : $!";
 }
 
 
