@@ -4,7 +4,7 @@ use warnings;
 
 use File::Temp qw/tempfile/;
 
-use Test::More tests => 15;
+use Test::More tests => 16;
 use Test::Exception;
 use IO::Pipe;
 
@@ -61,11 +61,17 @@ SKIP: {
 #test caching and aging
 wget_filter( 'http://tycho.usno.navy.mil/cgi-bin/timer.pl' => $tempfile );
 my (undef,$tempfile2) = tempfile(UNLINK => 1);
-sleep 3;
+sleep int rand 3;
 wget_filter( 'http://tycho.usno.navy.mil/cgi-bin/timer.pl' => $tempfile2 );
 unlike(`diff -q $tempfile $tempfile2`,qr/differ/,'caching works');
+sleep 1;
 wget_filter( 'http://tycho.usno.navy.mil/cgi-bin/timer.pl' => $tempfile2, {max_age => 1} );
 like(`diff -q $tempfile $tempfile2`, qr/differ/, 'caching expiry works');
+
+TODO: {
+    local $TODO = 'filters do not work with cxgn-resource URLS';
+    ok( 0 );
+}
 
 package TestWebServer;
 use HTTP::Server::Simple::CGI;
