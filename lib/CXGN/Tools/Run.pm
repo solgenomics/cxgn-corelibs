@@ -8,6 +8,8 @@ use Time::HiRes qw/time/;
 
 use IPC::Cmd ();
 
+use Data::Dumper;
+
 use File::Path;
 use File::Temp qw( tempfile );
 use File::Basename;
@@ -16,15 +18,13 @@ use Cwd;
 use UNIVERSAL qw/isa/;
 use File::NFSLock qw/uncache/;
 
+use Storable qw/ nstore retrieve /;
+
 use constant DEBUG => $ENV{CXGNTOOLSRUNDEBUG} ? 1 : 0;
-BEGIN {
-  if(DEBUG) {
-    use Data::Dumper;
-  }
-}
-#debug print function
+
+# debug print function
 sub dbp(@) {
-  #get rid of first arg if it's one of these objects
+  # get rid of first arg if it's one of these objects
   return 1 unless DEBUG;
   shift if( ref($_[0]) && ref($_[0]) =~ /::/ and $_[0]->isa(__PACKAGE__));
   print STDERR '# dbg '.__PACKAGE__.': ',@_;
@@ -132,6 +132,7 @@ use Class::MethodMaker
                                    #where we submitted a cluster job
 	       '_error_string',    #holds our die error, if any
 	       '_command',         #holds the command string that was executed
+	       '_job_name',        #small name to use in tempdir names and job submission
 	       '_host',            #hostname where the command ran
 	       '_start_time',      #holds the time() from when we started the job
 	       '_end_time',        #holds the approximate time from when the job finished
@@ -189,7 +190,8 @@ sub run {
 
   $ENV{MOD_PERL} and croak "CXGN::Tools::Run->run() not functional under mod_perl";
 
-  $self->_common_prerun(\@args);
+  my $options = $self->_pop_options( \@args );
+  $self->_process_common_options( $options );
 
   #now start the process and die informatively if it errors
   $self->_start_time(time);
@@ -260,7 +262,8 @@ sub run_async {
 
   $ENV{MOD_PERL} and croak "CXGN::Tools::Run->run_async() not functional under mod_perl";
 
-  $self->_common_prerun(\@args);
+  my $options = $self->_pop_options( \@args );
+  $self->_process_common_options( $options );
 
   #make sure we have a temp directory made already before we fork
   #calling tempdir() makes this directory and returns its name.
@@ -358,11 +361,20 @@ sub run_cluster {
 
   my $self = bless {},$class;
 
-  my %options = $self->_common_prerun(\@args);
+  my $options = $self->_pop_options( \@args );
+  $self->_process_common_options( $options );
+
+  return $self->_run_cluster( \@args, $options );
+}
+
+sub _run_cluster {
+    my ( $self, $cmd, $options ) = @_;
+
+    $self->_command( $cmd ); #< store the command for use in error messages
 
   # set our job destination from configuration if running under the website
-  if( defined $options{queue} ) {
-      $self->_jobdest($options{queue});
+  if( defined $options->{queue} ) {
+      $self->_jobdest($options->{queue});
   }
   # TODO: change all SGN code to pass in queue =>, then remove this!
   elsif( defined $ENV{PROJECT_NAME} && $ENV{PROJECT_NAME} eq 'SGN' ) {
@@ -426,11 +438,11 @@ sub run_cluster {
   ###submit the job with qsub in the form of a bash script that contains a perl script
   #we do this so we can use CXGN::Tools::Run to write
   my $working_dir = $self->_working_dir_isset ? "working_dir => '".$self->_working_dir."'," : '';
-  my $cmd_string = join(",\n", map { my $s="$_"; #< stringify args
-				    $s=~s/'/\\'/g; #< quote for inserting into a single-quoted string
-				    "'$s'"
-				  } @args
-		       ); #< xlate the comment string into perl array syntax
+  my $cmd_string = do {
+      local $Data::Dumper::Terse  = 1;
+      local $Data::Dumper::Indent = 0;
+      join ', ', map Dumper( "$_" ), @$cmd;
+  };
   my $outfile = $self->out_file;
   my $errfile = $self->err_file;
 
@@ -453,7 +465,6 @@ sub run_cluster {
 
 EOSCRIPT
   .<<EOSCRIPT;
-  #and this is a perl script
   CXGN::Tools::Run->run($cmd_string,
                         { out_file => '$outfile',
                           err_file => '$errfile',
@@ -462,7 +473,7 @@ EOSCRIPT
                         });
 
 EOSCRIPT
-    
+
   dbp "running cmd_string:\n$cmd_string\n";
 
   # also, include a copy of this very module!
@@ -508,7 +519,7 @@ EOSCRIPT
 					    -r => 'n', #< not rerunnable, cause we'll notice it died
 					    -o => '/dev/null',
 					    -e => $self->err_file,
-					    -N => basename($self->tempdir),
+					    -N => $self->_job_name,
 					    ( $self->_working_dir_isset ? (-d => $self->working_dir)
 					                                : ()
 					    ),
@@ -544,6 +555,80 @@ EOSCRIPT
 }
 
 
+=head2 run_cluster_perl
+
+  Usage: my $job = CXGN::Tools::Run->run_cluster_perl({ args => see below })
+
+  Desc : Like run_cluster, but calls a perl class method on a cluster
+         node with the given args.  The method args can be anything
+         that Storable can serialize.  The actual job launched on the
+         node is something like:
+            perl -M$class -e '$class->$method_name(@args)'
+
+         where the @args are exactly what you pass in method_args.
+
+  Args : {  class         => class name for invoking the method,
+            method_name   => name of the method to call,
+            method_args   => arrayref of the method's arguments (can
+                             be objects, datastructures, whatever),
+
+            (optional)
+            run_args      => hashref of CXGN::Tools::Run options (see
+                             run_cluster() above),
+            load_packages => arrayref of perl packages to
+                             require before deserializing the arguments,
+            perl          => string or arrayref specifying how to invoke
+                             perl on the remote node, defaults to
+                             [ '/usr/bin/env', 'perl' ]
+         }
+  Ret  : a job object, same as run_cluster
+
+=cut
+
+sub run_cluster_perl {
+  my ( $class, $args ) = @_;
+  my ( $perl, $method_class, $method_name, $method_args, $run_args, $packages ) =
+      @{$args}{qw{ perl class method_name method_args run_args load_packages}};
+
+  $method_args ||= [];
+  $run_args ||= {};
+  $perl ||= [qw[ /usr/bin/env perl ]];
+  my @perl = ref $perl ? @$perl : ($perl);
+
+  my $self = bless {},$class;
+  $self->_job_name( $method_name );
+  $self->_process_common_options( $run_args );
+
+  $packages ||= [];
+  $packages = [$packages] unless ref $packages;
+  $packages = join '', map "require $_; ", @$packages;
+
+  if ( @$method_args ) {
+      my $args_file = File::Spec->catfile( $self->tempdir, 'args.dat' );
+      nstore( $method_args => $args_file ) or croak "run_cluster_perl: $! serializing args to '$args_file'";
+      return $self->_run_cluster(
+          [ @perl,
+            '-MStorable=retrieve',
+            '-M'.$class,
+            -e => $packages.$method_class.'->'.$method_name.'(@{retrieve("'.$args_file.'")})',
+          ],
+          $run_args,
+         );
+    } else {
+        return $self->_run_cluster(
+            [ @perl,
+              '-MStorable=retrieve',
+              '-M'.$class,
+              -e => $packages.$method_class.'->'.$method_name.'()',
+            ],
+            $run_args,
+           );
+   }
+}
+
+sub _run_cluster_perl_test { print 'a string for use by the test suite ('.join(',',@_).')' }
+
+
 # if the cluster head node is currently is running more than
 # max_cluster_jobs jobs, don't overload it, block until the number
 # of jobs goes down.  prints a warning the first time in the run
@@ -565,15 +650,33 @@ EOSCRIPT
   }
 }
 
+sub _pop_options {
+    my ( $self, $args ) = @_;
+
+    #make sure all of our args are defined
+    defined || croak "undefined argument passed to run method" foreach @$args;
+
+    my $options = ref($args->[-1]) eq 'HASH' ?  pop( @$args ) : {};
+
+    #store our command array for later use in error messages and such
+    $self->_command($args);
+
+    unless( $self->_job_name ) {
+        my ($executable) = $self->_command->[0] =~ /^([^'\s]+)/;
+        $executable ||= '';
+        if($executable) {
+            $executable = basename($executable);
+        }
+        $self->_job_name($executable)
+    }
+
+    return $options;
+}
+
 #process the options hash and set the correct parameters in our object
 #use for input and output
-sub _common_prerun {
-  my ($self,$args) = @_;
-
-  #make sure all of our args are defined
-  defined || croak "undefined argument passed to run method" foreach @$args;
-
-  my %options = ref($args->[-1]) eq 'HASH' ? %{pop @$args} : ();
+sub _process_common_options {
+  my ( $self, $options ) = @_;
 
   my @allowed_options = qw(
 			   in_file
@@ -591,13 +694,10 @@ sub _common_prerun {
 			   vmem
 			   queue
 			  );
-  foreach my $optname (keys %options) {
+  foreach my $optname (keys %$options) {
     grep {$optname eq $_} @allowed_options
       or croak "'$optname' is not a valid option for run_*() methods\n";
   }
-
-  #store our command string for later use in error messages and such
-  $self->_command("'".join(' ',@$args)."'");
 
   #given a filehandle or filename, absolutify it if it is a filename
   sub abs_if_filename($) {
@@ -607,45 +707,45 @@ sub _common_prerun {
   }
 
   #set out temp_base, if given
-  $self->_temp_base( $options{temp_base} ) if defined $options{temp_base};
+  $self->_temp_base( $options->{temp_base} ) if defined $options->{temp_base};
 
   #if an existing temp dir has been passed, verify that it exists, and
   #use it
-  if(defined $options{existing_temp}) {
-    $self->{tempdir} = $options{existing_temp};
-    -d $self->{tempdir} or croak "existing_temp '$options{existing_temp}' does not exist";
-    -w $self->{tempdir} or croak "existing_temp '$options{existing_temp}' is not writable";
+  if(defined $options->{existing_temp}) {
+    $self->{tempdir} = $options->{existing_temp};
+    -d $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' does not exist";
+    -w $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' is not writable";
     $self->_existing_temp(1);
   }
 
   #figure out where to put the files for the stdin and stderr
   #outputs of the program.  Make sure to use absolute file names
   #in case the working dir gets changed
-  $self->out_file( abs_if_filename( $options{out_file}
+  $self->out_file( abs_if_filename( $options->{out_file}
 				    || File::Spec->catfile($self->tempdir, 'out')
 				  )
 		 );
-  $self->err_file( abs_if_filename( $options{err_file}
+  $self->err_file( abs_if_filename( $options->{err_file}
 				    || File::Spec->catfile($self->tempdir, 'err')
 				  )
 		 );
-  $self->in_file( abs_if_filename $options{in_file} );
+  $self->in_file( abs_if_filename $options->{in_file} );
 
-  $self->working_dir( $options{working_dir} );
+  $self->working_dir( $options->{working_dir} );
 
   dbp "Got dirs and files ",map {$_||=''; "'$_' "} $self->out_file, $self->err_file, $self->in_file, $self->working_dir;
 
-  $self->_die_on_destroy(1) if $options{die_on_destroy};
-  $self->_raise_error(0) if defined($options{raise_error}) && !$options{raise_error};
+  $self->_die_on_destroy(1) if $options->{die_on_destroy};
+  $self->_raise_error(0) if defined($options->{raise_error}) && !$options->{raise_error};
 
-  $self->_procs_per_node($options{procs_per_node}) if defined $options{procs_per_node};
-  $self->_nodes($options{nodes}) if defined $options{nodes};
-  $self->_vmem($options{vmem}) if defined $options{vmem};
+  $self->_procs_per_node($options->{procs_per_node}) if defined $options->{procs_per_node};
+  $self->_nodes($options->{nodes}) if defined $options->{nodes};
+  $self->_vmem($options->{vmem}) if defined $options->{vmem};
 
-  $self->_max_cluster_jobs( $options{max_cluster_jobs} || 2000 );
+  $self->_max_cluster_jobs( $options->{max_cluster_jobs} || 2000 );
 
-  if( defined $options{on_completion} ) {
-      my $c = $options{on_completion};
+  if( defined $options->{on_completion} ) {
+      my $c = $options->{on_completion};
       $c = [$c] unless ref $c eq 'ARRAY';
       foreach (@$c) {
           ref eq 'CODE'
@@ -654,7 +754,7 @@ sub _common_prerun {
       $self->_on_completion( $c );
   }
 
-  return %options;
+  return $options;
 }
 
 =head2 tempdir
@@ -679,17 +779,12 @@ my @CHARS = (qw/ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 
 sub tempdir {
   my ($self) = @_;
+
   #return our current temp dir if we have one
   return $self->{tempdir} if $self->{tempdir};
 
   #otherwise make a new temp dir
-  #figure out the right place to make our temp dir
-  my ($executable) = $self->_command =~ /^'([^'\s]+)/;
-  $executable ||= '';
-  if($executable) {
-    $executable = basename($executable);
-    $executable .= '-';
-  }
+
   #TODO: do tempdir stem-and-leafing
   #number of dirs in one dir = $#CHARS ^ $numchars
   #number of possible combinations = $#CHARS ^ ($numchars+$numlevels)
@@ -703,7 +798,9 @@ sub tempdir {
   mkpath($temp_stem);
   -d $temp_stem or die "could not make temp stem '$temp_stem'\n";
 
-  my $newtemp = File::Temp::tempdir("${executable}XXXXXX",
+  my $job_name = $self->_job_name || 'cxgn-tools-run';
+
+  my $newtemp = File::Temp::tempdir($job_name.'-XXXXXX',
  				    DIR     => $temp_stem,
  				    CLEANUP => 0, #don't delete our kids' tempfiles
  				   );
@@ -855,7 +952,7 @@ sub _format_error_message {
   };
   return join '', map {chomp; __PACKAGE__.": $_\n"} ( 
       "date: ".strftime('%Y-%m-%d %H:%M:%S %Z',localtime),
-      "command failed: ".$self->_command,
+      "command failed: '" . join(' ',@{$self->_command}) . "'",
       $error,
       @out_tail,
       @err_tail,
