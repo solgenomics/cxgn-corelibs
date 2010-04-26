@@ -645,7 +645,7 @@ sub _run_cluster_perl_test { print 'a string for use by the test suite ('.join('
 		      ." (max_cluster_jobs) jobs, throttling job submissions\n";
 	  }
 
-	  sleep 1 while $self->_cluster_queue_jobs_count >= $self->_max_cluster_jobs;
+	  sleep int rand 120 while $self->_cluster_queue_jobs_count >= $self->_max_cluster_jobs;
       }
   }
 }
