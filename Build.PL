@@ -98,6 +98,7 @@ my $build = Module::Build->new(
         'enum' => 0,
         'Error' => 0,
         'File::Find::Rule' => 0,
+        'File::Flock' => 0,
         'File::NFSLock' => 0,
 	'File::Path' => '2.08',
         'File::Temp' => 0,
