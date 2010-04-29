@@ -567,13 +567,12 @@ EOSCRIPT
 
          where the @args are exactly what you pass in method_args.
 
-  Args : {  class         => class name for invoking the method,
-            method_name   => name of the method to call,
-            method_args   => arrayref of the method's arguments (can
+  Args : {  method        => [ Class::Name => 'method_to_run' ],
+            args          => arrayref of the method's arguments (can
                              be objects, datastructures, whatever),
 
             (optional)
-            run_args      => hashref of CXGN::Tools::Run options (see
+            run_opts      => hashref of CXGN::Tools::Run options (see
                              run_cluster() above),
             load_packages => arrayref of perl packages to
                              require before deserializing the arguments,
@@ -587,8 +586,10 @@ EOSCRIPT
 
 sub run_cluster_perl {
   my ( $class, $args ) = @_;
-  my ( $perl, $method_class, $method_name, $method_args, $run_args, $packages ) =
-      @{$args}{qw{ perl class method_name method_args run_args load_packages}};
+  my ( $perl, $method_args, $run_args, $packages ) =
+      @{$args}{qw{ perl args run_opts load_packages}};
+
+  my ($method_class, $method_name) = @{ $args->{method} };
 
   $method_args ||= [];
   $run_args ||= {};

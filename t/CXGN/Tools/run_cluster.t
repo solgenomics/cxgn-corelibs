@@ -128,9 +128,8 @@ throws_ok {
 #test run_cluster_perl
 {
     CXGN::Tools::Run->temp_base('/data/shared/tmp');
-    my $job = CXGN::Tools::Run->run_cluster_perl({ class => 'CXGN::Tools::Run',
-                                                   method_name => '_run_cluster_perl_test',
-                                                   method_args => ['foo', 'bar','baz'],
+    my $job = CXGN::Tools::Run->run_cluster_perl({ method => [ 'CXGN::Tools::Run' => '_run_cluster_perl_test' ],
+                                                   args   => ['foo', 'bar','baz'],
                                                    load_packages => 'Carp',
                                                });
     $job->wait;
