@@ -108,7 +108,7 @@ environment variable CXGNTOOLSRUNDEBUG to something true, like "1", or
 "you know a biologist is lying when they tell you something is
 _always_ true".
 
-=head1 METHODS
+=head1 CONSTRUCTORS
 
 =cut
 
@@ -706,7 +706,7 @@ sub _process_common_options {
     ref($name) ? $name : File::Spec->rel2abs($name);
   }
 
-  #set out temp_base, if given
+  #set our temp_base, if given
   $self->_temp_base( $options->{temp_base} ) if defined $options->{temp_base};
 
   #if an existing temp dir has been passed, verify that it exists, and
@@ -756,6 +756,33 @@ sub _process_common_options {
 
   return $options;
 }
+
+# NOTE: temp_base class method is deprecated, do not use in new code.
+#  pass temp_base to each Run invocation instead
+# =head2 temp_base
+
+#   Usage: CXGN::Tools::Run->temp_base('/data/local/temp');
+
+#   Desc : class method to get/set the base directory where these
+#          objects put their tempfiles.  This defaults to the value of
+#          File::Spec->tmpdir (which is usually '/tmp')
+
+#   Ret  : directory name of place to put temp files
+#   Args : (optional) name of new place to put temp files
+
+# =cut
+
+# return the base path where CXGN::Tools::Run classes
+# should stick their temp dirs, indexes, whatever
+{ my %tb = ( __PACKAGE__ , File::Spec->tmpdir );
+  sub temp_base {
+      my ( $class, $val ) = @_;
+      $tb{$class} = $val if @_ > 1;
+      return $tb{$class};
+  }
+}
+
+=head1 OBJECT METHODS
 
 =head2 tempdir
 
@@ -813,29 +840,6 @@ sub tempdir {
   return $self->{tempdir};
 }
 
-=head2 temp_base
-
-  Usage: CXGN::Tools::Run->temp_base('/data/local/temp');
-
-  Desc : class method to get/set the base directory where these
-         objects put their tempfiles.  This defaults to the value of
-         File::Spec->tmpdir (which is usually '/tmp')
-
-  Ret  : directory name of place to put temp files
-  Args : (optional) name of new place to put temp files
-
-=cut
-
-
-# return the base path where CXGN::Tools::Run classes
-# should stick their temp dirs, indexes, whatever
-{ my %tb = ( __PACKAGE__ , File::Spec->tmpdir );
-  sub temp_base {
-      my ( $class, $val ) = @_;
-      $tb{$class} = $val if @_ > 1;
-      return $tb{$class};
-  }
-}
 
 #returns the name of the file to use for recording the die message from background jobs
 sub _diefile_name {
