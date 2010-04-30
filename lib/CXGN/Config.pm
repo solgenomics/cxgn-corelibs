@@ -284,6 +284,7 @@ $defaults =
                                      phenome
                                      physical
                                      tomato_gff
+				     sgn_people
                                  ]],
 
      cview_db_backend         => 'cxgn',
