@@ -33,26 +33,21 @@ Takes a dbh and marker ID and returns a marker object.
 =cut
 
 #this is the constructor for a marker whose data you want to get from the database. you must send in a dbh and a marker id. this returns undef if the marker is not found.
-sub new
-{
+sub new {
     my $class=shift;
     my($dbh,$marker_id)=@_; 
     my $self=bless({},$class);
-    if(CXGN::DB::Connection::is_valid_dbh($dbh))
-    {
+    if(CXGN::DB::Connection::is_valid_dbh($dbh)) {
         $self->{dbh}=$dbh;
     }
-    else
-    {
+    else {
         croak"You must supply a dbh as the first argument to the marker constructor";
     }
-    unless($marker_id and $marker_id=~/^\d+$/ and $marker_id>0)
-    {
+    unless($marker_id and $marker_id=~/^\d+$/ and $marker_id>0) {
         croak"Marker ID '$marker_id' is not a valid ID";
     }
     $self->{marker_id}=CXGN::Marker::Tools::is_valid_marker_id($dbh,$marker_id);
-    unless($self->{marker_id})
-    {
+    unless($self->{marker_id}) {
         warn"Marker ID '$marker_id' not found in database";
         return undef;
     }
@@ -97,21 +92,18 @@ For internal use only.
 #this helps optimize the speed of the display object, for scripts that use a lot of them.
 #also, it prevents the Modifiable subclass from being able to clobber its own modifications by calling accessors 
 #which reload data from the database.
-sub _should_we_run_query
-{
+sub _should_we_run_query {
     my $self=shift;
     my($query_name)=@_;
 
     #if we do not have a marker id yet, we are a new marker being created for future insertion. therefore, our 
     #data will not be in the database, and running a query would be unnecessary and/or bad.
-    unless($self->{marker_id})
-    {
+    unless($self->{marker_id}) {
         return 0;
     }    
     
     #if this query has already been run, return that we do not need to run it again
-    if($self->{data_populated}->{$query_name})
-    {
+    if($self->{data_populated}->{$query_name}) {
         return 0;
     }
 
@@ -130,8 +122,7 @@ Returns a string of this markers data for debugging.
 =cut
 
 #for debugging and such
-sub as_string
-{
+sub as_string {
     my $self=shift;
     
     #any time you need a fully populated marker, you must run populate_from_db    
@@ -141,24 +132,20 @@ sub as_string
     $string.="<marker>\n";
     $string.="Name(s): ".CXGN::Tools::Text::list_to_string(@{$self->{marker_names}});
 
-    if($self->{marker_id})
-    {
+    if($self->{marker_id}) {
         $string.="\tSGN-M$self->{marker_id}\n";
     }
-    else
-    {
+    else {
         $string.="\t(Marker not yet inserted into database)\n";
     }
 
     $string.="Collections: ".CXGN::Tools::Text::list_to_string(@{$self->{collections}})."\n";
-    for my $location(@{$self->{locations}})
-    {
+    for my $location(@{$self->{locations}}) {
         $string.="Location:\tMap version ID '$location->{map_version_id}'\tLinkage group ID '$location->{lg_id}'\tPosition '$location->{position}'\tConfidence '$location->{confidence}'\tSubscript '$location->{subscript}'\n";
         $string.="Mapped via:\tPCR exp ID: '$location->{pcr_experiment_id}'\tRFLP exp ID: '$location->{rflp_experiment_id}'\n";
     }
     $string.="Non-mapping PCR experiments:\n";
-    for my $pcr_id(@{$self->{non_mapping_pcr_experiment_ids}})
-    {
+    for my $pcr_id(@{$self->{non_mapping_pcr_experiment_ids}}) {
         $string.=CXGN::Marker::PCR::Experiment->new($self->{dbh},$pcr_id)->as_string();        
     }
 
@@ -176,8 +163,7 @@ Returns this markers ID.
 =cut
 
 #you cannot set the marker id except in the constructor
-sub marker_id
-{
+sub marker_id {
     my $self=shift;
     return $self->{marker_id};
 }
@@ -192,26 +178,283 @@ Returns a the preferred alias, or all aliases starting with the preferred, depen
 =cut
 
 #the marker name is stored as a "preferred" alias
-sub name_that_marker
-{
+sub name_that_marker {
     my $self=shift;
-    if($self->_should_we_run_query('name_that_marker'))
-    {
+    if ($self->_should_we_run_query('name_that_marker')) {
         my $name_q = $self->{dbh}->prepare("select alias from marker_alias where marker_id=? order by preferred desc,alias");
         $name_q->execute($self->{marker_id});
-        while(my ($alias) = $name_q->fetchrow_array())
-        {
+        while(my ($alias) = $name_q->fetchrow_array()) {
             push(@{$self->{marker_names}},$alias);
 	}
     }
-    if(wantarray)
-    {
+    if (wantarray) {
         return @{$self->{marker_names}};
     }
-    else
-    {
+    else {
         return $self->{marker_names}->[0];
     }
+}
+
+=head2 get_name
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_name {
+    my $self = shift;
+    return $self->name_that_marker();
+}
+
+
+
+=head2 associated_loci
+
+ Usage:        my @locus_info = $marker->associated_loci()
+ Desc:         retrieves information about associated loci.
+ Ret:          a list of listrefs of the form [ $locus_id, $locus_name].
+ Args:         none
+ Side Effects: accesses the database
+ Example:
+
+=cut
+
+sub associated_loci {
+    my $self = shift;
+
+    my $kfg_query = $self->{dbh}->prepare('SELECT locus_id, locus_name FROM phenome.locus_marker inner join phenome.locus using(locus_id) where marker_id=?');
+    $kfg_query->execute($self->marker_id);
+    
+    return unless $kfg_query->rows() > 0;
+
+    my @loci = ();
+    while (my ($locus_id, $locus_name) = $kfg_query->fetchrow_array()){
+	push @loci, [$locus_id, $locus_name];
+    }
+    return @loci;
+}
+
+=head2 rflp_data
+
+ Usage:        my $hashref = $marker->rflp_data()
+ Desc:
+ Ret:          a hashref with the following keys:
+               r.rflp_id, r.marker_id, r.rflp_name, r.insert_size, 
+	       r.vector, r.cutting_site, r.drug_resistance, 
+	       fs.fasta_sequence as forward_seq, 
+	       rs.fasta_sequence as reverse_seq, r.forward_seq_id, 
+	       r.reverse_seq_id
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub rflp_data {
+    my $self = shift;
+
+    my $rflp_query = q{SELECT r.rflp_id, r.marker_id, r.rflp_name, r.insert_size, 
+	     r.vector, r.cutting_site, r.drug_resistance, 
+	     fs.fasta_sequence as forward_seq, 
+	     rs.fasta_sequence as reverse_seq, r.forward_seq_id, 
+	     r.reverse_seq_id FROM 
+	     rflp_markers AS r LEFT JOIN rflp_sequences AS fs ON 
+	     r.forward_seq_id=fs.seq_id LEFT JOIN rflp_sequences AS rs 
+	     ON r.reverse_seq_id=rs.seq_id WHERE marker_id=?};
+    
+    my $rflp_sth = $self->{dbh}->prepare($rflp_query); 
+    $rflp_sth->execute($self->marker_id());
+    my $r = $rflp_sth->fetchrow_hashref();
+    unless($r->{rflp_id}){return'';}
+
+    return $r;
+
+}
+
+=head2 rflp_unigene_matches
+
+ Usage:        my ($a_ref, $b_ref) = $marker->rflp_unigene_matches($forward_id, $reverse_id)      
+ Desc:         returns unigene match data for rflp markers
+  Ret:         a listref with the forward matches and a listref
+               with the reverse matches.
+ Args:
+ Side Effects:
+ Example:
+ TO DO:        This needs to be refactored, because sorting by evalue is not a good idea.
+
+=cut
+
+sub rflp_unigene_matches {
+    my $self = shift;
+    my $forward_seq_id = shift;
+    my $reverse_seq_id = shift;
+
+    my $sth = $self->{dbh}->prepare(q{SELECT unigene_id, e_val, 
+				   align_length, query_start, 
+				   query_end FROM rflp_unigene_associations 
+				       WHERE rflp_seq_id=?});
+    my %forward_unigene_matches;
+    $sth->execute($forward_seq_id);
+    while (my ($ug_id, $e_val, $align_length, $q_start, $q_end) = $sth->fetchrow_array) {
+	push @{$forward_unigene_matches{$e_val}}, ["SGN-U$ug_id", $e_val, $align_length ];
+    }
+    my %reverse_unigene_matches;
+    $sth->execute($reverse_seq_id);
+    while (my ($ug_id, $e_val, $align_length, $q_start, $q_end) = $sth->fetchrow_array) {
+	push @{$reverse_unigene_matches{$e_val}}, ["SGN-U$ug_id", $e_val, $align_length ];
+    }
+    my @forward_matches = ();
+    my @fwd_e_vals = keys %forward_unigene_matches;
+    if (@fwd_e_vals) {
+	foreach my $e (sort {$a <=> $b} @fwd_e_vals) {
+	    push @forward_matches, $forward_unigene_matches{$e};
+	}
+    }
+    my @reverse_matches = ();
+    my @rev_e_vals = keys %reverse_unigene_matches;
+    if (@rev_e_vals) {
+	foreach my $e (sort {$a <=> $b} @rev_e_vals) {
+	    push @reverse_matches, $reverse_unigene_matches{$e};
+	}
+    }
+    
+    return (\@forward_matches, \@reverse_matches);
+}
+
+=head2 primer_unigene_matches
+
+ Usage:        @unigene_ids = $marker->primer_unigene_matches()
+ Desc:         returns a list of unigene ids that have primers 
+               matching this marker sequence
+ Ret:          a list of unigene ids
+ Args:         none
+ Side Effects: accesses the database
+ Example:
+
+=cut
+
+sub primer_unigene_matches {
+    my $self = shift;
+    return $self->{dbh}->selectcol_arrayref("SELECT DISTINCT unigene_id FROM primer_unigene_match WHERE marker_id=".$self->marker_id());
+}
+
+=head2 ssr_data
+
+ Usage:         my @data = $marker->ssr_data()
+ Desc:          returns ssr data.
+ Ret:          	returns a list with the following values:
+                $ssr_id, $marker_id, $ssr_name, $est_trace, 
+                $start_primer, $end_primer, $pcr_length, $ann_high, 
+                $ann_low;
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub ssr_data {
+    my $self = shift;
+    my $ssr_sth = $self->{dbh}->prepare("SELECT s.ssr_id, s.ssr_name, et.trace_name, s.start_primer, s.end_primer, s.pcr_product_ln, s.ann_high, s.ann_low FROM ssr AS s LEFT JOIN seqread AS et ON s.est_read_id=et.read_id where marker_id=?");
+    
+    $ssr_sth->execute($self->marker_id());
+    if(my ($ssr_id, $ssr_name, $est_trace, $start_primer, $end_primer, $pcr_length, $ann_high, $ann_low) = $ssr_sth->fetchrow_array)  {
+	
+	my $mapped = '';
+# 	  unless (defined($ssr_page)) {$ssr_page='';}
+# 	  unless (defined($marker_id)) {$marker_id='';}
+# 	  unless (defined($ssr_name)) {$ssr_name='';}
+# 	  unless (defined($est_trace)) {$est_trace='';}
+# 	  unless (defined($est_page)) {$est_page='';}
+# 	  unless (defined($ssr_id)) {$ssr_id='';}
+# 	  unless (defined($start_primer)) {$start_primer='';}
+# 	  unless (defined($end_primer)) {$end_primer='';}
+# 	  unless (defined($pcr_length)) {$pcr_length='';}
+# 	  unless (defined($ann_low)) {$ann_low='';}
+# 	  unless (defined($ann_high)) {$ann_high='';}
+# 	  unless (defined($mapped)) {$mapped='';}    
+	
+	return $ssr_id, $ssr_name, $est_trace, $start_primer, $end_primer, $pcr_length, $ann_high, $ann_low;
+	
+	
+    }
+}
+
+=head2 ssr_motif_info
+
+ Usage:        my @motif_info = $marker->ssr_motif_info();
+ Desc:         returns motif information if the $marker is an 
+               SSR marker, an empty list otherwise
+ Ret:          a list of lists with [ $motif, $repeat_count ]
+               for each motif.
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub ssr_motif_info { 
+    my $self = shift;
+    my $ssr_id = shift;
+    my $repeats_sth = $self->{dbh}->prepare("SELECT repeat_motif, reapeat_nr FROM ssr_repeats WHERE ssr_id=?");
+    $repeats_sth->execute($ssr_id);
+    my @motif_info = ();
+    while (my ($motif, $r_nr) = $repeats_sth->fetchrow_array) {
+	push @motif_info, [ $motif, $r_nr ];
+    }
+
+    return @motif_info;
+    
+}
+
+=head2 cos_data
+
+ Usage:         my $hashref = $marker->cos_data()
+ Desc:          retrieves cos marker related data
+ Ret:           a hashref with the following keys:
+                   c.cos_marker_id
+                   c.marker_id
+                   c.cos_id
+                   c.at_match
+                   c.at_position 
+                   c.bac_id
+                   c.best_gb_prot_hit 
+                   c.at_evalue
+                   c.at_identities
+                   c.mips_cat
+                   c.description
+                   c.comment
+                   c.gbprot_evalue 
+                   c.gbprot_identities
+                   s.trace_name
+                   
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub cos_data {
+    my $self = shift;
+    my $marker_id = shift;
+    
+    my $cos_query = q{SELECT c.cos_marker_id, c.marker_id, c.cos_id, c.at_match, 
+	    c.at_position, c.bac_id, c.best_gb_prot_hit, c.at_evalue, 
+	    c.at_identities, c.mips_cat, c.description, c.comment, 
+	    c.gbprot_evalue, c.gbprot_identities, s.trace_name 
+	    FROM cos_markers AS c LEFT JOIN seqread AS s ON 
+	    c.est_read_id=s.read_id WHERE c.marker_id = ?};
+    
+    my $cos_sth = $self->{dbh}->prepare($cos_query);
+    $cos_sth->execute($self->marker_id());
+    my $r = $cos_sth->fetchrow_hashref();
+    
+    return $r;
+    
 }
 
 =head2 collections
@@ -223,11 +466,9 @@ Returns an arrayref of this markers collections.
 =cut
 
 #this is a list of groups this marker is considered to be a part of. this is usually a list of one or two collection names.
-sub collections
-{
+sub collections {
     my $self=shift;
-    if($self->_should_we_run_query('collections'))
-    {
+    if($self->_should_we_run_query('collections')) {
         my $collections_q=$self->{dbh}->prepare
         ('
             select 
@@ -240,8 +481,7 @@ sub collections
                 marker.marker_id=?
         ');
         $collections_q->execute($self->{marker_id});
-        while(my($collection)=$collections_q->fetchrow_array())
-        {
+        while(my($collection)=$collections_q->fetchrow_array()) {
             push(@{$self->{collections}},$collection);
         }
     }
@@ -251,10 +491,8 @@ sub collections
 =head2 derived_from_sources
 
     my $sources=$marker->derived_from_sources();
-    if($sources)
-    {
-        for my $source(@{$sources})
-        {
+    if($sources) {
+        for my $source(@{$sources}) {
             my $source_name=$source->{source_name};
             my $id_in_source=$source->{id_in_source};
             print"Marker is from source '$source_name' with ID '$id_in_source'\n";
@@ -266,11 +504,9 @@ Returns an arrayref of sources whence this marker came.
 =cut
 
 #ids of all sources from which this marker was derived
-sub derived_from_sources
-{
+sub derived_from_sources {
     my $self=shift;
-    if($self->_should_we_run_query('derived_from_sources'))
-    { 
+    if($self->_should_we_run_query('derived_from_sources')) { 
         my $sources_q=$self->{dbh}->prepare
         ('
             select 
@@ -292,10 +528,8 @@ sub derived_from_sources
 =head2 experiments
 
     my $exps=$marker->experiments();
-    if($exps)
-    {
-        for my $exp(@{$exps})
-        {
+    if($exps) {
+        for my $exp(@{$exps}) {
             if($exp->{location}){print $exp->{location}->as_string();}
             if($exp->{pcr_experiment}){print $exp->{pcr_experiment}->as_string();}
             if($exp->{rflp_experiment}){print $exp->{rflp_experiment}->as_string();}            
@@ -307,12 +541,10 @@ Returns an arrayref of hashrefs with keys 'location', 'pcr_experiment', and 'rfl
 =cut
 
 #get information about all of this marker's locations on various maps
-sub experiments
-{
+sub experiments {
     my $self=shift;
     my $dbh=$self->{dbh};
-    if($self->_should_we_run_query('experiments'))
-    {
+    if($self->_should_we_run_query('experiments')) {
         #the order-bys in this SQL statement make the marker_experiment entries with MORE information
         #show up FIRST. the reason for doing this is that the display page (markerinfo.pl) assumes
         #that if it has already displayed a location or experiment, that it does not need to display
@@ -344,19 +576,15 @@ sub experiments
         #SOME OF THESE ORDER-BYS ARE IMPORTANT FOR THE WEBPAGE DISPLAY!
         #IF YOU CHANGE THEM, SOME DATA MAY NOT SHOW UP ON THE WEBSITE!
         $locations_q->execute($self->{marker_id});
-        while(my ($marker_experiment_id,$location_id,$pcr_experiment_id,$rflp_experiment_id,$protocol)=$locations_q->fetchrow_array())
-        {
+        while(my ($marker_experiment_id,$location_id,$pcr_experiment_id,$rflp_experiment_id,$protocol)=$locations_q->fetchrow_array()) {
             my %experiment;
-            if($location_id)
-            {
+            if($location_id) {
                 $experiment{location}=CXGN::Marker::Location->new($dbh,$location_id);
             }
-            if($pcr_experiment_id)
-            {
+            if($pcr_experiment_id) {
                 $experiment{pcr_experiment}=CXGN::Marker::PCR::Experiment->new($dbh,$pcr_experiment_id);
             }
-            if($rflp_experiment_id)
-            {            
+            if($rflp_experiment_id) {            
                 $experiment{rflp_experiment}=CXGN::Marker::RFLP::Experiment->new($dbh,$rflp_experiment_id);
             }
             $experiment{protocol}=$protocol;
@@ -377,15 +605,13 @@ sub experiments
                 and pcr_experiment.marker_id=?
         ');
         $orphan_pcr_q->execute($self->{marker_id});
-        while(my ($orphan_pcr_id)=$orphan_pcr_q->fetchrow_array())
-        {
+        while(my ($orphan_pcr_id)=$orphan_pcr_q->fetchrow_array()) {
             my %experiment;
             $experiment{pcr_experiment}=CXGN::Marker::PCR::Experiment->new($dbh,$orphan_pcr_id);
             push(@{$self->{experiments}},\%experiment);
             $orphan_pcr_notification.=$self->name_that_marker()." has orphan PCR experiment ID '$orphan_pcr_id'\n";          
         }
-        if($orphan_pcr_notification)
-        {
+        if($orphan_pcr_notification) {
             #turn this once when beth is finished fixing the known ones
             #CXGN::Apache::Error::notify('found orphan PCR experiment',$orphan_pcr_notification);
         }
@@ -403,8 +629,7 @@ Fully populates the object. Mainly for use by CXGN::Marker::Modifiable to ensure
 
 #this function MUST contain all of the accessors which populate this object, because it is used by the Modifiable subclass, which MUST have a fully populated object.
 #if you add a marker accessor which retrieves data from the database (as the others do), you MUST call it here.
-sub populate_from_db
-{
+sub populate_from_db {
     my $self=shift;
     $self->name_that_marker();
     $self->collections();
@@ -436,20 +661,15 @@ Usually these are the ones you are interested in, right? Note: this does not get
 
 =cut
 
-sub current_mapping_experiments
-{
+sub current_mapping_experiments {
     my $self=shift;
     my @current_mapping_experiments;
     my $experiments=$self->experiments();
-    if($experiments and @{$experiments})
-    {
-        for my $experiment(@{$self->{experiments}})
-        {
-            if($experiment->{location})
-            {
+    if($experiments and @{$experiments}) {
+        for my $experiment(@{$self->{experiments}}) {
+            if($experiment->{location}) {
                 my $map_version_id=$experiment->{location}->map_version_id();
-                if(CXGN::Map::Tools::is_current_version($self->{dbh},$map_version_id))
-                {
+                if(CXGN::Map::Tools::is_current_version($self->{dbh},$map_version_id)) {
                     push(@current_mapping_experiments,$experiment);
                 }               
             }
@@ -466,15 +686,12 @@ This gets the COSII iUPA and eUPA experiments.
 
 =cut
 
-sub upa_experiments
-{
+sub upa_experiments {
     my $self=shift;
     my @upa_experiments;
     my $experiments=$self->experiments();
-    if($experiments and @{$experiments})
-    {
-        for my $experiment(@{$self->{experiments}})
-        {
+    if($experiments and @{$experiments}) {
+        for my $experiment(@{$self->{experiments}}) {
             if
             (
                 !$experiment->{location}#if there is no associated location 
@@ -502,8 +719,7 @@ Returns marker comment text.
 
 =cut
 
-sub comments 
-{
+sub comments {
     my $self=shift;  
     my $dbh=$self->{dbh};
     my $id=$dbh->quote($self->{marker_id});
@@ -520,8 +736,7 @@ Returns the stuff that goes in the 'href' attribute of the 'a' tag which will ta
 =cut
 
 #get a link to a marker's info page
-sub marker_page_link
-{
+sub marker_page_link {
     my $self=shift;
     return"/search/markers/markerinfo.pl?marker_id=$self->{marker_id}";
 }
@@ -535,8 +750,7 @@ Returns an array of hashrefs with COSII unigene data.
 =cut
 
 #special marker data accessors
-sub cosii_unigenes
-{
+sub cosii_unigenes {
     my $self=shift;
     unless($self->is_in_collection('COSII')){return;}
     my $dbh=$self->{dbh};
@@ -545,8 +759,7 @@ sub cosii_unigenes
     $unigene_query->execute($self->{marker_id});
     my $unigene_results_ref=$unigene_query->fetchall_arrayref();
     my @unigene_results=@{$unigene_results_ref};
-    for(0..$#unigene_results)
-    {
+    for(0..$#unigene_results) {
         $unigenes[$_]={};
         $unigenes[$_]->{unigene_id}=$unigene_results[$_][0];
         $unigenes[$_]->{copies}=$unigene_results[$_][1];
@@ -578,16 +791,13 @@ Takes a collection name and returns a 1 if the marker is in the collection or a 
 
 =cut
 
-sub is_in_collection
-{
+sub is_in_collection {
     my $self=shift;
     my($collection_maybe)=@_;
     unless($collection_maybe){return 0;}
     my $collections=$self->collections();
-    for my $collection(@{$collections})
-    {
-        if($collection_maybe eq $collection)
-        {
+    for my $collection(@{$collections}) {
+        if($collection_maybe eq $collection) {
             return 1;
 	}    
     }
