@@ -38,6 +38,7 @@ use base qw/ CXGN::Search::DBI::Simple::WWWQuery /;
 sub _cached_dbh() { our $_cached_dbc ||= CXGN::DB::Connection->new('public') }
 
 my $public = 'public';
+my $phenome = 'phenome';
 
 __PACKAGE__->selects_data("$public.cvterm.cvterm_id",
 			  "$public.cvterm.name",			 
@@ -60,7 +61,6 @@ __PACKAGE__->uses_joinpath("cvtermsynonym_path", ["$public.cvtermsynonym", "$pub
   			   );
 
 
-	                         
 
 ###### NOW WWW STUFF ###
 
@@ -77,7 +77,7 @@ sub request_to_params {
   
   if($params{cvterm_name}) {
       $self->cvterm_name('ILIKE ?', "%$params{cvterm_name}%");
-      $self->synonym('ILIKE ?', "%$params{cvterm_name}%");
+      $self->synonym('ILIKE ?', "%$params{cvterm_name}%");     
       $self->compound('&t OR &t', 'synonym', 'cvterm_name');
   }
 
@@ -119,7 +119,7 @@ sub to_html {
     
     my $cvterm_search =  qq|<input name="$cvterm_name" value="$scalars{cvterm_name}" size="30" >|;
   
-    $pop_links = "<table align=center cellpadding=20px><tr><td><b>Browse traits/QTLs by population:<br/>$pop_links<b></td></tr></table>";
+    $pop_links = "<table align=center cellpadding=20px><tr><td><b>Browse traits/QTLs by population:</b><br/>$pop_links</td></tr></table>";
 
       
     my $html_ret = <<EOHTML;
