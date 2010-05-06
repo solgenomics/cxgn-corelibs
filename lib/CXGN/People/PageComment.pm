@@ -220,7 +220,7 @@ sub get_html {
                    <table summary=\"\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" width=\"100%\"><tr><td>Posted by <b><a href=\"/solpeople/personal-info.pl?action=view&amp;sp_person_id=$sp_person_id\">$name</a>$user_type</b> on $date  </td><td class=\"right\">$remove_link&nbsp;</td></tr></table></div>";
 	$s .= "<div class=\"boxbgcolor5\"><div class=\"indentedcontent\">$text</div></div></td></tr>";
       }
-      $s .= "</table>";
+      $s .= "</table></div>";
     }	
   
   $subtitle .= "<a href=\"/forum/add_post.pl?page_type=".$self->get_type()."&amp;page_object_id=".$self->get_id()."&amp;refering_page=$encoded_url\">[Add comment]</a>";
