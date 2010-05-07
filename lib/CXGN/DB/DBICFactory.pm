@@ -1,52 +1,58 @@
-package CXGN::DB::DBICFactory;
-use Moose;
+=head1 DEPRECATED
 
-use English;
-use Carp;
-
-use CXGN::DB::Connection;
-
-=head1 NAME
-
-CXGN::DB::DBICFactory - thin wrapper to instantiate L<DBIx::Class> schemas
-using connection params from L<CXGN::DB::Connection>
-
-=head1 SYNOPSIS
-
-  my $s = CXGN::DB::DBICFactory
-            ->open_schema( 'Bio::Chado::Schema',
-                           search_path => ['public','sgn'],
-                         );
-
-
-  my $m = CXGN::DB::DBICFactory
-            ->merge_schemas( schema_classes =>
-                              [ 'Bio::Chado::Schema',
-                                'SGN::Schema',
-                              ],
-                             search_path => ['public','sgn'],
-                           );
-
-=head1 CLASS METHODS
-
-=head2 open_schema
-
-  Status  : public
-  Usage   : my $schema = CXGN::DB::DBICFactory
-                            ->open_schema( $schema_classname,
-                                           %options
-                                         );
-  Returns : a DBIx::Class::Schema object
-  Args    : schema class name, hash-style list of options as:
-
-              search_path => arrayref of schema names to set
-                             as the search path
-              dbconn_args => hashref of args passed directly to
-                             CXGN::DB::Connection->new_no_connect
-
-  Side Eff: dies on error
+CXGN::DB::DBICFactory is deprecated, do not use in new code.
 
 =cut
+
+# package CXGN::DB::DBICFactory;
+# use Moose;
+
+# use English;
+# use Carp;
+
+# use CXGN::DB::Connection;
+
+# =head1 NAME
+
+# CXGN::DB::DBICFactory - thin wrapper to instantiate L<DBIx::Class> schemas
+# using connection params from L<CXGN::DB::Connection>
+
+# =head1 SYNOPSIS
+
+#   my $s = CXGN::DB::DBICFactory
+#             ->open_schema( 'Bio::Chado::Schema',
+#                            search_path => ['public','sgn'],
+#                          );
+
+
+#   my $m = CXGN::DB::DBICFactory
+#             ->merge_schemas( schema_classes =>
+#                               [ 'Bio::Chado::Schema',
+#                                 'SGN::Schema',
+#                               ],
+#                              search_path => ['public','sgn'],
+#                            );
+
+# =head1 CLASS METHODS
+
+# =head2 open_schema
+
+#   Status  : public
+#   Usage   : my $schema = CXGN::DB::DBICFactory
+#                             ->open_schema( $schema_classname,
+#                                            %options
+#                                          );
+#   Returns : a DBIx::Class::Schema object
+#   Args    : schema class name, hash-style list of options as:
+
+#               search_path => arrayref of schema names to set
+#                              as the search path
+#               dbconn_args => hashref of args passed directly to
+#                              CXGN::DB::Connection->new_no_connect
+
+#   Side Eff: dies on error
+
+# =cut
 
 sub open_schema {
     my ($class, $package_name, %options) = @_;
@@ -81,25 +87,25 @@ sub open_schema {
 }
 
 
-=head2 merge_schemas
+# =head2 merge_schemas
 
-  Usage   : my $s = CXGN::DB::DBICFactory
-                      ->merge_schemas( schema_classes =>
-                                        [ 'Foo', 'Bar', 'Baz' ],
-                                       search_path => ...
-                                     )
-  Returns : a L<DBIx::Class::Schema>-based object,
-            containing all the ResultSource objects from the
-            listed schema classes
+#   Usage   : my $s = CXGN::DB::DBICFactory
+#                       ->merge_schemas( schema_classes =>
+#                                         [ 'Foo', 'Bar', 'Baz' ],
+#                                        search_path => ...
+#                                      )
+#   Returns : a L<DBIx::Class::Schema>-based object,
+#             containing all the ResultSource objects from the
+#             listed schema classes
 
-  Args : same as open_schema above, except
-         schema_class is replaced with schema_classes:
+#   Args : same as open_schema above, except
+#          schema_class is replaced with schema_classes:
 
-              schema_classes => arrayref of schema class names,
+#               schema_classes => arrayref of schema class names,
 
-  Merges multiple DBIC Schema namespaces into a single schema.
+#   Merges multiple DBIC Schema namespaces into a single schema.
 
-=cut
+# =cut
 
 my $merge_increment = 0;
 sub merge_schemas {
@@ -160,22 +166,22 @@ sub merge_schemas {
 }
 
 
-=head1 MAINTAINER
+# =head1 MAINTAINER
 
-Robert Buels
+# Robert Buels
 
-=head1 AUTHOR
+# =head1 AUTHOR
 
-Robert Buels, E<lt>rmb32@cornell.eduE<gt>
+# Robert Buels, E<lt>rmb32@cornell.eduE<gt>
 
-=head1 COPYRIGHT & LICENSE
+# =head1 COPYRIGHT & LICENSE
 
-Copyright 2009 Boyce Thompson Institute for Plant Research
+# Copyright 2009 Boyce Thompson Institute for Plant Research
 
-This program is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+# This program is free software; you can redistribute it and/or modify
+# it under the same terms as Perl itself.
 
-=cut
+# =cut
 
 ####
 1;
