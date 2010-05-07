@@ -4,13 +4,13 @@ CXGN::DB::DBICFactory is deprecated, do not use in new code.
 
 =cut
 
-# package CXGN::DB::DBICFactory;
-# use Moose;
+package CXGN::DB::DBICFactory;
+use Moose;
 
-# use English;
-# use Carp;
+use English;
+use Carp;
 
-# use CXGN::DB::Connection;
+use CXGN::DB::Connection;
 
 # =head1 NAME
 
