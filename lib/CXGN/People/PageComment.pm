@@ -28,7 +28,6 @@ use strict;
 
 package CXGN::People::PageComment;
 
-use CXGN::Page;
 use CXGN::Login;
 use CXGN::People;
 use CXGN::People::Forum;
@@ -57,17 +56,18 @@ sub new {
     my $dbh = shift;
     my $type = shift;
     my $id = shift;
-    my $args = {};
+    my $referer = shift;
 
+    my $args = {};
     my $self = $class->SUPER::new($dbh);
 
     $self->set_type($type);
     $self->set_id($id);
     
     # get a page object to decide if a user is logged in.
-    my $page= CXGN::Page->new("", "Lukas");
+#    my $page= CXGN::Page->new("", "Lukas");
     $self->set_user_id(CXGN::Login->new($self->get_dbh())->has_session());
-    $self->set_refering_page($page->{request}->uri()."?".$page->{request}->args());
+    $self->set_refering_page($referer);
     #print STDERR "Referer: ".($self->get_refering_page())."\n";
 			     
     @{$self->{posts}}= ();
