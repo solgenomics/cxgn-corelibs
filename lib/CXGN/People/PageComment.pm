@@ -1,11 +1,11 @@
 ####
-=head1 Page_comment.pm
+=head1 NAME
 
-Page_comment.pm -- a package for adding user comments to database detail pages.
+CXGN::People::PageComment - a package for adding user comments to database detail pages.
 
-=head1 Synopsys
+=head1 SYNOPSYS
 
-my $page_comment_obj = CXGN::People::PageComment->new($dbh, "map", $map_id);
+my $page_comment_obj = CXGN::People::PageComment->new($dbh, "map", $map_id, $referer);
 
 print $page_comment_obj->get_html();
 
@@ -13,11 +13,13 @@ print $page_comment_obj->get_html();
 
 Handles the addition and deletion of user comments to SGN pages. Users have to be logged in using SGN's login system to post/delete messages. 
 
-=head1 Dependencies
+=head1 DEPENDENCIES
 
-The current implementation depends on CXGN::People::Forum.pm
+The current implementation depends on CXGN::People::Forum.
 
-=head1 Functions
+=head1 FUNCTIONS
+
+This class implements the following methods:
 
 =cut
 #####
@@ -38,11 +40,12 @@ use base qw | CXGN::DB::Object |;
 
 =head2 function new
 
-Synopsis: my $pc = CXGN::People::PageComment -> new($dbh, "map", 9);
+Synopsis: my $pc = CXGN::People::PageComment -> new($dbh, "map", 9, $referer);
 Arguments: 
     (1) A database handle
     (2) A type, one of "BAC", "EST", "unigene", "marker", "map", "bac_end"
     (3) the object\'s ID (an integer value that specifies the page).
+    (4) the refering page, including the page arguments
 Returns: a handle to a Page_comment object
 Side effects: Accesses the sgn_people database through the Forum.pm interface to search for comments for the specified type/ID and caches them.
 Description:	
