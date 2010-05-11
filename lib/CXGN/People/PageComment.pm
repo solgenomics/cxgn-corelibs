@@ -1,4 +1,4 @@
-####
+
 =head1 NAME
 
 CXGN::People::PageComment - a package for adding user comments to database detail pages.
@@ -9,7 +9,7 @@ my $page_comment_obj = CXGN::People::PageComment->new($dbh, "map", $map_id, $ref
 
 print $page_comment_obj->get_html();
 
-=head1 Description
+=head1 DESCRIPTION
 
 Handles the addition and deletion of user comments to SGN pages. Users have to be logged in using SGN's login system to post/delete messages. 
 
@@ -17,16 +17,17 @@ Handles the addition and deletion of user comments to SGN pages. Users have to b
 
 The current implementation depends on CXGN::People::Forum.
 
+=head1 USAGE ON DETAIL PAGES
+
+On detail pages, the page comment feature should be added using a mason module, /page/comments.mas.
+
 =head1 FUNCTIONS
 
 This class implements the following methods:
 
 =cut
-#####
-
 
 use strict;
-
 
 package CXGN::People::PageComment;
 
@@ -35,10 +36,8 @@ use CXGN::People;
 use CXGN::People::Forum;
 
 use base qw | CXGN::DB::Object |;
-1;
 
-
-=head2 function new
+=head2 constructor new()
 
 Synopsis: my $pc = CXGN::People::PageComment -> new($dbh, "map", 9, $referer);
 Arguments: 
@@ -51,8 +50,6 @@ Side effects: Accesses the sgn_people database through the Forum.pm interface to
 Description:	
 
 =cut
-
-
 
 sub new { 
     my $class = shift;
@@ -79,6 +76,16 @@ sub new {
     return $self;
 }
 
+=head2 function fetch_page_comments()
+
+ Usage:        $pcobj -> fetch_page_comments();
+ Desc:         populates the page comment object from the
+               database. Called by the constructor.
+ Side Effects:
+ Example:
+
+=cut
+
 sub fetch_page_comments { 
     #
     # fetch the page comments using a function in the Topic class
@@ -102,6 +109,17 @@ sub fetch_page_comments {
     
 }
 
+=head2 accessors set_refering_page(), get_refering_page()
+
+ Usage:        $pc->set_refering_page('/detail?object_id=$id');
+ Property:     the url of the page that the post is stored
+               for.
+ Side Effects: the url will be embedded in links to get back to
+               the relevant detail page.
+ Example:
+
+=cut
+
 sub set_refering_page { 
     my $self = shift;
     $self->{refering_page} = shift;
@@ -111,6 +129,15 @@ sub get_refering_page {
     my $self = shift;
     return $self->{refering_page};
 }
+
+=head2 accessors set_topic(), get_topic()
+
+ Usage:        $pc->set_topic($topic_id)
+ Property:     each post has an associated topic_id
+ Side Effects:
+ Example:
+
+=cut
 
 sub set_topic { 
     my $self = shift;
@@ -122,6 +149,15 @@ sub get_topic {
     return $self->{topic};
 }
 
+=head2 accessors set_posts(), get_posts()
+
+ Usage:        $pc->set_posts(@posts)
+ Property:     The posts for this type and id combination
+ Side Effects:
+ Example:
+
+=cut
+
 sub set_posts { 
     my $self = shift;
     @{$self->{posts}} = @_;
@@ -131,6 +167,17 @@ sub get_posts {
     my $self = shift;
     return @{$self->{posts}};
 }
+
+=head2 accessors set_type(), get_type()
+
+ Usage:        $pc->set_type('marker');
+ Property:     the type of page this page comment
+               is stored for. Supported are things like
+               bac, marker, pub, locus, etc.
+ Side Effects:
+ Example:
+
+=cut
 
 sub set_type { 
     my $self = shift;
@@ -142,6 +189,15 @@ sub get_type {
     return $self->{type};
 }
 
+=head2 accessors set_id(), get_id()
+
+ Usage:        $pc->set_id($id)
+ Property:     the id of this post
+ Side Effects:
+ Example:
+
+=cut
+
 sub set_id { 
     my $self = shift;
     $self->{id}=shift;
@@ -151,6 +207,15 @@ sub get_id  {
     my $self = shift;
     return $self->{id};
 }
+
+=head2 accessors set_user_id(), get_user_id()
+
+ Usage:        $pc->set_user_id($sp_person_id)
+ Property:     the id of the user owning the post
+ Side Effects:
+ Example:
+
+=cut
 
 sub set_user_id { 
     my $self = shift;
@@ -162,18 +227,18 @@ sub get_user_id {
     return $self->{user_id};
 }
 
-###
-=head2 function get_html
+=head2 function get_html()
 
-  Synopsis:  print $cp -> get_html();
- Arguments:  none
-  Returns:   a string containing html code containing the user comments
-    Side effects:	
+  THIS FUNCTION IS DEPRECATED. USE /page/comments.mas IN NEW CODE.
+  Synopsis:     print $cp -> get_html();
+  Arguments:    none
+  Returns:      a string containing html code containing the user
+                comments
+  Side effects:
   Description:	
 
-=cut
-###
 
+=cut
 
 sub get_html { 
 
@@ -236,9 +301,10 @@ sub get_html {
 							 );
 }
 
-
 sub url_encode {
     my $theURL = $_[0];
    $theURL =~ s/([\W])/"%" . uc(sprintf("%2.2x",ord($1)))/eg;
    return $theURL;
 }
+
+return 1;
