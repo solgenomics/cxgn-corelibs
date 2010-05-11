@@ -96,6 +96,20 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.04999_07 @ 2009-09-04 13:21:55
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/WBLY/XERG0gUSp/aJJTvw
 
+use Carp ();
+
+sub seq {
+    my ($self) = @_;
+
+    if( $self->nr_members > 1 ) {
+        return $self->consensi->seq;
+    } elsif( $self->nr_members == 1 ) {
+        return $self->unigene_members->single->est->hqi_seq;
+    } else {
+        Carp::confess( 'unigene SGN-U'.$self->unigene_id.' has invalid nr_members ('.$self->nr_members.')' );
+    }
+}
+
 
 # You can replace this text with custom content, and it will be preserved on regeneration
 1;
