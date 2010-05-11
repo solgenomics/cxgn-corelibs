@@ -92,6 +92,16 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.04999_07 @ 2009-09-04 13:21:55
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/9dRnSHAEUwZAT6rU6Fl8Q
 
+sub hqi_seq {
+    my ( $self ) = @_;
+
+    if( my $qc = $self->qc_report ) {
+        return substr( $self->seq, $qc->hqi_start, $qc->hqi_length );
+    } else {
+        return $self->seq;
+    }
+}
+
 
 # You can replace this text with custom content, and it will be preserved on regeneration
 1;
