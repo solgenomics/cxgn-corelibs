@@ -269,19 +269,23 @@ sub get_html {
 	my $person = CXGN::People::Person -> new($self->get_dbh(), $person_id);
 	my $sp_person_id = $person -> get_sp_person_id();
 	my $name = $person->get_first_name()." ".$person->get_last_name();
+
 	my $user_type = $person->get_user_type();
+
+	my $remove_link = "&nbsp;";
+	if ($sp_person_id && ($self->get_user_id() == $sp_person_id || $user_type eq 'curator' )) {
+	  $remove_link = "<a href=\"/forum/forum_post_delete.pl?post_id=".($p->get_forum_post_id())."&amp;refering_page=$encoded_url\">Delete</a>\n"; 
+	}
+
 	if($user_type and $user_type ne 'user'){
 	  $user_type=" ($user_type)";
 	} else {
 	  $user_type='';
 	}
+
 	my $text = $p -> get_post_text();
 	my $date = $p -> get_formatted_post_time();
-	my $remove_link = "&nbsp;";
 	
-	if (($self->get_user_id() == $sp_person_id) && $sp_person_id) { 
-	  $remove_link = "<a href=\"/forum/forum_post_delete.pl?post_id=".($p->get_forum_post_id())."&amp;refering_page=$encoded_url\">Delete</a>\n"; 
-	}
     	
 	$s .= "<tr><td><div class=\"boxbgcolor2\">
                  
@@ -307,4 +311,5 @@ sub url_encode {
    return $theURL;
 }
 
-return 1;
+
+1;
