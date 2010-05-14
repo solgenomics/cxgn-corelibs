@@ -1051,7 +1051,7 @@ sub get_organism_by_tax {
 
  Usage: my $o=CXGN::Chado::Organism->new_with_species($schema, 'my node name')
  Desc:  Instantiate a new organism object with species name.
-        species name is anything thaat is stored in teh species column
+        species name is anything that is stored in the species column
         which means it does not have to be a taxonmic species, but can be any tax name,
         as long as it is unique.
  Ret:   an organism object
