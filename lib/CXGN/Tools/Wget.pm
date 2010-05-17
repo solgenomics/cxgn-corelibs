@@ -183,11 +183,7 @@ sub wget_filter {
 
   my $copy_from_cache = sub {
       my $gunzip_error = system qq!gunzip -c '$cache_filename' > '$destfile'!;
-      if( $gunzip_error ) {
-          # if there was an error unzipping, unlink the corrupt files and return failure
-          unlink $destfile;
-          return 0;
-      }
+      return 0 if $gunzip_error;
       return 1;
   };
 
