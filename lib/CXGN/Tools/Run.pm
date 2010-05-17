@@ -943,20 +943,21 @@ sub _format_error_message {
   my $ef = $self->err_file;
   my @out_tail = do {
     unless(ref $of) {
-      "last few lines of stdout:\n",`tail -20 $of`
+      "last few lines of stdout:\n",`tail -20 $of 2>&1`
     } else {
       ("(no stdout captured)")
     }
   };
   my @err_tail = do {
     unless(ref $ef) {
-      "last few lines of stderr:\n",`tail -20 $ef`
+      "last few lines of stderr:\n",`tail -20 $ef 2>&1`
     } else {
       ("(no stderr captured)")
     }
   };
-  return join '', map {chomp; __PACKAGE__.": $_\n"} ( 
-      "date: ".strftime('%Y-%m-%d %H:%M:%S %Z',localtime),
+  return join '', map {chomp; __PACKAGE__.": $_\n"} (
+      #"start time: ".( $self->start_time ? strftime('%Y-%m-%d %H:%M:%S %Z', localtime($self->start_time) ) : 'NOT RECORDED' ),
+      "error time: ".strftime('%Y-%m-%d %H:%M:%S %Z',localtime),
       "command failed: '" . join(' ',@{$self->_command}) . "'",
       $error,
       @out_tail,
@@ -1348,7 +1349,7 @@ sub job_id {
 sub host {
   my $self = shift;
   return $self->_host if $self->_host_isset;
-  CORE::die 'should have a hostname by now' unless $self->is_async || $self->is_cluster;
+  confess 'should have a hostname by now' unless $self->is_async || $self->is_cluster;
   $self->_read_status_file;
   return $self->_host;
 
@@ -1367,7 +1368,7 @@ sub host {
 sub start_time {
   my $self = shift;
   return $self->_start_time if $self->_start_time_isset;
-  CORE::die 'should have a start time by now' unless $self->is_async || $self->is_cluster;
+  confess 'should have a start time by now' unless $self->is_async || $self->is_cluster;
   $self->_read_status_file;
   return $self->_start_time;
 }
@@ -1887,8 +1888,8 @@ sub run3 {
         my $r = do {
 	  if($tempdir) {
 	    local $| = 1;
-	    open(STATFILE,">$tempdir/status");
-	    print STATFILE "start:",time,"\n";
+	    open(my $statfile,">","$tempdir/status");
+	    print $statfile "start:",time,"\n";
 	  }
 
 	  my $pid = fork;
@@ -1911,10 +1912,10 @@ sub run3 {
 	  my $ret = waitpid($pid,0); #wait for child to finish
 	  if ($tempdir) {
 	    local $| = 1;
-	    print STATFILE "end:",time,"\n";
-	    print STATFILE "ret:$?\n";
-	    print STATFILE "host:$host\n";
-	    close STATFILE;
+	    open(my $statfile,">>","$tempdir/status");
+	    print $statfile "end:",time,"\n";
+	    print $statfile "ret:$?\n";
+	    print $statfile "host:$host\n";
 	  }
 	  die "Got signal SIG$we_get_signal\n" if $we_get_signal;
 	  #how are you gentlemen!
