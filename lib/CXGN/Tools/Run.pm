@@ -1,7 +1,6 @@
 package CXGN::Tools::Run;
 use strict;
 use warnings;
-use English;
 use Carp qw/ carp confess croak /;
 use POSIX qw( :sys_wait_h strftime );
 use Time::HiRes qw/time/;
@@ -202,13 +201,13 @@ sub run {
     my $cmd = @args > 1 ? \@args : $args[0];
     CXGN::Tools::Run::Run3::run3( $cmd, $self->in_file, $self->out_file, $self->err_file, $self->tempdir );
     chdir $curdir or die "Could not cd back to parent working directory '$curdir': $!";
-  }; if( $EVAL_ERROR ) {
-    $self->_error_string($EVAL_ERROR);
+  }; if( $@ ) {
+    $self->_error_string( $@ );
     if($self->_raise_error) {
       #write die messages to a file for later retrieval by interested
       #parties, chiefly the parent process if this is a cluster job
-      $self->_write_die($EVAL_ERROR);
-      croak $self->_format_error_message($EVAL_ERROR);
+      $self->_write_die( $@ );
+      croak $self->_format_error_message( $@ );
     }
   }
   $self->_end_time(time);
@@ -291,9 +290,9 @@ sub run_async {
       CXGN::Tools::Run::Run3::run3($cmd, $self->in_file, $self->out_file, $self->err_file, $self->tempdir );
       chdir $curdir or die "Could not cd back to parent working dir '$curdir': $!";
 
-    }; if( $EVAL_ERROR ) {
+    }; if( $@ ) {
       #write die messages to a file for later retrieval by parent process
-      $self->_write_die($EVAL_ERROR);
+      $self->_write_die( $@ );
     }
     #explicitly close all our filehandles, cause the hard exit doesn't do it
     foreach ($self->in_file,$self->out_file,$self->err_file) {
@@ -818,7 +817,7 @@ sub tempdir {
   #number of possible combinations = $#CHARS ^ ($numchars+$numlevels)
   my $numlevels = 5;
   my $numchars  = 2;
-  my $username = getpwuid $EUID;
+  my $username = getpwuid $>;
   my $temp_stem = File::Spec->catdir( ( $self->_temp_base() || __PACKAGE__->temp_base() ),
 				      $username.'-cxgn-tools-run-tempfiles',
 				      ( map {$CHARS[int rand $#CHARS].$CHARS[int rand $#CHARS]} 1..$numlevels ),

@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use English;
 use Data::Dumper;
 
 use FindBin;
@@ -23,12 +22,12 @@ BEGIN { use_ok( 'CXGN::Tools::Run' ) };
 my $run = eval {
   CXGN::Tools::Run->run('cd thereisnodirectoryhere');
 };
-ok($EVAL_ERROR, 'failed commands throw an error');
+ok( $@, 'failed commands throw an error');
 diag $run->out if $run;
 $run = eval {
   CXGN::Tools::Run->run('cd thereisnodirectoryhere',{raise_error=>0});
 };
-ok(! $EVAL_ERROR, 'turning off raise_error disables error throwing');
+ok(! $@, 'turning off raise_error disables error throwing');
 #diag($run->out) if $run;
 
 
@@ -98,8 +97,8 @@ ok(! -d $tempdir,'first sleeper temp dir is gone');
       $failer = CXGN::Tools::Run->run_async(qq|perl -e 'die "oh crap I died.\n"'|, { on_completion => sub { $completion_hook += 3 } });
       $failer->wait if $failer;
   };
-  ok($EVAL_ERROR,'async processes propagate dies');
-  like($EVAL_ERROR,qr/oh crap I died/,'die message propagated');
+  ok( $@, 'async processes propagate dies');
+  like( $@, qr/oh crap I died/,'die message propagated');
   is( $completion_hook, 42, 'completion hook did not run for failed process' );
 
   #test turning off error raising
@@ -110,7 +109,7 @@ ok(! -d $tempdir,'first sleeper temp dir is gone');
                                            );
       $failer->wait if $failer;
   };
-  ok(!$EVAL_ERROR,'async processes do not propagate dies if raise_error is off');
+  is($@, '', 'async processes do not propagate dies if raise_error is off');
   like($failer->err,qr/oh crap I died/,'die message was on stderr');
   like($failer->error_string,qr/oh crap I died./,'die message was correctly recorded in error string');
 }
@@ -233,8 +232,8 @@ unless($tester_pid) {
   eval {
     my $s1 = CXGN::Tools::Run->run('sleep',57)
       or die "i can't sleep: $!";
-  }; if($EVAL_ERROR) {
-    die $EVAL_ERROR unless $EVAL_ERROR =~ /Got signal SIGTERM/;
+  }; if( $@ ) {
+    die $@ unless $@ =~ /Got signal SIGTERM/;
   }
   exit(-1);
 }
