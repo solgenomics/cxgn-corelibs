@@ -483,78 +483,102 @@ EOSCRIPT
   # disguise the ending EOF so that it passes through the file inclusion
 
   #$self->dbp("cluster running command '$cmd_string'");
-  my ($cmd_temp_fh,$cmd_temp_file) = tempfile( File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX' ) );
-  print $cmd_temp_fh $cmd_string;
-  close $cmd_temp_fh;
+  my $cmd_temp_file = File::Temp->new( File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX' ) );
+  $cmd_temp_file->print( $cmd_string );
+  $cmd_temp_file->close;
 
-  my %resources = (
-      ppn => $self->_procs_per_node || undef,
-      nodes => $self->_nodes        || 1,
-      vmem  => $self->_vmem         || undef,
-  );
-  my $resource_str = $self->_make_torque_resource_string(\%resources);
-  sub _make_torque_resource_string {
-      my ($self, $r) = @_;
-      my %r = %$r;
-
-      # tweak nodes=
-      my $ppn = delete $r{ppn};
-      $r{nodes} .= ":ppn=$ppn" if $ppn;
-
-      # tweak vmem=
-      $r{vmem}  .= 'm' if defined $r{vmem};
-
-      my $s = join ',',        #< joined by commas
-	  map {"$_=$r{$_}"}    #< print it as type=value
-	 grep defined $r{$_},  #< don't print any that are undef
-         sort                  #< in stable sorted order
-         keys %r;              #< for each resource type
-
-      return $s;
+  my $retry_count;
+  my $qsub_retry_limit = 3; #< try 3 times to submit the job
+  my $submit_success;
+  until( ($submit_success = $self->_submit_cluster_job( $cmd_temp_file )) || ++$retry_count > $qsub_retry_limit ) {
+      sleep 1;
+      warn "CXGN::Tools::Run retrying cluster job submission.\n";
   }
-
-  #note that you can use a reference to a string as a filehandle, which is done here:
-  my $qsub_cmd = join( ' ',
-			   #my $qsub = CXGN::Tools::Run->run(
-				   dprinta( "qsub",
-					    '-V',
-					    -r => 'n', #< not rerunnable, cause we'll notice it died
-					    -o => '/dev/null',
-					    -e => $self->err_file,
-					    -N => $self->_job_name,
-					    ( $self->_working_dir_isset ? (-d => $self->working_dir)
-					                                : ()
-					    ),
-					    ( $self->_jobdest_isset ? (-q => $self->_jobdest)
-                                                                    : ()
-					    ),
-					    -l => $resource_str,
-					    $cmd_temp_file,
-					    #{ in_file  => \$cmd_string,
-					    #  out_file => \$jobid,
-					    #}
-					  )
-				  );
-  #die "running '$qsub_cmd'";
-  my $jobid = `$qsub_cmd 2>&1`; #< string to hold the job ID of this job submission
-
-  $self->_flush_qstat_cache; #< force a qstat update
-
-  #check that we got a sane job id
-  chomp $jobid;
-  $jobid =~ /^\d+(\.[a-zA-Z0-9-]+)+$/
-    or die "Error running qsub, output was: $jobid\n";
-
-  dbp( "got jobid $jobid" );
-
-  $self->_jobid($jobid); #< remember our job id
-
-  unlink $cmd_temp_file;
+  $submit_success or die "CXGN::Tools::Run: failed to submit cluster job, after $retry_count tries\n";
 
   $self->_die_if_error;
 
   return $self;
 }
+
+sub _submit_cluster_job {
+    my ($self, $cmd_temp_file) = @_;
+
+    my %resources = (
+        ppn => $self->_procs_per_node || undef,
+        nodes => $self->_nodes        || 1,
+        vmem  => $self->_vmem         || undef,
+       );
+    my $resource_str = $self->_make_torque_resource_string(\%resources);
+
+    #note that you can use a reference to a string as a filehandle, which is done here:
+    my $qsub_cmd = join( ' ',
+                         #my $qsub = CXGN::Tools::Run->run(
+                         dprinta( "qsub",
+                                  '-V',
+                                  -r => 'n', #< not rerunnable, cause we'll notice it died
+                                  -o => '/dev/null',
+                                  -e => $self->err_file,
+                                  -N => $self->_job_name,
+                                  ( $self->_working_dir_isset ? (-d => $self->working_dir)
+                                        : ()
+                                       ),
+                                  ( $self->_jobdest_isset ? (-q => $self->_jobdest)
+                                        : ()
+                                       ),
+                                  -l => $resource_str,
+                                  $cmd_temp_file,
+                                  #{ in_file  => \$cmd_string,
+                                  #  out_file => \$jobid,
+                                  #}
+                                 )
+                        );
+    #die "running '$qsub_cmd'";
+    my $jobid = `$qsub_cmd 2>&1`; #< string to hold the job ID of this job submission
+
+    # test hook for testing a qsub failure, makes the test fail the first time
+    if( $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE} ) {
+        $jobid = $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE};
+        delete $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE};
+    }
+
+    $self->_flush_qstat_cache;  #< force a qstat update
+
+    #check that we got a sane job id
+    chomp $jobid;
+    unless( $jobid =~ /^\d+(\.[a-zA-Z0-9-]+)+$/ ) {
+        warn "CXGN::Tools::Run error running `qsub`: $jobid\n";
+        return;
+    }
+
+    dbp( "got jobid $jobid" );
+
+
+    $self->_jobid($jobid);      #< remember our job id
+
+    return 1;
+}
+
+sub _make_torque_resource_string {
+    my ($self, $r) = @_;
+    my %r = %$r;
+
+    # tweak nodes=
+    my $ppn = delete $r{ppn};
+    $r{nodes} .= ":ppn=$ppn" if $ppn;
+
+    # tweak vmem=
+    $r{vmem}  .= 'm' if defined $r{vmem};
+
+    my $s = join ',',           #< joined by commas
+        map {"$_=$r{$_}"}       #< print it as type=value
+            grep defined $r{$_}, #< don't print any that are undef
+                sort            #< in stable sorted order
+                    keys %r;    #< for each resource type
+
+    return $s;
+}
+
 
 
 =head2 run_cluster_perl

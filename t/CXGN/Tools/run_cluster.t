@@ -3,6 +3,7 @@ use warnings;
 use English;
 use Test::More;
 use Test::Exception;
+use Test::Warn;
 
 use File::Temp qw/ tempfile /;
 use Path::Class;
@@ -11,7 +12,7 @@ use CXGN::Tools::File qw/ file_contents /;
 
 BEGIN {
     if( $ENV{CXGNTOOLSRUNTESTCLUSTER} ) {
-        plan tests => 30;
+        plan tests => 32;
     }
     else {
         plan skip_all => 'cluster job tests skipped by default, set environment var CXGNTOOLSRUNTESTCLUSTER=1 to test';
@@ -134,5 +135,22 @@ throws_ok {
                                                });
     $job->wait;
     is( $job->out, 'a string for use by the test suite (CXGN::Tools::Run,foo,bar,baz)', 'got right output for run_cluster_perl' );
+    $job->cleanup;
+}
+
+
+# test qsub retry
+{
+    $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE} = 'error forced by run_cluster.t test!';
+    CXGN::Tools::Run->temp_base('/data/shared/tmp');
+    my $job;
+    warnings_like {
+        $job = CXGN::Tools::Run->run_cluster_perl({ method => [ 'CXGN::Tools::Run' => '_run_cluster_perl_test' ],
+                                                    args   => ['foo', 'bar','baz'],
+                                                    load_packages => 'Carp',
+                                                });
+    } [qr/error forced by run_cluster.t/,qr/retrying/], 'got a warning about the qsub failure';
+    $job->wait;
+    is( $job->out, 'a string for use by the test suite (CXGN::Tools::Run,foo,bar,baz)', 'run_cluster_perl retries and succeeds on qsub failure' );
     $job->cleanup;
 }
