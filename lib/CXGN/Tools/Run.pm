@@ -363,13 +363,14 @@ sub run_cluster {
 
   my $options = $self->_pop_options( \@args );
   $self->_process_common_options( $options );
-  $self->is_cluster(1);
 
   return $self->_run_cluster( \@args, $options );
 }
 
 sub _run_cluster {
     my ( $self, $cmd, $options ) = @_;
+
+    $self->is_cluster(1);
 
     $self->_command( $cmd ); #< store the command for use in error messages
 
