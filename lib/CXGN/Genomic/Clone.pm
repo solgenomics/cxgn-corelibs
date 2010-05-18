@@ -1106,7 +1106,7 @@ sub latest_sequence_version {
   my ($self) = @_;
   my @seqs = $self->latest_sequence_name
     or return;
-  my $p = parse_clone_ident(shift @seqs,'versioned_bac_seq');
+  my $p = parse_clone_ident(shift @seqs);
   return $p->{version};
 }
 
