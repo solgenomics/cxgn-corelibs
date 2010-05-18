@@ -5,6 +5,7 @@ use Data::Dumper;
 
 use FindBin;
 
+use File::Spec::Functions qw/ tmpdir catdir catfile /;
 use File::Temp qw/tempfile tempdir/;
 use Storable qw/retrieve/;
 
@@ -54,7 +55,7 @@ SKIP: {
 }
 
 #test passing a shell command
-my $tempdir = tempdir('cxgn-tools-run-t-XXXXXXXX',CLEANUP=>1);
+my $tempdir = tempdir(catdir(tmpdir(),'cxgn-tools-run-t-XXXXXXXX'),CLEANUP=>1);
 my $complete_hook = 0;
 $run = CXGN::Tools::Run->run('echo monkeys on the top of the mountain > foo.out',
 			     { working_dir => $tempdir,
