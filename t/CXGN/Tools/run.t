@@ -15,7 +15,7 @@ use Path::Class;
 
 use CXGN::Tools::File qw/file_contents/;
 
-use Test::More tests => 64;
+use Test::More tests => 65;
 
 BEGIN { use_ok( 'CXGN::Tools::Run' ) };
 
@@ -110,6 +110,7 @@ ok(! -d $tempdir,'first sleeper temp dir is gone');
       $failer->wait if $failer;
   };
   is($@, '', 'async processes do not propagate dies if raise_error is off');
+  ok( $failer, 'still got a job object if raise_error is off' );
   like($failer->err,qr/oh crap I died/,'die message was on stderr');
   like($failer->error_string,qr/oh crap I died./,'die message was correctly recorded in error string');
 }

@@ -263,6 +263,7 @@ sub run_async {
 
   my $options = $self->_pop_options( \@args );
   $self->_process_common_options( $options );
+  $self->is_async(1);
 
   #make sure we have a temp directory made already before we fork
   #calling tempdir() makes this directory and returns its name.
@@ -362,6 +363,7 @@ sub run_cluster {
 
   my $options = $self->_pop_options( \@args );
   $self->_process_common_options( $options );
+  $self->is_cluster(1);
 
   return $self->_run_cluster( \@args, $options );
 }
@@ -754,6 +756,10 @@ sub _process_common_options {
       $self->_on_completion( $c );
   }
 
+  # set is_cluster and is_async defaults
+  $self->is_cluster(0);
+  $self->is_async(0);
+
   return $options;
 }
 
@@ -859,8 +865,8 @@ sub _write_die {
 # croak()s if our subprocess terminated abnormally
 sub _die_if_error {
   my $self = shift;
-  if(($self->is_async || $self->is_cluster)
-     && $self->_diefile_exists) {
+  if( ($self->is_async || $self->is_cluster)
+      && $self->_diefile_exists) {
     my $error_string = $self->_file_contents( $self->_diefile_name );
     if( $self->is_cluster ) {
 	# if it's a cluster job, look for warnings from the resource
@@ -955,7 +961,7 @@ sub _format_error_message {
     }
   };
   return join '', map {chomp; __PACKAGE__.": $_\n"} (
-      #"start time: ".( $self->start_time ? strftime('%Y-%m-%d %H:%M:%S %Z', localtime($self->start_time) ) : 'NOT RECORDED' ),
+      "start time: ".( $self->start_time ? strftime('%Y-%m-%d %H:%M:%S %Z', localtime($self->start_time) ) : 'NOT RECORDED' ),
       "error time: ".strftime('%Y-%m-%d %H:%M:%S %Z',localtime),
       "command failed: '" . join(' ',@{$self->_command}) . "'",
       $error,
@@ -1102,15 +1108,16 @@ sub working_dir {
 =head2 is_async
 
   Usage: print "It was asynchronous" if $runner->is_async;
-  Desc : tell whether this run was asynchronous (backgrounded)
+  Desc : tell whether this run was asynchronous (run_async or run_cluster)
   Ret  : 1 if the run was asynchronous, 0 if not
   Args : none
 
 =cut
 
 sub is_async {
-  my ($self) = @_;
-  return $self->_pid_isset ? 1 : 0;
+    my $self = shift;
+    $self->{is_async} = shift if @_;
+    return $self->{is_async};
 }
 
 =head2 is_cluster
@@ -1123,8 +1130,9 @@ sub is_async {
 =cut
 
 sub is_cluster {
-  my ($self) = @_;
-  return $self->_jobid_isset ? 1 : 0;
+    my $self = shift;
+    $self->{is_cluster} = shift if @_;
+    return $self->{is_cluster};
 }
 
 =head2 alive
@@ -1812,6 +1820,11 @@ sub run3 {
        "\n"
        if debugging;
 
+    if($tempdir) {
+        open(my $statfile,">","$tempdir/status");
+        print $statfile "start:",time,"\n";
+    }
+
     if ( ref $cmd ) {
         croak "run3(): empty command"     unless @$cmd;
         croak "run3(): undefined command" unless defined $cmd->[0];
@@ -1885,11 +1898,6 @@ sub run3 {
 	my ($user) = getpwuid( $< );
 	chomp $host;
         my $r = do {
-	  if($tempdir) {
-	    local $| = 1;
-	    open(my $statfile,">","$tempdir/status");
-	    print $statfile "start:",time,"\n";
-	  }
 
 	  my $pid = fork;
 	  defined($pid) or die "Could not fork!";
@@ -1910,7 +1918,6 @@ sub run3 {
 	  }
 	  my $ret = waitpid($pid,0); #wait for child to finish
 	  if ($tempdir) {
-	    local $| = 1;
 	    open(my $statfile,">>","$tempdir/status");
 	    print $statfile "end:",time,"\n";
 	    print $statfile "ret:$?\n";
