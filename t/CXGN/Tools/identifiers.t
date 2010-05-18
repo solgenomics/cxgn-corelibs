@@ -91,7 +91,7 @@ BEGIN {
 			     match => 'LE_HBa12A2',
 			   },
 			  ],
-     'LE_H12A2'        => [undef,undef,undef,undef],
+     'LE_H12A2'        => ['bac','LE_HBa0012A02',qr/clone_info\.pl/,undef],
      'SL_MboI12A2'     => ['bac','SL_MboI0012A02',qr/clone_info\.pl/,
 			   { clonetype => 'bac', lib => 'SL_MboI', plate => 12, row => 'A', col => 2,
 			     match => 'SL_MboI12A2'
