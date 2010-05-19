@@ -291,39 +291,21 @@ sub rflp_data {
 
 sub rflp_unigene_matches {
     my $self = shift;
-    my $forward_seq_id = shift;
-    my $reverse_seq_id = shift;
 
-    my $sth = $self->{dbh}->prepare(q{SELECT unigene_id, e_val, 
-				   align_length, query_start, 
-				   query_end FROM rflp_unigene_associations 
-				       WHERE rflp_seq_id=?});
-    my %forward_unigene_matches;
-    $sth->execute($forward_seq_id);
-    while (my ($ug_id, $e_val, $align_length, $q_start, $q_end) = $sth->fetchrow_array) {
-	push @{$forward_unigene_matches{$e_val}}, ["SGN-U$ug_id", $e_val, $align_length ];
-    }
-    my %reverse_unigene_matches;
-    $sth->execute($reverse_seq_id);
-    while (my ($ug_id, $e_val, $align_length, $q_start, $q_end) = $sth->fetchrow_array) {
-	push @{$reverse_unigene_matches{$e_val}}, ["SGN-U$ug_id", $e_val, $align_length ];
-    }
-    my @forward_matches = ();
-    my @fwd_e_vals = keys %forward_unigene_matches;
-    if (@fwd_e_vals) {
-	foreach my $e (sort {$a <=> $b} @fwd_e_vals) {
-	    push @forward_matches, $forward_unigene_matches{$e};
-	}
-    }
-    my @reverse_matches = ();
-    my @rev_e_vals = keys %reverse_unigene_matches;
-    if (@rev_e_vals) {
-	foreach my $e (sort {$a <=> $b} @rev_e_vals) {
-	    push @reverse_matches, $reverse_unigene_matches{$e};
-	}
-    }
-    
-    return (\@forward_matches, \@reverse_matches);
+    my $sth = $self->{dbh}->prepare(<<'');
+SELECT
+     'SGN-U' || unigene_id
+   , e_val
+   , align_length
+FROM rflp_unigene_associations
+WHERE rflp_seq_id=?
+ORDER BY e_val DESC
+
+    return map {
+        my $id = $_;
+        $sth->execute( $id );
+        $sth->fetchall_arrayref
+    } @_;
 }
 
 =head2 primer_unigene_matches
