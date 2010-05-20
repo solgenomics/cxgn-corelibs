@@ -909,9 +909,13 @@ sub _die_if_error {
 	    $pbs_warnings .= $@ if $@;
 	}
 	# and also prepend the cluster job ID to aid troubleshooting
-	$error_string =  __PACKAGE__.': cluster job id: '.$self->job_id."\n"
+        my $jobid = $self->job_id;
+	$error_string =  __PACKAGE__.": cluster job id: $jobid\n"
 	               . $pbs_warnings
 		       . $error_string
+                       . '==== '.__PACKAGE__.' running qstat -f on this job ==========='
+                       . `qstat -f '$jobid'`
+                       . '==== '.__PACKAGE__.' end qstat output ======================='
     }
     #kill our child process's whole group if it's still running for some reason
     kill SIGKILL => -($self->pid) if $self->is_async;
