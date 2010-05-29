@@ -43,7 +43,6 @@ sub new {
     my $class = shift;
     my $dbh=shift;
     my $phenotype_id=shift;
-   
     my $self = $class->SUPER::new($dbh);
     
     $self->set_phenotype_id($phenotype_id);
@@ -80,9 +79,8 @@ sub fetch {
 
 sub store {
     my $self = shift;
-   
+    
     if ($self->get_phenotype_id()) { 
-	
 	my $query = "UPDATE public.phenotype SET
                      uniquename=?, observable_id=?, attr_id=?, value=?, cvalue_id=?, assay_id=?, individual_id=?, sp_person_id=?
                      WHERE phenotype_id=?";
@@ -93,12 +91,10 @@ sub store {
 		       $self->get_value(),
 		       $self->get_cvalue_id(),
 		       $self->get_assay_id(),
-		       $self->get_phenotype_id(),
 		       $self->get_individual_id(),
-		       $self->get_sp_person_id()
+		       $self->get_sp_person_id(),
+		       $self->get_phenotype_id()
 		       );
-	return $self->get_phenotype_id();
-         
     }
     else { 
 	       
@@ -116,8 +112,8 @@ sub store {
 		      
 	my $phenotype_id=$self->get_currval("public.phenotype_phenotype_id_seq");
  	$self->set_phenotype_id($phenotype_id);
- 	return $phenotype_id;
     }
+    return $self->get_phenotype_id();
 }
 
 
