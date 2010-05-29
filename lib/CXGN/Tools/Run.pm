@@ -483,7 +483,9 @@ EOSCRIPT
   # disguise the ending EOF so that it passes through the file inclusion
 
   #$self->dbp("cluster running command '$cmd_string'");
-  my $cmd_temp_file = File::Temp->new( File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX' ) );
+  my $cmd_temp_file = File::Temp->new( TEMPLATE =>
+                                       File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX' )
+                                     );
   $cmd_temp_file->print( $cmd_string );
   $cmd_temp_file->close;
 
@@ -909,9 +911,13 @@ sub _die_if_error {
 	    $pbs_warnings .= $@ if $@;
 	}
 	# and also prepend the cluster job ID to aid troubleshooting
-	$error_string =  __PACKAGE__.': cluster job id: '.$self->job_id."\n"
+        my $jobid = $self->job_id;
+	$error_string =  __PACKAGE__.": cluster job id: $jobid\n"
 	               . $pbs_warnings
 		       . $error_string
+                       . '==== '.__PACKAGE__." running qstat -f on this job ===========\n"
+                       . `qstat -f '$jobid'`
+                       . '==== '.__PACKAGE__." end qstat output =======================\n"
     }
     #kill our child process's whole group if it's still running for some reason
     kill SIGKILL => -($self->pid) if $self->is_async;
@@ -1922,6 +1928,7 @@ sub run3 {
 	my $host = `hostname`;
 	my ($user) = getpwuid( $< );
 	chomp $host;
+        my $cmd_pid;
         my $r = do {
 
 	  my $pid = fork;
@@ -1936,6 +1943,8 @@ sub run3 {
 	    }
 	    POSIX::_exit(-1); #call a HARD exit to avoid running any weird END blocks
 	  }
+
+          $cmd_pid = $pid;
 	  #forward 'stop!' signals to our child process, then heed them ourselves
 	  my $we_get_signal; #main screen turn on
 	  foreach my $sig (qw/ QUIT INT TERM KILL /) {
@@ -1962,7 +1971,7 @@ sub run3 {
 	  }
 
 	  my @signames = split / /,$Config{sig_name};
-	  die "Command failed on host '$host', user '$user', with \$?=$?, exit value $exval, signal $signames[$sig] ($sig), \$r=$r, \$!='$!' (string could be spurious)\n";
+	  die "Command failed on host '$host', user '$user', local monitor pid $$, cmd pid $cmd_pid, \$?=$?, exit value $exval, signal $signames[$sig] ($sig), \$r=$r, \$!='$!' (string could be spurious)\n";
         }
 
         if ( debugging ) {

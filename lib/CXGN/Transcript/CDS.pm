@@ -75,8 +75,7 @@ sub new_with_unigene_id {
     my $class = shift;
     my $dbh = shift;
     my $unigene_id = shift;
-    my $sgn = $dbh->qualify_schema("sgn");
-    my $query = "SELECT cds_id FROM $sgn.cds WHERE unigene_id = ?";
+    my $query = "SELECT cds_id FROM cds WHERE unigene_id = ?";
     my $sth = $dbh->prepare($query);
     $sth->execute($unigene_id); 
     my ($cds_id) = $sth->fetchrow_array();

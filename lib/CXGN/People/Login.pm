@@ -164,10 +164,9 @@ EOQ
         my $cc=$self->get_confirm_code();
         my $dsa=$self->get_disabled();
         my $ut=$self->get_user_type();
-        my $fn='<a href=\"/solpeople/contact-info.pl\">[please update</a>';
-        my $ln='<a href=\"/solpeople/contact-info.pl\">name info]</a>';
-        
-		my $sth = $self->get_sql("insert");
+        my $fn='<a href="/solpeople/contact-info.pl">[click to update]</a>';
+        my $ln='<a href="/solpeople/contact-info.pl">[click to update]</a>';
+        my $sth = $self->get_sql("insert");
 #		my $DBH = $self->DBH();
         #print STDERR "Preparing to execute login insert\n";
         $sth->execute($un,$prive,$pende,$pwd,$cc,$dsa,$ut,$fn,$ln);

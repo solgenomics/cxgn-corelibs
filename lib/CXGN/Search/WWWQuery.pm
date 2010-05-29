@@ -1,10 +1,6 @@
 package CXGN::Search::WWWQuery;
 
 use strict;
-use POSIX;
-use CXGN::Page::FormattingHelpers qw/commify_number/;
-use Carp;
-
 use base qw/  CXGN::Page::WebForm  /;
 
 =head1 NAME
