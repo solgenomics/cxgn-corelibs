@@ -18,9 +18,11 @@
  prove sample.t
 
  this test needs some environment variables:
-    export GEMTEST_METALOADER= 'metaloader user'
-    export GEMTEST_DBUSER= 'database user with insert permissions'
-    export GEMTEST_DBPASS= 'database password'
+
+   export BIOSOURCE_TEST_METALOADER= 'metaloader user'
+   export BIOSOURCE_TEST_DBDSN= 'database dsn as: dbi:DriverName:database=database_name;host=hostname;port=port'
+   export BIOSOURCE_TEST_DBUSER= 'database user with insert permissions'
+   export BIOSOURCE_TEST_DBPASS= 'database password'
 
  also is recommendable set the reset dbseq after run the script
     export RESET_DBSEQ=1
@@ -70,15 +72,53 @@ use Test::More;
 use Test::Exception;
 
 use CXGN::DB::Connection;
-use CXGN::DB::DBICFactory;
+
+
+## The tests still need search_path
+
+my $psqlv = `psql --version`;
+chomp($psqlv);
+my @schema_list = ('biosource', 'metadata', 'public');
+                
+## This is a version patch
+
+if ($psqlv =~ /8\.1/) {
+    push @schema_list, 'tsearch2';              
+}
+
+my $schema_list = join(',', @schema_list);
+my $set_path = "SET search_path TO $schema_list";
+
+## First check env. variables and connection
 
 BEGIN {
-    my @env_variables = qw/GEMTEST_METALOADER GEMTEST_DBUSER GEMTEST_DBPASS RESET_DBSEQ/;
+
+    ## Env. variables have been changed to use biosource specific ones
+
+    my @env_variables = qw/BIOSOURCE_TEST_METALOADER BIOSOURCE_TEST_DBDSN BIOSOURCE_TEST_DBUSER BIOSOURCE_TEST_DBPASS/;
+
+    ## RESET_DBSEQ is an optional env. variable, it doesn't need to check it
+
     for my $env (@env_variables) {
         unless (defined $ENV{$env}) {
             plan skip_all => "Environment variable $env not set, aborting";
         }
     }
+
+    eval { 
+        CXGN::DB::Connection->new( 
+                                   $ENV{BIOSOURCE_TEST_DBDSN}, 
+                                   $ENV{BIOSOURCE_TEST_DBUSER}, 
+                                   $ENV{BIOSOURCE_TEST_DBPASS}, 
+                                   {on_connect_do => $set_path}
+                                 ); 
+    };
+
+    if ($@ =~ m/DBI connect/) {
+
+        plan skip_all => "Could not connect to database";
+    }
+
     plan tests => 339;
 }
 
@@ -103,11 +143,12 @@ Bio::Chado::Schema->can('connect')
 my $metadata_creation_user = $ENV{GEMTEST_METALOADER};
 
 ## The biosource schema contain all the metadata classes so don't need to create another Metadata schema
+## CXGN::DB::DBICFactory is obsolete, it has been replaced by CXGN::Biosource::Schema
 
-my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Biosource::Schema', dbconn_args => {
-                                dbuser => $ENV{GEMTEST_DBUSER},
-                                dbpass => $ENV{GEMTEST_DBPASS},
-                            });
+my $schema = CXGN::Biosource::Schema->connect( $ENV{BIOSOURCE_TEST_DBDSN}, 
+                                               $ENV{BIOSOURCE_TEST_DBUSER}, 
+                                               $ENV{BIOSOURCE_TEST_DBPASS}, 
+                                               {on_connect_do => $set_path});
 
 $schema->txn_begin();
 
