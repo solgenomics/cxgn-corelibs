@@ -86,15 +86,7 @@ use CXGN::DB::Connection;
 
 ## The tests still need search_path, but it will use CXGN::Biosource::Schema->connect()
 
-my $psqlv = `psql --version`;
-chomp($psqlv);
 my @schema_list = ('biosource', 'metadata', 'public');
- 
-## This is a patch for version 8.1
-                
-if ($psqlv =~ /8\.1/) {
-    push @schema_list, 'tsearch2';              
-}
 my $schema_list = join(',', @schema_list);
 my $set_path = "SET search_path TO $schema_list";
 
