@@ -1928,6 +1928,7 @@ sub run3 {
 	my $host = `hostname`;
 	my ($user) = getpwuid( $< );
 	chomp $host;
+        my $cmd_pid;
         my $r = do {
 
 	  my $pid = fork;
@@ -1942,6 +1943,8 @@ sub run3 {
 	    }
 	    POSIX::_exit(-1); #call a HARD exit to avoid running any weird END blocks
 	  }
+
+          $cmd_pid = $pid;
 	  #forward 'stop!' signals to our child process, then heed them ourselves
 	  my $we_get_signal; #main screen turn on
 	  foreach my $sig (qw/ QUIT INT TERM KILL /) {
@@ -1968,7 +1971,7 @@ sub run3 {
 	  }
 
 	  my @signames = split / /,$Config{sig_name};
-	  die "Command failed on host '$host', user '$user', with \$?=$?, exit value $exval, signal $signames[$sig] ($sig), \$r=$r, \$!='$!' (string could be spurious)\n";
+	  die "Command failed on host '$host', user '$user', local monitor pid $$, cmd pid $cmd_pid, \$?=$?, exit value $exval, signal $signames[$sig] ($sig), \$r=$r, \$!='$!' (string could be spurious)\n";
         }
 
         if ( debugging ) {
