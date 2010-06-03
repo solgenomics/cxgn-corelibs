@@ -483,7 +483,9 @@ EOSCRIPT
   # disguise the ending EOF so that it passes through the file inclusion
 
   #$self->dbp("cluster running command '$cmd_string'");
-  my $cmd_temp_file = File::Temp->new( File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX' ) );
+  my $cmd_temp_file = File::Temp->new( TEMPLATE =>
+                                       File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX' )
+                                     );
   $cmd_temp_file->print( $cmd_string );
   $cmd_temp_file->close;
 
