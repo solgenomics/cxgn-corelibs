@@ -12,14 +12,14 @@ Version:1.0
 
 Naama Menda <nm249@cornell.edu>
 
-=cut 
+=cut
 
 
 
 use strict;
 use warnings;
 
-package CXGN::Chado::Organism ; # 
+package CXGN::Chado::Organism ; #
 
 
 use Carp;
@@ -36,7 +36,7 @@ use base qw / CXGN::DB::Object / ;
         Bio::Chado::Schema->connect( sub{ CXGN::DB::Connection->new()->get_actual_dbh()}, %other_parameters);
         $organism_id, if $organism_id is omitted, an empty metadata object is created.
   Side_Effects: accesses the database, check if exists the database columns that this object use. die if the id is not an integer.
- 
+
 =cut
 
 sub new {
@@ -46,21 +46,21 @@ sub new {
 
     ### First, bless the class to create the object and set the schema into the object.
     my $self = $class->SUPER::new($schema);
-   
-    ##Setting sbh for using some legacy functions from the old Organism object 
+
+    ##Setting sbh for using some legacy functions from the old Organism object
     my $dbh= $schema->storage->dbh();
     $self->set_dbh($dbh);
-    
-    #Check if $id is an integer 
+
+    #Check if $id is an integer
     my $organism;
     if (defined $id) {
 	unless ($id =~ m/^\d+$/) {  ## The id can be only an integer
 	    my $error_message = "\nDATA TYPE ERROR: The organism_id ($id) for CXGN::Chado::Organism->new() IS NOT AN INTEGER.\n\n";
 	    croak($error_message);
 	}
-	
-	$organism = $self->get_resultset('Organism::Organism')->find({ organism_id => $id }); 
-	
+
+	$organism = $self->get_resultset('Organism::Organism')->find({ organism_id => $id });
+
 	unless (defined $organism) {
 	    my $error_message2 = "\nDATABASE COHERENCE ERROR: The organism_id ($id) for CXGN::Chado::Organism->new(\$schema, \$id) ";
             $error_message2 .= "DOES NOT EXIST IN THE DATABASE.\n";
@@ -71,21 +71,21 @@ sub new {
 	}
     } else {
 	$self->debug("Creating a new empty Organism object! " . $self->get_resultset('Organism::Organism'));
-	$organism = $self->get_resultset('Organism::Organism')->new({});   ### Create an empty resultset object; 
+	$organism = $self->get_resultset('Organism::Organism')->new({});   ### Create an empty resultset object;
     }
     ###It's important to set the object row for using the accesor in other class functions
     $self->set_object_row($organism);
-    
+
     return $self;
 }
-    
 
-    
+
+
 =head2 store
 
  Usage: $self->store
- Desc:  store a new organism 
- Ret:   a database id 
+ Desc:  store a new organism
+ Ret:   a database id
  Args:  none
  Side Effects: checks if the organism exists in the database, and if does, will attempt to update
  Example:
@@ -97,28 +97,28 @@ sub store {
     my $id= $self->get_organism_id();
     my $schema=$self->get_schema();
     #no organism id . Check first if genus + species exists in te database
-    if (!$id) { 
+    if (!$id) {
 	my $exists= $self->exists_in_database();
 	if (!$exists) {
-	    
+
 	    my $new_row = $self->get_object_row();
 	    $new_row->insert();
-	   
+
 	    $id=$new_row->organism_id();
-	    
+
 	    $self->set_organism_id($id);
 	    $self->d(  "Inserted a new organism  " . $self->get_organism_id() ." database_id = $id\n");
-	}else { 
+	}else {
 	    $self->set_organism_id($exists);
 	    my $existing_organism=$self->get_resultset('Organism::Organism')->find($exists);
 	    #don't update here if organism already exist. User should call from the code exist_in_database
 	    #and instantiate a new organism object with the database organism_id
 	    #updating here is not a good idea, since it might not be what the user intended to do
             #and it can mess up the database.
-	    
+
 	    $self->debug("Organism " . $self->get_species() . " " . $self->get_genus() .  " exists in database!");
-	    
-	} 
+
+	}
     }else { # id exists
 	$self->d( "Updating existing organism_id $id\n");
 	$self->get_object_row()->update();
@@ -128,7 +128,7 @@ sub store {
 
 
 =head2 exists_in_database
-    
+
  Usage: $self->exists_in_database()
  Desc:  check if the genus + species exists in the organism table
  Ret:
@@ -140,14 +140,14 @@ sub store {
 
 sub exists_in_database {
     my $self=shift;
-    my $genus= $self->get_genus() || '' ;  
+    my $genus= $self->get_genus() || '' ;
     my $species = $self->get_species() || '' ;
     my $o = $self->get_resultset('Organism::Organism')->search({
 	genus  => { 'ilike' => $genus },
 	species    => { 'ilike'  => $species  }
-    })->single(); #  ->single() for retrieving a single row (there sould be only one genus-species entry) 
+    })->single(); #  ->single() for retrieving a single row (there sould be only one genus-species entry)
     if ($o) { return $o->organism_id(); }
-    
+
     # search if the genus+species where set together in the species field
     if ($species =~ m/(.*)\s(.*)/) {
 	$o = $self->get_resultset('Organism::Organism')->search(
@@ -176,10 +176,10 @@ sub exists_in_database {
 sub get_dbxrefs {
     my $self=shift;
     my @organism_dbxrefs= $self->get_schema()->resultset('Organism::OrganismDbxref')->search( {organism_id => $self->get_organism_id() } );
-    
+
     my @dbxrefs=();
     foreach my $od (@organism_dbxrefs) {
-	my $dbxref_id= $od->dbxref_id(); 
+	my $dbxref_id= $od->dbxref_id();
 	push @dbxrefs, $self->get_resultset("General::Dbxref")->search( { dbxref_id => $dbxref_id } );
     }
     return  @dbxrefs;
@@ -190,8 +190,8 @@ sub get_dbxrefs {
 
  Usage: $self->add_dbxref($dbxref)
  Desc:  store a new organism_dbxref
- Ret:   database id 
- Args:  dbxref object 
+ Ret:   database id
+ Args:  dbxref object
  Side Effects: accesses the database
  Example:
 
@@ -204,7 +204,7 @@ sub add_dbxref {
     my $schema=$self->get_schema;
     my $organism_id= $self->get_organism_id();
     my $dbxref_id = $dbxref->get_dbxref_id();
-    my $organism_dbxref = $schema->resultset('Organism::OrganismDbxref')->find_or_create( 
+    my $organism_dbxref = $schema->resultset('Organism::OrganismDbxref')->find_or_create(
 	{
 	    organism_id => $organism_id,
 	    dbxref_id   => $dbxref_id,
@@ -220,7 +220,7 @@ sub add_dbxref {
  Usage: $self->add_synonym($synonym)
  Desc:  Store a new synonym for this organism
  Ret:   an organismprop object
- Args:  a synonym (text) 
+ Args:  a synonym (text)
  Side Effects: stores a new organismprop with a type_id of 'synonym'
  Example:
 
@@ -229,10 +229,10 @@ sub add_dbxref {
 sub add_synonym {
     my $self=shift;
     my $synonym=shift;
-    
+
     my $cvterm= $self->get_resultset("Cv::Cvterm")->search( {name => 'synonym' } )->single();;
     my $type_id;
-    if ($cvterm) { 
+    if ($cvterm) {
 	$type_id= $cvterm->get_column('cvterm_id');
 	my $rank=1;
 	my @organismprops= $self->get_schema()->resultset("Organism::Organismprop")->search(
@@ -240,19 +240,19 @@ sub add_synonym {
 		organism_id=>$self->get_organism_id(),
 		type_id =>$type_id
 	    });
-	if (@organismprops) { 
+	if (@organismprops) {
 	    my @sorted_ranks = reverse sort { $a <=> $b }  ( map($_->get_column('rank'), @organismprops) ) ;
 	    my $max_rank = $sorted_ranks[0];
 	    $rank = $max_rank+1;
 	}
-	my ($organismprop)= $self->get_schema()->resultset("Organism::Organismprop")->search( 
+	my ($organismprop)= $self->get_schema()->resultset("Organism::Organismprop")->search(
 	    {
 		organism_id => $self->get_organism_id(),
 		type_id => $type_id,
 		value   => $synonym,
 	    });
 	if (!$organismprop) {
-	    $organismprop= $self->get_schema()->resultset("Organism::Organismprop")->create( 
+	    $organismprop= $self->get_schema()->resultset("Organism::Organismprop")->create(
 		{
 		    organism_id => $self->get_organism_id(),
 		    type_id => $type_id,
@@ -271,8 +271,8 @@ sub add_synonym {
 
  Usage: my @synonyms= $self->get_synonyms()
  Desc:  find the synonyms for this organism
- Ret:   a list 
- Args:  none 
+ Ret:   a list
+ Args:  none
  Side Effects: get the organismprops for type_id of cvterm.name = synonym
  Example:
 
@@ -280,12 +280,12 @@ sub add_synonym {
 
 sub get_synonyms {
     my $self=shift;
-    my @props= $self->get_resultset("Organism::Organismprop")->search( 
+    my @props= $self->get_resultset("Organism::Organismprop")->search(
 	{ organism_id => $self->get_organism_id(),
-	  type_id  => $self->get_resultset("Cv::Cvterm")->search( { name => 'synonym'} )->first()->get_column('cvterm_id') 
+	  type_id  => $self->get_resultset("Cv::Cvterm")->search( { name => 'synonym'} )->first()->get_column('cvterm_id')
 	});
     my @synonyms;
-    foreach my $prop (@props) { 
+    foreach my $prop (@props) {
 	push @synonyms, $prop->get_column('value');
     }
     return @synonyms;
@@ -298,7 +298,7 @@ sub get_synonyms {
  Usage: my $ploidy= $self->get_ploidy()
  Desc:  find the ploidy value for this organism
  Ret:   a scalar
- Args:  none 
+ Args:  none
  Side Effects: get the organismprops for type_id of cvterm.name = ploidy
  Example:
 
@@ -318,7 +318,7 @@ sub get_ploidy {
  Usage: my $chr= $self->get_chromosome_number()
  Desc:  find the chromosome number  value for this organism
  Ret:   a scalar
- Args:  none 
+ Args:  none
  Side Effects: get the organismprops for type_id of cvterm.name = chromosome_number_variation
  Example:
 
@@ -336,7 +336,7 @@ sub get_chromosome_number {
  Usage: my $genome_size= $self->get_genome_size()
  Desc:  find the genome size value for this organism
  Ret:   a scalar
- Args:  none 
+ Args:  none
  Side Effects: get the organismprops for type_id of cvterm.name = 'genome size'
  Example:
 
@@ -355,7 +355,7 @@ sub get_genome_size {
  Usage: my $att= $self->get_est_attribution()
  Desc:  find the est attribution for this organism
  Ret:   a scalar
- Args:  none 
+ Args:  none
  Side Effects: get the organismprops for type_id of cvterm.name = 'est attribution'
  Example:
 
@@ -367,13 +367,13 @@ sub get_est_attribution {
     my $value= $self->get_organismprop($name);
     return $value;
 }
- 
+
 =head2 get_organismprop
 
  Usage: $self->get_organismprop($value)
  Desc:  find the value of the organismprop for value $value
  Ret:   a string or undef
- Args:  $value (a cvterm name) 
+ Args:  $value (a cvterm name)
  Side Effects:
  Example:
 
@@ -382,10 +382,10 @@ sub get_est_attribution {
 sub get_organismprop {
     my $self=shift;
     my $name = shift;
-    
-    my ($prop)= $self->get_resultset("Organism::Organismprop")->search( 
+
+    my ($prop)= $self->get_resultset("Organism::Organismprop")->search(
 	{ organism_id => $self->get_organism_id(),
-	  type_id  => $self->get_resultset("Cv::Cvterm")->search( { name => $name } )->first()->get_column('cvterm_id') 
+	  type_id  => $self->get_resultset("Cv::Cvterm")->search( { name => $name } )->first()->get_column('cvterm_id')
 	});
     if ($prop) {
 	my $value= $prop->get_column('value');
@@ -399,7 +399,7 @@ sub get_organismprop {
  Usage: $self->get_parent()
  Desc:  get the parent organism of this object
  Ret:   Chado::Organism object or undef if organism has no parent (i.e. is the root in the tree)
- Args:  none 
+ Args:  none
  Side Effects: accesses the phylonode table
  Example:
 
@@ -408,19 +408,19 @@ sub get_organismprop {
 sub get_parent {
     my $self=shift;
     my $organism_id = $self->get_organism_id();
-   
+
     my ($phylonode)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
 	{ organism_id =>$self->get_organism_id() })->search_related('phylonode');
-    
+
     if ($phylonode) {
 	my $parent_phylonode_id= $phylonode->get_column('parent_phylonode_id');
-	
+
 	my ($parent_phylonode)= $self->get_resultset("Phylogeny::Phylonode")->search(
 	    { phylonode_id=> $parent_phylonode_id } );
 	if ($parent_phylonode) {
 	    my ($phylonode_organism)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
 		{ phylonode_id => $parent_phylonode->get_column('phylonode_id') } );
-	    
+
 	    my $parent_organism= CXGN::Chado::Organism->new($self->get_schema(), $phylonode_organism->organism_id );
 	    return $parent_organism;
 	}
@@ -434,7 +434,7 @@ sub get_parent {
  Usage: $self->get_direct_children()
  Desc:  get the child organisms of this object
  Ret:   list of CXGN::Chado::Organism objects or an empty list if organism has no children (i.e. is a leaf in the tree)
- Args:  none 
+ Args:  none
  Side Effects: accesses the phylonode table
  Example:
 
@@ -443,23 +443,23 @@ sub get_parent {
 sub get_direct_children {
     my $self=shift;
     my $organism_id = $self->get_organism_id();
-    
+
     my @children=();
-    
+
     my ($phylonode)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
 	{ organism_id =>$self->get_organism_id() })->search_related('phylonode');
-    
+
     if ($phylonode) {
 
 	#my $parent_phylonode_id= $phylonode->get_column('parent_phylonode_id');
-	
+
 	my @child_phylonodes = $self->get_resultset("Phylogeny::Phylonode")->search(
 	    { parent_phylonode_id => $phylonode->phylonode_id() } );
 
 	foreach my $d (@child_phylonodes) {
 	    my ($phylonode_organism)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
 		{ phylonode_id => $d->get_column('phylonode_id') } );
-	    
+
 	    my $child_organism= CXGN::Chado::Organism->new($self->get_schema(), $phylonode_organism->organism_id() );
 	    push @children, $child_organism;
 	}
@@ -470,7 +470,7 @@ sub get_direct_children {
 =head2 get_taxon
 
  Usage: $sef->get_taxon()
- Desc:  get the taxon for this organism 
+ Desc:  get the taxon for this organism
  Ret:   a taxon name
  Args:  none
  Side Effects: looks in the phylonode table
@@ -484,7 +484,7 @@ sub get_taxon {
 	{ organism_id=>$self->get_organism_id() } )->search_related("phylonode");
     if ($phylonode) {
 	my $type_id = $phylonode->get_column('type_id');
-	
+
 	my ($cvterm) = $self->get_resultset("Cv::Cvterm")->find( { cvterm_id=>$type_id });
 	if ($cvterm) {
 	    my $taxon = $cvterm->get_column('name');
@@ -492,7 +492,7 @@ sub get_taxon {
 	}
     }
     return undef;
-    
+
 }
 
 
@@ -512,14 +512,14 @@ sub get_taxon {
 
 sub get_species {
     my $self = shift;
-    return $self->get_object_row()->get_column('species');    
+    return $self->get_object_row()->get_column('species');
 }
 
 sub set_species {
     my $self = shift;
     my $species=shift || croak " No argument passed to set_species!!!";
     $self->get_object_row()->set_column(species => $species ) ;
-    
+
 }
 
 =head2 accessors get_genus, set_genus
@@ -534,7 +534,7 @@ sub set_species {
 
 sub get_genus {
     my $self = shift;
-    return $self->get_object_row()->get_column("genus"); 
+    return $self->get_object_row()->get_column("genus");
 }
 
 sub set_genus {
@@ -554,7 +554,7 @@ sub set_genus {
 
 sub get_abbreviation {
     my $self = shift;
-    return $self->get_object_row()->get_column("abbreviation"); 
+    return $self->get_object_row()->get_column("abbreviation");
 }
 
 sub set_abbreviation {
@@ -574,7 +574,7 @@ sub set_abbreviation {
 
 sub get_common_name {
     my $self = shift;
-    return $self->get_object_row()->get_column("common_name"); 
+    return $self->get_object_row()->get_column("common_name");
 }
 
 sub set_common_name {
@@ -595,7 +595,7 @@ sub set_common_name {
 
 sub get_comment {
     my $self = shift;
-    return $self->get_object_row()->get_column("comment"); 
+    return $self->get_object_row()->get_column("comment");
 }
 
 sub set_comment {
@@ -618,21 +618,21 @@ sub set_comment {
 
 sub get_organism_id {
     my $self = shift;
-    return $self->get_object_row()->get_column('organism_id'); 
+    return $self->get_object_row()->get_column('organism_id');
 }
 
 sub set_organism_id {
     my $self = shift;
     my $organism_id=shift || croak "No argument passed to organism_id";
     #check if integer
-    #check if id is in the database 
+    #check if id is in the database
     $self->get_object_row()->set_column(organism_id=>$organism_id);
 }
 
 
 sub get_object_row {
     my $self = shift;
-    return $self->{object_row}; 
+    return $self->{object_row};
 }
 
 sub set_object_row {
@@ -643,7 +643,7 @@ sub set_object_row {
 =head2 get_resultset
 
  Usage: $self->get_resultset(ModuleName::TableName)
- Desc:  Get a ResultSet object for source_name 
+ Desc:  Get a ResultSet object for source_name
  Ret:   a ResultSet object
  Args:  a source name
  Side Effects: none
@@ -664,11 +664,11 @@ sub get_resultset {
 =head2 new_with_taxon_id
 
  Usage:  my $organism = CXGN::Chado::Organism->new_with_taxon_id($dbh, $gb_taxon_id)
- Desc:   create a new organism object using genbank taxon_id instead of organism_id 
- Ret:    a new organism object, or undef
- Args:   
+ Desc:   create a new organism object using genbank taxon_id instead of organism_id
+ Ret:    a new organism object
+ Args:
  Side Effects: creates a new Bio::Chado::Schema object
- Example: 
+ Example:
 
 =cut
 
@@ -684,9 +684,8 @@ sub new_with_taxon_id {
 					  { on_connect_do => ['SET search_path TO public'],
 					  },);
     }
-
     my $taxon_id = shift;
-    
+
     my ($organism)= $schema->resultset("General::Db")->search(
 	{  name      =>  'DB:NCBI_taxonomy' }) ->
 	search_related('dbxrefs', { accession =>  $taxon_id } )->
@@ -704,9 +703,9 @@ sub new_with_taxon_id {
  Usage:  $self->get_genbank_taxon_id
  Desc:   get the genbank taxon id of this organism
  Ret:    a string
- Args:   
+ Args:
  Side Effects: none
- Example: 
+ Example:
 
 =cut
 
@@ -715,7 +714,7 @@ sub get_genbank_taxon_id {
     my $schema= $self->get_schema();
     my ($db) = $schema->resultset("General::Db")->search( { name =>  'DB:NCBI_taxonomy' } );
     my $db_id = $db->get_column('db_id');
-    
+
     my ($dbxref)= $schema->resultset("Organism::OrganismDbxref")->search(
 	{  organism_id => $self->get_organism_id() })->
 	search_related('dbxref', {db_id => $db_id } ) ;
@@ -729,16 +728,16 @@ sub get_genbank_taxon_id {
 
  Usage:  my $organism = CXGN::Chado::Organism->new_with_common_name($schema, $common_name)
  Desc:   create a new organism object using common_name instead of organism_id
-          Each common_name should have a 'default' organism asociated in the organismprop table 
+          Each common_name should have a 'default' organism asociated in the organismprop table
  Ret:    a new organism object
- Args:   
+ Args:
  Side Effects: make a new Bio::Chado::Schema connection if $schema arg is a CXGN::DB::Connection object
- Example: 
+ Example:
 
 =cut
 
 
-###Need to figure out what to do with common names 
+###Need to figure out what to do with common names
 sub new_with_common_name {
     my $self = shift;
     my $schema = shift;
@@ -750,31 +749,31 @@ sub new_with_common_name {
 	    ->open_schema( 'Bio::Chado::Schema',
 			   search_path => ['public'],
 	    );
-	
+
     }
-    
+
     my ($organism)= $schema->resultset("Cv::Cvterm")->search(
 	{  name      =>  'common_name' }) ->
 	search_related('organismprops', { value => $common_name } )->
 	search_related('organism');
     return undef if !$organism;
     return CXGN::Chado::Organism->new($schema, $organism->get_column('organism_id') );
-    
+
 }
 
 
 =head2 get_intergroup_species_name DEPRECATED see get_group_common_name
-    
- Usage: 
- Ret:   
- Args:   
- Side Effects: 
- Example: 
+
+ Usage:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
 
 =cut
 
 sub get_intergroup_species_name {
-    
+
     my $self = shift;
     warn "DEPRECATED. Replaced by get_group_common_name";
     return $self->get_group_common_name();
@@ -786,10 +785,10 @@ sub get_intergroup_species_name {
 
  Usage: my $group_common_name= $self->get_group_common_name()
  Desc:  The unigenes, loci and phenome are grouped by interspecific group class.
-        e.g. for all tomato species we have the same number of unigene, loci or phenotypes accessions. 
-        This function  get this common_name for this organism 
+        e.g. for all tomato species we have the same number of unigene, loci or phenotypes accessions.
+        This function  get this common_name for this organism
  Ret:   A string
- Args:   
+ Args:
  Side Effects: none
  Example: my $species_intergroup= $organism->get_group_common_name()
 
@@ -803,12 +802,12 @@ sub get_group_common_name {
 		FROM sgn.organismgroup
 		JOIN sgn.organismgroup_member USING (organismgroup_id)
 	        WHERE organism_id=? AND type = ?";
-    
+
     my $sth=$self->get_dbh()->prepare($query);
     $sth->execute($self->get_organism_id() , 'common name');
 
     my ($common_name) = $sth->fetchrow_array();
-       
+
     return $common_name;
 
 }
@@ -824,7 +823,7 @@ sub get_group_common_name {
  Usage:  my $map_data = $self->get_map_data ();
  Desc:   Get the map link for an organism. The organism could be one of the parents.
  Ret:    array of [ map short_name , map_id ], [], ...
- Args:   
+ Args:
  Side Effects: none
  Example: my ($short_name, $map_id = $organism->get_map_data();
 
@@ -833,19 +832,19 @@ sub get_group_common_name {
 sub get_map_data {
 
     my $self = shift;
-    
+
     my $query = "SELECT DISTINCT
-		 	sgn.map.short_name, 
-			sgn.map.map_id 
-		  FROM sgn.map 
-   		  INNER JOIN sgn.accession ON (parent_1=accession_id or parent_2=accession_id or ancestor=accession_id) 
+		 	sgn.map.short_name,
+			sgn.map.map_id
+		  FROM sgn.map
+   		  INNER JOIN sgn.accession ON (parent_1=accession_id or parent_2=accession_id or ancestor=accession_id)
 		  INNER JOIN public.organism on  (public.organism.organism_id = sgn.accession.chado_organism_id)
 		  WHERE public.organism.organism_id = ?";
 
     my $sth=$self->get_dbh()->prepare($query);
     $sth->execute($self->get_organism_id() );
     my @map_data=();
-  
+
     while (my ($short_name, $map_id) = $sth -> fetchrow_array()) {
 	push @map_data, [$short_name, $map_id];
     }
@@ -860,7 +859,7 @@ sub get_map_data {
  Usage: my $loci_count = $self->get_loci_count();
  Desc:  Get the loci data for an organism  .
  Ret:   An integer.
- Args:   
+ Args:
  Side Effects: none
  Example: my $loci_count = $organism->get_loci_count();
 
@@ -871,14 +870,14 @@ sub get_loci_count {
     my $self = shift;
 
     my $query = "SELECT COUNT
-			(phenome.locus.locus_id) 
+			(phenome.locus.locus_id)
                  FROM phenome.locus
                  JOIN sgn.common_name using (common_name_id)
                  JOIN sgn.organismgroup  on (common_name.common_name = organismgroup.name )
                  JOIN sgn.organismgroup_member USING (organismgroup_id)
                  JOIN public.organism USING (organism_id)
                  WHERE locus.obsolete = 'f' AND public.organism.organism_id=?";
-    
+
     my $sth=$self->get_dbh()->prepare($query);
     $sth->execute($self->get_organism_id() );
 
@@ -889,16 +888,16 @@ sub get_loci_count {
 =head2 get_library_list
 
  Usage: my $library_count = $self->get_library_list();
- Desc:  Get the libraries names. 
+ Desc:  Get the libraries names.
  Ret:  a list of library_shortnames
- Args:   
+ Args:
  Side Effects: none
  Example: my $lib = $organism->get_library_list();
 
 =cut
 
 sub get_library_list {
-   
+
     my $self=shift;
 
     my $query = "SELECT library_shortname
@@ -915,12 +914,12 @@ sub get_library_list {
     return @libraries;
 }
 
-=head2 get_est_count 
+=head2 get_est_count
 
  Usage: my $est_count = $organism->get_est_count();
- Desc:  Get the EST count for an organism. This number is only for the ESTs where status=0 and flags=0. 
+ Desc:  Get the EST count for an organism. This number is only for the ESTs where status=0 and flags=0.
  Ret:   An integer.
- Args:   
+ Args:
  Side Effects: THIS FUNCTION IS VERY SLOW. Currently not called from the organism page.
  Example: my $est_n = $organism->get_ests_count();
 
@@ -937,7 +936,7 @@ sub get_est_count {
 		 JOIN sgn.clone USING (clone_id)
 		 JOIN sgn.library USING (library_id)
 		 JOIN public.organism ON (organism.organism_id = library.chado_organism_id)
-		                  WHERE sgn.est.status = 0 and sgn.est.flags = 0 and public.organism.organism_id=?"; 
+		                  WHERE sgn.est.status = 0 and sgn.est.flags = 0 and public.organism.organism_id=?";
 
     my $sth = $self->get_dbh()->prepare($query);
     $sth->execute($self->get_organism_id() );
@@ -950,9 +949,9 @@ sub get_est_count {
  Usage: my $phenotypes =$self->get_phenotype_count();
  Desc:  Get the phenotypes count for an organism.
  Ret:   An integer or undef
- Args:   
+ Args:
  Side Effects: none
- Example: 
+ Example:
 
 =cut
 
@@ -960,22 +959,22 @@ sub get_phenotype_count {
 
    my $self = shift;
 
-   my $query=" SELECT COUNT (phenome.individual.individual_id) 
+   my $query=" SELECT COUNT (phenome.individual.individual_id)
                  FROM phenome.individual
                  JOIN sgn.common_name using (common_name_id)
                  JOIN sgn.organismgroup  on (common_name.common_name = organismgroup.name )
                  JOIN sgn.organismgroup_member USING (organismgroup_id)
                  JOIN public.organism USING (organism_id)
                  WHERE individual.obsolete = 'f' AND public.organism.organism_id=?";
-    
+
    my $sth=$self->get_dbh()->prepare($query);
    $sth->execute($self->get_organism_id() );
-   
+
    my $phenotypes =0;
    while (my ($pheno_count) = $sth->fetchrow_array()) {
-       $phenotypes += $pheno_count; 
+       $phenotypes += $pheno_count;
    }
-   
+
    return $phenotypes;
 }
 
@@ -985,7 +984,7 @@ sub get_phenotype_count {
 =head2 get_organism_by_species
 
  Usage: CXGN::Chado::Organism::get_organism_by_species($species, $schema)
- Desc:  
+ Desc:
  Ret:   Organism object or undef
  Args: species name and a schema object
  Side Effects:
@@ -999,8 +998,8 @@ sub get_organism_by_species {
     my $schema= shift;
     my ($organism)=$schema->resultset("Organism::Organism")->find(
 	{ species => $species }
-	); #should be just one species... 
-    
+	); #should be just one species...
+
     return $organism || undef ;
 }
 
@@ -1023,7 +1022,7 @@ sub get_organism_by_tax {
     my ($cvterm) = $self->get_resultset("Cv::Cvterm")->find( { name => $taxon } );
     if ($cvterm) {
 	my $type_id = $cvterm->get_column('cvterm_id');
-	
+
 	my ($self_phylonode)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
 	    { organism_id => $self->get_organism_id() } )->search_related('phylonode');
 	if ($self_phylonode) {
@@ -1031,11 +1030,11 @@ sub get_organism_by_tax {
 	    my $right_idx=$self_phylonode->get_column('right_idx');
 	    my ($phylonode)=$self->get_resultset("Phylogeny::Phylonode")->search_literal(
 		('left_idx < ? AND right_idx > ? AND type_id = ?' , ($left_idx, $right_idx, $type_id) ));
-	    
-	    if ($phylonode) { 
+
+	    if ($phylonode) {
 		my ($organism)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
 		    { phylonode_id => $phylonode->get_column('phylonode_id') } )->search_related('organism');
-		
+
 		return $organism || undef ;
 	    }
 	}else { warn("NO PHYLONODE stored for organism " . $self->get_abbreviation() . "\n");  }
@@ -1051,7 +1050,7 @@ sub get_organism_by_tax {
         which means it does not have to be a taxonmic species, but can be any tax name,
         as long as it is unique.
  Ret:   an organism object
- Args:  Bio::Chado::Schema object and a string 
+ Args:  Bio::Chado::Schema object and a string
  Side Effects:
  Example:
 
