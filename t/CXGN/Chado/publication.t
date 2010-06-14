@@ -31,7 +31,7 @@ use CXGN::Chado::Publication;
 
 use Data::Dumper;
 
-my $dbh = CXGN::DB::Connection->new();  #{ dbname=>"sandbox", dbhost=>"localhost" });
+my $dbh = CXGN::DB::Connection->new(); 
 
 my $q= "SELECT max (pub_id) FROM pub";
 my $sth=$dbh->prepare($q);

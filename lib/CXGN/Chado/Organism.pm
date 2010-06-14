@@ -665,7 +665,7 @@ sub get_resultset {
 
  Usage:  my $organism = CXGN::Chado::Organism->new_with_taxon_id($dbh, $gb_taxon_id)
  Desc:   create a new organism object using genbank taxon_id instead of organism_id 
- Ret:    a new organism object
+ Ret:    a new organism object, or undef
  Args:   
  Side Effects: creates a new Bio::Chado::Schema object
  Example: 
@@ -676,9 +676,6 @@ sub new_with_taxon_id {
     my $class = shift;
     my $schema = shift;
 
-    #my $dbh;
-    #$dbh = $schema->storage()->dbh() if $schema->isa("Bio::Chado::Schema");
-
     #this is for old-stype objects having only a dbh (See CXGN::Chado::Feature)
     if ( $schema->isa("CXGN::DB::Connection")) { # it's a DBI object
 	my $dbh=$schema;
@@ -687,10 +684,7 @@ sub new_with_taxon_id {
 					  { on_connect_do => ['SET search_path TO public'],
 					  },);
     }
-#    my $self = $class->SUPER::new($schema);
-    
-    ##Setting sbh for using some legacy functions from the old Organism object 
-#    $self->set_dbh($dbh);
+
     my $taxon_id = shift;
     
     my ($organism)= $schema->resultset("General::Db")->search(
@@ -698,9 +692,11 @@ sub new_with_taxon_id {
 	search_related('dbxrefs', { accession =>  $taxon_id } )->
 	search_related('organism_dbxrefs')->
 	search_related('organism');
-    return CXGN::Chado::Organism->new($schema, $organism->get_column('organism_id') );
+    if ($organism) {
+	return CXGN::Chado::Organism->new($schema, $organism->get_column('organism_id') );
+    }
+    return undef;
 }
-
 
 
 =head2 get_genbank_taxon_id

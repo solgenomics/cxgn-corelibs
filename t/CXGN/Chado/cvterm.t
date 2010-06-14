@@ -25,7 +25,7 @@ use CXGN::Chado::Cvterm;
 use CXGN::Chado::Ontology;
 use Data::Dumper;
 
-my $dbh = CXGN::DB::Connection->new();  #{ dbname=>"sandbox", dbhost=>"localhost" });
+my $dbh = CXGN::DB::Connection->new();  
 
 my @term_list =();
 
