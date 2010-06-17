@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-#use CXGN::Error::Backtrace;
 use CXGN::Marker;
 use CXGN::Marker::Modifiable;
 use CXGN::Marker::Tools;
@@ -12,14 +11,13 @@ use CXGN::DB::Connection;
 use Data::Dumper;
 use Test::More 'no_plan';
 use Test::Exception;
-my $ERRORS;
-open($ERRORS,'>errors.txt');
-my $dbh=CXGN::DB::Connection->new({dbhost=>'scopolamine',dbname=>'sandbox',dbschema=>'sgn',dbuser=>'update',dbpass=>'dontcare'});
+
+my $dbh=CXGN::DB::Connection->new;
+
 my @dirty_names=CXGN::Marker::Tools::dirty_marker_names($dbh);
 ok(!@dirty_names,'All marker names should be clean');
 if(@dirty_names)
 {
-    print"Dirty names:\n";
     for(@dirty_names)
     {
         print"$_ cleans to ".CXGN::Marker::Tools::clean_marker_name($_)."\n";
@@ -103,7 +101,7 @@ while(my($marker_id)=$id_q->fetchrow_array())
     my ($oops_name)=$name_q->fetchrow_array();
     unless(ok(!$oops_name,"Should only be one preferred name."))
     {
-        print $ERRORS "Should only be one preferred name, but found at least 2: $marker_name and $oops_name.\n";
+        diag "Should only be one preferred name, but found at least 2: $marker_name and $oops_name.";
     }
     ok($marker_name eq $marker->name_that_marker(),"Marker name $marker_name should be the same as ".$marker->name_that_marker());
     my @names=$marker->name_that_marker();
@@ -263,20 +261,17 @@ while(my($marker_id)=$id_q->fetchrow_array())
     };
     unless(ok(!$@,"Should not die on store attempt"))
     {
-        print "$@\n";
-        print $ERRORS "$@\n";
+        diag($@);
     }
     unless(ok(!$stored,'Should not store any data'))
     {
-        print "Marker object returned $stored data insertions for marker $marker_id\n";
-        print $ERRORS "Marker object returned $stored data insertions for marker $marker_id\n";
+        diag "Marker object returned $stored data insertions for marker $marker_id";
     }
 
     #test that a new marker cannot be created with an existing marker name
     $duplicate_modifiable->{marker_id}=undef;
     dies_ok {$duplicate_modifiable->store_new_data()};
 
-    print"-----------------------------------------------------------\n";
 }
 
 #test some counts of table entries which were obtained in different ways
@@ -297,5 +292,4 @@ $sources_count_q->execute();
 my($sources_count)=$sources_count_q->fetchrow_array();
 ok($sources_count==$sources_found,"$sources_count sources entries found should match $sources_found sources");
 
-close $ERRORS;
 $dbh->rollback();
