@@ -8,8 +8,7 @@ use CXGN::Marker::Location;
 use CXGN::Marker::PCR::Experiment;
 use CXGN::Marker::RFLP::Experiment;
 use CXGN::DB::Connection;
-use Data::Dumper;
-use Test::More 'no_plan';
+use Test::More tests => 113;
 use Test::Exception;
 
 my $dbh = CXGN::DB::Connection->new;
@@ -18,24 +17,22 @@ my @dirty_names = CXGN::Marker::Tools::dirty_marker_names($dbh);
 ok( !@dirty_names, 'All marker names should be clean' );
 if (@dirty_names) {
     for (@dirty_names) {
-        print "$_ cleans to "
-          . CXGN::Marker::Tools::clean_marker_name($_) . "\n";
+        diag "$_ cleans to " . CXGN::Marker::Tools::clean_marker_name($_);
     }
 }
 my $consistent_lg_q = $dbh->prepare(
-'select * from marker_location inner join linkage_group using (lg_id) where marker_location.map_version_id<>linkage_group.map_version_id'
+'select * from marker_location inner join linkage_group using (lg_id) where marker_location.map_version_id<>linkage_group.map_version_id limit 10'
 );
 $consistent_lg_q->execute();
 my @oops = $consistent_lg_q->fetchrow_array();
 ok( !@oops, 'lg_ids and map_version_ids should be consistent' );
 my $no_orphan_pcr_q = $dbh->prepare(
-'select * from pcr_experiment left join marker_experiment using (pcr_experiment_id) where marker_experiment.pcr_experiment_id is null'
+'select * from pcr_experiment left join marker_experiment using (pcr_experiment_id) where marker_experiment.pcr_experiment_id is null limit 10'
 );
 $no_orphan_pcr_q->execute();
 @oops = $no_orphan_pcr_q->fetchrow_array();
-ok( !@oops, 'Should be no orphan PCR experiments' );
-print "======================================================\n";
-my $id_q   = $dbh->prepare('select marker_id from marker order by marker_id');
+is( @oops,0, "Found " . scalar(@oops) . " orphan PCR experiments" );
+my $id_q   = $dbh->prepare('select marker_id from marker order by marker_id limit 10');
 my $name_q = $dbh->prepare( "
     select 
         alias 
@@ -44,6 +41,7 @@ my $name_q = $dbh->prepare( "
     where 
         marker_id=? 
         and preferred='t'
+    limit 10
 " );
 my $collections_q = $dbh->prepare( '
     select 
@@ -75,9 +73,9 @@ my $experiments_q = $dbh->prepare( '
         marker_experiment
     where
         marker_id=?
+    limit 10
 ' );
-my ( $names_found, $experiments_found, $sources_found, $collectibles_found ) =
-  ( 0, 0, 0, 0 );
+my ( $names_found, $experiments_found, $sources_found, $collectibles_found ) = ( 0, 0, 0, 0 );
 $id_q->execute();
 my $marker;
 while ( my ($marker_id) = $id_q->fetchrow_array() ) {
@@ -99,8 +97,7 @@ while ( my ($marker_id) = $id_q->fetchrow_array() ) {
     my ($marker_name) = $name_q->fetchrow_array();
     my ($oops_name)   = $name_q->fetchrow_array();
     unless ( ok( !$oops_name, "Should only be one preferred name." ) ) {
-        diag
-"Should only be one preferred name, but found at least 2: $marker_name and $oops_name.";
+        diag "Should only be one preferred name, but found at least 2: $marker_name and $oops_name.";
     }
     ok(
         $marker_name eq $marker->name_that_marker(),
@@ -191,7 +188,6 @@ while ( my ($marker_id) = $id_q->fetchrow_array() ) {
                     if ( $_->{location} and $location ) {
                         if ( $_->{location}->equals($location) ) {
 
-                            #print $location->as_string();
                         }
                         else {
                             $matches = 0;
@@ -201,7 +197,6 @@ while ( my ($marker_id) = $id_q->fetchrow_array() ) {
                     if ( $_->{pcr_experiment} and $pcr ) {
                         if ( $_->{pcr_experiment}->equals($pcr) ) {
 
-                            #print $pcr->as_string();
                         }
                         else {
                             $matches = 0;
@@ -211,7 +206,6 @@ while ( my ($marker_id) = $id_q->fetchrow_array() ) {
                     if ( $_->{rflp_experiment} and $rflp ) {
                         if ( $_->{rflp_experiment}->equals($rflp) ) {
 
-                            #print $rflp->as_string();
                         }
                         else {
                             $matches = 0;
@@ -259,8 +253,7 @@ while ( my ($marker_id) = $id_q->fetchrow_array() ) {
         diag($@);
     }
     unless ( ok( !$stored, 'Should not store any data' ) ) {
-        diag
-"Marker object returned $stored data insertions for marker $marker_id";
+        diag "Marker object returned $stored data insertions for marker $marker_id";
     }
 
     #test that a new marker cannot be created with an existing marker name
@@ -268,34 +261,5 @@ while ( my ($marker_id) = $id_q->fetchrow_array() ) {
     dies_ok { $duplicate_modifiable->store_new_data() };
 
 }
-
-#test some counts of table entries which were obtained in different ways
-my $exps_count_q = $dbh->prepare("select count(*) from marker_experiment");
-$exps_count_q->execute();
-my ($exps_count) = $exps_count_q->fetchrow_array();
-ok(
-    $exps_count == $experiments_found,
-"$exps_count experiment entries found should match $experiments_found experiments"
-);
-my $collectibles_count_q =
-  $dbh->prepare("select count(*) from marker_collectible");
-$collectibles_count_q->execute();
-my ($collectibles_count) = $collectibles_count_q->fetchrow_array();
-ok(
-    $collectibles_count == $collectibles_found,
-"$collectibles_count collectibles entries found should match $collectibles_found collectibles"
-);
-my $names_count_q = $dbh->prepare("select count(*) from marker_alias");
-$names_count_q->execute();
-my ($names_count) = $names_count_q->fetchrow_array();
-ok( $names_count == $names_found,
-    "$names_count names entries found should match $names_found names" );
-my $sources_count_q = $dbh->prepare("select count(*) from marker_derived_from");
-$sources_count_q->execute();
-my ($sources_count) = $sources_count_q->fetchrow_array();
-ok(
-    $sources_count == $sources_found,
-    "$sources_count sources entries found should match $sources_found sources"
-);
 
 $dbh->rollback();
