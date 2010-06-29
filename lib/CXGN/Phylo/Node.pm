@@ -19,13 +19,16 @@ This class implements the following functions:
 
 =cut
 
-use strict;
+use strict; 
+
+package CXGN::Phylo::Node;
+
 
 use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Tree;
 use CXGN::Phylo::Label;
-
-package CXGN::Phylo::Node; 
+use CXGN::Page::FormattingHelpers qw/tooltipped_text/;
+ 
 
 =head2 function new()
 
@@ -754,7 +757,8 @@ sub get_label {
 
 sub set_label { 
 	my $self=shift;
-	$self->{label}=shift;
+	$self->{label}= shift;
+        $self->{label} 
 }
 
 =head2 function set_tooltip()
@@ -773,10 +777,51 @@ sub set_tooltip {
 sub get_tooltip {
 	my $self = shift;
 	return $self->{tooltip};
+
+}
+=head2 function set_onmouseout()
+
+  Synopsis:	 $a_node->set_onmouseout($javascript)
+  Description:	Set the nodes onmouseout javascript code to $javascript.
+
+=cut
+sub set_onmouseout{
+    my $self=shift;
+    $self->{onmouseout}=shift;
 }
 
+=head2 function get_onmouseout()
 
+  Synopsis:	 $a_node->get_onmouseout()
+  Returns:      Javascript code that will occur onmouseout.
 
+=cut
+sub get_onmouseout{
+    my $self=shift;
+    return $self->{onmouseout};
+}
+=head2 function set_onmouseover()
+
+  Synopsis:	 $a_node->onmouseover($javascript)
+  Description:	Sets the onMouseOver code to be $javascript.
+
+=cut
+sub set_onmouseover{
+    my $self=shift;
+    my $script=shift;
+    $self->{onmouseover}=$script;
+}
+=head2 function get_onmouseover()
+
+  Synopsis:	 $a_node->get_onmouseover()
+  Description:	Returns the javascript code for onmouseover for this node.
+
+=cut
+sub get_onmouseover{
+    my $self= shift;
+  
+    return $self->{onmouseover};
+}
 =head2 function get_branch_length()
 
   Synopsis:	 $a_node->get_branch_length()
@@ -1084,6 +1129,23 @@ sub set_name {
 	my $self=shift;
 	$self->{name}=shift;
 #	$self->get_label()->set_name($self->{name});
+}
+=head2 function wrap_tooltip(){
+
+  Synopsis:	$n->wrap_tooltip("At1g01010");
+  Arguments:	text/variable to wrap in tooltip, tooltip itself
+  Side effects:	NOT SURE YET. NEED TO TEST 
+                CXGN::Phylo::Node::search searches the name property.
+  Description:	//TODO//
+
+=cut
+
+sub wrap_tooltip { 
+	my $self=shift;
+	my $tooltip = shift;
+	$self->{name}=shift;
+        my $wrappedobj = tooltipped_text($self->{name},$tooltip);
+        return $wrappedobj;
 }
 
 =head2 accessors get_link(), set_link()
