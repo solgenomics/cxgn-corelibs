@@ -120,6 +120,50 @@ sub set_name {
 	$self->{name}=shift;
 }
 
+=head2 function set_onmouseover()
+
+  Synopsis:	$a_label->set_onmouseover($javascript);
+  Arguments:	$javascript -> js code to set onMouseOver tag to
+  Returns:	nothing
+  Side effects:	nothing
+  Description: Sets the javascript code for onMouseOver to $javascript
+
+=cut
+sub set_onmouseover{
+    my $self=shift;
+    my $script=shift;
+    $self->{onmouseover}=$script;
+}
+
+=head2 function get_onmouseover()
+
+  Synopsis:	$a_label->get_onmouseover($title,$content,$beginning_js)
+  Arguments:
+  Returns:	javascript code that needs to be put into the onMouseOver
+  Side effects:	nothing
+  Description:
+
+=cut      
+sub get_onmouseover{
+    my $self=shift;
+    return $self->{onmouseover};
+}
+=head2 function set_onmouseout()
+Synopsis: $a_label->set_onmouseout($javascript)
+Arguments: $javascript: code you want to go into the onmouseout js tag
+=cut
+sub set_onmouseout{
+    my $self=shift;
+    $self->{onmouseout}=shift;
+}
+=head2 function get_onmouseout()
+Synopsis: $a_label->get_onmouseout()
+Returns: javascript code set for onMouseOut
+=cut
+sub get_onmouseout{
+    my $self=shift;
+    return $self->{onmouseout};
+}
 
 =head2 function is_hidden()
 
@@ -651,7 +695,7 @@ sub get_html_image_map {
     my $self = shift;
     my $s = "";
     if ($self->get_link()) { 
-		$s = "<area shape=\"rect\" coords=\"".(join ",", $self->get_enclosing_rect())."\" href=\"".$self->get_link()."\" alt=\"\" title=\"".$self->get_tooltip."\"/>\n";
+		$s = "<area shape=\"rect\" onmouseover=\"".$self->get_onmouseover()."\" onmouseout=\"".$self->get_onmouseout()."\" coords=\"".(join ",", $self->get_enclosing_rect())."\" href=\"".$self->get_link()."\" alt=\"\" title=\"".$self->get_tooltip."\"/>\n";
     }
     return $s;
 }

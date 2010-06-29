@@ -628,7 +628,8 @@ sub get_html_image_map {
 	foreach my $bl_label (@{$self->{bl_labels}}){
 		next unless $bl_label->get_tooltip();
 		my $coords = join ",", ($bl_label->get_enclosing_rect);
-		$map .= "\n<area coords=\"$coords\" title=\"" . $bl_label->get_tooltip() . "\" \\>";
+		print STDERR "--------RENDERED.PM------". $bl_label->get_onmouesover()."------";
+		$map .= "\n<area coords=\"$coords\" title=\"hey yo\" \\>";
 	}
 
     my $maptag = qq( <map name="$name">\n$map</map>\n );
@@ -643,10 +644,10 @@ sub recursive_image_map_coords {
 	$tooltip ||= "Node " . $node->get_node_key() . ": " . $node->get_label()->get_name();
     #print STDERR "RECURSIVE_IMAGE_MAP_COORDS\n";
     my $map = 
-		"<area shape=\"rect\" coords=\""
+		"<area shape=\"rect\" id = \"".$node->get_name()."\" coords=\""
 		. int(($node->get_X())-3) . ",".int(($node->get_Y())-3).",".int(($node->get_X())+3).",".int(($node->get_Y())+3)
 		. "\" href=\"".$node->get_link()
-		."\" title=\"$tooltip\" alt=\"$tooltip\" />\n";
+		."\" title=\"$tooltip\" onmouseover=\"".$node->get_onmouseover()."\" onmouseout=\"".$node->get_onmouseout()."\" alt=\"$tooltip\" />\n";
  
     $map .= $node->get_label()->get_html_image_map();
     my @children = $node->get_children();
