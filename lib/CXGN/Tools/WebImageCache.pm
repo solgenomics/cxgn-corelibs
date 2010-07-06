@@ -1,5 +1,4 @@
 
-
 =head1 NAME
 
 CXGN::Tools::WebImageCache - manages a local cache of images that are
@@ -10,7 +9,7 @@ generated on the fly from data
  my $cache = CXGN::Tools::WebImageCache->new();
  $cache->set_key("abc");
  $cache->set_expiration_time(86400); # seconds, this would be a day.
-$cache->set_map_name("map_name"); # what's in the <map name='map_name' tag.
+ $cache->set_map_name("map_name"); # what's in the <map name='map_name' tag.
  $cache->set_temp_dir("/documents/tempfiles/cview");
  $cache->set_basedir("/data/local/website/"); # would get this from VHost...
  if (! $cache->is_valid()) { 
@@ -36,7 +35,12 @@ This class implements the following methods:
 
 =cut
 
+use strict;
+use warnings;
+
 package CXGN::Tools::WebImageCache;
+
+use base "CXGN::Debug";
 
 use File::Path ();
 use File::Basename ();
@@ -44,7 +48,12 @@ use Digest::MD5;
 
 =head2 new
 
-  Synopsis:	
+  Synopsis:	$wic = CXGN::Tools::WebImageCache->new( 
+                       { expiration_time => 80000,
+                         key             => 'blabla',
+                         temp_dir        => $tempdir,
+                         base_dir        => $basedir,
+                                                      });
   Arguments:	
   Returns:	
   Side effects:	
@@ -80,18 +89,12 @@ sub new {
     $self->set_image_type($args->{image_type}) 
 	if exists($args->{image_type});
 
-    
-
     return $self;   
 }
 
-
 =head2 accessors set_temp_dir, get_temp_dir
 
-  Property:	
-  Setter Args:	
-  Getter Args:	
-  Getter Ret:	
+  Property:	the tempfile directory, excluding the basepath
   Side Effects:	
   Description:	
 
@@ -110,10 +113,8 @@ sub set_temp_dir {
 
 =head2 accessors set_basedir, get_basedir
 
-  Property:	
-  Setter Args:	
-  Getter Args:	
-  Getter Ret:	
+  Property:	the basepath. Forms the fully qualified path if 
+                temp_dir is appended to it.
   Side Effects:	
   Description:	
 
@@ -131,24 +132,20 @@ sub set_basedir {
 
 =head2 function get_file_url
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	returns the url of the tempfile
   Side effects:	
   Description:	
 
 =cut
 
 sub get_file_url {
-    $self = shift;
+    my $self = shift;
     return File::Spec->catfile($self->get_temp_dir(), $self->get_cache_name());
 }
 
 =head2 function get_filepath
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	returns the path of the temp file
   Side effects:	
   Description:	
 
@@ -158,7 +155,6 @@ sub get_filepath {
     my $self = shift;
     return File::Spec->catfile($self->get_basedir(), $self->get_temp_dir(), $self->get_cache_name());
 }
-
 
 =head2 function get_image_path
 
@@ -182,7 +178,6 @@ sub get_image_url {
     $self->get_file_url().".".$self->get_image_type();
 }
 
-
 =head2 function get_image_map_path
 
   Description:	returns the fully qualified path to the file
@@ -193,8 +188,6 @@ sub get_image_map_path {
     my $self = shift;
     return $self->get_filepath().".map";
 }
-
-
 
 =head2 accessors set_expiration_time, get_expiration_time
 
@@ -236,9 +229,6 @@ sub set_expiration_time {
                 used to generate the image in a webpage.
                 This property needs to be set, otherwise the 
                 program dies.
-  Setter Args:	
-  Getter Args:	
-  Getter Ret:	
   Side Effects:	
   Description:	
 
@@ -257,10 +247,8 @@ sub set_key {
 
 =head2 accessors set_cache_name, get_cache_name
 
-  Property:	
-  Setter Args:	
-  Getter Args:	
-  Getter Ret:	
+  Property:	the name of the cache file. An md5checksum of the 
+                key is the default. Should probably not be changed...
   Side Effects:	
   Description:	
 
@@ -287,7 +275,7 @@ sub set_cache_name {
 
 sub get_image_data { 
     my $self=shift;
-    open (my $FILE, "<".($self->get_image_path())) || die "Can't open ".$self->get_image_path()." for reading";
+    open (my $FILE, "<", $self->get_image_path()) || die "Can't open ".$self->get_image_path()." for reading";
     my @contents = <$FILE>;
     close($FILE);
     return join "\n", @contents;
@@ -296,10 +284,12 @@ sub get_image_data {
 sub set_image_data { 
     my $self=shift;
     my @contents = @_;
-    print STDERR "Generating image cache file ".$self->get_image_path()."\n";
+
+    $self->d("Generating image cache file ".$self->get_image_path()."\n");
+
     my $dir = File::Basename::dirname( $self->get_image_path );
     File::Path::mkpath($dir);
-    open (my $FILE, ">".($self->get_image_path())) || die "Can't open ".$self->get_image_path()." for writing";
+    open (my $FILE, ">", $self->get_image_path()) || die "Can't open ".$self->get_image_path()." for writing";
     print $FILE join "\n", @contents;
     close($FILE);
 }
@@ -315,7 +305,7 @@ sub set_image_data {
 
 sub get_image_map_data { 
     my $self=shift;
-    print STDERR "Generating image map cache file ".$self->get_image_map_path()."\n";
+    $self->d("Generating image map cache file ".$self->get_image_map_path()."\n");
     open (my $FILE, "<".($self->get_image_map_path())) || die "Can't open ".$self->get_image_map_path();
     my @contents = <$FILE>;
     close($FILE);
@@ -331,9 +321,6 @@ sub set_image_map_data {
     close($FILE);
 
 }
-
-
-
 
 =head2 function is_valid
 
@@ -352,7 +339,7 @@ sub is_valid {
     $self->_hash();
 
     if ($self->get_force() eq "1") { 
-	print STDERR "Force reloading cache...\n";
+	$self->d("Force reloading cache...\n");
 	return 0;
     }
 
@@ -365,18 +352,18 @@ sub is_valid {
 	    my $mtime = (stat($self->get_image_path()))[9];
 	    my $age = time()-$mtime;
 	    if ($age > $self->get_expiration_time()) { 
-		print STDERR "ARGH! Cache has expired!!!!!\n";
+		$self->d("ARGH! Cache has expired!!!!!\n");
 		return 0;
 	    }
 	}
 
 	# the cache file is ok.
-	print STDERR "Cache exists...\n";
+	$self->d("Cache exists...\n");
 	return 1;
     }
     else {
 	# there is no cache.
-	print STDERR "Cache DOES NOT exist!\n";
+	$self->d("Cache DOES NOT exist!\n");
 	return 0;
     }
 }
@@ -392,7 +379,7 @@ sub is_valid {
 =cut
 
 sub get_image_tag {
-    $self= shift;
+    my $self= shift;
     my $image_url = $self->get_image_url();
     my $usemap = $self->get_map_name();
     return qq{ <img src="$image_url" border="0" usemap="#$usemap" />\n };
@@ -415,27 +402,9 @@ return $self->{map_name};
 }
 
 sub set_map_name { 
-my $self=shift;
-$self->{map_name}=shift;
+    my $self=shift;
+    $self->{map_name}=shift;
 }
-
-
-
-# =head2 function get_image_map_url
-
-#   Property:	
-#   Setter Args:	
-#   Getter Args:	
-#   Getter Ret:	
-#   Side Effects:	
-#   Description:	
-
-# =cut
-
-# sub get_image_map_url { 
-#     my $self=shift;
-#     return $self->get_file_url().".map";
-# }
 
 =head2 accessors set_force, get_force
 
@@ -451,6 +420,9 @@ $self->{map_name}=shift;
 
 sub get_force { 
     my $self=shift;
+    if (!exists($self->{force}) || !defined($self->{force})) { 
+	$self->{force} = 0;
+    }
     return $self->{force};
 }
 
@@ -480,7 +452,7 @@ sub get_image_html {
 
 =head2 accessors set_function, get_function
 
-  Property:	
+  Property:	(Don't know what that is? Who added this function?)
   Setter Args:	
   Getter Args:	
   Getter Ret:	
@@ -534,11 +506,9 @@ sub set_image_type {
 sub _hash {
     my $self = shift;
     my $filename = Digest::MD5->new()->add($self->get_key())->hexdigest();
-    print STDERR "Generated filename $filename\n";
+    $self->d("Generated filename $filename\n");
     $self->set_cache_name($filename);
 }
 
 
-
-
-return 1;
+1;
