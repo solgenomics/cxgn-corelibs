@@ -324,11 +324,14 @@ sub set_image_map_data {
 
 =head2 function is_valid
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	$wic->is_valid()
+  Arguments:	none
+  Returns:	true if the cache is valid, false if not
   Side effects:	
-  Description:	
+  Description:	the cache may be valid because it was not 
+                initialized, or because the time expiration has 
+                occurred, or because the cache's force parameter
+                has been set.
 
 =cut
 
@@ -370,9 +373,9 @@ sub is_valid {
 
 =head2 function get_image_tag
 
-  Synopsis:	
-  Arguments:	
-  Returns:	
+  Synopsis:	my $img_tag = $wic -> get_image_tag();
+  Arguments:	none
+  Returns:	the html for the cached image.
   Side effects:	
   Description:	
 
@@ -388,9 +391,6 @@ sub get_image_tag {
 =head2 accessors set_map_name, get_map_name
 
   Property:	the name of the image map, to link to the image with usemap.
-  Setter Args:	
-  Getter Args:	
-  Getter Ret:	
   Side Effects:	
   Description:	
 
@@ -509,6 +509,23 @@ sub _hash {
     $self->d("Generated filename $filename\n");
     $self->set_cache_name($filename);
 }
+
+=head2 destroy
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub destroy {
+    my $self = shift;
+    return unlink($self->get_image_path(), $self->get_image_map_path());
+}
+
 
 
 1;

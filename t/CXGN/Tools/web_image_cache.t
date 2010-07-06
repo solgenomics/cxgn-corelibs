@@ -3,7 +3,7 @@
 use strict;
 
 use GD;
-use Test::More tests => 6;
+use Test::More tests => 7;
 use CXGN::Tools::WebImageCache;
 
 my $CACHE_EXPIRY = 5; # 5 seconds validity
@@ -44,6 +44,12 @@ my $image_name = $cache->get_cache_name();
 like($cache->get_image_html(), qr/$image_name/, "file name test");
 
 # let the cache expire...
+#
 sleep($CACHE_EXPIRY + 2);
 
 is($cache->is_valid(), 0, "expired cache test");
+
+# clean up the cache files
+#
+
+END { is($cache->destroy(), 2, "cache destruction test"); }
