@@ -369,6 +369,7 @@ sub agp_contigs {
                           #  in the agp file
                           # takes 1 arg, the identifier string, returns
                           # the sequence as a string
+                          # if fetch_default
            lowercase   => 1,   #< force lower-case sequence,
                                   defaults to force uppercase
            pad_short_sequences => 0, #< if true, N-pad sequences that are too
@@ -396,10 +397,9 @@ sub agp_contig_seq {
 
   my $seq = '';
   foreach my $member (sort {$a->{ostart} <=> $b->{ostart}} @$members) {
-    my $comp_type = identifier_namespace($member->{ident})
-      or croak "cannot guess type of '$member->{ident}'";
+    my $comp_type = identifier_namespace($member->{ident}) || 'default';
     my $fetch_func = $opt{"fetch_$comp_type"}
-      or croak "no sequence fetch given for identifiers in namespace $comp_type";
+      or croak "cannot fetch sequence for $member->{ident} in namespace $comp_type, please provide a fetch_$comp_type, or check that this is the correct namespace";
     my $comp_seq = $fetch_func->($member->{ident})
       or croak "failed to fetch sequence for '$member->{ident}'";
 
