@@ -132,15 +132,19 @@ my @agptests = (
 		    { file => 'chr09.v1.agp',
 		      lines => 155,
 		    },
+                    { file => 'test_seq_assembly.agp',
+                      lines => 5,
+                      fetch => \&test_seq_assembly_get_seq,
+                      contig_seqs => [qw[  NAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCCGGGGCCCCCCCCCCGGGTTTTTNTTTTTTTTTTTTTT ]],
+                    },
+
 		  );
 $_->{file} = File::Spec->catfile($testfiles_path,$_->{file}) foreach @agptests;
 
-use Test::More;
-plan tests => 1+2*@agptests + scalar( map {  values(%{$_->{specs}}), values(%{$_->{contigs}}) } @agptests) + 2;
-
+use Test::More tests => 15;
 use File::Temp qw/tempfile/;
 
-use_ok(  'CXGN::BioTools::AGP' , qw/agp_to_seq agp_parse agp_write agp_contigs agp_to_features/ )
+use_ok(  'CXGN::BioTools::AGP' , qw/agp_to_seq agp_parse agp_write agp_contigs agp_to_features agp_contig_seq / )
     or BAIL_OUT('could not include the module being tested');
 
 
@@ -172,17 +176,45 @@ foreach my $test (@agptests) {
 
   #extract the features and check them
   my @features = agp_to_features( $tf, source_name => 'testy');
-  is($features[20]->source->value, 'testy', 'agp_to_features');
+  is($features[-1]->source->value, 'testy', 'agp_to_features');
+
+  if( my $fetch = $test->{fetch} ) {
+      for( my $i = 0; $i<@contigs; $i++ ) {
+          my $contig = $contigs[$i];
+          my $seq = agp_contig_seq( $contig,
+                                    fetch_default => $fetch,
+                                   );
+          is( $seq, $test->{contig_seqs}[$i], "correct agp_contig_seq $i" );
+      }
+  }
 }
 
-# sub fetch_bac_seq {
-#   my ($seqfile,$seq) = @_;
 
-#   our %indexes;
-#   $indexes{$seqfile} ||= do {
-#     my (undef,$indexfile) = tempfile(UNLINK => 1);
+sub test_seq_assembly_get_seq {
 
-#   };
+    my %seqs = (
+        test1 =>
+            #         1         2         3         4         5         6         7         8         9
+            #123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456
+            'NAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCN',
+        test2 =>
+            #         1         2         3         4         5         6         7         8         9
+            #123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456
+            'NTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGN',
+            #      TTTTTTTTTTTTTT
+        test3 =>
+            #         1         2         3         4         5         6         7         8         9
+            #123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456
+            'NAAAAAAAAACCCCCCCCCCCCCCTTTTTTTTTTTTTGGGGGGGGGGGGGGGAAAAAAAAATTTTTTTTTTTTTCCCCCCCCCTTTTTTTTTTTTN',
+            #NAAAAA
+            #TTTTTN revcom (1-6)
+        test4 =>
+            #         1         2         3         4         5         6         7         8         9
+            #123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456
+            'NGGGGGGGGCCCCCCCCCCCCCGGGGGGGGGGCCCCCCCCGGGGGGGGCCCCCCCCGGGGGGGCCCCCCCGGGGGGGCCCCCCCCCGGGGGGGGCN',
+            #                   CCCGGGGGGGGGGCCCC
+            # revcom (20-36):   GGGGCCCCCCCCCCGGG
+          );
 
-#   $indexes{$seqfile}->fetch($seq);
-# }
+    return $seqs{+shift};
+}
