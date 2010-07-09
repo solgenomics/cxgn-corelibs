@@ -1,10 +1,8 @@
 #!/usr/bin/perl
 use strict;
+use warnings;
 use CXGN::Genomic::Search::Clone;
-
 use CXGN::DB::Connection;
-CXGN::DB::Connection->verbose(0);
-
 use Data::Dumper;
 
 use Test::More tests=>6;
@@ -17,8 +15,7 @@ sub dbtee {
 
 my $search = CXGN::Genomic::Search::Clone->new;
 ok($search);
-#$search->debug(1);
-my $dbconn = CXGN::DB::Connection->new('genomic');
+my $dbconn = CXGN::DB::Connection->new;
 ok($dbconn);
 
 my $query = $search->new_query;
@@ -35,9 +32,9 @@ my @ids1 = map {$_->[0]} @{$dbconn->selectall_arrayref('select c.clone_id from g
 my $resultcount = 0;
 my $good = 1;
 while(my $c = $result->next_result and $resultcount < @ids1) {
-  unless($c->clone_id == @ids1[$resultcount]) {
+  unless($c->clone_id == $ids1[$resultcount]) {
     $good = 0;
-    diag "Mismatch: ".$c->clone_id." is not ",@ids1[$resultcount],"\n";
+    diag "Mismatch: ".$c->clone_id." is not ",$ids1[$resultcount],"\n";
     last;
   }
 #   else {
@@ -136,8 +133,8 @@ sub test_query {
       my $datacol = 1;
       if($datasubs) {
 	foreach my $datasub (@$datasubs) { #do checks on the derived data
-	  my $subresult = $datasub->($c);
-	  unless($subresult == $manual->[$resultcount]->[$datacol]) {
+	  my $subresult = $datasub->($c) || '';
+	  unless($subresult eq $manual->[$resultcount]->[$datacol]) {
 	    $good = 0;
 	    carp  "Data mismatch: ".$c->clone_id." has ".$manual->[$resultcount]->[$datacol]." from manual query, but has $subresult from the automatic query\n";
 	    last;
@@ -158,6 +155,7 @@ sub test_query {
 
   return $good && $resultcount == @$manual;
 }
+$dbconn->rollback();
 
 ###
 1;#do not remove
