@@ -3,7 +3,6 @@ use namespace::autoclean;
 use Moose;
 use Moose::Util::TypeConstraints;
 
-use English;
 use Carp;
 
 use File::Path;
