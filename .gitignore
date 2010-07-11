@@ -5,3 +5,5 @@ MYMETA.yml
 _build/*
 blib/*
 *.sw?
+*.bak
+core
