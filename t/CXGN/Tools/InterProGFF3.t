@@ -13,7 +13,7 @@ sub teardown : Test(teardown) {
 }
 
 sub TEST_BASIC : Tests {
-    my $converter = CXGN::Tools::InterProGFF3->new( file => 't/data/interpro.xml' );
+    my $converter = CXGN::Tools::InterProGFF3->new( file => 't/data/interpro_sample.xml' );
     isa_ok($converter, 'CXGN::Tools::InterProGFF3');
 
 }
