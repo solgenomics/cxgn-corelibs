@@ -176,6 +176,7 @@ sub get_consensus_base_segments {
 
     $self->_run_phrap($seq_index) if $self->{needs_phrap};
 
+    my %used_reads;
     my %af;
     my $curr_reads;
     my @consensi;
@@ -196,12 +197,22 @@ sub get_consensus_base_segments {
             ### length 1: $2 - $1 + 1
             ### length 2: $re - $rs + 1
             push @$curr_reads, [ $1, $2, $3, $rs, $re, $reverse ];
+            $used_reads{$3} = 1;
             ### read length: $seq_index->fetch($3)->length
         }
         elsif( $line =~ /^CO / ) {
             push @consensi, $curr_reads = [];
         }
     }
+
+
+    push @consensi,
+        map { my $length = $seq_index->fetch($_)->length;
+              [[ 1, $length, $_, 1, $length, 0 ]],
+            }
+        grep !$used_reads{$_},
+        $self->get_members;
+
 
     return @consensi;
 }
