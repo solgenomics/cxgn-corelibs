@@ -147,6 +147,67 @@ sub get_contig_coords {
   }
 }
 
+=head2 function get_consensus_base_segments()
+
+ Usage: @list = $cluster->get_consensus_base_segments($seq_index)
+ Ret:  get a list of the read segments used to produce each consensus
+       sequence, as:
+          ( [ [ start wrt contig,
+                end wrt contig,
+                read id,
+                start wrt read,
+                end wrt read,
+                1 if read is reverse-complemented, 0 if not
+              ]
+              ... (and so on for each read)
+            ],
+            ... (and so on for each consensus sequence)
+          )
+ Args: a Bio::Index::Fasta object to get sequences from, because
+       we need the sequences to calculate the proper assembly
+ Side Effects: may call phrap to calculate the assembly
+
+=cut
+
+#use Smart::Comments;
+
+sub get_consensus_base_segments {
+    my ($self, $seq_index) = @_;
+
+    $self->_run_phrap($seq_index) if $self->{needs_phrap};
+
+    my %af;
+    my $curr_reads;
+    my @consensi;
+    open my $ace, '<', $self->{phrap_ace} or die "$! opening $self->{phrap_ace}";
+    while( my $line = <$ace> ) {
+        if( $line =~ /^AF (\S+) (U|C) (\d+)/ ) {
+            ### AF: $line
+            $af{$1} = [ $2 eq 'C' ? 1 : 0,
+                        $3
+                      ];
+            ### af: $af{$1}
+        }
+        elsif( $line =~ /^BS (\d+) (\d+) (\S+)/ ) {
+            ### line: $line
+            my ( $reverse, $offset ) = @{$af{$3}};
+            my ( $rs, $re ) = map { $_ - $offset + 1 } $1, $2;
+            ### bs:  [ $1, $2, $rs, $re, $3 ]
+            ### length 1: $2 - $1 + 1
+            ### length 2: $re - $rs + 1
+            push @$curr_reads, [ $1, $2, $3, $rs, $re, $reverse ];
+            ### read length: $seq_index->fetch($3)->length
+        }
+        elsif( $line =~ /^CO / ) {
+            push @consensi, $curr_reads = [];
+        }
+    }
+
+    return @consensi;
+}
+
+
+
 sub _run_phrap {
   my ($self,$seq_index) = @_;
 
@@ -178,10 +239,12 @@ sub _run_phrap {
 
   my $phrap = CXGN::Tools::Run->run( $phrap_exec,
 				     $seqs_temp,
+                                     '-new_ace',
 				     $self->_phrap_options,
 				     { working_dir => $tempdir },
 				   );
   #warn "phrap output:\n".$phrap->out;
+  $self->{phrap_ace} = "$seqs_temp.ace";
 
   my $as_in = Bio::Assembly::IO->new( -file => $phrap->out_file,
 				      -format => 'phrap',
@@ -206,6 +269,9 @@ sub _phrap_options {
    -minmatch     => 1_500,
    -maxmatch     => 60_000,
    -forcelevel   => 10,
+   -bypasslevel  => 0,
+   -repeat_stringency => .98,
+   -node_seg     => 1000,
 #   -maxgap       => 1_000,
 #   -node_seg     => 20_000,
 #   -node_space   => 1_000,

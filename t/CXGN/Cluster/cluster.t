@@ -7,7 +7,7 @@ use FindBin;
 use File::Temp qw/tempfile/;
 use Data::Dumper;
 
-use Test::More tests => 15;
+use Test::More tests => 17;
 
 use Bio::Index::Fasta;
 
@@ -151,6 +151,48 @@ is_deeply( [ $c[0]->get_contig_coords($test_seqs_index) ],
 	 );
 
 
+my $bs = [ $c[0]->get_consensus_base_segments($test_seqs_index) ];
+is_deeply( $bs,
+           [
+               [
+                   [
+                       '1',
+                       '26696',
+                       'C04HBa0114G11.1',
+                       1,
+                       26696,
+                       0
+                      ],
+                   [
+                       '26697',
+                       '138337',
+                       'C04HBa0050I18.1',
+                       1,
+                       111641,
+                       0
+                      ],
+                   [
+                       '138338',
+                       '250489',
+                       'C04HBa0036C23.1',
+                       1,
+                       112152,
+                       0
+                      ],
+                   [
+                       '250490',
+                       '332061',
+                       'C04HBa0008H22.1',
+                       1,
+                       81572,
+                       0
+                      ]
+                  ]
+              ],
+           'get_consensus_base_segments',
+          )
+    or diag Dumper $bs;
+
 #put in the second cluster
 $set->add_match($known_clusters[1][0],$_) foreach @{$known_clusters[1]};
 is_deeply(cs_contents($set),
@@ -177,6 +219,32 @@ is_deeply( [ $c[0]->get_contig_coords($test_seqs_index) ],
 	    ]],
 	   'second test contig assembled OK'
 	 );
+
+$bs = [ $c[0]->get_consensus_base_segments($test_seqs_index) ];
+is_deeply( $bs,
+           [
+               [
+                   [
+                       '1',
+                       '83242',
+                       'C04HBa0024G05.1',
+                       1,
+                       83242,
+                       0
+                      ],
+                   [
+                       '83243',
+                       '211703',
+                       'C04HBa0020F17.1',
+                       1,
+                       128461,
+                       0
+                      ]
+                  ]
+           ],
+          )
+    or diag Dumper $bs;
+
 
 #make an artificial linkage between the first and second cluster, this
 #should assemble into two real contigs
