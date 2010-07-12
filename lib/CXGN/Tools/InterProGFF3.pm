@@ -3,6 +3,7 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use Bio::OntologyIO::InterProParser;
 with 'MooseX::Runnable';
+with 'MooseX::Getopt';
 
 =head1 NAME
 
