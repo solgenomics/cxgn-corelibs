@@ -182,16 +182,23 @@ sub get_consensus_base_segments {
     my @consensi;
     open my $ace, '<', $self->{phrap_ace} or die "$! opening $self->{phrap_ace}";
     while( my $line = <$ace> ) {
-        if( $line =~ /^AF (\S+) (U|C) (\d+)/ ) {
+        if( $line =~ /^AF (\S+) (U|C) ([-\d]+)/ ) {
             ### AF: $line
             $af{$1} = [ $2 eq 'C' ? 1 : 0,
                         $3
                       ];
             ### af: $af{$1}
         }
-        elsif( $line =~ /^BS (\d+) (\d+) (\S+)/ ) {
+        elsif( $line =~ /^BS ([-\d]+) ([-\d]+) (\S+)/ ) {
             ### line: $line
-            my ( $reverse, $offset ) = @{$af{$3}};
+            my $af = $af{$3} or do {
+                warn "no AF found for '$3'";
+                my $error_dir = "/tmp/precluster-error-data";
+                system "rm -rf $error_dir";
+                system "cp -ra ".$self->_tempdir." $error_dir";
+                die "copied erroneous data to $error_dir.  aborting.\n";
+            };
+            my ( $reverse, $offset ) = @$af;
             my ( $rs, $re ) = map { $_ - $offset + 1 } $1, $2;
             ### bs:  [ $1, $2, $rs, $re, $3 ]
             ### length 1: $2 - $1 + 1
