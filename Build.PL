@@ -182,6 +182,7 @@ my $build = Module::Build->new(
         'Tie::Function' => 0,
         'HTTP::Server::Simple' => 0,
         'Test::Class'   => '0.33',
+        'MooseX::Runnable' => 0,
     },
 );
 $build->create_build_script;

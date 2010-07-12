@@ -2,6 +2,7 @@ package CXGN::Tools::InterProGFF3;
 use Moose;
 use Moose::Util::TypeConstraints;
 use Bio::OntologyIO::InterProParser;
+with 'MooseX::Runnable';
 
 =head1 NAME
 
@@ -31,19 +32,14 @@ it under the same terms as Perl itself.
 
 =cut
 
-has filehandle => (
+has filename => (
     is => 'ro',
-    isa => 'FileHandle',
+    isa => 'Str',
 );
 
 has interpro_parser => (
     is  => 'ro',
     isa => 'Bio::OntologyIO::InterProParser',
-    default => sub {
-        Bio::OntologyIO::InterProParser->new(
-            -ontology_engine => 'simple',
-        ),
-    },
 );
 
 sub BUILDARGS {
@@ -52,6 +48,10 @@ sub BUILDARGS {
     # if no file param is given, read from STDIN
 
     return $class->SUPER::BUILDARGS( %args );
+}
+
+sub run {
+    my ($self,%args) = @_;
 }
 
 __PACKAGE__->meta->make_immutable;
