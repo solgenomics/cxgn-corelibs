@@ -233,11 +233,11 @@ sub _run_phrap {
     or croak 'must provide a Bio::Index::Fasta';
 
   #make a temp fasta file and run phrap on it
-  my $tempdir = $self->_tempdir;
+  my $assembly_dir = $self->get_assembly_dir || $self->_tempdir;
   my $max_seq_size = 0;
   my $seq_count;
   my $seqs_temp = do {
-    my $t = "$tempdir/thiscluster.seq";
+    my $t = "$assembly_dir/precluster_members.seq";
     my $seqs_temp_io = Bio::SeqIO->new( -file => ">$t", -format => 'fasta');
     foreach my $id ( $self->get_members ) {
 	my $seq = $seq_index->fetch($id)
@@ -259,7 +259,7 @@ sub _run_phrap {
 				     $seqs_temp,
                                      '-new_ace',
 				     $self->_phrap_options,
-				     { working_dir => $tempdir },
+				     { working_dir => $assembly_dir },
 				   );
   #warn "phrap output:\n".$phrap->out;
   $self->{phrap_ace} = "$seqs_temp.ace";
@@ -296,9 +296,33 @@ sub _phrap_options {
   )
 }
 
+=head2 set_assembly_dir, get_assembly_dir
+
+  Usage: $precluster->set_assembly_dir('/foo/bar');
+         $precluster->get_assembly_dir
+  Desc : set/get the directory in which to deposit assembly files for
+         this precluster.  if not set, puts them in a tempdir and
+         discards them at program end
+  Ret  :
+  Side Effects:
+  Example :
+
+=cut
+
+sub set_assembly_dir {
+  my ( $self, $dir ) = @_;
+  $self->{assembly_dir} = $dir;
+}
+
+sub get_assembly_dir { shift->{assembly_dir} }
+
 sub _tempdir {
   my ($self) = @_;
-  $self->{tempdir} ||= tempdir(CLEANUP => 1);
+
+  $self->{tempdir} ||=
+      File::Temp->newdir( TEMPLATE => 'cxgn-cluster-precluster-XXXXXXX',
+                          CLEANUP  => 1,
+                         );
 }
 
 =head2 function get_members()
