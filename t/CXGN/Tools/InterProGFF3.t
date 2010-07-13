@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use base 'Test::Class';
-use Test::More tests => 12;
+use Test::More tests => 18;
 use File::Slurp qw/slurp/;
 
 BEGIN { use_ok("CXGN::Tools::InterProGFF3") }
@@ -30,13 +30,14 @@ sub TEST_BASIC : Tests(5) {
     like($file, qr/^##feature ontology /m, 'GFF3 feature ontology directive');
 }
 
-sub TEST_ATTRIBUTES : Tests(6) {
+sub TEST_ATTRIBUTES : Tests(12) {
     my $self = shift;
     my $file = $self->{file};
     for my $line (split '\n', $file ) {
         # skip directive lines
         next if $line =~ m/^##/;
-        like ($line, qr/ID=.*;Name=.*;Alias=.*;Parent=.*;Note=.*;Dbxref=.*;interpro_type=.*/, 'GFF3 line has a well-formed attribute field');
+        like ($line, qr/([0-9A-z]+)\t.*0\t0\t\.\t\.\t\.\tID=([0-9A-z]+);Name=.*;Alias=.*;Parent=.*;Note=.*;Dbxref=.*;interpro_type=.*/, 'GFF3 line has a well-formed attribute field');
+        is($1,$2,"Seqid column is the same as the ID attribute");
     }
 }
 
