@@ -346,8 +346,8 @@ sub _simplify_base_segments {
     }
 
     # make a sub ref that applies the gaussian filter to a signal
-    #my $gaussian_filter = _make_sampled_gaussian_filter( 5 );
-    my $gaussian_filter = sub { shift };
+    my $gaussian_filter = $self->_make_sampled_gaussian_filter( 5 );
+    #my $gaussian_filter = sub { shift };
     foreach my $signal (values %signals) {
         $signal->{filtered} = $gaussian_filter->( $signal->{original} );
     }
@@ -372,6 +372,7 @@ sub _simplify_base_segments {
             $last_segment->{local_end}++;
         } else {
             my $offset = $offsets{$dominant_member};
+            #warn "new segment: $dominant_member ($dominant_siglevel) starting at contig $x, local ".($x-$offset)."\n";
             push @new_segments, {
                 name         => $dominant_member,
                 contig_start => $x,
