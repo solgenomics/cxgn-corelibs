@@ -89,13 +89,19 @@ sub run {
                                 ontology_engine => 'simple'
                           ));
     $self->ontology( $self->parser->next_ontology );
+    $self->convert;
+    print $self->gff3;
+
+    #exit code
+    return 0;
+}
+
+sub convert {
+    my ($self) = @_;
     my @domains = $self->get_domains;
     for my $domain (@domains) {
         $self->gff3( $self->gff3 . $self->make_gff3_line($domain) );
     }
-    print $self->gff3;
-    #exit code
-    return 0; 
 }
 
 sub make_gff3_line {
