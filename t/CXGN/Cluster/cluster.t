@@ -18,11 +18,6 @@ BEGIN {
     or BAIL_OUT('could not include the module being tested');
 }
 
-
-#find our file of test sequences
-my $test_seqs_filename = File::Spec->catfile($FindBin::Bin,'data','test.seq');
-die "can't open $test_seqs_filename" unless -r $test_seqs_filename;
-
 #now start testing with them
 my $set = CXGN::Cluster::ClusterSet->new;
 
@@ -78,15 +73,10 @@ is_deeply( cs_contents($set),
 	 );
 
 
-#now test the cluster calculation using a few things we know should cluster in the test set
-my @known_clusters =
-  (
-   [sort qw/C04HBa0114G11.1 C04HBa0050I18.1 C04HBa0036C23.1 C04HBa0008H22.1/],
-   [sort qw/C04HBa0024G05.1 C04HBa0020F17.1/],
-#    [sort qw/ C04SLm0033N19.1 C04HBa0107M13.1/],
-#    [sort qw/ C04HBa0053M02.1 C04SLm0129D14.1/],
-#    [sort qw/ C04SLm0096K04.1 C04HBa0106F07.1 C04HBa0068N05.1/],
-  );
+
+#find our file of test sequences
+my $test_seqs_filename = File::Spec->catfile($FindBin::Bin,'data','test.seq');
+die "can't open $test_seqs_filename" unless -r $test_seqs_filename;
 
 #make a Bio::Index of them so we can retrieve individual ones
 my $test_seqs_index = Bio::Index::Fasta->new( -filename => do { my (undef,$tf) = tempfile(UNLINK => 1); $tf },
@@ -96,6 +86,13 @@ $test_seqs_index->make_index($test_seqs_filename);
 
 #make a new set
 $set = CXGN::Cluster::ClusterSet->new;
+
+#now test the cluster calculation using a few things we know should cluster in the test set
+my @known_clusters =
+  (
+   [sort qw/C04HBa0114G11.1 C04HBa0050I18.1 C04HBa0036C23.1 C04HBa0008H22.1/],
+   [sort qw/C04HBa0024G05.1 C04HBa0020F17.1/],
+  );
 
 #make a cluster with just one member
 $set->add_match($known_clusters[0][0],$known_clusters[0][0]);
@@ -151,7 +148,7 @@ is_deeply( [ $c[0]->get_contig_coords($test_seqs_index) ],
 	 );
 
 
-my $bs = [ $c[0]->get_consensus_base_segments($test_seqs_index) ];
+my $bs = [ $c[0]->get_consensus_base_segments($test_seqs_index, gaussian_simplify => 3 ) ];
 is_deeply( $bs,
            [
                [
