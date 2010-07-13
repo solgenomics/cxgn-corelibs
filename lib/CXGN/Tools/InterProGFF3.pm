@@ -104,24 +104,26 @@ sub convert {
     my ($self) = @_;
     my @domains = $self->get_domains;
     for my $domain (@domains) {
-        $self->gff3( $self->gff3 . $self->make_gff3_line($domain) );
+        my ($relation) = $self->ontology->get_relationships($domain);
+        my $type       = $relation->object_term->name;
+        $self->gff3( $self->gff3 . $self->make_gff3_line($domain, $type) );
     }
 }
 
 sub make_gff3_line {
-    my ($self,$domain) = @_;
+    my ($self,$domain, $type) = @_;
     my $fmt = "%s\t" x 8 . "%s\n";
     return sprintf $fmt, $domain->identifier,
                     $self->source, $self->term_type,
-                    0, 0, qw/. . ./, $self->make_id_string($domain);
+                    0, 0, qw/. . ./, $self->make_id_string($domain, $type);
 }
 
 sub make_id_string {
-    my ($self,$domain) = @_;
+    my ($self,$domain, $type) = @_;
     my $fmt = 'ID=%s;Name=%s;Alias=%s;Parent=%s;Note=%s;Dbxref=%s;Type=%s';
     return sprintf $fmt, $domain->identifier, $domain->name,
             $domain->short_name, 'PARENTS', $domain->definition,
-            ($domain->get_dbxrefs||'XREF'), 'TYPE';
+            ($domain->get_dbxrefs || ''), $type;
 }
 
 sub get_domains {
