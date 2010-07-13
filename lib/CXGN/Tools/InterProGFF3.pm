@@ -4,6 +4,7 @@ use Moose::Util::TypeConstraints;
 use Bio::OntologyIO::InterProParser;
 use feature 'say';
 use Data::Dumper;
+use autodie;
 with 'MooseX::Runnable';
 with 'MooseX::Getopt';
 
@@ -76,8 +77,6 @@ sub BUILDARGS {
     my $class = shift;
     my %args = @_;
     # if no file param is given, read from STDIN
-    say 'Hello!';
-    #warn 'filename=' . $self->filenname;
     return $class->SUPER::BUILDARGS( %args );
 }
 
@@ -90,8 +89,13 @@ sub run {
                           ));
     $self->ontology( $self->parser->next_ontology );
     $self->convert;
-    print $self->gff3;
-
+    if ($self->output) {
+        open my $fh, '>', $self->output;
+        print $fh $self->gff3;
+        close $fh;
+    } else {
+        print $self->gff3;
+    }
     #exit code
     return 0;
 }
