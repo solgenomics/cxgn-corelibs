@@ -76,7 +76,8 @@ sub BUILDARGS {
     my $class = shift;
     my %args = @_;
     # if no file param is given, read from STDIN
-
+    say 'Hello!';
+    #warn 'filename=' . $self->filenname;
     return $class->SUPER::BUILDARGS( %args );
 }
 
@@ -93,6 +94,8 @@ sub run {
         $self->gff3( $self->gff3 . $self->make_gff3_line($domain) );
     }
     print $self->gff3;
+    #exit code
+    return 0; 
 }
 
 sub make_gff3_line {
