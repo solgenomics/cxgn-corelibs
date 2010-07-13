@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use base 'Test::Class';
-use Test::More tests => 18;
+use Test::More tests => 24;
 use File::Slurp qw/slurp/;
 
 BEGIN { use_ok("CXGN::Tools::InterProGFF3") }
@@ -37,7 +37,19 @@ sub TEST_ATTRIBUTES : Tests(12) {
         # skip directive lines
         next if $line =~ m/^##/;
         like ($line, qr/([0-9A-z]+)\t.*0\t0\t\.\t\.\t\.\tID=([0-9A-z]+);Name=.*;Alias=.*;ipr_parent=.*;Note=.*;Dbxref=.*;interpro_type=.*/, 'GFF3 line has a well-formed attribute field');
-        is($1,$2,"Seqid column is the same as the ID attribute");
+        my ($seqid, $id) = ($1,$2);
+        is($seqid,$id,"Seqid column is the same as the ID attribute");
+    }
+}
+
+sub TEST_NOTE_ESCAPING : Tests(6) {
+    my $self = shift;
+    my $file = $self->{file};
+    for my $line (split '\n', $file ) {
+        # skip directive lines
+        next if $line =~ m/^##/;
+        $line =~ m/Note=(.*);/;
+        unlike($1,qr/;=%&,/, 'Note attribute does not contain illegal chars');
     }
 }
 

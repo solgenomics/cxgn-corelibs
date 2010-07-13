@@ -5,6 +5,7 @@ use Bio::OntologyIO::InterProParser;
 use feature 'say';
 use Data::Dumper;
 use autodie;
+use URI::Escape;
 with 'MooseX::Runnable';
 with 'MooseX::Getopt';
 
@@ -128,9 +129,10 @@ sub make_gff3_line {
 sub make_id_string {
     my ($self,$domain, $type) = @_;
     my $fmt = 'ID=%s;Name=%s;Alias=%s;ipr_parent=%s;Note=%s;Dbxref=%s;interpro_type=%s';
-    return sprintf $fmt, $domain->identifier, $domain->name,
+    return sprintf $fmt, map { uri_escape($_,';=%&,') } (
+            $domain->identifier, $domain->name,
             $domain->short_name, 'PARENTS', $domain->definition,
-            ($domain->get_dbxrefs || ''), $type;
+            ($domain->get_dbxrefs || ''), $type);
 }
 
 sub get_domains {
