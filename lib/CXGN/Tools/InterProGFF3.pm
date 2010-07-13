@@ -36,6 +36,13 @@ it under the same terms as Perl itself.
 
 =cut
 
+has gff3_preamble => (
+    is  => 'ro',
+    isa => 'Str',
+    default => "##gff-version 3
+##feature ontology http://song.cvs.sourceforge.net/*checkout*/song/ontology/sofa.obo?revision=1.220\n",
+);
+
 has filename => (
     is => 'ro',
     isa => 'Str',
@@ -76,7 +83,6 @@ has gff3 => (
 sub BUILDARGS {
     my $class = shift;
     my %args = @_;
-    # if no file param is given, read from STDIN
     return $class->SUPER::BUILDARGS( %args );
 }
 
@@ -88,6 +94,7 @@ sub run {
                                 ontology_engine => 'simple'
                           ));
     $self->ontology( $self->parser->next_ontology );
+    $self->gff3( $self->gff3_preamble );
     $self->convert;
     if ($self->output) {
         open my $fh, '>', $self->output;
