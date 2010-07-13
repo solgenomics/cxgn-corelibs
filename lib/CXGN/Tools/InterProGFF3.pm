@@ -128,11 +128,11 @@ sub make_gff3_line {
 
 sub make_attribute_string {
     my ($self,$domain, $type) = @_;
-    my $fmt = 'ID=%s;Name=%s;Alias=%s;ipr_parent=%s;Note=%s;Dbxref=%s;interpro_type=%s';
+    my $fmt = 'ID=%s;Name=%s;Alias=%s;ipr_parent=%s;Note=%s;Dbxref=%s;interpro_type=%s;protein_count=%s';
     return sprintf $fmt, map { uri_escape($_,';=%&,') } (
             $domain->identifier, $domain->name,
             $domain->short_name, 'PARENTS', $domain->definition,
-            ($domain->get_dbxrefs || ''), $type);
+            ($domain->get_dbxrefs || ''), $type, $domain->protein_count);
 }
 
 sub get_domains {

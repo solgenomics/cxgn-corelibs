@@ -36,7 +36,7 @@ sub TEST_ATTRIBUTES : Tests(12) {
     for my $line (split '\n', $file ) {
         # skip directive lines
         next if $line =~ m/^##/;
-        like ($line, qr/([0-9A-z]+)\t.*0\t0\t\.\t\.\t\.\tID=([0-9A-z]+);Name=.*;Alias=.*;ipr_parent=.*;Note=.*;Dbxref=.*;interpro_type=.*/, 'GFF3 line has a well-formed attribute field');
+        like ($line, qr/([0-9A-z]+)\t.*0\t0\t\.\t\.\t\.\tID=([0-9A-z]+);Name=.*;Alias=.*;ipr_parent=.*;Note=.*;Dbxref=.*;interpro_type=.*;protein_count=.*/, 'GFF3 line has a well-formed attribute field');
         my ($seqid, $id) = ($1,$2);
         is($seqid,$id,"Seqid column is the same as the ID attribute");
     }
