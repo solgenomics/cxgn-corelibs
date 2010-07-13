@@ -48,8 +48,8 @@ sub TEST_NOTE_ESCAPING : Tests(6) {
     for my $line (split '\n', $file ) {
         # skip directive lines
         next if $line =~ m/^##/;
-        $line =~ m/Note=(.*);/;
-        unlike($1,qr/;=%&,\t/, 'Note attribute does not contain illegal chars');
+        $line =~ m/Note=(.*?);/;
+        unlike($1,qr/[;=&,\t]+/, 'Note attribute does not contain illegal chars');
     }
 }
 
