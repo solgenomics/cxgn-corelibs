@@ -2,6 +2,8 @@ package CXGN::Tools::InterProGFF3;
 use Moose;
 use Moose::Util::TypeConstraints;
 use Bio::OntologyIO::InterProParser;
+use feature 'say';
+use Data::Dumper;
 with 'MooseX::Runnable';
 with 'MooseX::Getopt';
 
@@ -38,9 +40,36 @@ has filename => (
     isa => 'Str',
 );
 
-has interpro_parser => (
-    is  => 'ro',
+has output => (
+    is => 'ro',
+    isa => 'Str',
+);
+
+has parser => (
+    is  => 'rw',
     isa => 'Bio::OntologyIO::InterProParser',
+);
+
+has ontology => (
+    is => 'rw',
+);
+
+has source => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'InterPro Version X',
+);
+
+has term_type => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'SO:0000417',
+);
+
+has gff3 => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => '',
 );
 
 sub BUILDARGS {
@@ -53,6 +82,39 @@ sub BUILDARGS {
 
 sub run {
     my ($self,%args) = @_;
+    $self->parser( Bio::OntologyIO->new(
+                                -format => 'interpro',
+                                -file   => $self->filename,
+                                ontology_engine => 'simple'
+                          ));
+    $self->ontology( $self->parser->next_ontology );
+    my @domains = $self->get_domains;
+    for my $domain (@domains) {
+        $self->gff3( $self->gff3 . $self->make_gff3_line($domain) );
+    }
+    print $self->gff3;
+}
+
+sub make_gff3_line {
+    my ($self,$domain) = @_;
+    my $fmt = "%s\t" x 8 . "%s\n";
+    return sprintf $fmt, $domain->identifier,
+                    $self->source, $self->term_type,
+                    0, 0, qw/. . ./, $self->make_id_string($domain);
+}
+
+sub make_id_string {
+    my ($self,$domain) = @_;
+    my $fmt = 'ID=%s;Name=%s;Alias=%s;Parent=%s;Note=%s;Dbxref=%s;Type=%s';
+    return sprintf $fmt, $domain->identifier, $domain->name,
+            $domain->short_name, 'PARENTS', $domain->definition,
+            ($domain->get_dbxrefs||'XREF'), 'TYPE';
+}
+
+sub get_domains {
+    my ($self) = @_;
+    # this can be improved
+    return grep { $_->identifier =~ m/^IPR/ } $self->ontology->get_all_terms;
 }
 
 __PACKAGE__->meta->make_immutable;
