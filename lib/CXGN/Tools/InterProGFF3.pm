@@ -127,7 +127,7 @@ sub make_gff3_line {
 
 sub make_id_string {
     my ($self,$domain, $type) = @_;
-    my $fmt = 'ID=%s;Name=%s;Alias=%s;Parent=%s;Note=%s;Dbxref=%s;Type=%s';
+    my $fmt = 'ID=%s;Name=%s;Alias=%s;Parent=%s;Note=%s;Dbxref=%s;interpro_type=%s';
     return sprintf $fmt, $domain->identifier, $domain->name,
             $domain->short_name, 'PARENTS', $domain->definition,
             ($domain->get_dbxrefs || ''), $type;
