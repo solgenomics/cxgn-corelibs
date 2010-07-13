@@ -123,10 +123,10 @@ sub make_gff3_line {
     my $fmt = "%s\t" x 8 . "%s\n";
     return sprintf $fmt, $domain->identifier,
                     $self->source, $self->term_type,
-                    0, 0, qw/. . ./, $self->make_id_string($domain, $type);
+                    0, 0, qw/. . ./, $self->make_attribute_string($domain, $type);
 }
 
-sub make_id_string {
+sub make_attribute_string {
     my ($self,$domain, $type) = @_;
     my $fmt = 'ID=%s;Name=%s;Alias=%s;ipr_parent=%s;Note=%s;Dbxref=%s;interpro_type=%s';
     return sprintf $fmt, map { uri_escape($_,';=%&,') } (
