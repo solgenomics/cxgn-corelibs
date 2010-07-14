@@ -169,8 +169,10 @@ sub get_contig_coords {
           )
  Args: Bio::Index::Fasta object to get sequences from,
        list of options, as:
-          simplification_window => <window size in bp, default 20>,
-          simplification_passes => <number of passes, default off>,
+          min_segment_size => filter out consensus segments smaller
+                              than this.  filtered segments will
+                              be replaced with extensions of the
+                              segments at either side
 
  Side Effects: may call phrap to calculate the assembly
 
@@ -227,10 +229,10 @@ sub get_consensus_base_segments {
         grep !$used_reads{$_},
         $self->get_members;
 
-    for (1 .. ( $options{simplification_passes} || 0 ) ) {
+    if( $options{min_segment_size} ) {
         foreach my $c (@consensi) {
-            if( @$c > 1 ) {
-                $c = $self->_gaussian_simplify_base_segments( $c, $options{simplification_window} || 20 );
+            if ( @$c > 1 ) {
+                $c = $self->_weighted_simplify_base_segments( $c, $seq_index, $options{min_segment_size} );
             }
         }
     }
@@ -288,6 +290,74 @@ sub _run_phrap {
   my $as = $self->{assembly} = $as_in->next_assembly;
 
   $self->{needs_phrap} = 0;
+}
+
+
+sub _weighted_simplify_base_segments {
+    my ( $self, $original_segments, $seq_index, $min_seg_len ) = @_;
+
+    # segment record layout:
+    #  0 member_contig_start
+    #  1 member_contig_end
+    #  2 name
+    #  3 member_local_start
+    #  4 member_local_end
+    #  5 member_reverse
+
+    my @output_segments = @$original_segments;
+
+    for( my $segment_num = 0; $segment_num < @output_segments; $segment_num++ ) {
+        # init variables holding this segment, the segments on either
+        # side, and the lengths of each.  some of these may be
+        # undefined.
+        my ( $seg, $seg_before, $seg_after ) =
+            @output_segments[ $segment_num, $segment_num - 1, $segment_num + 1 ];
+        undef $seg_before if $segment_num == 0;
+        my ( $seg_len, $seg_before_len, $seg_after_len ) =
+            map { $_ ? $_->[1] - $_->[0] + 1
+                     : undef
+                 }
+              $seg, $seg_before, $seg_after;
+
+        # if the segment is big enough, leave it alone
+        next unless $seg_len < $min_seg_len;
+
+        # otherwise, remove it and expand the segments on either side
+
+        my $seg_before_bases_available = $seq_index->fetch( $seg_before->[2] )->length - $seg_before->[4];
+        my $seg_after_bases_available  = $seg_after->[3] - 1;
+
+        my ( $expand_before, $expand_after ) = do {
+            no warnings 'uninitialized';
+            map {
+                my $weight = $_ / ( $seg_before_bases_available + $seg_after_bases_available );
+                sprintf( '%0.0f', $weight * $seg_len );
+            } $seg_before_bases_available, $seg_after_bases_available
+        };
+
+        # if we don't have enough sequence available on either side to
+        # excise and cover this segment, leave it alone
+        next unless $expand_before >= $seg_before_bases_available;
+        next unless $expand_after >= $seg_after_bases_available;
+
+
+        # now do the actual segment adjusting:
+        if( $expand_before ) {
+            $expand_before > 0 or die 'sanity check failed';
+            $_ += $expand_before for @{$seg_before}[1,4];
+        }
+        if( $expand_after ) {
+            $expand_after > 0 or die 'sanity check failed';
+            $_ -= $expand_after for @{$seg_after}[0,3];
+        }
+
+        # and then delete this segment from the array
+        undef $output_segments[$segment_num];
+        @output_segments = grep $_, @output_segments;
+        $segment_num--; #< because the segments have shifted over, we need to do this index again
+    }
+
+    return \@output_segments;
 }
 
 
