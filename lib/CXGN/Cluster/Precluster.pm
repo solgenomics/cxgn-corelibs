@@ -230,7 +230,7 @@ sub get_consensus_base_segments {
     for (1 .. ( $options{simplification_passes} || 0 ) ) {
         foreach my $c (@consensi) {
             if( @$c > 1 ) {
-                $c = $self->_simplify_base_segments( $c, $options{simplification_window} || 20 );
+                $c = $self->_gaussian_simplify_base_segments( $c, $options{simplification_window} || 20 );
             }
         }
     }
@@ -292,7 +292,7 @@ sub _run_phrap {
 
 
 my %cached_filters;
-sub _simplify_base_segments {
+sub _gaussian_simplify_base_segments {
     my ($self, $original_segments, $window_size) = @_;
 
     ### strategy:
