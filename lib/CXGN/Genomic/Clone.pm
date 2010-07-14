@@ -1,6 +1,6 @@
 package CXGN::Genomic::Clone;
 use strict;
-use English;
+use warnings;
 use Carp;
 use File::Glob ':glob';
 
