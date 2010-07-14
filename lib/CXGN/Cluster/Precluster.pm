@@ -169,7 +169,8 @@ sub get_contig_coords {
           )
  Args: Bio::Index::Fasta object to get sequences from,
        list of options, as:
-          gaussian_simplify => <window size in bp>,
+          simplification_window => <window size in bp, default 20>,
+          simplification_passes => <number of passes, default off>,
 
  Side Effects: may call phrap to calculate the assembly
 
@@ -226,10 +227,10 @@ sub get_consensus_base_segments {
         grep !$used_reads{$_},
         $self->get_members;
 
-    if( my $window_size = $options{gaussian_simplify} ) {
+    for (1 .. ( $options{simplification_passes} || 0 ) ) {
         foreach my $c (@consensi) {
             if( @$c > 1 ) {
-                $c = $self->_simplify_base_segments( $c, $window_size );
+                $c = $self->_simplify_base_segments( $c, $options{simplification_window} || 20 );
             }
         }
     }
@@ -290,6 +291,7 @@ sub _run_phrap {
 }
 
 
+my %cached_filters;
 sub _simplify_base_segments {
     my ($self, $original_segments, $window_size) = @_;
 
@@ -345,8 +347,10 @@ sub _simplify_base_segments {
 
     }
 
-    # make a sub ref that applies the gaussian filter to a signal
-    my $gaussian_filter = $self->_make_sampled_gaussian_filter( 5 );
+    # make a sub ref that applies the gaussian filter to a signal (cached)
+    my $gaussian_filter =
+        $cached_filters{$window_size} ||=
+            $self->_make_sampled_gaussian_filter( $window_size );
     #my $gaussian_filter = sub { shift };
     foreach my $signal (values %signals) {
         $signal->{filtered} = $gaussian_filter->( $signal->{original} );

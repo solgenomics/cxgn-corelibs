@@ -148,7 +148,7 @@ is_deeply( [ $c[0]->get_contig_coords($test_seqs_index) ],
 	 );
 
 
-my $bs = [ $c[0]->get_consensus_base_segments($test_seqs_index, gaussian_simplify => 100 ) ];
+my $bs = [ $c[0]->get_consensus_base_segments($test_seqs_index, simplification_passes => 2, simplification_window => 3 ) ];
 is_deeply( $bs,
            [
                [
