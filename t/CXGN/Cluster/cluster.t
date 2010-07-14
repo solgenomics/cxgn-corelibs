@@ -7,7 +7,7 @@ use FindBin;
 use File::Temp qw/tempfile/;
 use Data::Dumper;
 
-use Test::More tests => 17;
+use Test::More tests => 19;
 
 use Bio::Index::Fasta;
 
@@ -91,7 +91,8 @@ $set = CXGN::Cluster::ClusterSet->new;
 my @known_clusters =
   (
    [sort qw/C04HBa0114G11.1 C04HBa0050I18.1 C04HBa0036C23.1 C04HBa0008H22.1/],
-   [sort qw/C04HBa0024G05.1 C04HBa0020F17.1/],
+   [sort qw/C04HBa0024G05.1 C04HBa0020F17.1 /],
+   [sort qw/C10HBa0020A12.1 C10HBa0248A13.3 /],
   );
 
 #make a cluster with just one member
@@ -299,6 +300,30 @@ is_deeply( [ $c[0]->get_contig_coords($test_seqs_index) ],
 	   ],
 	   'erroneous precluster assembles into two actual contigs'
 	 );
+
+
+#make a new set
+$set = CXGN::Cluster::ClusterSet->new;
+
+# now add fake matches between and among the known clusters to put
+# them all in one precluster
+for my $cluster ( @known_clusters ) {
+    $set->add_match( $known_clusters[0][0], $cluster->[0] );
+    $set->add_match( $cluster->[0], $_ ) for @$cluster;
+}
+
+@c = $set->get_clusters;
+is( scalar(@c), 1, 'got one cluster' );
+# and check the base segments that are made
+TODO: {
+    local $TODO = 'need to fix base segment merging';
+    $bs = [ $c[0]->get_consensus_base_segments($test_seqs_index) ];
+    is_deeply( $bs,
+               [ #todo, put the right output here
+                  ],
+              )
+        or diag Dumper $bs;
+}
 
 #make a sorted list of sorted arrayrefs representing the clusters in the set
 #clusters sorted in descending size order,

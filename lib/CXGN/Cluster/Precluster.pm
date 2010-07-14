@@ -359,6 +359,26 @@ sub _weighted_simplify_base_segments {
         $segment_num--; #< because the segments have shifted over, we need to do this index again
     }
 
+    # now go through and merge any adjacent same-read segments
+    for( my $segment_num = 0; $segment_num < @output_segments; $segment_num++ ) {
+        # init variables holding this segment, the segments on either
+        # side, and the lengths of each.  some of these may be
+        # undefined.
+        my ( $seg, $seg_after ) = @output_segments[$segment_num, $segment_num+1];
+
+        # find segments where the segment after this one is the same
+        # read and orientation
+        next unless $seg->[2] eq $seg_after->[2] && !($seg->[5] xor $seg_after->[5]);
+
+        # merge the coordinates into the first seg
+        $seg->[4] = $seg_after->[4];
+        $seg->[1] = $seg_after->[1];
+
+        # delete the second seg
+        undef $output_segments[$segment_num+1];
+        @output_segments = grep $_, @output_segments;
+    }
+
     return \@output_segments;
 }
 
