@@ -952,15 +952,18 @@ sub seqlen {
   $seqname =~ s/-\d+$//;
 
   my $cids = $self->_cvterm_type_ids;
+  return unless $cids && %$cids;
+
+  my $clone_types_placeholders = join ', ', map '?', values %$cids;
 
   #get the sequences out of the chado db
-  my ($sum) = $self->db_Main->selectrow_array(<<EOQ,undef,$self->clone_id,"$seqname%");
+  my ($sum) = $self->db_Main->selectrow_array(<<EOQ,undef,$self->clone_id,"$seqname%", values %$cids);
 SELECT sum(seqlen)
 FROM feature f
 JOIN clone_feature USING(feature_id)
 WHERE clone_id = ?
   AND name like ?
-  AND f.type_id=$cids->{BAC_clone}
+  AND f.type_id IN( $clone_types_placeholders )
 EOQ
 
   return $sum;

@@ -106,6 +106,13 @@ sub test_random_clone {
 
   #check that the clone's sequence is valid
   unlike( $clone->seq || '', qr/[^ACTGXN]/i, 'clone has valid sequence or no sequence');
+  #check that the clone's sequence is valid
+  my $seqlen = $clone->seqlen;
+  if( defined $seqlen ) {
+     like( $seqlen, qr/^\d+$/, 'seqlen looks valid' );
+  } else {
+     ok( 1, 'clone has no seqlen' );
+  }
 
   #check that the latest sequence name is kosher
   my $chado_name = $clone->latest_sequence_name;
