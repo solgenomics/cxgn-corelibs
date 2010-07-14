@@ -337,17 +337,19 @@ sub _weighted_simplify_base_segments {
 
         # if we don't have enough sequence available on either side to
         # excise and cover this segment, leave it alone
-        next unless $expand_before >= $seg_before_bases_available;
-        next unless $expand_after >= $seg_after_bases_available;
+        next unless $expand_before <= $seg_before_bases_available;
+        next unless $expand_after <= $seg_after_bases_available;
+        # also leave it alone if it is the only one left for this read
+        next if 1 == scalar grep $_->[2] eq $seg->[2], @output_segments;
 
 
         # now do the actual segment adjusting:
         if( $expand_before ) {
-            $expand_before > 0 or die 'sanity check failed';
+            $expand_before > 0 or die "sanity check failed ($seg_before_bases_available,$expand_before)";
             $_ += $expand_before for @{$seg_before}[1,4];
         }
         if( $expand_after ) {
-            $expand_after > 0 or die 'sanity check failed';
+            $expand_after > 0 or die "sanity check failed ($seg_after_bases_available,$expand_after)";
             $_ -= $expand_after for @{$seg_after}[0,3];
         }
 
