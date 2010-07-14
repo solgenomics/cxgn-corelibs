@@ -112,8 +112,22 @@ sub convert {
     my ($self) = @_;
     my @domains = $self->get_domains;
     for my $domain (@domains) {
-        my ($relation) = $self->ontology->get_relationships($domain);
-        my $type       = $relation->object_term->name;
+        # this relies on the fact that the "type" is the first relationship
+        # returned, which is wrong. the parent relationship needs to be found as well
+        die Dumper [ $self->ontology ];
+        my (@relations) = $self->ontology->get_relationships($domain);
+        warn Dumper [ $domain->identifier,
+            [ map { $_->subject_term->identifier } @relations ],
+            [ map { $_->predicate_term->name } @relations ],
+            [ map { $_->object_term->identifier } @relations ],
+        ];
+
+        my $type       = $relations[0]->object_term->name;
+
+
+        my (@parents) = # grep { $_->predicate_term->name eq 'CONTAINS_A' }
+            $self->ontology->get_relationships($domain);
+
         $self->gff3( $self->gff3 . $self->make_gff3_line($domain, $type) );
     }
 }

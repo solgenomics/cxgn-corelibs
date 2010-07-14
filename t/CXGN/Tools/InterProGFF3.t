@@ -17,7 +17,7 @@ sub make_fixture : Test(setup) {
 }
 
 sub teardown : Test(teardown) {
-    unlink 't/data/interpro.gff3';
+    #unlink 't/data/interpro.gff3';
 }
 
 sub TEST_BASIC : Tests(5) {
