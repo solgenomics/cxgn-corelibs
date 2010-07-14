@@ -65,7 +65,7 @@ $set->add_match(@seqnames[3,7]);
 $set->add_match(@seqnames[3,6]);
 $set->add_match(@seqnames[3,5]);
 is_deeply( cs_contents($set),
-	   [	
+	   [
 	    [ @seqnames[3,5,6,7] ],
 	    [ @seqnames[0,1,2] ],
 	   ],
@@ -307,23 +307,55 @@ $set = CXGN::Cluster::ClusterSet->new;
 
 # now add fake matches between and among the known clusters to put
 # them all in one precluster
-for my $cluster ( @known_clusters ) {
-    $set->add_match( $known_clusters[0][0], $cluster->[0] );
-    $set->add_match( $cluster->[0], $_ ) for @$cluster;
-}
+$set->add_match( $known_clusters[0][0], $known_clusters[2][0] );
+$set->add_match( $known_clusters[2][0], $_ ) for @{$known_clusters[2]};
 
 @c = $set->get_clusters;
 is( scalar(@c), 1, 'got one cluster' );
 # and check the base segments that are made
-TODO: {
-    local $TODO = 'need to fix base segment merging';
-    $bs = [ $c[0]->get_consensus_base_segments($test_seqs_index) ];
-    is_deeply( $bs,
-               [ #todo, put the right output here
+$bs = [ $c[0]->get_consensus_base_segments($test_seqs_index, min_segment_size => 100 ) ];
+is_deeply( $bs,
+           [
+               [
+                   [
+                       1,
+                       134537,
+                       'C10HBa0020A12.1',
+                       1,
+                       134537,
+                       0
+                      ],
+                   [
+                       134538,
+                       134541,
+                       'C10HBa0248A13.3',
+                       134538,
+                       134541,
+                       0
+                      ],
+                   [
+                       134542,
+                       135038,
+                       'C10HBa0020A12.1',
+                       134542,
+                       135038,
+                       0
+                      ]
                   ],
-              )
-        or diag Dumper $bs;
-}
+               [
+                   [
+                       1,
+                       81572,
+                       'C04HBa0008H22.1',
+                       1,
+                       81572,
+                       0
+                      ]
+                  ]
+              ],
+           'segment merging worked'
+          )
+    or diag Dumper $bs;
 
 #make a sorted list of sorted arrayrefs representing the clusters in the set
 #clusters sorted in descending size order,

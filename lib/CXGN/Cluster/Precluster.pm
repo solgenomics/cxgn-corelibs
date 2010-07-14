@@ -368,7 +368,7 @@ sub _weighted_simplify_base_segments {
 
         # find segments where the segment after this one is the same
         # read and orientation
-        next unless $seg->[2] eq $seg_after->[2] && !($seg->[5] xor $seg_after->[5]);
+        next unless $seg_after && $seg->[2] eq $seg_after->[2] && !($seg->[5] xor $seg_after->[5]);
 
         # merge the coordinates into the first seg
         $seg->[4] = $seg_after->[4];
@@ -377,6 +377,7 @@ sub _weighted_simplify_base_segments {
         # delete the second seg
         undef $output_segments[$segment_num+1];
         @output_segments = grep $_, @output_segments;
+        $segment_num--; #< we need to go over this one again to evaluate the next merge
     }
 
     return \@output_segments;
