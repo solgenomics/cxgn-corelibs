@@ -124,12 +124,19 @@ sub get_contig_coords {
   $self->_run_phrap($seq_index) if $self->{needs_phrap};
 
   if($self->get_member_count > 1) {
+
+    my $as_in = Bio::Assembly::IO->new( -file => $self->{phrap}->out_file,
+                                        -format => 'phrap',
+                                        -alphabet => 'dna',
+                                       );
+    my $as = $as_in->next_assembly;
+
     return
       (				#SINGLETONS
        map {
 	 my $s = $_;
 	 [ [$s->id, 1, $s->seqref->length, 1 ] ]
-       } $self->{assembly}->all_singlets
+       } $as->all_singlets
       ),
 	(			#CONTIGS
 	 map {
@@ -143,7 +150,7 @@ sub get_contig_coords {
 	    grep $_->primary_tag =~ /^_unalign_coord:/,
 	    $c->get_features_collection->get_all_features
 	   ]
-	 } $self->{assembly}->all_contigs
+	 } $as->all_contigs
 	);
   } else {
     my ($seq_name) = $self->get_members;
@@ -221,7 +228,6 @@ sub get_consensus_base_segments {
         }
     }
 
-
     push @consensi,
         map { my $length = $seq_index->fetch($_)->length;
               [[ 1, $length, $_, 1, $length, 0 ]],
@@ -273,21 +279,17 @@ sub _run_phrap {
                                             'phrap';
   #warn "and thus we're using $phrap_exec\n";
 
-  my $phrap = CXGN::Tools::Run->run( $phrap_exec,
-				     $seqs_temp,
-                                     '-new_ace',
-				     $self->_phrap_options,
-				     { working_dir => $assembly_dir },
-				   );
+  $self->{phrap} =
+      CXGN::Tools::Run->run(
+          $phrap_exec,
+          $seqs_temp,
+          '-new_ace',
+          $self->_phrap_options,
+          { working_dir => $assembly_dir },
+         );
+
   #warn "phrap output:\n".$phrap->out;
   $self->{phrap_ace} = "$seqs_temp.ace";
-
-  my $as_in = Bio::Assembly::IO->new( -file => $phrap->out_file,
-				      -format => 'phrap',
-				    );
-
-
-  my $as = $self->{assembly} = $as_in->next_assembly;
 
   $self->{needs_phrap} = 0;
 }
