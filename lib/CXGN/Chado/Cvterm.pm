@@ -1155,7 +1155,7 @@ sub delete_def_dbxref {
     my $dbxref=shift;
     my $query = "DELETE FROM cvterm_dbxref WHERE cvterm_id=? AND dbxref_id=? AND is_for_definition = 1";
     my $sth=$self->get_dbh()->prepare($query);
-    #print "Cvterm.pm found dbxref_id ". $dbxref->get_dbxref_id() ."\n";
+   
     $sth->execute($self->get_cvterm_id(), $dbxref->get_dbxref_id());
 }
 
@@ -1449,13 +1449,12 @@ sub get_loci {
 
 sub get_recursive_loci {
     my $self=shift;
-    my $query = "select distinct locus_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.locus_dbxref using (dbxref_id )  where (cvtermpath.object_id = ? or cvtermpath.subject_id = ?) and locus_dbxref.obsolete = 'f' ";
+    my $query = "select distinct locus_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.locus_dbxref using (dbxref_id )  join phenome.locus using (locus_id) where (cvtermpath.subject_id = ?) and locus_dbxref.obsolete = 'f' and locus.obsolete = 'f' and pathdistance <0";
 
-##    my $query = "select distinct locus_id   from cvterm as parent join cvtermpath on (parent.cvterm_id = cvtermpath.subject_id) join cvterm as children on (cvtermpath.object_id = children.cvterm_id or cvtermpath.subject_id = children.cvterm_id) join phenome.locus_dbxref on (locus_dbxref.dbxref_id= children.dbxref_id) where parent.cvterm_id =?" ;
     
     my $sth=$self->get_dbh()->prepare($query);;
     my @loci;
-    $sth->execute($self->get_cvterm_id(), $self->get_cvterm_id() );
+    $sth->execute($self->get_cvterm_id() );
     while ( my ($locus_id) = $sth->fetchrow_array() ) {
 	my $locus= CXGN::Phenome::Locus->new($self->get_dbh(), $locus_id);
 	push @loci, $locus;
@@ -1478,15 +1477,12 @@ sub get_recursive_loci {
 sub get_recursive_individuals {
     my $self=shift;
     
-    my $query = "select distinct individual_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.individual_dbxref using (dbxref_id )  where (cvtermpath.object_id = ? or cvtermpath.subject_id =?) and individual_dbxref.obsolete = 'f'";
+    my $query = "select distinct individual_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.individual_dbxref using (dbxref_id ) join phenome.individual using (individual_id) where ( cvtermpath.subject_id =?) and individual_dbxref.obsolete = 'f' and individual.obsolete = 'f' and pathdistance < 0";
 
 
-
-#"select distinct individual_id   from cvterm as parent join cvtermpath on (parent.cvterm_id = cvtermpath.subject_id) join cvterm as children on (cvtermpath.object_id = children.cvterm_id or cvtermpath.subject_id = children.cvterm_id) join phenome.individual_dbxref on (individual_dbxref.dbxref_id= children.dbxref_id) where parent.cvterm_id =?" ;
-    
     my $sth=$self->get_dbh()->prepare($query);;
     my @ind;
-    $sth->execute($self->get_cvterm_id(), $self->get_cvterm_id()  );
+    $sth->execute($self->get_cvterm_id()  );
     while ( my ($individual_id) = $sth->fetchrow_array() ) {
 	my $individual= CXGN::Phenome::Individual->new($self->get_dbh(), $individual_id);
 	push @ind, $individual;
