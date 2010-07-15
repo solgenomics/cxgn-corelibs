@@ -92,7 +92,6 @@ sub run {
     $self->parser( Bio::OntologyIO->new(
                                 -format => 'interpro',
                                 -file   => $self->filename,
-                                ontology_engine => 'simple'
                           ));
     $self->ontology( $self->parser->next_ontology );
     $self->gff3( $self->gff3_preamble );
@@ -112,21 +111,21 @@ sub convert {
     my ($self) = @_;
     my @domains = $self->get_domains;
     for my $domain (@domains) {
-        # this relies on the fact that the "type" is the first relationship
-        # returned, which is wrong. the parent relationship needs to be found as well
-        die Dumper [ $self->ontology ];
+
         my (@relations) = $self->ontology->get_relationships($domain);
-        warn Dumper [ $domain->identifier,
-            [ map { $_->subject_term->identifier } @relations ],
-            [ map { $_->predicate_term->name } @relations ],
-            [ map { $_->object_term->identifier } @relations ],
-        ];
+        #warn Dumper [    map { $_->{_object_term}->{_ontology}->{engine}->{_inverted_relationship_store} } @relations ];
+        #warn Dumper [ 'domain=', $domain->identifier,
+        #    [ map { $_->subject_term->identifier } @relations ],
+        #    [ map { $_->predicate_term->name } @relations ],
+        #    [ map { $_->object_term->identifier } @relations ],
+        #];
 
-        my $type       = $relations[0]->object_term->name;
-
-
-        my (@parents) = # grep { $_->predicate_term->name eq 'CONTAINS_A' }
-            $self->ontology->get_relationships($domain);
+        # Find all IS_A relations of this domain, excluding itself
+        my @isa_relations = grep {
+            $_->predicate_term->name eq 'IS_A' &&
+            $_->object_term->identifier ne $domain->identifier
+        } @relations;
+        my $type       = $isa_relations[0]->object_term->name;
 
         $self->gff3( $self->gff3 . $self->make_gff3_line($domain, $type) );
     }
@@ -152,7 +151,7 @@ sub make_attribute_string {
 sub get_domains {
     my ($self) = @_;
     # this can be improved
-    return grep { $_->identifier =~ m/^IPR/ } $self->ontology->get_all_terms;
+    return sort { $b <=> $a } grep { $_->identifier =~ m/^IPR/ } $self->ontology->get_all_terms;
 }
 
 __PACKAGE__->meta->make_immutable;
