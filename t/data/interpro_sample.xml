@@ -922,6 +922,273 @@ C2-key motif. Structural analyses of several C2 domains have shown them to consi
     <sec_ac acc="IPR018029"/>
   </sec_list>
 </interpro>
+<interpro id="IPR013806" protein_count="0" short_name="Kringle-like" type="Domain">
+  <name>Kringle-like fold</name>
+  <abstract>
+<p>This entry represents proteins displaying a Kringle-like structure, which consists of a nearly all-beta, disulphide-rich fold. Proteins displaying this fold include both Kringle modules as well as fibronectin type II modules, the latter displaying a shorter two-disulphide version of the Kringle module.</p>
+<p> Kringle modules occur in blood clotting and fibrinolytic proteins, such as plasminogen, prothrombin, meizothrombin, and urokinase-type plasminogen activator, as well as in apolipoprotein and hepatocyte growth factor. Kringle domains are believed to play a role in binding mediators (e.g., membranes, other proteins or phospholipids), and in the regulation of proteolytic activity [<cite idref="PUB00001541"/>, <cite idref="PUB00003257"/>].</p>
+<p>Fibronectin type II modules occur in fibronectin, as well as in gelatinase A (MMP-2), gelatinase B (MMP-9), and the collagen-binding domain of PDC-109. Fibronectin is a multi-domain glycoprotein, found in a soluble form in plasma, and in an insoluble form in loose connective tissue and basement membranes, that binds cell surfaces and various compounds including collagen, fibrin, heparin, DNA, and actin [<cite idref="PUB00001346"/>]. Fibronectins are involved in a number of important functions e.g., wound healing; cell adhesion; blood coagulation; cell differentiation and migration; maintenance of the cellular cytoskeleton; and tumour metastasis. Gelatinases A and B are members of the matrix metalloproteinase family that act as neutral proteinases in the breakdown and remodelling of the extracellular matrix. These gelatinases play important roles in the pathogenesis of inflammation, infection and in neoplastic diseases [<cite idref="PUB00028079"/>]. In gelatinase A, the three fibronectin-like modules are inserted within a catalytic domain, these modules acting to target the enzyme to matrix macromolecules [<cite idref="PUB00028080"/>].</p>
+</abstract>
+  <example_list>
+    <example>
+      <db_xref db="SWISSPROT" dbkey="P00747"/>
+    </example>
+    <example>
+      <db_xref db="SWISSPROT" dbkey="P02784"/>
+    </example>
+    <example>
+      <db_xref db="SWISSPROT" dbkey="P11276"/>
+    </example>
+    <example>
+      <db_xref db="SWISSPROT" dbkey="Q24488"/>
+    </example>
+  </example_list>
+  <pub_list>
+    <publication id="PUB00001346">
+      <author_list>Skorstengaard K, Jensen MS, Sahl P, Petersen TE, Magnusson S.</author_list>
+      <title>Complete primary structure of bovine plasma fibronectin.</title>
+      <db_xref db="PUBMED" dbkey="3780752"/>
+      <journal>Eur. J. Biochem.</journal>
+      <location issue="2" pages="441-53" volume="161"/>
+      <year>1986</year>
+    </publication>
+    <publication id="PUB00001541">
+      <author_list>Patthy L, Trexler M, Vali Z, Banyai L, Varadi A.</author_list>
+      <title>Kringles: modules specialized for protein binding. Homology of the gelatin-binding region of fibronectin with the kringle structures of proteases.</title>
+      <db_xref db="PUBMED" dbkey="6373375"/>
+      <journal>FEBS Lett.</journal>
+      <location issue="1" pages="131-6" volume="171"/>
+      <year>1984</year>
+    </publication>
+    <publication id="PUB00003257">
+      <author_list>Atkinson RA, Williams RJ.</author_list>
+      <title>Solution structure of the kringle 4 domain from human plasminogen by 1H nuclear magnetic resonance spectroscopy and distance geometry.</title>
+      <db_xref db="PUBMED" dbkey="2157850"/>
+      <journal>J. Mol. Biol.</journal>
+      <location issue="3" pages="541-52" volume="212"/>
+      <year>1990</year>
+    </publication>
+    <publication id="PUB00028079">
+      <author_list>Chakrabarti S, Patel KD.</author_list>
+      <title>Matrix metalloproteinase-2 (MMP-2) and MMP-9 in pulmonary pathology.</title>
+      <db_xref db="PUBMED" dbkey="16019990"/>
+      <journal>Exp. Lung Res.</journal>
+      <location issue="6" pages="599-621" volume="31"/>
+      <year>2005</year>
+    </publication>
+    <publication id="PUB00028080">
+      <author_list>Hornebeck W, Bellon G, Emonard H.</author_list>
+      <title>Fibronectin type II (FnII)-like modules regulate gelatinase A activity.</title>
+      <db_xref db="PUBMED" dbkey="16085117"/>
+      <journal>Pathol. Biol.</journal>
+      <location issue="7" pages="405-10" volume="53"/>
+      <year>2005</year>
+    </publication>
+  </pub_list>
+  <child_list>
+    <rel_ref ipr_ref="IPR000001"/>
+    <rel_ref ipr_ref="IPR000562"/>
+  </child_list>
+  <contains>
+    <rel_ref ipr_ref="IPR018056"/>
+    <rel_ref ipr_ref="IPR018059"/>
+  </contains>
+  <found_in>
+    <rel_ref ipr_ref="IPR016247"/>
+    <rel_ref ipr_ref="IPR020715"/>
+  </found_in>
+  <member_list>
+    <db_xref protein_count="923" db="SSF" dbkey="SSF57440" name="Kringle-like"/>
+  </member_list>
+  <structure_db_links>
+    <db_xref db="PDB" dbkey="1a0h"/>
+    <db_xref db="PDB" dbkey="1a5h"/>
+    <db_xref db="PDB" dbkey="1a5i"/>
+    <db_xref db="PDB" dbkey="1avg"/>
+    <db_xref db="PDB" dbkey="1b2i"/>
+    <db_xref db="PDB" dbkey="1bbr"/>
+    <db_xref db="PDB" dbkey="1bda"/>
+    <db_xref db="PDB" dbkey="1bht"/>
+    <db_xref db="PDB" dbkey="1bml"/>
+    <db_xref db="PDB" dbkey="1bui"/>
+    <db_xref db="PDB" dbkey="1c5w"/>
+    <db_xref db="PDB" dbkey="1c5x"/>
+    <db_xref db="PDB" dbkey="1c5y"/>
+    <db_xref db="PDB" dbkey="1c5z"/>
+    <db_xref db="PDB" dbkey="1cea"/>
+    <db_xref db="PDB" dbkey="1ceb"/>
+    <db_xref db="PDB" dbkey="1ck7"/>
+    <db_xref db="PDB" dbkey="1cxw"/>
+    <db_xref db="PDB" dbkey="1ddj"/>
+    <db_xref db="PDB" dbkey="1e88"/>
+    <db_xref db="PDB" dbkey="1e8b"/>
+    <db_xref db="PDB" dbkey="1eak"/>
+    <db_xref db="PDB" dbkey="1ejn"/>
+    <db_xref db="PDB" dbkey="1etr"/>
+    <db_xref db="PDB" dbkey="1ets"/>
+    <db_xref db="PDB" dbkey="1ett"/>
+    <db_xref db="PDB" dbkey="1f5k"/>
+    <db_xref db="PDB" dbkey="1f5l"/>
+    <db_xref db="PDB" dbkey="1f92"/>
+    <db_xref db="PDB" dbkey="1fbr"/>
+    <db_xref db="PDB" dbkey="1fv9"/>
+    <db_xref db="PDB" dbkey="1gi7"/>
+    <db_xref db="PDB" dbkey="1gi8"/>
+    <db_xref db="PDB" dbkey="1gi9"/>
+    <db_xref db="PDB" dbkey="1gj7"/>
+    <db_xref db="PDB" dbkey="1gj8"/>
+    <db_xref db="PDB" dbkey="1gj9"/>
+    <db_xref db="PDB" dbkey="1gja"/>
+    <db_xref db="PDB" dbkey="1gjb"/>
+    <db_xref db="PDB" dbkey="1gjc"/>
+    <db_xref db="PDB" dbkey="1gjd"/>
+    <db_xref db="PDB" dbkey="1gkc"/>
+    <db_xref db="PDB" dbkey="1gkd"/>
+    <db_xref db="PDB" dbkey="1gmn"/>
+    <db_xref db="PDB" dbkey="1gmo"/>
+    <db_xref db="PDB" dbkey="1gp9"/>
+    <db_xref db="PDB" dbkey="1gxd"/>
+    <db_xref db="PDB" dbkey="1h8p"/>
+    <db_xref db="PDB" dbkey="1hov"/>
+    <db_xref db="PDB" dbkey="1hpj"/>
+    <db_xref db="PDB" dbkey="1hpk"/>
+    <db_xref db="PDB" dbkey="1hrt"/>
+    <db_xref db="PDB" dbkey="1i5k"/>
+    <db_xref db="PDB" dbkey="1i71"/>
+    <db_xref db="PDB" dbkey="1id5"/>
+    <db_xref db="PDB" dbkey="1j7m"/>
+    <db_xref db="PDB" dbkey="1jfn"/>
+    <db_xref db="PDB" dbkey="1kdu"/>
+    <db_xref db="PDB" dbkey="1ki0"/>
+    <db_xref db="PDB" dbkey="1kiv"/>
+    <db_xref db="PDB" dbkey="1krn"/>
+    <db_xref db="PDB" dbkey="1ks0"/>
+    <db_xref db="PDB" dbkey="1l4d"/>
+    <db_xref db="PDB" dbkey="1l4z"/>
+    <db_xref db="PDB" dbkey="1l6j"/>
+    <db_xref db="PDB" dbkey="1lmw"/>
+    <db_xref db="PDB" dbkey="1mkw"/>
+    <db_xref db="PDB" dbkey="1mkx"/>
+    <db_xref db="PDB" dbkey="1nk1"/>
+    <db_xref db="PDB" dbkey="1nl1"/>
+    <db_xref db="PDB" dbkey="1nl2"/>
+    <db_xref db="PDB" dbkey="1o3p"/>
+    <db_xref db="PDB" dbkey="1o5a"/>
+    <db_xref db="PDB" dbkey="1o5b"/>
+    <db_xref db="PDB" dbkey="1o5c"/>
+    <db_xref db="PDB" dbkey="1o9a"/>
+    <db_xref db="PDB" dbkey="1owd"/>
+    <db_xref db="PDB" dbkey="1owe"/>
+    <db_xref db="PDB" dbkey="1owh"/>
+    <db_xref db="PDB" dbkey="1owi"/>
+    <db_xref db="PDB" dbkey="1owj"/>
+    <db_xref db="PDB" dbkey="1owk"/>
+    <db_xref db="PDB" dbkey="1pdc"/>
+    <db_xref db="PDB" dbkey="1pk2"/>
+    <db_xref db="PDB" dbkey="1pk4"/>
+    <db_xref db="PDB" dbkey="1pkr"/>
+    <db_xref db="PDB" dbkey="1pmk"/>
+    <db_xref db="PDB" dbkey="1pml"/>
+    <db_xref db="PDB" dbkey="1qgb"/>
+    <db_xref db="PDB" dbkey="1qib"/>
+    <db_xref db="PDB" dbkey="1qo6"/>
+    <db_xref db="PDB" dbkey="1qrz"/>
+    <db_xref db="PDB" dbkey="1rjx"/>
+    <db_xref db="PDB" dbkey="1rtf"/>
+    <db_xref db="PDB" dbkey="1sc8"/>
+    <db_xref db="PDB" dbkey="1sqa"/>
+    <db_xref db="PDB" dbkey="1sqo"/>
+    <db_xref db="PDB" dbkey="1sqt"/>
+    <db_xref db="PDB" dbkey="1tbq"/>
+    <db_xref db="PDB" dbkey="1tbr"/>
+    <db_xref db="PDB" dbkey="1toc"/>
+    <db_xref db="PDB" dbkey="1tpg"/>
+    <db_xref db="PDB" dbkey="1tpk"/>
+    <db_xref db="PDB" dbkey="1u6q"/>
+    <db_xref db="PDB" dbkey="1ucy"/>
+    <db_xref db="PDB" dbkey="1urk"/>
+    <db_xref db="PDB" dbkey="1uvt"/>
+    <db_xref db="PDB" dbkey="1uvu"/>
+    <db_xref db="PDB" dbkey="1vit"/>
+    <db_xref db="PDB" dbkey="1vj9"/>
+    <db_xref db="PDB" dbkey="1vja"/>
+    <db_xref db="PDB" dbkey="1w0z"/>
+    <db_xref db="PDB" dbkey="1w10"/>
+    <db_xref db="PDB" dbkey="1w11"/>
+    <db_xref db="PDB" dbkey="1w12"/>
+    <db_xref db="PDB" dbkey="1w13"/>
+    <db_xref db="PDB" dbkey="1w14"/>
+    <db_xref db="PDB" dbkey="1ycp"/>
+    <db_xref db="PDB" dbkey="2a1d"/>
+    <db_xref db="PDB" dbkey="2cg7"/>
+    <db_xref db="PDB" dbkey="2doh"/>
+    <db_xref db="PDB" dbkey="2doi"/>
+    <db_xref db="PDB" dbkey="2fd6"/>
+    <db_xref db="PDB" dbkey="2fn2"/>
+    <db_xref db="PDB" dbkey="2hgf"/>
+    <db_xref db="PDB" dbkey="2hpp"/>
+    <db_xref db="PDB" dbkey="2hpq"/>
+    <db_xref db="PDB" dbkey="2i9a"/>
+    <db_xref db="PDB" dbkey="2i9b"/>
+    <db_xref db="PDB" dbkey="2ody"/>
+    <db_xref db="PDB" dbkey="2ovx"/>
+    <db_xref db="PDB" dbkey="2ovz"/>
+    <db_xref db="PDB" dbkey="2ow0"/>
+    <db_xref db="PDB" dbkey="2ow1"/>
+    <db_xref db="PDB" dbkey="2ow2"/>
+    <db_xref db="PDB" dbkey="2pf1"/>
+    <db_xref db="PDB" dbkey="2pf2"/>
+    <db_xref db="PDB" dbkey="2pk4"/>
+    <db_xref db="PDB" dbkey="2qj2"/>
+    <db_xref db="PDB" dbkey="2qj4"/>
+    <db_xref db="PDB" dbkey="2r2w"/>
+    <db_xref db="PDB" dbkey="2spt"/>
+    <db_xref db="PDB" dbkey="2vin"/>
+    <db_xref db="PDB" dbkey="2vio"/>
+    <db_xref db="PDB" dbkey="2vip"/>
+    <db_xref db="PDB" dbkey="2viq"/>
+    <db_xref db="PDB" dbkey="2viv"/>
+    <db_xref db="PDB" dbkey="2viw"/>
+    <db_xref db="PDB" dbkey="3bt1"/>
+    <db_xref db="PDB" dbkey="3bt2"/>
+    <db_xref db="PDB" dbkey="3e6p"/>
+    <db_xref db="PDB" dbkey="3kiv"/>
+    <db_xref db="PDB" dbkey="4kiv"/>
+    <db_xref db="PDB" dbkey="5hpg"/>
+    <db_xref db="CATH" dbkey="2.10.10.10"/>
+    <db_xref db="CATH" dbkey="2.10.25.10"/>
+    <db_xref db="CATH" dbkey="2.10.70.10"/>
+    <db_xref db="CATH" dbkey="2.40.20.10"/>
+    <db_xref db="CATH" dbkey="3.40.390.10"/>
+    <db_xref db="CATH" dbkey="3.50.4.10"/>
+    <db_xref db="CATH" dbkey="4.10.140.10"/>
+    <db_xref db="SCOP" dbkey="b.47.1.2"/>
+    <db_xref db="SCOP" dbkey="d.92.1.11"/>
+    <db_xref db="SCOP" dbkey="g.10.1.1"/>
+    <db_xref db="SCOP" dbkey="g.14.1.1"/>
+    <db_xref db="SCOP" dbkey="g.14.1.2"/>
+    <db_xref db="SCOP" dbkey="g.3.11.1"/>
+  </structure_db_links>
+  <taxonomy_distribution>
+    <taxon_data name="Eukaryota" proteins_count="923"/>
+    <taxon_data name="Nematoda" proteins_count="6"/>
+    <taxon_data name="Caenorhabditis elegans" proteins_count="6"/>
+    <taxon_data name="Arthropoda" proteins_count="42"/>
+    <taxon_data name="Fruit Fly" proteins_count="2"/>
+    <taxon_data name="Chordata" proteins_count="775"/>
+    <taxon_data name="Human" proteins_count="111"/>
+    <taxon_data name="Mouse" proteins_count="84"/>
+    <taxon_data name="Plastid Group" proteins_count="12"/>
+    <taxon_data name="Green Plants" proteins_count="12"/>
+    <taxon_data name="Metazoa" proteins_count="889"/>
+    <taxon_data name="Plastid Group" proteins_count="16"/>
+    <taxon_data name="Plastid Group" proteins_count="4"/>
+  </taxonomy_distribution>
+  <sec_list>
+    <sec_ac acc="IPR000001"/>
+    <sec_ac acc="IPR000562"/>
+  </sec_list>
+</interpro>
 <deleted_entries>
   <del_ref id="IPR000000"/>
   <del_ref id="IPR000002"/>
