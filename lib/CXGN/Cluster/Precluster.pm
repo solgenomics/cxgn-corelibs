@@ -326,8 +326,15 @@ sub _weighted_simplify_base_segments {
 
         # otherwise, remove it and expand the segments on either side
 
-        my $seg_before_bases_available = $seq_index->fetch( $seg_before->[2] )->length - $seg_before->[4];
-        my $seg_after_bases_available  = $seg_after->[3] - 1;
+        my $seg_before_bases_available =
+            $seg_before ? $seq_index->fetch( $seg_before->[2] )->length - $seg_before->[4]
+                        : 0;
+        my $seg_after_bases_available  =
+            $seg_after  ? $seg_after->[3] - 1
+                        : 0;
+
+        # if no bases are available on either side, we cannot excise this.
+        next unless  $seg_before_bases_available || $seg_after_bases_available;
 
         my ( $expand_before, $expand_after ) = do {
             no warnings 'uninitialized';
