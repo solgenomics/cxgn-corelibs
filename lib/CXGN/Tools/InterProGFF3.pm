@@ -44,6 +44,11 @@ has gff3_preamble => (
 ##feature ontology http://song.cvs.sourceforge.net/*checkout*/song/ontology/sofa.obo?revision=1.220\n",
 );
 
+has parent_list => (
+    is  => 'rw',
+    isa => 'HashRef',
+);
+
 has filename => (
     is => 'ro',
     isa => 'Str',
@@ -95,6 +100,7 @@ sub run {
                           ));
     $self->ontology( $self->parser->next_ontology );
     $self->gff3( $self->gff3_preamble );
+    $self->generate_parent_list;
     $self->convert;
     if ($self->output) {
         open my $fh, '>', $self->output;
@@ -107,20 +113,27 @@ sub run {
     return 0;
 }
 
+sub generate_parent_list {
+    my ($self) = @_;
+    my $relations = $self->ontology->{engine}->{_inverted_relationship_store} ;
+    my $parent_list = {};
+
+    while ( my ($k,$v) = each %$relations ) {
+        $parent_list->{$k} = join(',',grep { $_ =~ m/^IPR/ && $v->{$_}->name eq 'IS_A' } keys %$v);
+    }
+    $self->parent_list( $parent_list );
+}
+
 sub convert {
     my ($self) = @_;
     my @domains = $self->get_domains;
     for my $domain (@domains) {
 
         my (@relations) = $self->ontology->get_relationships($domain);
-        #warn Dumper [    map { $_->{_object_term}->{_ontology}->{engine}->{_inverted_relationship_store} } @relations ];
-        #warn Dumper [ 'domain=', $domain->identifier,
-        #    [ map { $_->subject_term->identifier } @relations ],
-        #    [ map { $_->predicate_term->name } @relations ],
-        #    [ map { $_->object_term->identifier } @relations ],
-        #];
 
         # Find all IS_A relations of this domain, excluding itself
+        # This should include parent terms, but does not. See
+        # generate_parent_list for how parents are found
         my @isa_relations = grep {
             $_->predicate_term->name eq 'IS_A' &&
             $_->object_term->identifier ne $domain->identifier
@@ -141,16 +154,17 @@ sub make_gff3_line {
 
 sub make_attribute_string {
     my ($self,$domain, $type) = @_;
-    my $fmt = 'ID=%s;Name=%s;Alias=%s;ipr_parent=%s;Note=%s;Dbxref=%s;interpro_type=%s;protein_count=%s';
+    my $fmt = 'ID=%s;Name=%s;Alias=%s;Parent=%s;Note=%s;Dbxref=%s;interpro_type=%s;protein_count=%s';
     return sprintf $fmt, map { uri_escape($_,';=%&,') } (
             $domain->identifier, $domain->name,
-            $domain->short_name, 'PARENTS', $domain->definition,
+            $domain->short_name,
+            $self->parent_list()->{$domain->identifier},
+            $domain->definition,
             ($domain->get_dbxrefs || ''), $type, $domain->protein_count);
 }
 
 sub get_domains {
     my ($self) = @_;
-    # this can be improved
     return sort { $b <=> $a } grep { $_->identifier =~ m/^IPR/ } $self->ontology->get_all_terms;
 }
 
