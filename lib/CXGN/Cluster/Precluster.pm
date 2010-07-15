@@ -284,7 +284,7 @@ sub _run_phrap {
           $phrap_exec,
           $seqs_temp,
           '-new_ace',
-          $self->_phrap_options,
+          $self->phrap_options,
           { working_dir => $assembly_dir },
          );
 
@@ -545,27 +545,32 @@ sub _make_sampled_gaussian_filter {
 }
 
 
+=head2 phrap_options
 
+Get the list of options passed to phrap to control its behavior.
 
+CURRENTLY THESE PHRAP OPTIONS ARE FOR ASSEMBLING CONTIGS OF BAC
+SEQUENCES
 
-# THESE PHRAP OPTIONS ARE FOR ASSEMBLING CONTIGS OF BAC SEQUENCES
-#
-# if we start wanting to use this module for something else,
-# you'll need to factor out these phrap options into subclasses
-# and add some kind of accessor to ClusterSet to choose what kind
-# of clusters you're making
+if we start wanting to use this module for something else, you'll need
+to factor out these phrap options into subclasses and add some kind of
+accessor to ClusterSet to choose what kind of clusters you're making
 
-sub _phrap_options {
-  (
-   -vector_bound => 0,
-   -minmatch     => 1_500,
-   -maxmatch     => 60_000,
-   -bypasslevel  => 0,
-   -repeat_stringency => .98,
-   '-force_high',
-   -node_seg     => 2_000,
-   -node_space   => 1_000,
-  )
+=cut
+
+sub phrap_options {
+    my $self = shift;
+    shift and die 'setting not yet supported';
+    return (
+        -vector_bound => 0,
+        -minmatch     => 1_500,
+        -maxmatch     => 60_000,
+        -bypasslevel  => 0,
+        -repeat_stringency => .98,
+        '-force_high',
+        -node_seg     => 2_000,
+        -node_space   => 1_000,
+       );
 }
 
 =head2 set_assembly_dir, get_assembly_dir
