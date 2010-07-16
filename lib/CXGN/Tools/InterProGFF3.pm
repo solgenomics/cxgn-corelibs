@@ -138,7 +138,7 @@ sub convert {
             $_->predicate_term->name eq 'IS_A' &&
             $_->object_term->identifier ne $domain->identifier
         } @relations;
-        my $type       = $isa_relations[0]->object_term->name;
+        my $type = @isa_relations ? $isa_relations[0]->object_term->name : '';
 
         $self->gff3( $self->gff3 . $self->make_gff3_line($domain, $type) );
     }
@@ -155,12 +155,13 @@ sub make_gff3_line {
 sub make_attribute_string {
     my ($self,$domain, $type) = @_;
     my $fmt = 'ID=%s;Name=%s;Alias=%s;Parent=%s;Note=%s;Dbxref=%s;interpro_type=%s;protein_count=%s';
+    no warnings 'uninitialized';
     return sprintf $fmt, map { uri_escape($_,';=%&,') } (
             $domain->identifier, $domain->name,
             $domain->short_name,
             $self->parent_list()->{$domain->identifier},
             $domain->definition,
-            ($domain->get_dbxrefs || ''), $type, $domain->protein_count);
+            $domain->get_dbxrefs, $type, $domain->protein_count);
 }
 
 sub get_domains {
