@@ -279,13 +279,19 @@ sub _run_phrap {
                                             'phrap';
   #warn "and thus we're using $phrap_exec\n";
 
+  $self->{phrap_out} = "$seqs_temp.stdout";
+
   $self->{phrap} =
       CXGN::Tools::Run->run(
           $phrap_exec,
           $seqs_temp,
           '-new_ace',
           $self->phrap_options,
-          { working_dir => $assembly_dir },
+          {
+              working_dir => $assembly_dir,
+              out_file => $self->{phrap_out},
+              err_file => "$seqs_temp.stderr",
+          },
          );
 
   #warn "phrap output:\n".$phrap->out;
