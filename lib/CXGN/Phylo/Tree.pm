@@ -1,10 +1,11 @@
+package CXGN::Phylo::Tree;
 
 =head1 NAME
 
 CXGN::Phylo::Tree - an object to handle trees
 
-=head1 USAG
-E
+=head1 USAGE
+
  my $tree = CXGN::Phylo::Tree->new();
  my $root = $tree->get_root();
  my $node = $root->add_child();
@@ -31,17 +32,15 @@ The tree object also provides the layout and rendering functions. The both layou
 =cut
 
 use strict;
+use warnings;
 
 use CXGN::Phylo::Node;
 use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Layout;
 use CXGN::Phylo::Renderer;
 use CXGN::Phylo::Parser;
-
 use CXGN::Phylo::Alignment;
 use CXGN::Phylo::Ortholog_group;
-
-package CXGN::Phylo::Tree;
 
 use base qw / CXGN::DB::Object / ;
 
