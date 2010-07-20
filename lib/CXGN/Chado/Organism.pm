@@ -1069,9 +1069,49 @@ sub new_with_species {
     }
     return undef;
 }
+=head2 has_avail_genome
 
+ Usage: my $o=CXGN::Chado::Organism->new()
+        my $hasgenome = $o->has_avail_genome();
+ Desc:  Return 'yes' if organism has an available genome information; 'no' otherwise.
+ Ret:   a string
+ Args:  None 
+ Side Effects:
+ Example:
 
+=cut
+sub has_avail_genome{
+    my $self= shift;
+    my $avail_genome;
 
-###
-1;#
-###
+    if (defined($self->get_ploidy()) ||defined( $self->get_genome_size()) || defined($self->get_chromosome_number())){
+        $avail_genome= 'yes';
+          } else {
+           $avail_genome= 'no';
+          }
+    return $avail_genome;
+}
+=head2 has_avail_map
+
+ Usage: my $o=CXGN::Chado::Organism->new()
+        my $hasmap = $o->has_avail_map();
+ Desc:  Return 'yes' if organism has an available map; 'no' otherwise.
+ Ret:   a string
+ Args:  None 
+ Side Effects:
+ Example:
+
+=cut
+
+sub has_avail_map{
+    my $self = shift;
+    my $avail_map;
+    if(defined($self->get_map_data())){
+       $avail_map = 'yes';
+        } else {
+         $avail_map = 'no';
+      }
+    return $avail_map;
+}
+1;
+

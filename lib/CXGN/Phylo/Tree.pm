@@ -3,8 +3,8 @@
 
 CXGN::Phylo::Tree - an object to handle trees
 
-=head1 USAGE
-
+=head1 USAG
+E
  my $tree = CXGN::Phylo::Tree->new();
  my $root = $tree->get_root();
  my $node = $root->add_child();
