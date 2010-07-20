@@ -3,7 +3,6 @@ package CXGN::Phylo::Alignment;
 use strict;
 use GD;
 use File::Temp;
-use CXGN::VHost;
 use Carp;
 use Cwd;
 use Digest::MD5 qw/md5_hex/;
@@ -254,7 +253,7 @@ sub set_tmp_dir {
 		die "Directory does not exist: $dir\n";
 	}
 	else {
-		my $vhost = CXGN::VHost->new();
+		my $vhost = SGN::Context->new();
 		$self->{tmp_dir} = $vhost->get_conf('basepath') . $vhost->get_conf('tempfiles_subdir') . '/align_viewer';
 		unless(-d $self->{tmp_dir}){
 			warn "Temporary directory does not exist: " . $self->{tmp_dir} . "; setting to current directory";
