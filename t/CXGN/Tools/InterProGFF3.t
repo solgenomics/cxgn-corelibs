@@ -63,6 +63,8 @@ sub TEST_ATTRIBUTES : Tests(18) {
                 ### todo dbxref
             }
 
+        } else {
+            ok(0, "Invalid GFF3 line!");
         }
 
     }

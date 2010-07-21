@@ -161,7 +161,7 @@ sub make_attribute_string {
             $domain->short_name,
             $self->parent_list()->{$domain->identifier},
             $domain->definition,
-            $domain->get_dbxrefs, $type, $domain->protein_count);
+            $domain->get_dbxrefs || '', $type, $domain->protein_count);
 }
 
 sub get_domains {
