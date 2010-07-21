@@ -83,8 +83,9 @@ sub hash2hiddenpost {
 			
 	my $string = "";
 	while(my($k, $v) = each %hash){
-		next unless $k;
-		$string .= "\n<input type=\"hidden\" name=\"$k\" value=\"$v\" />";
+        next unless $k;
+        $v ||= '';
+        $string .= qq{\n<input type="hidden" name="$k" value="$v" />};
 	}
 	return $string;	
 }
