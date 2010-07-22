@@ -161,7 +161,7 @@ sub make_attribute_string {
             $domain->short_name,
             $self->parent_list()->{$domain->identifier},
             $domain->definition)),
-            join(',', (map { $_->database . ':' . $_->primary_id } $domain->get_members)),
+            join(',', "INTERPRO:" . $domain->identifier, (map { $_->database . ':' . $_->primary_id } $domain->get_members)),
             $type, $domain->protein_count;
 }
 
