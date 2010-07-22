@@ -156,12 +156,13 @@ sub make_attribute_string {
     my ($self,$domain, $type) = @_;
     my $fmt = 'ID=%s;Name=%s;Alias=%s;Parent=%s;Note=%s;Dbxref=%s;interpro_type=%s;protein_count=%s';
     no warnings 'uninitialized';
-    return sprintf $fmt, map { uri_escape($_,';=%&,') } (
+    my $str = sprintf $fmt, (map { uri_escape($_,';=%&,') } (
             $domain->identifier, $domain->name,
             $domain->short_name,
             $self->parent_list()->{$domain->identifier},
-            $domain->definition,
-            $domain->get_dbxrefs || '', $type, $domain->protein_count);
+            $domain->definition)),
+            join(',', (map { $_->database . ':' . $_->primary_id } $domain->get_members)) || '',
+            $type, $domain->protein_count;
 }
 
 sub get_domains {
