@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use base 'Test::Class';
-use Test::More tests => 30;
+use Test::More tests => 31;
 use File::Slurp qw/slurp/;
 
 BEGIN { use_ok("CXGN::Tools::InterProGFF3") }
@@ -60,7 +60,7 @@ sub TEST_ATTRIBUTES : Tests(18) {
                 is($parent,'IPR013806','IPR00001.parent');
                 like($note,qr/Kringles are autonomous structural domains/, 'IPR000001.note');
                 is($type,'Domain', 'IPR000001.type');
-                ### todo dbxref
+                is($dbxref,'INTERPRO:IPR000001,PFAM:PF00051,PROFILE:PS50070,SMART:SM00130,GENE3D:G3DSA:2.40.20.10');
             }
 
         } else {
