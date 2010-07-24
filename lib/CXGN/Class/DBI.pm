@@ -214,10 +214,7 @@ sub make_DBH {
 	print STDERR "# $class is making a DBH\n" if $CXGN::Class::Exporter::VERBOSE;
 	
 	eval "require $DB_CLASS";
-	my $prior = $DB_CLASS->verbose(); 
-	$DB_CLASS->verbose($class->verbose());
 	my $DBH = $DB_CLASS->new($DB_PARAM);
-	$DB_CLASS->verbose($prior);
 	
 	%{$class."::SQL_PREPARED_STATEMENTS"} = ();
 
