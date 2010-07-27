@@ -1019,8 +1019,17 @@ sub get_organism_by_species {
 sub get_organism_by_tax {
     my $self=shift;
     my $taxon=shift;
-    my ($cvterm) = $self->get_resultset("Cv::Cvterm")->find( { name => $taxon } );
-    if ($cvterm) {
+    my $cvterm = $self
+        ->get_resultset("Cv::Cv")
+        ->search({ 'me.name' => 'taxonomy'})
+        ->search_related('cvterms', {
+            'cvterms.name'   => $taxon,
+            is_obsolete => 0,
+          })
+        ->single;
+
+    if( $cvterm ) {
+
 	my $type_id = $cvterm->get_column('cvterm_id');
 
 	my ($self_phylonode)= $self->get_resultset("Phylogeny::PhylonodeOrganism")->search(
@@ -1037,9 +1046,10 @@ sub get_organism_by_tax {
 
 		return $organism || undef ;
 	    }
-	}else { warn("NO PHYLONODE stored for organism " . $self->get_abbreviation() . "\n");  }
-    }else {  warn("NO CVTERM FOUND for term '$taxon'!! Check your database\n"); }
-    return undef;
+	} else { warn("NO PHYLONODE stored for organism " . $self->get_abbreviation() . "\n");  }
+    } else {  warn("NO CVTERM FOUND for term '$taxon'!! Check your database\n"); }
+
+    return;
 }
 
 =head2 new_with_species
