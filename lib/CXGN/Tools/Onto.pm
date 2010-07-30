@@ -1,16 +1,17 @@
+package CXGN::Tools::Onto;
+
 use strict;
+use warnings;
+
 use CXGN::Scrap;
 use CXGN::Page;
 
-package CXGN::Tools::Onto;
 
-sub new { 
+sub new {
     my $class = shift;
     my $ajax = shift;
     my $self = bless {}, $class;
-    
-#    my $ajax = CXGN::Page->new();
-    
+
     $ajax->jsan_use('MochiKit.DOM');
     $ajax->jsan_use('MochiKit.Visual');
     $ajax->jsan_use('MochiKit.Async');
@@ -24,19 +25,6 @@ sub new {
 
 sub browse { 
     my $self = shift;
-
-    
-    #$self->jsan_includes();
-    
-   
-# 	    <div id="ontology_browser_input" >    
-#     </div>
-# 	    <div id="ontology_term_input" >    
-#      </div>
-#     <div id="ontology_browser" >
-# 	&nbsp;
-    
-#     </div>
 	
  print <<HTML;
 	<script language="javascript" type="text/javascript"  >
@@ -126,18 +114,6 @@ sub term_selection_browse {
     my $self = shift;
     my $link_to_textfield = shift;
     
-    #$self->jsan_includes();
-    
-#     print <<HTML;
-# 	    <div id="ontology_browser_input" >    
-#     </div>
-# 	    <div id="ontology_term_input" >    
-#      </div>
-#     <div id="ontology_browser" >
-# 	&nbsp;
-    
-#     </div>
-
     print <<HTML;
 
 	<script language="javascript" type="text/javascript"  >
@@ -162,4 +138,4 @@ HTML
 
 }
 
-return 1;
+1;
