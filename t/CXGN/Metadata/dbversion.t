@@ -18,9 +18,11 @@
  prove Dbversion.t
 
  this test need some environment variables:
-    export GEMTEST_METALOADER= 'metaloader user'
-    export GEMTEST_DBUSER= 'database user with insert permissions'
-    export GEMTEST_DBPASS= 'database password'
+
+   export METADATA_TEST_METALOADER= 'metaloader user'
+   export METADATA_TEST_DBDSN= 'database dsn as: dbi:DriverName:database=database_name;host=hostname;port=port'
+   export METADATA_TEST_DBUSER= 'database user with insert permissions'
+   export METADATA_TEST_DBPASS= 'database password'
 
  also is recommendable set the reset dbseq after run the script
     export RESET_DBSEQ=1
@@ -32,7 +34,7 @@
 
 =head1 DESCRIPTION
 
- This script check XX variables to test the right operation of the 
+ This script check 33 variables to test the right operation of the 
  CXGN::Metadata::DBipath module:
 
  + Test from 1 to 3 - use modules.
@@ -57,11 +59,49 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Test::More  tests => 33; #qw | no_plan |; # while developing the tests
+use Test::More; #qw | no_plan |; # while developing the tests
 use Test::Exception;
 
 use CXGN::DB::Connection;
-use CXGN::DB::DBICFactory;
+
+## The tests still need search_path
+
+my @schema_list = ('metadata', 'public');
+my $schema_list = join(',', @schema_list);
+my $set_path = "SET search_path TO $schema_list";
+
+## First check env. variables and connection
+
+BEGIN {
+
+    ## Env. variables have been changed to use biosource specific ones
+
+    my @env_variables = qw/METADATA_TEST_METALOADER METADATA_TEST_DBDSN METADATA_TEST_DBUSER METADATA_TEST_DBPASS/;
+
+    ## RESET_DBSEQ is an optional env. variable, it doesn't need to check it
+
+    for my $env (@env_variables) {
+        unless (defined $ENV{$env}) {
+            plan skip_all => "Environment variable $env not set, aborting";
+        }
+    }
+
+    eval { 
+        CXGN::DB::Connection->new( 
+                                   $ENV{METADATA_TEST_DBDSN}, 
+                                   $ENV{METADATA_TEST_DBUSER}, 
+                                   $ENV{METADATA_TEST_DBPASS}, 
+                                   {on_connect_do => $set_path}
+                                 ); 
+    };
+
+    if ($@ =~ m/DBI connect/) {
+
+        plan skip_all => "Could not connect to database";
+    }
+
+    plan tests => 33;
+}
 
 BEGIN {
     use_ok('CXGN::Metadata::Schema');               ## TEST1
@@ -69,13 +109,6 @@ BEGIN {
     use_ok('CXGN::Metadata::Metadbdata');           ## TEST3
 }
 
-## Check the environment variables
-my @env_variables = ('GEMTEST_METALOADER', 'GEMTEST_DBUSER', 'GEMTEST_DBPASS', 'RESET_DBSEQ');
-foreach my $env (@env_variables) {
-    unless ($ENV{$env} =~ m/^\w+/) {
-	print STDERR "ENVIRONMENT VARIABLE WARNING: Environment variable $env was not set for this test. Use perldoc for more info.\n";
-    }
-}
 
 #if we cannot load the CXGN::Metadata::Schema module, no point in continuing
 CXGN::Metadata::Schema->can('connect')
@@ -83,34 +116,24 @@ CXGN::Metadata::Schema->can('connect')
 
 ## Prespecified variable
 
-my $metadata_creation_user = $ENV{GEMTEST_METALOADER};
+my $metadata_creation_user = $ENV{METADATA_TEST_METALOADER};
 
-## The triggers need to set the search path to tsearch2 in the version of psql 8.1
-my $psqlv = `psql --version`;
-chomp($psqlv);
+## The biosource schema contain all the metadata classes so don't need to create another Metadata schema
+## CXGN::DB::DBICFactory is obsolete, it has been replaced by CXGN::Metadata::Schema
 
-my @schema_list = ('metadata', 'public');
-if ($psqlv =~ /8\.1/) {
-    push @schema_list, 'tsearch2';
-}
+my $schema = CXGN::Metadata::Schema->connect( $ENV{METADATA_TEST_DBDSN}, 
+                                               $ENV{METADATA_TEST_DBUSER}, 
+                                               $ENV{METADATA_TEST_DBPASS}, 
+                                               {on_connect_do => $set_path});
 
-my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::Metadata::Schema', 
-                                                 search_path => \@schema_list, 
-                                                 dbconn_args => 
-                                                                { 
-                                                                    dbuser => $ENV{GEMTEST_DBUSER},
-                                                                    dbpass => $ENV{GEMTEST_DBPASS},
-                                                                }
-                                               );
 
 $schema->txn_begin();
 
 
 ## Get the last values
-my $all_last_ids_href = $schema->get_all_last_ids($schema);
-my %last_ids = %{$all_last_ids_href};
-my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'};
-my $last_dbversion_id = $last_ids{'metadata.md_dbversion_dbversion_id_seq'};
+my %last_ids = $schema->get_last_id();
+my $last_metadata_id = $last_ids{'md_metadata_metadata_id_seq'};
+my $last_dbversion_id = $last_ids{'md_dbversion_dbversion_id_seq'};
 
 ## Create a empty metadata object to use in the database store functions
 my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $metadata_creation_user);
@@ -367,5 +390,5 @@ $schema->txn_rollback();
        ##   more as the option 2 
 
 if ($ENV{RESET_DBSEQ}) {
-    $schema->set_sqlseq_values_to_original_state(\%last_ids);
+    $schema->set_sqlseq(\%last_ids);
 }

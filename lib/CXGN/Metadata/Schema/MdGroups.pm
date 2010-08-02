@@ -11,7 +11,7 @@ __PACKAGE__->add_columns(
   "group_id",
   {
     data_type => "bigint",
-    default_value => "nextval('metadata.md_groups_group_id_seq'::regclass)",
+    default_value => "nextval('md_groups_group_id_seq'::regclass)",
     is_nullable => 0,
     size => 8,
   },

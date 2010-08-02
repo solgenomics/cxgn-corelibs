@@ -54,24 +54,31 @@ __PACKAGE__->load_classes;
 
 
 
-=head2 get_all_last_ids
+=head2 get_last_id
 
-  Usage: my $all_last_ids_href = $schema->get_all_last_ids();
+  Usage: my %last_id = $schema->get_last_id();
+         my $last_table_id = $schema->get_last_id($tableseq_name)
  
   Desc: Get all the last ids and store then in an hash reference for a specified schema
  
   Ret: $all_last_ids_href, a hash reference with keys = SQL_sequence_name and value = last_value
  
   Args: $schema, a CXGN::SEDM::Schema object
+        $tableseq_name, a scalar, name of the sequence
  
   Side Effects: If the seq name don't have the schema name (schema.sequence_seq) is ignored 
  
-  Example: my $all_last_ids_href = $schema->get_all_last_ids();
+  Example: my %last_id = $schema->get_last_id();
+           my $last_table_id = $schema->get_last_id($tableseq_name)
 
 =cut
 
-sub get_all_last_ids {
-    my $schema = shift || die("None argument was supplied to the subroutine get_all_last_ids()");
+sub get_last_id {
+    my $schema = shift 
+	|| die("None argument was supplied to the subroutine get_all_last_ids()");
+    
+    my $sqlseq = shift;
+
     my %last_ids;
     my @source_names = $schema->sources();
     foreach my $source_name (@source_names) {
@@ -84,7 +91,8 @@ sub get_all_last_ids {
 
         my $seq_name;
         if (defined $primary_key_col_info) {
-            if ($primary_key_col_info =~ m/\'(\w+\..*?_seq)\'/) {
+
+            if ($primary_key_col_info =~ m/\'(.+?_seq)\'/) {
                 $seq_name = $1;
             }
         } 
@@ -95,12 +103,18 @@ sub get_all_last_ids {
             $last_ids{$seq_name} = $last_value || 0;
         }
     }
-    return \%last_ids;
+
+    if (defined $sqlseq) {
+	return $last_ids{$sqlseq};
+    }
+    else {
+	return %last_ids;
+    }
 }
 
-=head2 set_sqlseq_values_to_original_state
+=head2 set_sqlseq
 
-  Usage: $schema->set_sqlseq_values_to_original_state($seqvalues_href);
+  Usage: $schema->set_sqlseq($seqvalues_href);
  
   Desc: set the sequence values to the values specified in the $seqvalues_href
  
@@ -112,13 +126,15 @@ sub get_all_last_ids {
  
   Side Effects: If value to set is undef set value to the first seq
  
-  Example: $schema->set_sqlseq_values_to_original_state($seqvalues_href, 1);
+  Example: $schema->set_sqlseq($seqvalues_href, 1);
 
 =cut
 
-sub set_sqlseq_values_to_original_state {
-    my $schema = shift || die("None argument was supplied to the subroutine set_sqlseq_values_to_original_state().\n");
-    my $seqvalues_href = shift || die("None argument was supplied to the subroutine set_sqlseq_values_to_original_state().\n");
+sub set_sqlseq {
+    my $schema = shift 
+	|| die("None argument was supplied to the subroutine set_sqlseq_values_to_original_state().\n");
+    my $seqvalues_href = shift 
+	|| die("None argument was supplied to the subroutine set_sqlseq_values_to_original_state().\n");
     my $on_message = shift;  ## To enable messages
 
     my %seqvalues = %{ $seqvalues_href };
