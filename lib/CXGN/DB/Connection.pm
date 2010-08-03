@@ -6,6 +6,7 @@ use Carp qw/cluck croak carp confess/;
 use DBI;
 
 use Scalar::Util ();
+use List::MoreUtils qw/ any /;
 use CXGN::Debug  ();
 
 use base qw/Class::Accessor::Fast/;
@@ -218,7 +219,7 @@ sub new_no_connect {
   }
 
   my $autocommit_default = 0;
-  if( defined $ENV{MOD_PERL} ) {
+  if( any { defined $ENV{$_} } qw| MOD_PERL GATEWAY_INTERFACE CATALYST_ENGINE | ) {
       $autocommit_default = 1; #if we are running in the website, run with autocommit on. otherwise, don't
   }
 
