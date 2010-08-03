@@ -1,4 +1,3 @@
-
 =head1 NAME
 
 CXGN::Chado::Organism - a class to create and manipulate Chado organism objects.
@@ -14,16 +13,10 @@ Naama Menda <nm249@cornell.edu>
 
 =cut
 
-
-
+package CXGN::Chado::Organism ;
 use strict;
 use warnings;
-
-package CXGN::Chado::Organism ; #
-
-
 use Carp;
-use CXGN::DB::DBICFactory;
 
 use base qw / CXGN::DB::Object / ;
 
@@ -32,8 +25,7 @@ use base qw / CXGN::DB::Object / ;
   Usage: my $organism = CXGN::Chado::Organism->new($schema, $organism_id);
   Desc:
   Ret: a CXGN::Chado::Organism object
-  Args: a $schema a schema object, preferentially created using:
-        Bio::Chado::Schema->connect( sub{ CXGN::DB::Connection->new()->get_actual_dbh()}, %other_parameters);
+  Args: a $schema a schema object,
         $organism_id, if $organism_id is omitted, an empty metadata object is created.
   Side_Effects: accesses the database, check if exists the database columns that this object use. die if the id is not an integer.
 
@@ -666,24 +658,18 @@ sub get_resultset {
  Usage:  my $organism = CXGN::Chado::Organism->new_with_taxon_id($dbh, $gb_taxon_id)
  Desc:   create a new organism object using genbank taxon_id instead of organism_id
  Ret:    a new organism object
- Args:
+ Args:   a dbh or a dbic schema object
  Side Effects: creates a new Bio::Chado::Schema object
  Example:
 
 =cut
 
 sub new_with_taxon_id {
-    my $class = shift;
+    my $class  = shift;
     my $schema = shift;
 
-    #this is for old-stype objects having only a dbh (See CXGN::Chado::Feature)
-    if ( $schema->isa("CXGN::DB::Connection")) { # it's a DBI object
-	my $dbh=$schema;
-	require Bio::Chado::Schema;
-	$schema= Bio::Chado::Schema->connect(  sub { $dbh->get_actual_dbh() },
-					  { on_connect_do => ['SET search_path TO public'],
-					  },);
-    }
+    $schema = $class->_ensure_dbic( $schema );
+
     my $taxon_id = shift;
 
     my ($organism)= $schema->resultset("General::Db")->search(
@@ -695,6 +681,19 @@ sub new_with_taxon_id {
 	return CXGN::Chado::Organism->new($schema, $organism->get_column('organism_id') );
     }
     return undef;
+}
+
+sub _ensure_dbic {
+    my ($self,$dbh) = @_;
+
+    return $dbh if $dbh->can('resultset');
+
+    require Bio::Chado::Schema;
+    return Bio::Chado::Schema->connect(
+        $dbh->get_connection_parameters,
+        { on_connect_do => ['SET search_path TO public'] },
+      );
+
 }
 
 
@@ -742,15 +741,8 @@ sub new_with_common_name {
     my $self = shift;
     my $schema = shift;
     my $common_name = shift;
-    #this is for old-stype objects having only a dbh (See CXGN::Chado::Feature)
-    if ( $schema->isa("CXGN::DB::Connection")) { # it's a DBI object
 
-	$schema = CXGN::DB::DBICFactory
-	    ->open_schema( 'Bio::Chado::Schema',
-			   search_path => ['public'],
-	    );
-
-    }
+    $schema = $self->_ensure_dbic( $schema );
 
     my ($organism)= $schema->resultset("Cv::Cvterm")->search(
 	{  name      =>  'common_name' }) ->
