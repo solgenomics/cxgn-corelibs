@@ -66,11 +66,11 @@ sub new {
     if (ref($param)) { 
 	if ( $param->can('prepare') && $param->can('selectall_arrayref') ) { # it's a DBI handle of some sort
 	    $self->d("Received a dbh and setting the dbh...\n");
-	    $self->set_dbh($param);
+	    $self->set_dbh( $param );
 	}
 	elsif ($param->isa("DBIx::Class::Schema"))  {
-	    $self->set_schema($param);
-	    $self->set_dbh($param->storage()->dbh());
+	    $self->set_schema( $param );
+	    $self->set_dbh( $param->storage->dbh->clone );
 	    $self->d("Received a Schema class and setting the schema...\n");
 	}
 	else {
