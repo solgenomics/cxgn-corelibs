@@ -519,9 +519,7 @@ sub _do_search {
   unless($count_only) {
     ### execute the DB query ###
     my $sth;
-    our $dbconn;
-    $dbconn = undef if $ENV{MOD_PERL};
-    $dbconn ||= CXGN::DB::Connection->new;
+    my $dbconn = CXGN::DB::Connection->new;
     eval {
       my $oldpe = $dbconn->dbh_param('PrintError');
       $dbconn->dbh_param('PrintError',0);
@@ -587,9 +585,7 @@ sub _searchresult_cache_add {
     my $count;
     unless( defined($count=$countcache{$cachekey}) ) {
       my $btime = time();
-      our $dbconn;
-      $dbconn = undef if $ENV{MOD_PERL};
-      $dbconn ||= CXGN::DB::Connection->new;
+      my $dbconn = CXGN::DB::Connection->new;
       eval {
 	my $oldpe = $dbconn->dbh_param('PrintError');
 	$dbconn->dbh_param('PrintError',0);
