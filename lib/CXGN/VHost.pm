@@ -31,10 +31,6 @@ being read from CXGN::VHost should be passed in via mandatory
 arguments to new(), or similar.
 EOM
 
-after 'new' => sub { croak <<EOM unless $ENV{MOD_PERL} || $ENV{CATALYST_ENGINE} || $ENV{GATEWAY_INTERFACE} };
-CXGN::VHost is not available for use outside of code running under the SGN website.
-EOM
-
 # backwards-compatibility methods
 around 'get_conf' => sub {
     my $orig = shift;
