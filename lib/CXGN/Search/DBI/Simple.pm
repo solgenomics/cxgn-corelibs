@@ -531,8 +531,8 @@ sub _do_search {
       $sth->execute(@bindvals);
 
       $dbconn->dbh_param('PrintError',$oldpe);
-    }; if($EVAL_ERROR) {
-      croak 'Error executing generated SQL (DBI said: \''.$dbconn->errstr.'\')';
+    }; if( $EVAL_ERROR ) {
+      croak 'Error executing generated SQL (DBI error: \''.$dbconn->errstr."') (SQL: $data_query $lim_sql)";
     }
 
     foreach my $row (@{$sth->fetchall_arrayref}) {
