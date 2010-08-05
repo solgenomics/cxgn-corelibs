@@ -27,8 +27,8 @@ use CXGN::Page::FormattingHelpers qw /simple_selectbox_html
     /;
 
 my $dbh = CXGN::DB::Connection->new();
-my $s = $dbh->qualify_schema("insitu");
-my $p = $dbh->qualify_schema("sgn_people");
+my $s = 'insitu';
+my $p = 'sgn_people';
 
 #__PACKAGE__->selects_data("$s.experiment.name", "$s.experiment.tissue", "$s.experiment.stage", "$s.experiment.description", "$s.primer.name", "$s.primer.clone", "$s.image.name", "$s.image.description", "$p.sp_person.last_name", "$p.sp_person.first_name");
 
