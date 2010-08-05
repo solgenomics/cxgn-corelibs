@@ -37,6 +37,9 @@ This class implements the following methods:
 package CXGN::People::Person;
 
 use strict;
+use Carp;
+use Scalar::Util qw/blessed/;
+use namespace::autoclean;
 
 #use CXGN::Class::DBI;
 
@@ -89,6 +92,7 @@ sub get_curators {
 sub new {
     my $class=shift;
     my $dbh = shift;
+    confess "first param must be a dbh" unless blessed($dbh) &&  $dbh->can('selectall_arrayref');
     my $person_id = shift;
     my $self = CXGN::People::Login->new($dbh, $person_id);
 	bless $self, $class;
