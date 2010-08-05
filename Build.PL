@@ -12,7 +12,7 @@ my $build = Module::Build->new(
     recursive_test_files => 1,
 
     requires => {
-        'perl'                                    => '5.6.1',
+        'perl'                                    => '5.10',
 #         'Apache2::CmdParms' => 0,
 #         'Apache2::Connection' => 0,
 #         'Apache2::Const' => 0,
