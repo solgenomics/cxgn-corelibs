@@ -11,7 +11,7 @@ sub new {
     if (!$dbh) { 
 	die "CXGN::Insitu::DB: need a database handle";
     }
-    if (ref($dbh) ne "CXGN::DB::Connection") { 
+    unless( ref($dbh) && $dbh->can('selectall_arrayref') ) {
 	die "Need a database handle as argument!\n";
     }
     my $self = bless {}, $class;
