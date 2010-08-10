@@ -77,7 +77,7 @@ has source => (
 has term_type => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'SO:0000417',
+    default => 'polypeptide_domain',
 );
 
 has gff3 => (
@@ -152,16 +152,21 @@ sub make_gff3_line {
                     0, 0, qw/. . ./, $self->make_attribute_string($domain, $type);
 }
 
+sub escape_gff {
+    my ($self, $data) = @_;
+    return uri_escape ($data, ';=%&,');
+}
+
 sub make_attribute_string {
     my ($self,$domain, $type) = @_;
     my $fmt = 'ID=%s;Name=%s;Alias=%s;Parent=%s;Note=%s;Dbxref=%s;interpro_type=%s;protein_count=%s';
     no warnings 'uninitialized';
 
     return sprintf $fmt, (
-            $domain->identifier, $domain->name,
-            $domain->short_name,
+            $domain->identifier, $self->escape_gff($domain->name),
+            $self->escape_gff($domain->short_name),
             $self->parent_list()->{$domain->identifier},
-            uri_escape ( $domain->definition, ';=%&,' ),
+            $self->escape_gff( $domain->definition),
             join(',', "INTERPRO:" . $domain->identifier, (map { $_->database . ':' . $_->primary_id } $domain->get_members)),
             $type, $domain->protein_count);
 }

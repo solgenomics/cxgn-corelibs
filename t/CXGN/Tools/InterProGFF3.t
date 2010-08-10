@@ -30,7 +30,7 @@ sub TEST_BASIC : Tests(5) {
     like($file, qr/^##feature-ontology /m, 'GFF3 feature ontology directive');
 }
 
-sub TEST_ATTRIBUTES : Tests(18) {
+sub TEST_ATTRIBUTES : Tests(19) {
     my $self = shift;
     my $file = $self->{file};
     for my $line (split '\n', $file ) {
@@ -55,8 +55,8 @@ sub TEST_ATTRIBUTES : Tests(18) {
             # Verify all data for one term
             if( $seqid eq 'IPR000001') {
                 is($protein_count,655,'IPR000001 protein count');
-                is($name,'Kringle','IPR00001.name');
-                is($alias,'Kringle','IPR00001.alias');
+                is($name,'Kringle',"IPR00001.name : $name ?= Kringle");
+                is($alias,'Kringle',"IPR00001.alias : $alias ?= Kringle");
                 is($parent,'IPR013806','IPR00001.parent');
                 like($note,qr/Kringles are autonomous structural domains/, 'IPR000001.note');
                 is($type,'Domain', 'IPR000001.type');
