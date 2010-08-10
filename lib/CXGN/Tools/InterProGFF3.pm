@@ -41,7 +41,7 @@ has gff3_preamble => (
     is  => 'ro',
     isa => 'Str',
     default => "##gff-version 3
-##feature ontology http://song.cvs.sourceforge.net/*checkout*/song/ontology/sofa.obo?revision=1.220\n",
+##feature-ontology http://song.cvs.sourceforge.net/*checkout*/song/ontology/sofa.obo?revision=1.220\n",
 );
 
 has parent_list => (

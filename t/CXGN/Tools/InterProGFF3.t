@@ -27,7 +27,7 @@ sub TEST_BASIC : Tests(5) {
     ok(-s 't/data/interpro.gff3','GFF3 file is not empty');
     my $file = $self->{file};
     like($file, qr/^##gff-version 3/, 'GFF3 version string');
-    like($file, qr/^##feature ontology /m, 'GFF3 feature ontology directive');
+    like($file, qr/^##feature-ontology /m, 'GFF3 feature ontology directive');
 }
 
 sub TEST_ATTRIBUTES : Tests(18) {
