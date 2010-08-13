@@ -385,6 +385,7 @@ sub get_image_tag {
     my $self= shift;
     my $image_url = $self->get_image_url();
     my $usemap = $self->get_map_name();
+    no warnings 'uninitialized';
     return qq{ <img src="$image_url" border="0" usemap="#$usemap" />\n };
 }
 
