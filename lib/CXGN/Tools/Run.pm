@@ -865,7 +865,7 @@ sub tempdir {
  				    CLEANUP => 0, #don't delete our kids' tempfiles
  				   );
   -d $newtemp and -w $newtemp
-    or die __PACKAGE__.": Could not make temp dir in ".__PACKAGE__->temp_base().": $!";
+    or die __PACKAGE__.": Could not make temp dir in $temp_stem/$job_name-XXXXXX: $!";
 
   $self->{tempdir} = $newtemp;
   dbp "Made new temp dir $newtemp\n";
