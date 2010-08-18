@@ -1,3 +1,5 @@
+package CXGN::People::Login;
+
 =head1 NAME
 
 CXGN::People::Login - a class that deals with user metadata for logins.
@@ -26,17 +28,14 @@ L<CXGN::Login>, L<CXGN::People::Person>
 
 =cut
 
-package CXGN::People::Login;
 
 use strict;
 
 use CXGN::DB::Connection;
-#use CXGN::Class::DBI;
+
 our $EXCHANGE_DBH = 1;
 
 use base qw | CXGN::DB::Object |;
-#use base qw /CXGN::Class::DBI/;
-
 
 =head1 CONSTRUCTORS
 
@@ -52,17 +51,16 @@ use base qw | CXGN::DB::Object |;
 
 sub new {
     my $class = shift;
-    my $dbh = shift;
-    my $id = shift;
-    my $self = $class->SUPER::new($dbh);
+    my $dbh   = shift;
+    my $id    = shift;
+    my $self  = $class->SUPER::new($dbh);
     $self->set_sql();
     if ($id) {
-	$self->set_sp_person_id($id);
-        $self->sp_login_fetch(); 
+        $self->set_sp_person_id($id);
+        $self->sp_login_fetch();
     }
     return $self;
 }
-
 
 =head2 construtor get_login()
 
@@ -77,19 +75,19 @@ sub new {
 
 sub get_login {
 
-    # alternate constructor generating an sgn_people object when given a username
+   # alternate constructor generating an sgn_people object when given a username
     my $class    = shift;
     my $dbh      = shift;
     my $username = shift;
 
-    my $sp       = CXGN::People::Login->new($dbh);
-    unless($sp){return undef;}
+    my $sp = CXGN::People::Login->new($dbh);
+    unless ($sp) { return undef; }
     chomp($username);
-    my $sth   = $sp->get_sql('get_login');
+    my $sth = $sp->get_sql('get_login');
     $sth->execute($username);
-	 my ($sp_person_id) = $sth->fetchrow_array();
+    my ($sp_person_id) = $sth->fetchrow_array();
 
-    my $self = CXGN::People::Login->new($dbh, $sp_person_id);
+    my $self = CXGN::People::Login->new( $dbh, $sp_person_id );
     return $self;
 }
 
@@ -100,8 +98,8 @@ Used internally to populate the object from the database.
 =cut
 
 sub sp_login_fetch {
-    my $self  = shift;
-    my $sth = $self->get_sql('fetch');
+    my $self = shift;
+    my $sth  = $self->get_sql('fetch');
     $sth->execute( $self->get_sp_person_id() );
 
     my $hashref = $sth->fetchrow_hashref();
@@ -109,7 +107,6 @@ sub sp_login_fetch {
         $self->{$k} = $$hashref{$k};
     }
 }
-
 
 =head2 function store
 
@@ -125,13 +122,12 @@ sub sp_login_fetch {
 sub store {
 
 # store updates the record if an id is defined, or inserts a new row if $id is undefined.
-    my $self = shift;
-    my $action='';
-    #print STDERR "Preparing to store.\n";
+    my $self   = shift;
+    my $action = '';
     if ( $self->get_sp_person_id() ) {
-        $action='updated';
-        #print STDERR "Updating login record.\n";
-	$self->get_dbh->do( <<EOQ, undef,
+        $action = 'updated';
+        $self->get_dbh->do(
+            <<EOQ, undef,
                            UPDATE sgn_people.sp_person
                            SET   username      = ?
                                , private_email = ?
@@ -143,35 +139,34 @@ sub store {
                            WHERE
                                sp_person_id = ?
 EOQ
-                           $self->get_username,
-                           $self->get_private_email,
-                           $self->get_pending_email,
-                           $self->get_password,
-                           $self->get_confirm_code,
-                           $self->get_disabled,
-                           $self->get_user_type,
-                           $self->get_sp_person_id,
-                          );
+            $self->get_username,
+            $self->get_private_email,
+            $self->get_pending_email,
+            $self->get_password,
+            $self->get_confirm_code,
+            $self->get_disabled,
+            $self->get_user_type,
+            $self->get_sp_person_id,
+        );
 
     }
     else {
-        $action='inserted';
-        #print STDERR "Adding new login record...\n";
-        my $un=$self->get_username();
-        my $prive=$self->get_private_email();
-        my $pende=$self->get_pending_email();
-        my $pwd=$self->get_password();
-        my $cc=$self->get_confirm_code();
-        my $dsa=$self->get_disabled();
-        my $ut=$self->get_user_type();
-        my $fn='<a href="/solpeople/contact-info.pl">[click to update]</a>';
-        my $ln='<a href="/solpeople/contact-info.pl">[click to update]</a>';
+        $action = 'inserted';
+
+        my $un    = $self->get_username();
+        my $prive = $self->get_private_email();
+        my $pende = $self->get_pending_email();
+        my $pwd   = $self->get_password();
+        my $cc    = $self->get_confirm_code();
+        my $dsa   = $self->get_disabled();
+        my $ut    = $self->get_user_type();
+        my $fn  = '<a href="/solpeople/contact-info.pl">[click to update]</a>';
+        my $ln  = '<a href="/solpeople/contact-info.pl">[click to update]</a>';
         my $sth = $self->get_sql("insert");
-#		my $DBH = $self->DBH();
-        #print STDERR "Preparing to execute login insert\n";
-        $sth->execute($un,$prive,$pende,$pwd,$cc,$dsa,$ut,$fn,$ln);
-        my $person_id=$self->get_dbh()->last_insert_id('sp_person','sgn_people');
-        #print STDERR "Executed login insert";
+
+        $sth->execute( $un, $prive, $pende, $pwd, $cc, $dsa, $ut, $fn, $ln );
+        my $person_id =
+          $self->get_dbh()->last_insert_id( 'sp_person', 'sgn_people' );
         $self->{sp_person_id} = $person_id;
     }
     return 1;
@@ -192,9 +187,9 @@ sub get_sp_person_id {
     return $self->{sp_person_id};
 }
 
-sub set_sp_person_id { 
-    my $self =shift;
-    $self->{sp_person_id}=shift;
+sub set_sp_person_id {
+    my $self = shift;
+    $self->{sp_person_id} = shift;
 }
 
 =head2 function get_password()
@@ -304,8 +299,6 @@ sub set_pending_email {
 
 =cut
 
-
-
 sub set_confirm_code {
     my $self = shift;
     $self->{confirm_code} = shift;
@@ -353,10 +346,11 @@ sub get_disabled {
 
 sub get_user_type {
     my $self = shift;
-    if (exists ($self->{user_type})) {
-	return $self->{user_type};
-    } else {
-	return "user";
+    if ( exists( $self->{user_type} ) ) {
+        return $self->{user_type};
+    }
+    else {
+        return "user";
     }
 }
 
@@ -365,14 +359,14 @@ sub set_user_type {
     $self->{user_type} = shift;
 }
 
-sub set_sql { 
+sub set_sql {
     my $self = shift;
 
     $self->{queries} = {
 
-	fetch =>
+        fetch =>
 
-		"
+          "
 			SELECT 
 				sp_person_id, username, private_email, pending_email, 
 				password, confirm_code, disabled, user_type 
@@ -380,9 +374,9 @@ sub set_sql {
 			WHERE sp_person_id=?
 		",
 
-	insert =>
+        insert =>
 
-		"
+          "
             INSERT into sgn_people.sp_person 
             (
                 username, 
@@ -398,37 +392,35 @@ sub set_sql {
             VALUES (?,?,?,?,?,?,?,?,?)
         ",
 
-	get_login =>
+        get_login =>
 
-		"
+          "
 			SELECT sp_person_id 
 			FROM sgn_people.sp_person 
 			WHERE username ilike ?
 		",
-	
-	user_from_cookie =>
 
-		"
+        user_from_cookie =>
+
+          "
 			SELECT sp_person_id
 			FROM sgn_people.sp_person
 			WHERE cookie_string=?
 		",
 
-	};
+    };
 
-	while(my($name,$sql) = each %{$self->{queries}}){
-		$self->{query_handles}->{$name} = $self->get_dbh()->prepare($sql);
-	}
+    while ( my ( $name, $sql ) = each %{ $self->{queries} } ) {
+        $self->{query_handles}->{$name} = $self->get_dbh()->prepare($sql);
+    }
 }
 
-sub get_sql { 
-    my $self =shift;
+sub get_sql {
+    my $self = shift;
     my $name = shift;
     return $self->{query_handles}->{$name};
 }
 
-
-
 ###
-1;#do not remove
+1;    #do not remove
 ###
