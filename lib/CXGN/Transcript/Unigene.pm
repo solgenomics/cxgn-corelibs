@@ -1,3 +1,4 @@
+package CXGN::Transcript::Unigene;
 
 =head1 NAME
 
@@ -24,13 +25,10 @@ This class implements the following functions:
 =cut
 
 use strict;
-
-package CXGN::Transcript::Unigene;
-
+use warnings;
 use Carp;
 
 use CXGN::DB::Object;
-use CXGN::Tools::File qw /file_contents/;
 use CXGN::Tools::WebImageCache;
 use CXGN::Unigene::Tools;
 use CXGN::Transcript::CDS;
@@ -1468,13 +1466,6 @@ sub get_unigene_member_image {
 	    }
 	    close IMAGE_PROGRAM
 		or CXGN::Apache::Error::notify('failed to display unigene alignment image',"Non-zero exit code from unigene alignment imaging program $image_program ($?)");
-#	    my $map;
-#	    eval {
-	#	$map = file_contents($map_fullpath)
-	#	};
-	 #   if ($@){
-		#CXGN::Apache::Error::notify("could not open image map file","Could not open existing(?) image map file ($@)");
-	      #}
 	}
 	
 	my $hide_image= "";
@@ -1642,5 +1633,4 @@ sub create_unigene_dbxref_schema {
     
 }
 
-
-return 1;
+1;

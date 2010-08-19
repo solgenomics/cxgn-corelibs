@@ -2,19 +2,18 @@
 use strict;
 use warnings;
 
-use Test::More tests => 5;
+use Test::More tests => 4;
 
 use Time::HiRes qw/ usleep /;
 use File::Temp qw/tempfile/;
 use File::Spec::Functions qw/ tmpdir catfile/;
 
-use_ok( 'CXGN::Tools::File', qw/size_changing file_contents read_commented_file/ );
+use_ok( 'CXGN::Tools::File', qw/size_changing read_commented_file/ );
 
 my $test_string = "#monkeys in my pants and also in the attic!\nand the last line was a comment!\n"x42;
 my ($tfh,$tf) = tempfile(UNLINK => 1);
 print $tfh $test_string;
 close $tfh;
-is( file_contents($tf), $test_string, 'file_contents');
 is( read_commented_file($tf), "and the last line was a comment!\n"x42, 'read_commented_file');
 
 #test size_changing

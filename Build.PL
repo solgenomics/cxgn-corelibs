@@ -181,6 +181,7 @@ my $build = Module::Build->new(
         'Text::Glob' => 0,
         'Tie::Function' => 0,
         'HTTP::Server::Simple' => 0,
+        'File::Slurp' => 0,
     },
 );
 $build->create_build_script;

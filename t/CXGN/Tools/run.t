@@ -8,13 +8,12 @@ use FindBin;
 use File::Spec::Functions qw/ tmpdir catdir catfile /;
 use File::Temp qw/tempfile tempdir/;
 use Storable qw/retrieve/;
+use File::Slurp qw/slurp/;
 
 use POSIX qw/:sys_wait_h/;
 use IO::Pipe;
 
 use Path::Class;
-
-use CXGN::Tools::File qw/file_contents/;
 
 use Test::More tests => 65;
 
@@ -62,7 +61,7 @@ $run = CXGN::Tools::Run->run('echo monkeys on the top of the mountain > foo.out'
                                on_completion => sub { $complete_hook += 42 },
                              },
 			    );
-is(file_contents(File::Spec->catfile($tempdir,'foo.out')),
+is(slurp(File::Spec->catfile($tempdir,'foo.out')),
    "monkeys on the top of the mountain\n",
    'passing a shell command works',
   );

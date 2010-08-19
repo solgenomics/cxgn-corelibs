@@ -19,7 +19,7 @@ BEGIN {
   use_ok('CXGN::Publish::VersionedFile');
 }
 
-use CXGN::Tools::File qw/file_contents/;
+use File::Slurp qw/slurp/;
 
 #make a temp dir to do our dirty business
 our $tempdir = tempdir(CLEANUP => 1);
@@ -231,7 +231,7 @@ system("echo fonebone > $linktest1");
 ok(-f "$tempdir/pub/linktest1", 'echo worked');
 
 ok(link_or_print($linktest1,$linktest2),'link returned success');
-is(file_contents($linktest2),file_contents($linktest1),'link seems to have worked');
+is(slurp($linktest2),slurp($linktest1),'link seems to have worked');
 
 #test that link_or_print can take dir args
 my $linktestdir = File::Spec->catdir($tempdir,'linktest');
@@ -239,8 +239,8 @@ mkdir $linktestdir
   or die 'could not make dir $linktestdir: $!';
 
 ok(link_or_print($linktest1,$linktestdir),'link with dir target returned success');
-is(file_contents($linktest1),file_contents("$linktestdir/linktest1"),'link with dir target seems to have worked');
-is(file_contents("$linktestdir/linktest1"),"fonebone\n",'sanity check');
+is(slurp($linktest1),slurp("$linktestdir/linktest1"),'link with dir target seems to have worked');
+is(slurp("$linktestdir/linktest1"),"fonebone\n",'sanity check');
 
 #test versioned rm and rm -f
 publish(['rm',"$tempdir/pub/foo.ish.bar"],

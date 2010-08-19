@@ -22,7 +22,6 @@ All functions below are EXPORT_OK.
 
 BEGIN {
   our @EXPORT_OK = qw/
-		      file_contents
 		      read_commented_file
 		      get_sections
 		      create_zips_only
@@ -38,26 +37,6 @@ BEGIN {
 }
 our @EXPORT_OK;
 use base qw/Exporter/;
-
-=head2 file_contents
-
-  Desc: get the entire contents of a file as a string
-  Args: filename
-  Ret : string containing the entire contents of the file
-  Side Effects: reads the file from the filesystem, dies if
-                not openable
-
-  Be careful with this function.  If the file is big, this will take a
-  LOT of memory.
-
-=cut
-
-sub file_contents {
-    my ($filename) = @_;
-    local $/ = undef;
-    open(my $FILE,"$filename") or croak ("Could not open file $filename: $!");
-    return my $file_contents = <$FILE>;
-}
 
 =head2 read_commented_file
 

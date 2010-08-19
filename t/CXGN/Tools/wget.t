@@ -9,7 +9,7 @@ use Test::Exception;
 use IO::Pipe;
 
 use POSIX;
-use CXGN::Tools::File qw/file_contents/;
+use File::Slurp qw/slurp/;
 
 BEGIN {
   use_ok(  'CXGN::Tools::Wget', 'wget_filter', 'clear_cache'  );
@@ -19,7 +19,7 @@ my (undef,$tempfile) = tempfile(UNLINK => 1);
 
 lives_ok( sub { wget_filter( 'http://www.sgn.cornell.edu/' => $tempfile ); }, 'fetched http without error' );
 ok( -f $tempfile, 'download target exists');
-ok( file_contents($tempfile) =~ /solanaceae/i, 'download worked');
+ok( slurp($tempfile) =~ /solanaceae/i, 'download worked');
 
 lives_ok( sub { wget_filter( 'http://www.sgn.cornell.edu/' => $tempfile,
             sub {
@@ -29,11 +29,11 @@ lives_ok( sub { wget_filter( 'http://www.sgn.cornell.edu/' => $tempfile,
             }
         );
 },'fetched http without error' );
-ok( file_contents($tempfile) =~ /monkeys in the middle of the desert/, 'download filters work');
+ok( slurp($tempfile) =~ /monkeys in the middle of the desert/, 'download filters work');
 
 #test downloading from ftp
 lives_ok( sub { wget_filter( 'ftp://ftp.sgn.cornell.edu/tomato_genome/bacs/validate_submission.v*.pl' => $tempfile ); },'fetch from ftp ' . $@ );
-ok( file_contents($tempfile) =~ /BACSubmission/, 'ftp download worked');
+ok( slurp($tempfile) =~ /BACSubmission/, 'ftp download worked');
 
 SKIP: {
     eval { wget_filter('cxgn-resource://nyarlathotep') };
@@ -112,7 +112,7 @@ sub TEST_WGET_FILTER_CONCURRENCY {
     if (my $testpid = fork()) { # parent
         $pipe->reader;
         my $file = wget_filter( 'http://localhost:8080' );
-        my ($hits) = split /\n/, file_contents($file);
+        my ($hits) = split /\n/, slurp($file);
         is($hits,1,'wget_filter concurrency');
 
         # We don't need the webserver anymore
@@ -126,7 +126,7 @@ sub TEST_WGET_FILTER_CONCURRENCY {
     } elsif (defined $testpid) { # child
         $pipe->writer;
         my $file = wget_filter( 'http://localhost:8080' );
-        my ($hits) = split /\n/, file_contents($file);
+        my ($hits) = split /\n/, slurp($file);
         print $pipe $hits;
 
         # Don't run END/DESTROY blocks

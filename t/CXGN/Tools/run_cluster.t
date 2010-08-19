@@ -8,7 +8,7 @@ use Test::Warn;
 use File::Temp qw/ tempfile /;
 use Path::Class;
 
-use CXGN::Tools::File qw/ file_contents /;
+use File::Slurp qw/ slurp /;
 
 BEGIN {
     if( $ENV{CXGNTOOLSRUNTESTCLUSTER} ) {
@@ -67,7 +67,7 @@ $cjob->cleanup;
 #test cluster jobs with different working directories
 $cjob = CXGN::Tools::Run->run_cluster("echo barbarbar > foo.out",{@nodes, working_dir => dir('/data/shared/tmp')});
 $cjob->wait;
-is(file_contents("/data/shared/tmp/foo.out"),"barbarbar\n",'correct contents of test file');
+is(slurp("/data/shared/tmp/foo.out"),"barbarbar\n",'correct contents of test file');
 unlink "/data/shared/tmp/foo.out";
 $cjob->cleanup;
 
@@ -91,7 +91,7 @@ is($cjob->exit_status >>8 ,123,'cluster job error exit status is correct')
     or diag "error was: $EVAL_ERROR";
 like($cjob->err,qr/command failed/,'cluster job stderr is correct');
 is($cjob->out,"foo\n",'cluster job stdout is correct');
-is(file_contents($tempfile),"foo\n",'cluster job wrote to the correct file');
+is(slurp($tempfile),"foo\n",'cluster job wrote to the correct file');
 $cjob->cleanup;
 
 

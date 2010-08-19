@@ -1,7 +1,6 @@
 package CXGN::BlastDB::FileSet;
 use strict;
 use warnings;
-use English;
 
 use POSIX;
 
@@ -13,6 +12,7 @@ use Memoize;
 use File::Basename;
 use File::Copy;
 use File::Path;
+use File::Slurp qw/slurp/;
 use File::Spec::Functions qw/splitdir catdir/;
 
 use List::Util qw/ min max /;
@@ -21,7 +21,6 @@ use List::MoreUtils qw/ all any /;
 use Bio::PrimarySeq;
 
 use CXGN::Tools::Run;
-use CXGN::Tools::File qw/ file_contents /;
 
 =head1 NAME
 
@@ -364,7 +363,7 @@ sub format_from_file {
           (-f $n) ? $n : undef;
       }
      ) {
-    my $aliases = file_contents($aliasfile);
+    my $aliases = slurp($aliasfile);
     $aliases =~ s/-cxgn-blast-db-new//g; #remove the new extension
     $aliases =~ s/$ffbn_subdir\/*//g; #remove absolute paths
     CORE::open my $a_fh, '>', $aliasfile or confess "Could not open $aliasfile for writing";

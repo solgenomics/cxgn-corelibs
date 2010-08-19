@@ -6,3 +6,4 @@ _build/*
 blib/*
 *.sw?
 cover_db/
+*.bak

@@ -75,7 +75,6 @@ the value of the 'blast_db_path' configuration variable (see L<CXGN::VHost>).
 =cut
 
 use strict;
-use English;
 use Carp;
 use File::Spec;
 use File::Basename;
@@ -89,7 +88,6 @@ use Memoize;
 
 use CXGN::BlastDB::Config;
 use CXGN::Tools::List qw/any min all max/;
-use CXGN::Tools::File qw/file_contents/;
 use CXGN::Tools::Run;
 
 use CXGN::BlastDB::FileSet;

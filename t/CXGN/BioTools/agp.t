@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use English;
 
 use FindBin;
 use File::Basename;
@@ -9,10 +8,6 @@ use File::Spec;
 use File::Temp qw/tempfile/;
 
 use Bio::FeatureIO;
-
-
-use CXGN::Tools::File qw/file_contents/;
-
 
 my $testfiles_path = File::Spec->catdir($FindBin::RealBin,'data');
 my @agptests = (
