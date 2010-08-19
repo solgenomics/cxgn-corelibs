@@ -1,5 +1,6 @@
 package CXGN::Tools::File;
 use strict;
+use warnings;
 use POSIX;
 use Carp;
 
@@ -71,7 +72,7 @@ sub file_contents {
 
 sub read_commented_file {
     my ($filename) = @_;
-    open(my $FILE,"$filename") or croak ("Could not open file $filename: $!");
+    open(my $FILE,'<', $filename) or croak ("Could not open file $filename: $!");
     my $file_contents = "";
     while (<$FILE>) {
       next if /^\#/;
@@ -84,16 +85,14 @@ sub read_commented_file {
 sub get_sections
 {
     my($filename,$number_of_sections_to_get)=@_;
-    #unless(CXGN::Tools::Text::is_number($number_of_sections_to_get) and $number_of_sections_to_get>0){return;}
     my $content='';
     my $FILE;
-    open($FILE,"$filename") or croak "Could not open file $filename: $!";
+    open($FILE,'<', $filename) or croak "Could not open file $filename: $!";
     
     # the first line contains the number of sections to show
     # and is of the format: COUNT <integer>
     $number_of_sections_to_get = <$FILE>;
     $number_of_sections_to_get =~ s/.*COUNT\s+(\d+).*/$1/i;
-    #print STDERR "NUMBER OF SECTIONS: $number_of_sections_to_get\n";
     while($number_of_sections_to_get>0)
     {
         if(my $line=<$FILE>)
@@ -425,21 +424,6 @@ sub count_file_lines {
   close $bleh;
   return $lines;
 }
-
-# =head2 looks_like_fasta
-
-#   Usage: if( looks_like_fasta($myfilename) ) { print 'it is in fasta format' }
-#   Desc :
-#   Ret  :
-#   Args :
-#   Side Effects:
-#   Example:
-
-# =cut
-
-# sub looks_like_fasta {
-
-# }
 
 =head2 executable_is_in_path
 
