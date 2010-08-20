@@ -221,6 +221,7 @@ sub evidence_details {
 	my $ev_owner= $ev->get_person_details();
 	my $ev_date = $ev->get_modification_date() || $ev->get_create_date();
 	#The evidence details hash. These are the fields that will be used in your code for printing the ontology evidences
+        no warnings 'uninitialized';
 	my $ev_hash={
 	    dbxref_ev_object=> $ev,
 	    obsolete        => $ev->get_obsolete(),
