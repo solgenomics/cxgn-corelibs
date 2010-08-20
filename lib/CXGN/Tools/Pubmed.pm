@@ -1,6 +1,6 @@
-
 package CXGN::Tools::Pubmed;
 use strict;
+use warnings;
 use XML::Twig;
 use CXGN::Chado::Publication;
 use CXGN::Chado::Pubauthor;
@@ -93,8 +93,6 @@ sub fetch {
 	    $pub_object->set_cvterm_name('journal');
 	    $pub_object->d("!No cvtermname found for publication $accession. Setting to default 'journal'! ");
 	}
-	#$pub_object->store(); #store from the code..
-	$pub_object;
     };
      if($@) {
 	my $message= "Error in transaction or NCBI server seems to be down. Please check your input for accession $accession or try again later.\n $@";
@@ -435,10 +433,9 @@ sub author {
     my $author_data=  $lastname ."|" . $initials ; #.",".$initials ;
     
     $pub_object->add_author($author_data) ;
-    print STDERR "author $author_data\n";
     #$rank ++;
     $twig->purge
 }
 
 
-return 1;
+1;
