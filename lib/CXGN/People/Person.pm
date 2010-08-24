@@ -37,8 +37,8 @@ This class implements the following methods:
 package CXGN::People::Person;
 
 use strict;
-use Carp;
-use Scalar::Util qw/blessed/;
+use Carp qw/ cluck carp confess /;
+use Scalar::Util qw/ blessed /;
 use namespace::autoclean;
 
 #use CXGN::Class::DBI;
@@ -384,8 +384,7 @@ sub store {
             sprintf("%s-%02s-%02s", 1900+$time[2], $time[1]+1, $time[0])
 	    );
 #        my $query2 = "SELECT last_insert_id() FROM sp_person";
-       	
-	my $last   = $self->get_dbh()->last_insert_id('sp_person', 'sgn_people');
+       	my ($last) = $sth->fetchrow_array;
         $self->{sp_person_id} = $last;
         $return_value = $self->get_sp_person_id();
     }
@@ -802,7 +801,7 @@ sub add_organisms {
 sub hard_delete {
     my $self = shift;
     if (! $self->get_sp_person_id()) { 
-	print STDERR "This person object is not yet persistent. Can't delete.\n";
+	cluck "This person object is not yet persistent. Can't delete.\n";
 	return;
     }
 
@@ -875,8 +874,9 @@ sub set_sql {
 						address, country, phone_number, fax, contact_email, 
 						webpage, research_keywords, user_format, 
 						research_interests, contact_update, research_update
-						) 
+						)
 				VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                RETURNING sp_person_id
 			",
 	
 	select_organism =>
