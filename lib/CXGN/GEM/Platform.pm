@@ -142,10 +142,10 @@ The following class methods are implemented:
 sub new {
     my $class = shift;
     my $schema = shift ||
-	croak("PARAMETER ERROR: None schema object was supplied to the $class->new() function.\n");
+	croak("PARAMETER ERROR: No schema object was supplied to the $class->new() function.\n");
     my $id = shift;
 
-    ### First, bless the class to create the object and set the schema into de object
+    ### First, bless the class to create the object and set the schema into the object
     ### (set_schema comes from CXGN::DB::Object).
 
     my $self = $class->SUPER::new($schema);
