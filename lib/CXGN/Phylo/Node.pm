@@ -1976,6 +1976,7 @@ sub recursive_generate_newick {
 	    
 	    if (!$show_root) { $s .= $self->make_newick_attributes(1); }
 	    else {
+                no warnings 'uninitialized';
 		$s = "(" . $s;
 		$s .= $self->get_name();
 		$s .= $self->make_newick_attributes(1).":".$self->get_branch_length() || 0 ;
