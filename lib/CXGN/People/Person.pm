@@ -1,3 +1,4 @@
+package CXGN::People::Person;
 
 =head1 NAME
 
@@ -33,22 +34,15 @@ This class implements the following methods:
 
 =cut
 
-
-package CXGN::People::Person;
-
 use strict;
 use Carp qw/ cluck carp confess /;
 use Scalar::Util qw/ blessed /;
 use namespace::autoclean;
 
-#use CXGN::Class::DBI;
-
 use CXGN::Genomic::Clone;
 use CXGN::People::Organism;
 
-#use base qw/CXGN::People::Login CXGN::Class::DBI/;
 use base qw | CXGN::People::Login |;
-
 
 =head1 CLASS METHODS
 
@@ -59,18 +53,18 @@ use base qw | CXGN::People::Login |;
 
 =cut
 
-sub get_curators { 
+sub get_curators {
     my $dbh = shift;
-    my $query = "SELECT sp_person_id FROM sgn_people.sp_person WHERE user_type='curator' ";
+    my $query =
+"SELECT sp_person_id FROM sgn_people.sp_person WHERE user_type='curator' ";
     my $sth = $dbh->prepare($query);
     $sth->execute();
     my @ids = ();
-    while (my ($sp_person_id) = $sth->fetchrow_array()) { 
-	push @ids, $sp_person_id;
+    while ( my ($sp_person_id) = $sth->fetchrow_array() ) {
+        push @ids, $sp_person_id;
     }
     return @ids;
 }
-
 
 =head1 CONSTRUCTORS
 
@@ -90,12 +84,13 @@ sub get_curators {
 =cut
 
 sub new {
-    my $class=shift;
-    my $dbh = shift;
-    confess "first param must be a dbh" unless blessed($dbh) &&  $dbh->can('selectall_arrayref');
+    my $class = shift;
+    my $dbh   = shift;
+    confess "first param must be a dbh"
+      unless blessed($dbh) && $dbh->can('selectall_arrayref');
     my $person_id = shift;
-    my $self = CXGN::People::Login->new($dbh, $person_id);
-	bless $self, $class;
+    my $self = CXGN::People::Login->new( $dbh, $person_id );
+    bless $self, $class;
 
     $self->set_sql();
     $self->set_sp_person_id($person_id);
@@ -120,15 +115,15 @@ sub new {
 sub new_person {
 
     die "CXGN::People::Person new_person is not supported anymore!";
-    # this is the constructor for which you use the person_id.
-    my $class      = shift;
-    my $dbh        = shift;
-    my $id         = shift;
-    my $self = CXGN::People::Login->new($dbh, $id);
-    bless $self, $class;
-	return $self;
-}
 
+    # this is the constructor for which you use the person_id.
+    my $class = shift;
+    my $dbh   = shift;
+    my $id    = shift;
+    my $self  = CXGN::People::Login->new( $dbh, $id );
+    bless $self, $class;
+    return $self;
+}
 
 =head1 CLASS METHODS
 
@@ -144,17 +139,16 @@ sub new_person {
 =cut
 
 sub get_person_by_username {
-    my $class = shift;
-    my $dbh= shift;
-    my $username=shift;
-    
+    my $class    = shift;
+    my $dbh      = shift;
+    my $username = shift;
+
     my $person = CXGN::People::Person->new($dbh);
-    my $sth=$person->get_sql("person_from_username");
+    my $sth    = $person->get_sql("person_from_username");
     $sth->execute($username);
     my ($sp_person_id) = $sth->fetchrow_array();
     return $sp_person_id;
 }
-
 
 =head1 METHODS
 
@@ -171,51 +165,44 @@ sub get_person_by_username {
 
 =cut
 
-
-sub get_bacs_associated_with_person 
-{
-    my $self=shift;
-    my $chr = shift || 1;
-    my $person_id=$self->get_sp_person_id(); 
+sub get_bacs_associated_with_person {
+    my $self      = shift;
+    my $chr       = shift || 1;
+    my $person_id = $self->get_sp_person_id();
     my $bacs_query;
 
-    if($self->get_user_type() eq 'sequencer')
-    {
-		$bacs_query = $self->get_sql('sequencer_bacs');
+    if ( $self->get_user_type() eq 'sequencer' ) {
+        $bacs_query = $self->get_sql('sequencer_bacs');
         $bacs_query->execute($person_id);
     }
 
-    elsif($self->get_user_type() eq 'curator')
-    {
-		$bacs_query = $self->get_sql("curator_bacs");	
+    elsif ( $self->get_user_type() eq 'curator' ) {
+        $bacs_query = $self->get_sql("curator_bacs");
         $bacs_query->execute($chr);
     }
-    else
-    {
+    else {
         return;
     }
-    my $answer=$bacs_query->fetchall_arrayref();
+    my $answer = $bacs_query->fetchall_arrayref();
 
     #HACK! physical.bacs is now restructured as genomic.clone.
-    for my $row(@{$answer})
-    {
-        my($row_id,$project_id,$az_name)=@{$row};
-        unless(defined($az_name))
-        {
-            eval
-            {
-                require CXGN::Genomic::Clone;#grrrr this cannot be simply "used" at the top since it is so prone to failure at the moment, for instance when there is no database connectivity
+    for my $row ( @{$answer} ) {
+        my ( $row_id, $project_id, $az_name ) = @{$row};
+        unless ( defined($az_name) ) {
+            eval {
+                require CXGN::Genomic::Clone
+                  ; #grrrr this cannot be simply "used" at the top since it is so prone to failure at the moment, for instance when there is no database connectivity
             };
-            if($@)
-            {
-                $row->[2]='Database connection not available.';
+            if ($@) {
+                $row->[2] = 'Database connection not available.';
             }
-            else
-            {
-                $row->[2]=CXGN::Genomic::Clone->retrieve($row_id)->arizona_clone_name();
+            else {
+                $row->[2] =
+                  CXGN::Genomic::Clone->retrieve($row_id)->arizona_clone_name();
             }
         }
     }
+
     #END HACK!
     return $answer;
 }
@@ -223,17 +210,17 @@ sub get_bacs_associated_with_person
 sub get_projects_associated_with_person {
     my $self = shift;
 
-    if( $self->get_user_type() eq 'curator' ) {
-		my $sth = $self->get_sql('all_projects');
-		$sth->execute();
-		my $ary = $sth->fetchall_arrayref;
-		return map { $_->[0] } @$ary;
+    if ( $self->get_user_type() eq 'curator' ) {
+        my $sth = $self->get_sql('all_projects');
+        $sth->execute();
+        my $ary = $sth->fetchall_arrayref;
+        return map { $_->[0] } @$ary;
     }
 
     my $sth = $self->get_sql('projects_for_person');
-    $sth->execute($self->get_sp_person_id(), '%Tomato%Unmapped%');
-    my $answer=$sth->fetchall_arrayref();
-    if($answer) {
+    $sth->execute( $self->get_sp_person_id(), '%Tomato%Unmapped%' );
+    my $answer = $sth->fetchall_arrayref();
+    if ($answer) {
         return map { $_->[0] } @{$answer};
     }
     else {
@@ -253,25 +240,25 @@ sub get_projects_associated_with_person {
 
 sub is_person_associated_with_project {
     my $self = shift;
-    my ( $project_id ) = @_;
-    return 1 if($self->get_user_type() eq 'curator');
+    my ($project_id) = @_;
+    return 1 if ( $self->get_user_type() eq 'curator' );
 
     our ($unmapped_project_id) ||= do {
-      my $sth = $self->get_sql('project_by_name');
-      $sth->execute('%Tomato%unmapped%');
-      $sth->fetchrow_array();
+        my $sth = $self->get_sql('project_by_name');
+        $sth->execute('%Tomato%unmapped%');
+        $sth->fetchrow_array();
     };
     return 1 if $project_id == $unmapped_project_id;
 
     my $person_id = $self->get_sp_person_id();
-    
-	my $project_person_query = $self->get_sql("check_if_person_on_project");
+
+    my $project_person_query = $self->get_sql("check_if_person_on_project");
     $project_person_query->execute( $person_id, $project_id );
     my @project_person_result = $project_person_query->fetchrow_array();
     $project_person_query->finish();
 
-    return 1 if($project_person_result[0]);
-	return 0;
+    return 1 if ( $project_person_result[0] );
+    return 0;
 }
 
 # function fetch() is used internally to populate the instance from the
@@ -307,50 +294,42 @@ sub fetch {
 sub store {
     my $self         = shift;
     my $return_value = "";
-	 
-	{
-	 my $sos = "";
-	 foreach my $o ($self->get_organisms())
-	 {
-	 	if($o->is_selected()) {$sos .= $o->get_sp_organism_id() . " ";}
-		else {$sos .= "(" . $o->get_sp_organism_id() . ") ";}
-	 }
-	}
+
+    {
+        my $sos = "";
+        foreach my $o ( $self->get_organisms() ) {
+            if ( $o->is_selected() ) { $sos .= $o->get_sp_organism_id() . " "; }
+            else { $sos .= "(" . $o->get_sp_organism_id() . ") "; }
+        }
+    }
 
     #print STDERR "STORING PERSON DATA...\n";
     #
     # if an id is available, we update the existing record
     #
-    my $s= $self->get_sql("person_count");
-    $s->execute($self->get_sp_person_id());
+    my $s = $self->get_sql("person_count");
+    $s->execute( $self->get_sp_person_id() );
     my $rows = ( $s->fetchrow_array() )[0];
 
     #print STDERR "ROWS: $rows\n";
     if ( $rows > 1 ) {
         die("Too many people associated with one login!\n");
     }
-    my $action='';
+    my $action = '';
     if ($rows) {
-        $action='updated';
+        $action = 'updated';
+
         #print STDERR "Updating person record ".$self->get_sp_person_id()."\n";
         my $sth = $self->get_sql("update");
         $sth->execute(
-            $self->get_censored(),
-	    $self->get_salutation(),
-            $self->get_last_name(),
-	    $self->get_first_name(),
-            $self->get_organization(),
-	    $self->get_address(),
-            $self->get_country(),
-	    $self->get_phone_number(),
-            $self->get_fax(),
-	    $self->get_contact_email(),
-            $self->get_webpage(),
-	    $self->get_research_keywords(),
-            $self->get_user_format(),
-	    $self->get_research_interests(),
-	    $self->get_contact_update(),
-            $self->get_sp_person_id()
+            $self->get_censored(),       $self->get_salutation(),
+            $self->get_last_name(),      $self->get_first_name(),
+            $self->get_organization(),   $self->get_address(),
+            $self->get_country(),        $self->get_phone_number(),
+            $self->get_fax(),            $self->get_contact_email(),
+            $self->get_webpage(),        $self->get_research_keywords(),
+            $self->get_user_format(),    $self->get_research_interests(),
+            $self->get_contact_update(), $self->get_sp_person_id()
         );
         $return_value = $sth->rows();
 
@@ -361,37 +340,39 @@ sub store {
     # if an id is not available, we insert a new record
     #
     else {
-        $action='inserted';
+        $action = 'inserted';
+
         #print STDERR "inserting into sp_person...\n";
-        my $sth = $self->get_sql("insert");
-	my @time = (localtime())[3..5];
+        my $sth  = $self->get_sql("insert");
+        my @time = ( localtime() )[ 3 .. 5 ];
         $sth->execute(
             $self->get_censored(),
-	    $self->get_salutation(),
+            $self->get_salutation(),
             $self->get_last_name(),
-	    $self->get_first_name(),
+            $self->get_first_name(),
             $self->get_organization(),
-	    $self->get_address(),
+            $self->get_address(),
             $self->get_country(),
-	    $self->get_phone_number(),
+            $self->get_phone_number(),
             $self->get_fax(),
-	    $self->get_contact_email(),
+            $self->get_contact_email(),
             $self->get_webpage(),
-	    $self->get_research_keywords(),
+            $self->get_research_keywords(),
             $self->get_user_format(),
-	    $self->get_research_interests(),
-	    $self->get_contact_update(),
-            sprintf("%s-%02s-%02s", 1900+$time[2], $time[1]+1, $time[0])
-	    );
-#        my $query2 = "SELECT last_insert_id() FROM sp_person";
-       	my ($last) = $sth->fetchrow_array;
+            $self->get_research_interests(),
+            $self->get_contact_update(),
+            sprintf( "%s-%02s-%02s", 1900 + $time[2], $time[1] + 1, $time[0] )
+        );
+
+        #        my $query2 = "SELECT last_insert_id() FROM sp_person";
+        my ($last) = $sth->fetchrow_array;
         $self->{sp_person_id} = $last;
         $return_value = $self->get_sp_person_id();
     }
 
-    #my $subject="[People.pm] New person data $action for ".$self->get_first_name()." ".$self->get_last_name();
-    #my $body="New data has been entered. Just thought you'd like to know.\n\n";
-    #CXGN::Contact::send_email($subject,$body,'email');
+#my $subject="[People.pm] New person data $action for ".$self->get_first_name()." ".$self->get_last_name();
+#my $body="New data has been entered. Just thought you'd like to know.\n\n";
+#CXGN::Contact::send_email($subject,$body,'email');
 
     # store organism links
     #
@@ -408,8 +389,8 @@ sub store {
     return $return_value;
 }
 
-# function store_organization_links() is used internally to store the 
-# organization links to the database. 
+# function store_organization_links() is used internally to store the
+# organization links to the database.
 #
 sub store_organization_links {
     my $self = shift;
@@ -431,7 +412,7 @@ sub store_organization_links {
 sub store_project_links {
 }
 
-# the store_organism_links is used internally to store the organism links 
+# the store_organism_links is used internally to store the organism links
 #
 sub store_organism_links {
     my $self = shift;
@@ -454,9 +435,9 @@ sub store_organism_links {
     my $del = $self->get_sql('delete_organism');
 
     my $sp_person_id = $self->get_sp_person_id();
-#### deanx - I claim this is bug - jan 21 2008 
+#### deanx - I claim this is bug - jan 21 2008
 ###    foreach my $o ( @{ $self->{organisms} } ) {
-      foreach my $o (  $self->get_organisms  ) {
+    foreach my $o ( $self->get_organisms ) {
 ### deanx
         my $id = $o->get_organism_id();
 
@@ -526,7 +507,6 @@ The censor property is user-settable. If it is true, information
 will not be displayed on the web.
 
 =cut
-
 
 sub set_sp_person_id {
     my $self = shift;
@@ -598,10 +578,9 @@ sub get_user_format {
     return $self->{user_format} || 'auto';
 }
 
-sub get_research_interests
-{
-	my $self = shift;
-	return $self->{research_interests};
+sub get_research_interests {
+    my $self = shift;
+    return $self->{research_interests};
 }
 
 sub get_contact_update {
@@ -616,7 +595,7 @@ sub get_research_update {
 
 sub set_censor {
     my $self = shift;
-    $self->{censor} = (shift(@_) ? 1 : 0);
+    $self->{censor} = ( shift(@_) ? 1 : 0 );
 }
 
 sub set_salutation {
@@ -679,10 +658,9 @@ sub set_user_format {
     $self->{user_format} = shift;
 }
 
-sub set_research_interests
-{
-	my $self = shift;
-	$self->{research_interests} = shift;
+sub set_research_interests {
+    my $self = shift;
+    $self->{research_interests} = shift;
 }
 
 sub set_contact_update {
@@ -725,13 +703,15 @@ sub get_projects {
 sub get_organisms {
     my $self = shift;
 
-    #print STDERR "get_organisms()\n";
-    #if (!($self->get_dbh()->isa("CXGN::DB::Connection"))) { die "dbh is not defined here."; }
-    unless( $self->{organisms} )  {
-      my @fetched = CXGN::People::Organism->all_organisms($self->get_dbh(), $self->get_sp_person_id() );
-      $self->{organisms} = \@fetched;
+#print STDERR "get_organisms()\n";
+#if (!($self->get_dbh()->isa("CXGN::DB::Connection"))) { die "dbh is not defined here."; }
+    unless ( $self->{organisms} ) {
+        my @fetched =
+          CXGN::People::Organism->all_organisms( $self->get_dbh(),
+            $self->get_sp_person_id() );
+        $self->{organisms} = \@fetched;
     }
-    return @{$self->{organisms}};
+    return @{ $self->{organisms} };
 }
 
 sub add_organism {
@@ -758,14 +738,14 @@ Meant for use with the form framework
 =cut
 
 sub get_organism_id_string {
-	my $self = shift;
-	my @ids = ();
-	foreach my $o ($self->get_organisms()) {
-		if($o->is_selected()) {
-			push @ids, $o->get_organism_id();
-		}
-	}
-	return join("\0", @ids);
+    my $self = shift;
+    my @ids  = ();
+    foreach my $o ( $self->get_organisms() ) {
+        if ( $o->is_selected() ) {
+            push @ids, $o->get_organism_id();
+        }
+    }
+    return join( "\0", @ids );
 }
 
 =head2 add_organisms
@@ -777,13 +757,13 @@ Meant for use with the form framework
 =cut
 
 sub add_organisms {
-	my ($self, $organism_names_str) = @_;
-	foreach (split(/\0/, $organism_names_str)) {
-		my $organism = CXGN::People::Organism->new($self->get_dbh());
-		$organism->set_organism_name($_);
-		$organism->set_selected(1);
-		$self->add_organism($organism);
-	}
+    my ( $self, $organism_names_str ) = @_;
+    foreach ( split( /\0/, $organism_names_str ) ) {
+        my $organism = CXGN::People::Organism->new( $self->get_dbh() );
+        $organism->set_organism_name($_);
+        $organism->set_selected(1);
+        $self->add_organism($organism);
+    }
 }
 
 =head2 hard_delete
@@ -800,36 +780,33 @@ sub add_organisms {
 
 sub hard_delete {
     my $self = shift;
-    if (! $self->get_sp_person_id()) { 
-	cluck "This person object is not yet persistent. Can't delete.\n";
-	return;
+    if ( !$self->get_sp_person_id() ) {
+        cluck "This person object is not yet persistent. Can't delete.\n";
+        return;
     }
 
-    eval { 
-	my $pdq = "DELETE FROM sgn_people.sp_person where sp_person_id=?";
-	my $pdqh= $self->get_dbh()->prepare($pdq);
-	$pdqh->execute($self->get_sp_person_id());
-	
+    eval {
+        my $pdq  = "DELETE FROM sgn_people.sp_person where sp_person_id=?";
+        my $pdqh = $self->get_dbh()->prepare($pdq);
+        $pdqh->execute( $self->get_sp_person_id() );
+
     };
-    if ($@) { 
-	die "An error occurred during hard delete: $@";
+    if ($@) {
+        die "An error occurred during hard delete: $@";
     }
-    else { 
-	$self->get_dbh()->commit();
+    else {
+        $self->get_dbh()->commit();
     }
-    
+
 }
-
-
-
 
 sub set_sql {
     my $self = shift;
     $self->{queries} = {
-	
-	fetch =>
-	
-	"
+
+        fetch =>
+
+          "
 				SELECT 
 					sp_person_id, censor, salutation, last_name, 
 					first_name, organization, address, country, 
@@ -841,22 +818,22 @@ sub set_sql {
 				WHERE 
 					sp_person_id=?
 			",
-	
-	person_from_username =>
-	
-	"
+
+        person_from_username =>
+
+          "
 				SELECT sp_person_id 
 				FROM sgn_people.sp_person 
 				WHERE username=?
 			",
-	
-	person_count =>
-	
-	"	SELECT COUNT(*) FROM sgn_people.sp_person WHERE sp_person_id=? ",
-	
-	update =>
-	
-	"
+
+        person_count =>
+
+          "	SELECT COUNT(*) FROM sgn_people.sp_person WHERE sp_person_id=? ",
+
+        update =>
+
+          "
 				UPDATE sgn_people.sp_person 
 				SET censor=?, salutation=? , last_name=?, first_name=?, 
 					organization=?, address=?, country=?, phone_number=?, 
@@ -865,10 +842,10 @@ sub set_sql {
 					research_update=NOW() 
 				WHERE sp_person_id=?
 			",
-	
-	insert =>
-	
-	"
+
+        insert =>
+
+          "
 				INSERT INTO sgn_people.sp_person 
 					(	censor, salutation, last_name, first_name, organization, 
 						address, country, phone_number, fax, contact_email, 
@@ -878,38 +855,36 @@ sub set_sql {
 				VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                                 RETURNING sp_person_id
 			",
-	
-	select_organism =>
-	
-	"
+
+        select_organism =>
+
+          "
 				SELECT sp_person_organisms_id 
 				FROM sgn_people.sp_person_organisms 
 				WHERE sp_person_id=? and organism_id=?
 			",
-	
-	
-	insert_organism =>
-	
-	"	
+
+        insert_organism =>
+
+          "	
 				INSERT INTO sgn_people.sp_person_organisms 
 					(sp_person_id, organism_id) 
 				VALUES (?, ?)
 			",
-	
-	delete_organism =>
-	
-	"
+
+        delete_organism =>
+
+          "
 				DELETE FROM sgn_people.sp_person_organisms 
 				WHERE 
 					sp_person_id=? 
 					AND organism_id=?
 			",
-	
-	
-	sequencer_bacs =>
-	
-	#note the left join because some bacs are not in physical, they are only in genomic. these will show up with no names! FIXME! physical.bacs is now restructured as genomic.clone.
-	"     
+
+        sequencer_bacs =>
+
+#note the left join because some bacs are not in physical, they are only in genomic. these will show up with no names! FIXME! physical.bacs is now restructured as genomic.clone.
+          "     
 				SELECT 
                 	row_id,
                 	project_id,
@@ -930,10 +905,10 @@ sub set_sql {
 	            ORDER BY 
 	                project_id,
 	                arizona_clone_name",
-	
-	curator_bacs =>
-	
-			"
+
+        curator_bacs =>
+
+          "
 	            SELECT 
 	                row_id,
 	                project_id,
@@ -958,18 +933,17 @@ sub set_sql {
 	            ORDER BY 
 	                project_id,
 	                arizona_clone_name",
-	
-	all_projects =>
-	
-	"
+
+        all_projects =>
+
+          "
 				SELECT sp_project_id FROM sgn_people.sp_project
 
 			",
-	
-	
-	projects_for_person =>
-	
-	"
+
+        projects_for_person =>
+
+          "
 				SELECT sp_project_id 
 				FROM sgn_people.sp_project_person 
 				WHERE sp_person_id=?
@@ -978,51 +952,47 @@ sub set_sql {
 				FROM sgn_people.sp_project
 				WHERE name ilike ?
 			",
-	
-	project_by_name =>
-	
-	"
+
+        project_by_name =>
+
+          "
 				SELECT sp_project_id
 				FROM sgn_people.sp_project
 				WHERE name ilike ?
 			",
-	
-	
-	check_if_person_on_project =>
-	
-	"
+
+        check_if_person_on_project =>
+
+          "
 				SELECT sp_project_person_id 
 				FROM sgn_people.sp_project_person 
 				WHERE 
 					sp_person_id=? 
 					AND sp_project_id=?
 			",
-	count_organization_links =>
-	
-	"
+        count_organization_links =>
+
+          "
                                 SELECT count(sp_person_organization.sp_organization_id)
                                 FROM sgn_people.sp_person left join sgn_people.sp_person_organization on sp_person_id
                                 WHERE
                                         sp_person_organization.sp_organization_id = ?
                        ",
-	
-	
-	};
-    
-    while(my($name,$sql) = each %{$self->{queries}}) {
-	$self->{query_handles}->{$name}=$self->get_dbh()->prepare($sql);
+
+    };
+
+    while ( my ( $name, $sql ) = each %{ $self->{queries} } ) {
+        $self->{query_handles}->{$name} = $self->get_dbh()->prepare($sql);
     }
 
 }
 
-sub get_sql { 
+sub get_sql {
     my $self = shift;
     my $name = shift;
     return $self->{query_handles}->{$name};
 }
 
-
-
 ###
-1;#do not remove
+1;    #do not remove
 ###
