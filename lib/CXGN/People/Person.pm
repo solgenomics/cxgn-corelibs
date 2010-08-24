@@ -794,10 +794,6 @@ sub hard_delete {
     if ($@) {
         die "An error occurred during hard delete: $@";
     }
-    else {
-        $self->get_dbh()->commit();
-    }
-
 }
 
 sub set_sql {
