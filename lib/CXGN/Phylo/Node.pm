@@ -779,12 +779,14 @@ sub get_tooltip {
 	return $self->{tooltip};
 
 }
+
 =head2 function set_onmouseout()
 
   Synopsis:	 $a_node->set_onmouseout($javascript)
   Description:	Set the nodes onmouseout javascript code to $javascript.
 
 =cut
+
 sub set_onmouseout{
     my $self=shift;
     $self->{onmouseout}=shift;
@@ -796,32 +798,38 @@ sub set_onmouseout{
   Returns:      Javascript code that will occur onmouseout.
 
 =cut
+
 sub get_onmouseout{
     my $self=shift;
     return $self->{onmouseout};
 }
+
 =head2 function set_onmouseover()
 
   Synopsis:	 $a_node->onmouseover($javascript)
   Description:	Sets the onMouseOver code to be $javascript.
 
 =cut
+
 sub set_onmouseover{
     my $self=shift;
     my $script=shift;
     $self->{onmouseover}=$script;
 }
+
 =head2 function get_onmouseover()
 
   Synopsis:	 $a_node->get_onmouseover()
   Description:	Returns the javascript code for onmouseover for this node.
 
 =cut
+
 sub get_onmouseover{
     my $self= shift;
   
     return $self->{onmouseover};
 }
+
 =head2 function get_branch_length()
 
   Synopsis:	 $a_node->get_branch_length()
