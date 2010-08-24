@@ -643,11 +643,11 @@ sub recursive_image_map_coords {
 	my $tooltip = $node->get_tooltip();
 	$tooltip ||= "Node " . $node->get_node_key() . ": " . $node->get_label()->get_name();
     #print STDERR "RECURSIVE_IMAGE_MAP_COORDS\n";
-    my $map = 
+    my $map = do { no warnings 'uninitialized';
 		"<area shape=\"rect\" id = \"".$node->get_name()."\" coords=\""
 		. int(($node->get_X())-3) . ",".int(($node->get_Y())-3).",".int(($node->get_X())+3).",".int(($node->get_Y())+3)
 		. "\" href=\"".$node->get_link()
-		."\" title=\"$tooltip\" onmouseover=\"".$node->get_onmouseover()."\" onmouseout=\"".$node->get_onmouseout()."\" alt=\"$tooltip\" />\n";
+		."\" title=\"$tooltip\" onmouseover=\"".$node->get_onmouseover()."\" onmouseout=\"".$node->get_onmouseout()."\" alt=\"$tooltip\" />\n"};
  
     $map .= $node->get_label()->get_html_image_map();
     my @children = $node->get_children();
