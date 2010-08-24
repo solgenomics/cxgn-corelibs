@@ -1,5 +1,4 @@
-
-
+package CXGN::DB::Object;
 
 =head1 NAME
 
@@ -40,12 +39,10 @@ This class implements the following functions:
 
 use strict;
 
-package CXGN::DB::Object;
-
 use Carp qw/cluck/;
 use CXGN::Debug;
 
-use base qw /CXGN::Debug / ;
+use base qw /CXGN::Debug /;
 
 =head2 function new
 
@@ -63,23 +60,25 @@ sub new {
     my $param = shift;
 
     my $self = $class->SUPER::new();
-    if (ref($param)) { 
-	if ( $param->can('prepare') && $param->can('selectall_arrayref') ) { # it's a DBI handle of some sort
-	    $self->d("Received a dbh and setting the dbh...\n");
-	    $self->set_dbh( $param );
-	}
-	elsif ($param->isa("DBIx::Class::Schema"))  {
-	    $self->set_schema( $param );
-	    $self->set_dbh( $param->storage->dbh->clone );
-	    $self->d("Received a Schema class and setting the schema...\n");
-	}
-	else {
-	    cluck "WARNING! Need either a dbh or a schema in CXGN::DB::Object constructor (got $param)";
-	}
+    if ( ref($param) ) {
+        if ( $param->can('prepare') && $param->can('selectall_arrayref') )
+        {    # it's a DBI handle of some sort
+            $self->d("Received a dbh and setting the dbh...\n");
+            $self->set_dbh($param);
+        }
+        elsif ( $param->isa("DBIx::Class::Schema") ) {
+            $self->set_schema($param);
+            $self->set_dbh( $param->storage->dbh->clone );
+            $self->d("Received a Schema class and setting the schema...\n");
+        }
+        else {
+            cluck
+"WARNING! Need either a dbh or a schema in CXGN::DB::Object constructor (got $param)";
+        }
     }
     else {
-	cluck "A parameter is required in CXGN::DB::Object constructor";
-	
+        cluck "A parameter is required in CXGN::DB::Object constructor";
+
     }
     return $self;
 }
@@ -93,14 +92,14 @@ sub new {
 
 =cut
 
-sub get_dbh { 
-    my $self=shift;
+sub get_dbh {
+    my $self = shift;
     return $self->{dbh};
 }
 
-sub set_dbh { 
-    my $self=shift;
-    $self->{dbh}=shift;
+sub set_dbh {
+    my $self = shift;
+    $self->{dbh} = shift;
 }
 
 =head2 accessors get_schema, set_schema
@@ -114,15 +113,14 @@ sub set_dbh {
 =cut
 
 sub get_schema {
-  my $self = shift;
-  return $self->{schema}; 
+    my $self = shift;
+    return $self->{schema};
 }
 
 sub set_schema {
-  my $self = shift;
-  $self->{schema} = shift;
+    my $self = shift;
+    $self->{schema} = shift;
 }
-
 
 =head2 function get_currval
 
@@ -135,18 +133,12 @@ sub set_schema {
 =cut
 
 sub get_currval {
-    my $self = shift;
+    my $self        = shift;
     my $serial_name = shift;
-    my $sth = $self->get_dbh()->prepare("SELECT CURRVAL(?)");
+    my $sth         = $self->get_dbh()->prepare("SELECT CURRVAL(?)");
     $sth->execute($serial_name);
     my ($currval) = $sth->fetchrow_array();
     return $currval;
 }
 
-
-
-return 1;
-
-
-
-
+1;
