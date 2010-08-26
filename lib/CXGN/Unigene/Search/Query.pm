@@ -1,5 +1,6 @@
 package CXGN::Unigene::Search::Query;
 use strict;
+use warnings;
 use Carp;
 
 #Storable and Cache are used for caching the list of unigene builds
@@ -16,9 +17,6 @@ use CXGN::Tools::Class qw/ parricide /;
 use CXGN::Tools::Text qw/ to_tsquery_string from_tsquery_string trim /;
 use CXGN::Tools::Identifiers qw/identifier_namespace clean_identifier/;
 use CXGN::Tools::List qw/str_in/;
-
-use CXGN::VHost;
-
 use CXGN::CDBI::SGN::Unigene;
 use base qw/ CXGN::Search::DBI::Simple::WWWQuery /;
 
@@ -218,11 +216,6 @@ sub to_html {
 
   #do some caching of the unigene build choices, since they are a little expensive to generate
   my $unigene_build_choices = do {
-#     my $conf = CXGN::VHost->new;
-#     my $tempdir = $conf->get_conf('basepath').$conf->get_conf('tempfiles_subdir') || '/tmp';
-#     tie my %cache, 'Cache::File', { cache_root => $tempdir, default_expires => '24 hours' };
-#     my $frozen_choices = $cache{'unigene_build_choices'} ||= freeze( _unigene_build_choices() );
-#     thaw($frozen_choices); #this is the result
     _unigene_build_choices()
   };
 
