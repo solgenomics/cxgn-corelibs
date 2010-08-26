@@ -4,7 +4,6 @@ use warnings;
 
 use Storable qw/freeze thaw/;
 use Cache::File;
-use CXGN::VHost;
 
 =head1 NAME
 
@@ -67,9 +66,8 @@ sub sequences_count_by_library {
 =cut
 
 sub cached_sequences_count_by_library {
-  my $conf = CXGN::VHost->new;
+  my $conf = SGN::Context->new;
   my $tempdir = $conf->get_conf('basepath').$conf->get_conf('tempfiles_subdir') || '/tmp';
-  #print STDERR "TEMPDIR: $tempdir\n";
   tie my %cache, 'Cache::File', { cache_root => $tempdir, default_expires => '24 hours' };
 
   my $counts = $cache{'sequences_count_by_library'} ||= freeze([sequences_count_by_library(shift)]);
