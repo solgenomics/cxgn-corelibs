@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 package CXGN::Chromatogram;
 use CXGN::Chromatogram::Draw;
-use CXGN::VHost;
+use SGN::Context;
 use strict;
 use warnings;
 
@@ -24,10 +24,10 @@ sub create_image_file
     }
     $height||=120;
     $width||=720;
-    my $vhost_conf=CXGN::VHost->new();
-    my $website_path=$vhost_conf->get_conf('basepath');
-    $temp_path_for_display||=$vhost_conf->get_conf('tempfiles_subdir').'/traceimages/';
-    $temp_path_for_output||=$website_path.$temp_path_for_display;
+    my $context = SGN::Context->new;
+    my $website_path= $context->get_conf('basepath');
+    $temp_path_for_display ||= $context->get_conf('tempfiles_subdir').'/traceimages/';
+    $temp_path_for_output  ||= $website_path.$temp_path_for_display;
     $phred_path||='/usr/bin/';
     #image may already exist
     if(-f($temp_path_for_output.$temp_image_filename))
@@ -63,9 +63,9 @@ sub create_image_file
 sub has_abi_chromatogram
 {
     my($read_id)=@_;
-    my $vhost_conf=CXGN::VHost->new();
-    my $trace_basepath=$vhost_conf->get_conf('trace_path');
-    my $temp_image_path=$vhost_conf->get_conf('tempfiles_subdir').'/traceimages';
+    my $context = SGN::Context->new;
+    my $trace_basepath=$context->get_conf('trace_path');
+    my $temp_image_path=$context->get_conf('tempfiles_subdir').'/traceimages';
     if(!defined($read_id)||$read_id!~m/^[0-9]+$/){return;}
     my $dbh=CXGN::DB::Connection->new();
     my $traceq=$dbh->prepare("SELECT trace_location,trace_name from seqread where read_id=?");
@@ -83,8 +83,8 @@ sub has_abi_chromatogram
         return;
     }
     my $tmp_tracename="SGN-T$read_id.mct";#"mct"="mystery chromatogram type" ;-) --john
-    CXGN::Chromatogram::uncompress_if_necessary($full_pathname,$vhost_conf->get_conf('basepath')."$temp_image_path/$tmp_tracename");
-    return CXGN::Chromatogram::is_abi_file($vhost_conf->get_conf('basepath')."$temp_image_path/$tmp_tracename");    
+    CXGN::Chromatogram::uncompress_if_necessary($full_pathname,$context->get_conf('basepath')."$temp_image_path/$tmp_tracename");
+    return CXGN::Chromatogram::is_abi_file($context->get_conf('basepath')."$temp_image_path/$tmp_tracename");    
 }
 
 #chromats are hidden with obscure names and unspecified extensions, and we must try to find them. yay!

@@ -1,9 +1,8 @@
-use strict;
-
 package CXGN::Fish;
+use strict;
+use warnings;
+
 use CXGN::Page::FormattingHelpers;
-use CXGN::VHost;
-use diagnostics;
 
 sub find_file {
   my ($conf, $fn) = @_;
