@@ -1,5 +1,6 @@
 package CXGN::Class::MethodMaker;
 use strict;
+use warnings;
 no strict 'refs';
 
 =head1 NAME

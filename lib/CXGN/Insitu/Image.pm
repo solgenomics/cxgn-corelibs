@@ -1,3 +1,4 @@
+package CXGN::Insitu::Image;
 
 =head1 NAME
 
@@ -19,11 +20,10 @@ The following functions are provided in this class:
 
 
 use strict;
+use warnings;
 use CXGN::Insitu::DB;
 use CXGN::Insitu::Tag;
-
-
-package CXGN::Insitu::Image;
+use SGN::Context;
 
 use base qw / CXGN::Insitu::DB / ;
 
@@ -45,7 +45,7 @@ sub new {
     my $id = shift;
     my $self = $class ->SUPER::new($dbh);
     
-    $self->set_configuration_object(CXGN::VHost->new());
+    $self->set_configuration_object(SGN::Context->new());
 
     if ($id) { 
 	$self->set_image_id($id);
@@ -569,7 +569,7 @@ sub get_fullsize_dir {
 sub get_display_dir { 
     my $self = shift;
     # directory this script will move  shrunken images to
-    my $display_dir = CXGN::VHost->new->get_conf("insitu_display_dir");
+    my $display_dir = SGN::Context->new->get_conf("insitu_display_dir");
     $display_dir =~ s|/+$||;
     return $display_dir."/".$self->get_experiment_id();
 }
@@ -587,7 +587,7 @@ sub get_display_dir {
 
 sub get_input_dir { 
     my $self = shift;
-    my $input_dir = CXGN::VHost->new->get_conf("insitu_input_dir");
+    my $input_dir = SGN::Context->new->get_conf("insitu_input_dir");
     $input_dir =~ s|/+$||;
     return $input_dir;
 }

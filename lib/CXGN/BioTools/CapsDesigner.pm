@@ -7,7 +7,6 @@ use Bio::SeqIO;
 use Bio::AlignIO;
 use Getopt::Long;
 use File::Temp;
-use CXGN::VHost;
 
 package CXGN::BioTools::CapsDesigner;
 sub check_fasta {

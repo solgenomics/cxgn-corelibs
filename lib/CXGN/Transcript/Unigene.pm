@@ -34,6 +34,7 @@ use CXGN::Unigene::Tools;
 use CXGN::Transcript::CDS;
 use CXGN::Transcript::EST;
 use CXGN::Transcript::UnigeneBuild;
+use SGN::Context;
 
 use base qw | CXGN::DB::Object |;
 
@@ -1427,7 +1428,7 @@ sub get_unigene_member_image {
 	$cache->set_key("unigene_image-$unigene_id-".join(",", @highlight));
         $cache->set_expiration_time(86400); # seconds, this would be a day.
 	$cache->set_map_name("contigmap_SGN-U".$self->get_unigene_id()); # what's in the <map name='map_name' tag.
-	my $vh = CXGN::VHost->new();
+	my $vh = SGN::Context->new();
 	my $temp_dir = $vh->get_conf("tempfiles_subdir");
         $cache->set_temp_dir(File::Spec->catfile($temp_dir, "unigene_images"));
         $cache->set_basedir($vh->get_conf("basepath"));

@@ -61,10 +61,11 @@ package CXGN::DB::Phenotype;
 #  get_all_prop_images ()
 
 use strict;
+use warnings;
 use CXGN::DB::Connection;
 use CXGN::Tools::File;
-use CXGN::VHost;my $vhost_conf=CXGN::VHost->new();
 use CXGN::DB::Connection;
+my $vhost_conf = SGN::Context->new;
 
 #------------------------------------------------------
 #Class variables and other global properties.
