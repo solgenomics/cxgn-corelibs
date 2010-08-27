@@ -1,3 +1,4 @@
+package CXGN::Phylo::Configuration;
 
 =head1 NAME
 
@@ -11,14 +12,9 @@ People wishing to use the software have to fill in the function of the module wi
 
 =cut
 
-
-
 use strict;
-
-use CXGN::VHost;
-
-package CXGN::Phylo::Configuration;
-
+use warnings;
+use SGN::Context;
 
 sub new { 
     my $class = shift;
@@ -41,12 +37,9 @@ sub new {
 
 =cut
 
-sub get_temp_dir {     
-    my $self = shift;       
-    my $vhost = CXGN::VHost->new();
+sub get_temp_dir {
+    my $self = shift;
+    my $vhost = SGN::Context->new;
     $self->{temp_dir} = $vhost->get_conf("basepath").$vhost->get_conf("tempfiles_subdir")."/tree_browser";
-
 }
-
-
-return 1;
+1;
