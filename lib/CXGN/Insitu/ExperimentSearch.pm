@@ -22,7 +22,6 @@ use CXGN::Page::FormattingHelpers qw /simple_selectbox_html
   conditional_like_input_html
   /;
 
-my $dbh = CXGN::DB::Connection->new();
 my $s   = 'insitu';
 my $p   = 'sgn_people';
 
