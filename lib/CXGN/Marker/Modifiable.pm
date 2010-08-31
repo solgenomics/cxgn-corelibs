@@ -1,3 +1,4 @@
+package CXGN::Marker::Modifiable;
 =head1 NAME
 
 CXGN::Marker::Modifiable
@@ -13,7 +14,7 @@ Subclass of CXGN::Marker object used for storing new marker data and adding new 
 =cut
 
 use strict;
-package CXGN::Marker::Modifiable;
+use warnings;
 use CXGN::Marker::Tools;
 use CXGN::Marker::PCR::Experiment;
 use CXGN::Marker::Location;
@@ -464,7 +465,6 @@ sub store_new_data
             my $location=$experiment->{location};
             my $pcr=$experiment->{pcr_experiment};    
             my $rflp=$experiment->{rflp_experiment};
-            my $protocol=$experiment->{protocol};
             if($location)
             {
                 $location->marker_id($marker_id);
