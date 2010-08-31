@@ -384,7 +384,7 @@ EOH
     $scalars{has_image}  ||= '';
     
     my $html_ret = <<EOHTML;
-    (<a href="../help/phenotype_search_help.pl" />phenotype search help page<a />)
+    (<a href="../help/phenotype_search_help.pl">phenotype search help page</a>)
     <table><tr></tr>
     <tr><td colspan="2" ><b>Search by keyword</b></td></tr>
     <tr><td>$pheno_search</td>
