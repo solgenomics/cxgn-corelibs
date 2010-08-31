@@ -1,6 +1,6 @@
 package CXGN::Genomic::Search::Clone::Query;
 use strict;
-use English;
+use warnings;
 use Carp;
 
 use Tie::Function;
@@ -292,7 +292,7 @@ sub joinstructure {
   my $blast_query_sourcetype = $this->_bq_sourcetype;
 
   #cache these from query to query
-  our $overgo_version ||= CXGN::DB::Physical::get_current_overgo_version(our $physical_dbconn ||= CXGN::DB::Connection->new('physical'));
+  our $overgo_version ||= CXGN::DB::Physical::get_current_overgo_version(our $physical_dbconn ||= CXGN::DB::Connection->new);
   our $overgo_map_id ||= CXGN::DB::Physical::get_current_map_id();
 
 
