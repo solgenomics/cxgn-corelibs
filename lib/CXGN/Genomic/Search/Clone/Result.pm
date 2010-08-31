@@ -50,7 +50,7 @@ sub to_html {
   my $readinfopage = '/maps/physical/clone_read_info.pl';
 
   my $results_html = '';
-  our $physical_dbconn ||= CXGN::DB::Connection->new('physical');
+  our $physical_dbconn ||= CXGN::DB::Connection->new;
   my @tableheadings = 
   my @tabledata;
   my $clonequerystring = $this->_query->to_query_string;
