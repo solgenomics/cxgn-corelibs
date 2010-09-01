@@ -122,18 +122,16 @@ The following class methods are implemented:
 =cut
 
 sub new {
-    my ($class,$dbh,$id) = @_;
-    croak("PARAMETER ERROR: No schema object was supplied to the $class->new() function.\n") unless $dbh;
+    my $class = shift;
+    my $schema = shift || 
+	croak("PARAMETER ERROR: None schema object was supplied to the $class->new() function.\n");
+    my $id = shift;
 
     ### First, bless the class to create the object and set the schema into de object 
     ### (set_schema comes from CXGN::DB::Object).
 
-    my $schema_list = 'gem,biosource,metadata,public';
-    my $schema = CXGN::GEM::Schema->connect( sub { $dbh },
-                { on_connect_do => ["SET search_path TO $schema_list"] }, );
-    my $self = $class->SUPER::new($dbh);
-    $self->set_schema($schema);
-    $self->set_dbh($dbh);
+    my $self = $class->SUPER::new($schema);
+    $self->set_schema($schema);                                   
 
     ### Second, check that ID is an integer. If it is right go and get all the data for 
     ### this row in the database and after that get the data for experiment
@@ -1358,7 +1356,7 @@ sub get_experimental_design {
        croak("OBJECT MANIPULATION ERROR: The $self object haven't any experimental_design_id. Probably it hasn't store yet.\n");
    }
 
-   my $expdesign = CXGN::GEM::ExperimentalDesign->new($self->get_schema(), $experimental_design_id);
+   my $expdesign = CXGN::GEM::ExperimentalDesign->new($self->get_dbh(), $experimental_design_id);
   
    return $expdesign;
 }
@@ -1396,8 +1394,9 @@ sub get_target_list {
                           ->resultset('GeTarget')
                           ->search( { experiment_id => $experiment_id } );
 
+   my $dbh = CXGN::DB::Connection->new;
    foreach my $target_row (@target_rows) {
-       my $target = CXGN::GEM::Target->new($self->get_schema(), $target_row->get_column('target_id'));
+       my $target = CXGN::GEM::Target->new($dbh, $target_row->get_column('target_id'));
       
        push @targets, $target;
    }
@@ -1406,13 +1405,4 @@ sub get_target_list {
 
 }
 
-
-
-
-
-
-
-
-####
-1;##
-####
+1;
