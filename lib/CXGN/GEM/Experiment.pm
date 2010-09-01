@@ -1356,7 +1356,8 @@ sub get_experimental_design {
        croak("OBJECT MANIPULATION ERROR: The $self object haven't any experimental_design_id. Probably it hasn't store yet.\n");
    }
 
-   my $expdesign = CXGN::GEM::ExperimentalDesign->new($self->get_dbh(), $experimental_design_id);
+   my $dbh = CXGN::DB::Connection->new;
+   my $expdesign = CXGN::GEM::ExperimentalDesign->new($dbh, $experimental_design_id);
   
    return $expdesign;
 }

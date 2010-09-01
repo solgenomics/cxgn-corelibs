@@ -1,5 +1,3 @@
-
-
 package CXGN::GEM::Hybridization;
 
 use strict;
@@ -12,6 +10,7 @@ use CXGN::Metadata::Metadbdata;
 use CXGN::GEM::Platform;
 use CXGN::GEM::Target;
 use CXGN::Biosource::Protocol;
+use CXGN::DB::Connection;
 
 use Carp qw| croak cluck carp|;
 
@@ -954,8 +953,8 @@ sub get_target {
    unless (defined $target_id) {
        croak("OBJECT MANIPULATION ERROR: The $self object haven't any target_id. Probably it hasn't store yet.\n");
    }
-
-   my $target = CXGN::GEM::Target->new($self->get_schema(), $target_id);
+	my $dbh = CXGN::DB::Connection->new;
+   my $target = CXGN::GEM::Target->new($dbh, $target_id);
   
    return $target;
 }

@@ -1838,9 +1838,7 @@ sub get_experiment {
    unless (defined $experiment_id) {
        croak("OBJECT MANIPULATION ERROR: The $self object haven't any experiment_id. Probably it hasn't store yet.\n");
    }
-   my $dbh = CXGN::DB::Connection->new()->get_actual_dbh;
-
-   my $experiment = CXGN::GEM::Experiment->new($dbh, $experiment_id);
+   my $experiment = CXGN::GEM::Experiment->new($self->get_schema, $experiment_id);
   
    return $experiment;
 }
@@ -1873,7 +1871,8 @@ sub get_experimental_design {
        croak("OBJECT MANIPULATION ERROR: The $self object haven't any experimental_design_id. Probably it hasn't store yet.\n");
    }
 
-   my $expdesign = CXGN::GEM::ExperimentalDesign->new($self->get_schema(), $experimental_design_id);
+   my $dbh = CXGN::DB::Connection->new;
+   my $expdesign = CXGN::GEM::ExperimentalDesign->new($dbh, $experimental_design_id);
   
    return $expdesign;
 }
