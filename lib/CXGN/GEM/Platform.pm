@@ -145,11 +145,10 @@ sub new {
     ### (set_schema comes from CXGN::DB::Object).
 
     my $self = $class->SUPER::new($dbh);
+    my @schema_list = ('gem', 'biosource', 'metadata', 'public');
+    my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::GEM::Schema', search_path => \@schema_list, );
+    $self->set_schema($schema);
     $self->set_dbh($dbh);
-    my $schema = CXGN::DB::DBICFactory->open_schema(
-        'CXGN::GEM::Schema',
-         search_path => [qw/gem biosource metadata public/],
-    );
 
     ### Second, check that ID is an integer. If it is right go and get all the data for
     ### this row in the database and after that get the data for platform
