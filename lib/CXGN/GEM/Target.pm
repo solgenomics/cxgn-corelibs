@@ -1,4 +1,3 @@
-
 package CXGN::GEM::Target;
 
 use strict;
@@ -127,31 +126,29 @@ The following class methods are implemented:
 
   Ret: a CXGN::GEM::Target object
 
-  Args: a $schema a schema object, preferentially created using:
-        CXGN::GEM::Schema->connect(
-                   sub{ CXGN::DB::Connection->new()->get_actual_dbh()}, 
-                   %other_parameters );
+  Args: a $dbh
         A $target_id, a scalar.
         If $target_id is omitted, an empty target object is created.
 
   Side_Effects: access to database, check if exists the database columns that
                  this object use.  die if the id is not an integer.
 
-  Example: my $target = CXGN::GEM::Target->new($schema, $target_id);
+  Example: my $target = CXGN::GEM::Target->new($dbh, $target_id);
 
 =cut
 
 sub new {
-    my $class = shift;
-    my $schema = shift || 
-	croak("PARAMETER ERROR: None schema object was supplied to the $class->new() function.\n");
-    my $id = shift;
+    my ($class,$dbh,$id) = @_;
+	croak("PARAMETER ERROR: No schema object was supplied to the $class->new() function.\n") unless $dbh;
 
     ### First, bless the class to create the object and set the schema into de object 
-    ### (set_schema comes from CXGN::DB::Object).
 
-    my $self = $class->SUPER::new($schema);
-    $self->set_schema($schema);                                   
+    my $self = $class->SUPER::new($dbh);
+    $self->set_dbh($dbh);
+    my $schema = CXGN::DB::DBICFactory->open_schema(
+        'CXGN::GEM::Schema',
+         search_path => [qw/gem biosource metadata public/],
+    );
 
     ### Second, check that ID is an integer. If it is right go and get all the data for 
     ### this row in the database and after that get the data for target
@@ -168,8 +165,8 @@ sub new {
 	    croak("\nDATA TYPE ERROR: The target_id ($id) for $class->new() IS NOT AN INTEGER.\n\n");
 	}
 
-	## Get the ge_target_row object using a search based in the target_id 
 
+	## Get the ge_target_row object using a search based in the target_id 
 	($target) = $schema->resultset('GeTarget')
 	                   ->search( { target_id => $id } );
 	
@@ -248,16 +245,18 @@ sub new {
 =cut
 
 sub new_by_name {
-    my $class = shift;
-    my $schema = shift || 
-	croak("PARAMETER ERROR: None schema object was supplied to the $class->new_by_name() function.\n");
-    my $name = shift;
+    my ($class,$dbh,$name) = @_;
+	croak("PARAMETER ERROR: None schema object was supplied to the $class->new_by_name() function.\n") unless $dbh;
 
     ### It will search the target_id for this name and it will get the target_id for that using the new
     ### method to create a new object. If the name don't exists into the database it will create a empty object and
     ### it will set the target_name for it
   
     my $target;
+    my $schema = CXGN::DB::DBICFactory->open_schema(
+        'CXGN::GEM::Schema',
+         search_path => [qw/gem biosource metadata public/],
+    );
 
     if (defined $name) {
 	my ($target_row) = $schema->resultset('GeTarget')
