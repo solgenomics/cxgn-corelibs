@@ -9,6 +9,7 @@ use CXGN::GEM::Experiment;
 use CXGN::GEM::Target;
 use CXGN::Biosource::Schema;
 use CXGN::Metadata::Metadbdata;
+use CXGN::DB::Connection;
 use Carp qw| croak cluck |;
 
 
@@ -228,6 +229,7 @@ sub new_by_name {
     ### it will set the experimental_design_name for it
   
     my $expdesign;
+    my $dbh = CXGN::DB::Connection->new;
 
     if (defined $name) {
 	my ($expdesign_row) = $schema->resultset('GeExperimentalDesign')
@@ -240,17 +242,16 @@ sub new_by_name {
 	    ## If do not exists any experimental design with this name, it will return a warning and it will create an empty
             ## object with the exprimental design name set in it.
 
-	    $expdesign = $class->new($schema);
+	    $expdesign = $class->new($dbh);
 	    $expdesign->set_experimental_design_name($name);
 	}
 	else {
 
 	    ## if exists it will take the experimental_design_id to create the object with the new constructor
-	    $expdesign = $class->new( $schema, $expdesign_row->get_column('experimental_design_id') ); 
+	    $expdesign = $class->new( $dbh, $expdesign_row->get_column('experimental_design_id') ); 
 	}
-    } 
-    else {
-	$expdesign = $class->new($schema);                              ### Create an empty object;
+    } else {
+        $expdesign = $class->new($dbh);        ### Create an empty object;
     }
    
     return $expdesign;
