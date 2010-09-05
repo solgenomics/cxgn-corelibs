@@ -464,6 +464,7 @@ EOSQL
 							      ],
 						},
 				   childchoices => [ ['', sort {my ($an,$bn) = map{/(\d+)/} ($a,$b);
+                                                                no warnings 'uninitialized';
 								$an <=> $bn || $a cmp $b
 							      } keys %all_lgs
 						     ],
