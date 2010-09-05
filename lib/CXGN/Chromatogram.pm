@@ -26,7 +26,7 @@ sub create_image_file
     $width||=720;
     my $context = SGN::Context->new;
     my $website_path= $context->get_conf('basepath');
-    $temp_path_for_display ||= $context->get_conf('tempfiles_subdir').'/traceimages/';
+    $temp_path_for_display ||= $context->tempfiles_subdir('traceimages');
     $temp_path_for_output  ||= $website_path.$temp_path_for_display;
     $phred_path||='/usr/bin/';
     #image may already exist
@@ -65,7 +65,7 @@ sub has_abi_chromatogram
     my($read_id)=@_;
     my $context = SGN::Context->new;
     my $trace_basepath=$context->get_conf('trace_path');
-    my $temp_image_path=$context->get_conf('tempfiles_subdir').'/traceimages';
+    my $temp_image_path=$context->tempfiles_subdir('traceimages');
     if(!defined($read_id)||$read_id!~m/^[0-9]+$/){return;}
     my $dbh=CXGN::DB::Connection->new();
     my $traceq=$dbh->prepare("SELECT trace_location,trace_name from seqread where read_id=?");
