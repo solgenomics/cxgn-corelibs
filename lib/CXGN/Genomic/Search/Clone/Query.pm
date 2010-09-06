@@ -591,7 +591,7 @@ EOH
 		       ,$show_advanced_search);
   my $rethtml = <<EOHTML;
      <input type="hidden" name="$pname{page}" value="0" />
-     <div align="center" style="margin-bottom: 1em">
+     <div align="center" style="margin-bottom: 2em">
        <label style="font-weight: bold" for="bacsearchnameinput">Name contains</label> <span style="position: relative"><span style="position: absolute; left: 0.2em; top: 2em; font-size: 80%; white-space: nowrap; text-align: left; color: gray; width: 300px">full names, partial names, or lists of both</span><input id="bacsearchnameinput" type="text" size="50" name="$pname{id}" value="$webvalue{id}" /><input type="submit" value="Search" />
 </span>
      </div>
