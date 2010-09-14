@@ -68,7 +68,7 @@ sub new {
         }
         elsif ( $param->isa("DBIx::Class::Schema") ) {
             $self->set_schema($param);
-            $self->set_dbh( $param->storage->dbh->clone );
+            $self->set_dbh( $param->storage->dbh );
             $self->d("Received a Schema class and setting the schema...\n");
         }
         else {
