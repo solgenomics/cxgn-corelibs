@@ -1,3 +1,4 @@
+
 package CXGN::GEM::TechnologyType;
 
 use strict;

@@ -1,3 +1,5 @@
+
+
 package CXGN::GEM::Platform;
 
 use strict;
@@ -138,17 +140,16 @@ The following class methods are implemented:
 =cut
 
 sub new {
-    my ($class,$dbh,$id) = @_;
-	croak("PARAMETER ERROR: No dbh object was supplied to the $class->new() function.\n") unless $dbh;
+    my $class = shift;
+    my $schema = shift ||
+	croak("PARAMETER ERROR: No schema object was supplied to the $class->new() function.\n");
+    my $id = shift;
 
     ### First, bless the class to create the object and set the schema into the object
     ### (set_schema comes from CXGN::DB::Object).
 
-    my $self = $class->SUPER::new($dbh);
-    my @schema_list = ('gem', 'biosource', 'metadata', 'public');
-    my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::GEM::Schema', search_path => \@schema_list, );
+    my $self = $class->SUPER::new($schema);
     $self->set_schema($schema);
-    $self->set_dbh($dbh);
 
     ### Second, check that ID is an integer. If it is right go and get all the data for
     ### this row in the database and after that get the data for platform

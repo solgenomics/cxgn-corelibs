@@ -1,3 +1,4 @@
+
 package CXGN::GEM::Target;
 
 use strict;
@@ -126,30 +127,31 @@ The following class methods are implemented:
 
   Ret: a CXGN::GEM::Target object
 
-  Args: a $dbh
+  Args: a $schema a schema object, preferentially created using:
+        CXGN::GEM::Schema->connect(
+                   sub{ CXGN::DB::Connection->new()->get_actual_dbh()}, 
+                   %other_parameters );
         A $target_id, a scalar.
         If $target_id is omitted, an empty target object is created.
 
   Side_Effects: access to database, check if exists the database columns that
                  this object use.  die if the id is not an integer.
 
-  Example: my $target = CXGN::GEM::Target->new($dbh, $target_id);
+  Example: my $target = CXGN::GEM::Target->new($schema, $target_id);
 
 =cut
 
 sub new {
-    my ($class,$dbh,$id) = @_;
-    croak("PARAMETER ERROR: No schema object was supplied to the $class->new() function.\n") unless $dbh;
+    my $class = shift;
+    my $schema = shift || 
+	croak("PARAMETER ERROR: None schema object was supplied to the $class->new() function.\n");
+    my $id = shift;
 
     ### First, bless the class to create the object and set the schema into de object 
+    ### (set_schema comes from CXGN::DB::Object).
 
-    my $self = $class->SUPER::new($dbh);
-
-    my $schema_list = 'gem,biosource,metadata,public';
-    my $schema = CXGN::GEM::Schema->connect( sub { $dbh->get_actual_dbh },
-                { on_connect_do => ["SET search_path TO $schema_list"] }, );
-    $self->set_schema($schema);
-    $self->set_dbh($dbh);
+    my $self = $class->SUPER::new($schema);
+    $self->set_schema($schema);                                   
 
     ### Second, check that ID is an integer. If it is right go and get all the data for 
     ### this row in the database and after that get the data for target
@@ -161,44 +163,58 @@ sub new {
     my @target_dbxrefs = ();
  
     if (defined $id) {
-        unless ($id =~ m/^\d+$/) {  ## The id can be only an integer... so it is better if we detect this fail before.
-            croak("\nDATA TYPE ERROR: The target_id ($id) for $class->new() IS NOT AN INTEGER.\n\n");
-        }
+	unless ($id =~ m/^\d+$/) {  ## The id can be only an integer... so it is better if we detect this fail before.
+            
+	    croak("\nDATA TYPE ERROR: The target_id ($id) for $class->new() IS NOT AN INTEGER.\n\n");
+	}
 
-        ## Get the ge_target_row object using a search based in the target_id 
-        ($target) = $schema->resultset('GeTarget')->search( { target_id => $id } );
+	## Get the ge_target_row object using a search based in the target_id 
 
-        if (defined $target) {
-            ## Search also the target elements associated to this target
-            my @target_element_rows = $schema->resultset('GeTargetElement')
-                                            ->search( { target_id => $id } );
+	($target) = $schema->resultset('GeTarget')
+	                   ->search( { target_id => $id } );
+	
+	if (defined $target) {
 
-            foreach my $target_element_row (@target_element_rows) {
-                my $target_element_name = $target_element_row->get_column('target_element_name');
-                my $target_element_id = $target_element_row->get_column('target_element_id');
+	    ## Search also the target elements associated to this target
 
-                unless (defined $target_element_name) {
-                    croak("DATABASE COHERENCE ERROR: target_element_id=$target_element_id has undef value for target_element_name.\n");
-                } else {
-                    unless (exists $target_elements{$target_element_name}) {
-                    $target_elements{$target_element_name} = $target_element_row;                    
-                    } else {
-                        ## Die if there are more than two target elements with the same name for the same sample_id
-                        my $a = $target_elements{$target_element_name}->get_column('target_element_id') . ' and ' . $target_element_id;
-                        croak("DATABASE COHERENCE ERROR:There are more than one target_element_id ($a) with same target_element_name.\n");
-                    }
-                }
-            }
-            ## Search target_dbxref associations
-            @target_dbxrefs = $schema->resultset('GeTargetDbxref')
-                                    ->search( { target_id => $id } );
-        } else {
-            ## If do not exists the target_id, it will create an empty target object
-            $target = $schema->resultset('GeTarget')
-                            ->new({});
-        }
-    } else {
-        $target = $schema->resultset('GeTarget')->new({});          ### Create an empty object;
+	    my @target_element_rows = $schema->resultset('GeTargetElement')
+	                                    ->search( { target_id => $id } );
+	
+	    foreach my $target_element_row (@target_element_rows) {
+		my $target_element_name = $target_element_row->get_column('target_element_name');
+		my $target_element_id = $target_element_row->get_column('target_element_id');
+
+		unless (defined $target_element_name) {
+		    croak("DATABASE COHERENCE ERROR: target_element_id=$target_element_id has undef value for target_element_name.\n");
+		}
+		else {
+		    unless (exists $target_elements{$target_element_name}) {
+			$target_elements{$target_element_name} = $target_element_row;                    
+		    }
+		    else {
+		    
+			## Die if there are more than two target elements with the same name for the same sample_id
+                    
+			my $a = $target_elements{$target_element_name}->get_column('target_element_id') . ' and ' . $target_element_id;
+			croak("DATABASE COHERENCE ERROR:There are more than one target_element_id ($a) with same target_element_name.\n");
+		    }
+		}
+	    }
+	
+	    ## Search target_dbxref associations
+	
+	    @target_dbxrefs = $schema->resultset('GeTargetDbxref')
+	                             ->search( { target_id => $id } );
+	}
+	else {
+	    ## If do not exists the target_id, it will create an empty target object
+	    $target = $schema->resultset('GeTarget')
+	                     ->new({});
+	}       
+    }
+    else {
+	$target = $schema->resultset('GeTarget')
+	                ->new({});                              ### Create an empty object;
     }
 
     ## Finally it will load the rows into the object.
@@ -232,18 +248,16 @@ sub new {
 =cut
 
 sub new_by_name {
-    my ($class,$dbh,$name) = @_;
-	croak("PARAMETER ERROR: None schema object was supplied to the $class->new_by_name() function.\n") unless $dbh;
+    my $class = shift;
+    my $schema = shift || 
+	croak("PARAMETER ERROR: None schema object was supplied to the $class->new_by_name() function.\n");
+    my $name = shift;
 
     ### It will search the target_id for this name and it will get the target_id for that using the new
     ### method to create a new object. If the name don't exists into the database it will create a empty object and
     ### it will set the target_name for it
   
     my $target;
-    my $schema = CXGN::DB::DBICFactory->open_schema(
-        'CXGN::GEM::Schema',
-         search_path => [qw/gem biosource metadata public/],
-    );
 
     if (defined $name) {
 	my ($target_row) = $schema->resultset('GeTarget')
@@ -255,17 +269,17 @@ sub new_by_name {
 	    ## If do not exists any target with this name, it will return a warning and it will create an empty
             ## object with the target name set in it.
 
-	    $target = $class->new($dbh);
+	    $target = $class->new($schema);
 	    $target->set_target_name($name);
 	}
 	else {
 
 	    ## if exists it will take the target_id to create the object with the new constructor
-	    $target = $class->new( $dbh, $target_row->get_column('target_id') ); 
+	    $target = $class->new( $schema, $target_row->get_column('target_id') ); 
 	}
     } 
     else {
-	$target = $class->new($dbh);                              ### Create an empty object;
+	$target = $class->new($schema);                              ### Create an empty object;
     }
    
     return $target;
@@ -1838,7 +1852,8 @@ sub get_experiment {
    unless (defined $experiment_id) {
        croak("OBJECT MANIPULATION ERROR: The $self object haven't any experiment_id. Probably it hasn't store yet.\n");
    }
-   my $experiment = CXGN::GEM::Experiment->new($self->get_schema, $experiment_id);
+
+   my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $experiment_id);
   
    return $experiment;
 }
@@ -1871,8 +1886,7 @@ sub get_experimental_design {
        croak("OBJECT MANIPULATION ERROR: The $self object haven't any experimental_design_id. Probably it hasn't store yet.\n");
    }
 
-   my $dbh = CXGN::DB::Connection->new;
-   my $expdesign = CXGN::GEM::ExperimentalDesign->new($dbh, $experimental_design_id);
+   my $expdesign = CXGN::GEM::ExperimentalDesign->new($self->get_schema(), $experimental_design_id);
   
    return $expdesign;
 }

@@ -1356,8 +1356,7 @@ sub get_experimental_design {
        croak("OBJECT MANIPULATION ERROR: The $self object haven't any experimental_design_id. Probably it hasn't store yet.\n");
    }
 
-   my $dbh = CXGN::DB::Connection->new;
-   my $expdesign = CXGN::GEM::ExperimentalDesign->new($dbh, $experimental_design_id);
+   my $expdesign = CXGN::GEM::ExperimentalDesign->new($self->get_schema(), $experimental_design_id);
   
    return $expdesign;
 }
@@ -1395,9 +1394,8 @@ sub get_target_list {
                           ->resultset('GeTarget')
                           ->search( { experiment_id => $experiment_id } );
 
-   my $dbh = CXGN::DB::Connection->new;
    foreach my $target_row (@target_rows) {
-       my $target = CXGN::GEM::Target->new($dbh, $target_row->get_column('target_id'));
+       my $target = CXGN::GEM::Target->new($self->get_schema(), $target_row->get_column('target_id'));
       
        push @targets, $target;
    }
@@ -1406,4 +1404,13 @@ sub get_target_list {
 
 }
 
-1;
+
+
+
+
+
+
+
+####
+1;##
+####

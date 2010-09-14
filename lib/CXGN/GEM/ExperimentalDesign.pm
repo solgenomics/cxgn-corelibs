@@ -1,3 +1,4 @@
+
 package CXGN::GEM::ExperimentalDesign;
 
 use strict;
@@ -9,7 +10,7 @@ use CXGN::GEM::Experiment;
 use CXGN::GEM::Target;
 use CXGN::Biosource::Schema;
 use CXGN::Metadata::Metadbdata;
-use CXGN::DB::Connection;
+
 use Carp qw| croak cluck |;
 
 
@@ -128,18 +129,16 @@ The following class methods are implemented:
 =cut
 
 sub new {
-    my ($class,$dbh,$id) = @_;
-    croak("PARAMETER ERROR: No schema object was supplied to the $class->new() function.\n") unless $dbh;
+    my $class = shift;
+    my $schema = shift || 
+	croak("PARAMETER ERROR: None schema object was supplied to the $class->new() function.\n");
+    my $id = shift;
 
     ### First, bless the class to create the object and set the schema into de object 
     ### (set_schema comes from CXGN::DB::Object).
 
-    my $schema_list = 'gem,biosource,metadata,public';
-    my $schema = CXGN::GEM::Schema->connect( sub { $dbh->get_actual_dbh },
-                { on_connect_do => ["SET search_path TO $schema_list"] }, );
-    my $self = $class->SUPER::new($dbh);
-    $self->set_schema($schema);
-    $self->set_dbh($dbh);
+    my $self = $class->SUPER::new($schema);
+    $self->set_schema($schema);                                   
 
     ### Second, check that ID is an integer. If it is right go and get all the data for 
     ### this row in the database and after that get the data for expdesign. 
@@ -229,7 +228,6 @@ sub new_by_name {
     ### it will set the experimental_design_name for it
   
     my $expdesign;
-    my $dbh = CXGN::DB::Connection->new;
 
     if (defined $name) {
 	my ($expdesign_row) = $schema->resultset('GeExperimentalDesign')
@@ -242,16 +240,17 @@ sub new_by_name {
 	    ## If do not exists any experimental design with this name, it will return a warning and it will create an empty
             ## object with the exprimental design name set in it.
 
-	    $expdesign = $class->new($dbh);
+	    $expdesign = $class->new($schema);
 	    $expdesign->set_experimental_design_name($name);
 	}
 	else {
 
 	    ## if exists it will take the experimental_design_id to create the object with the new constructor
-	    $expdesign = $class->new( $dbh, $expdesign_row->get_column('experimental_design_id') ); 
+	    $expdesign = $class->new( $schema, $expdesign_row->get_column('experimental_design_id') ); 
 	}
-    } else {
-        $expdesign = $class->new($dbh);        ### Create an empty object;
+    } 
+    else {
+	$expdesign = $class->new($schema);                              ### Create an empty object;
     }
    
     return $expdesign;
@@ -1687,4 +1686,13 @@ sub get_target_list {
    return @targets;
 }
 
-1;
+
+
+
+
+
+
+
+####
+1;##
+####
