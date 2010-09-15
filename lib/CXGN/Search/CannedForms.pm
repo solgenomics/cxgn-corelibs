@@ -428,21 +428,7 @@ EOH
 <hr />
 <span style="margin-top: 1em" class="search_form_title">TIGR TC</span>
 <div class="indentedcontent">
-Find unigenes corresponding to a TIGR TC number.
-<form action="/search/tigrtc.pl" method="get">
-EOH
-      . info_table_html(
-        'TIGR TC'         => qq|<input type="text" size="15" name="tigr_tc" />|,
-        'TIGR gene index' => simple_selectbox_html(
-            choices => [ [ 1, 'Tomato' ] ],
-            name => 'tcindex_id',
-        ),
-        '&nbsp;'     => qq|<input type="submit" value="Search" />|,
-        __border     => 0,
-        __multicol   => 3,
-        __tableattrs => 'width="100%"',
-      ) . <<EOH;
-</form>
+  See <a href="/tools/convert/input.pl">Converting between SGN unigenes and TGI TC sequences</a>.
 </div>
 EOH
 }
