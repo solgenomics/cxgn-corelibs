@@ -864,8 +864,8 @@ sub tempdir {
  				    DIR     => $temp_stem,
  				    CLEANUP => 0, #don't delete our kids' tempfiles
  				   );
-  -d $newtemp and -w $newtemp
-    or die __PACKAGE__.": Could not make temp dir in $temp_stem/$job_name-XXXXXX: $!";
+  -d $newtemp or die __PACKAGE__.": Could not make temp dir $newtemp : $!";
+  -w $newtemp or die __PACKAGE__.": Temp dir $newtemp is not writable: $!";
 
   $self->{tempdir} = $newtemp;
   dbp "Made new temp dir $newtemp\n";
