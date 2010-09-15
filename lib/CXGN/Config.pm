@@ -285,6 +285,8 @@ $defaults =
                                      physical
                                      tomato_gff
 				     sgn_people
+                                     gem
+                                     biosource
                                  ]],
 
      cview_db_backend         => 'cxgn',
