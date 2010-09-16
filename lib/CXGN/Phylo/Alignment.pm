@@ -2083,56 +2083,11 @@ sub run_muscle {
 		system "rm $result_file";
 		chdir $wd;
     }
-   
-   ## RUN ON CLUSTER NODES ###################################################
-	
+
 	if ($run eq "cluster") { 
-    
+            die 'cluster runs no longer supported in this module';
 
-	
-   #     CXGN::Tools::Run->temp_base($CLUSTER_SHARED_TEMPDIR);
-
-        # generate a .req file that will indicate to the wait.pl script 
-        # that such a request has been made 
-        #
-   #     system ("touch $filename.req");
-
-        my $old_wd = &Cwd::cwd();
-			
-# 		my $job = CXGN::Tools::Run->run_cluster( "/data/prod/bin/muscle",
-# 												-in => "$filename",
-# 												-out => "$filename.aln",
-# 												-maxiters => $maxiters,
-#                                              { #if the next line is uncommented, we get the weird STDERR problem I was talking about --ccarpita
-# 											   #out_file => "$filename.aln",
-#                                                err_file => $filename.".STDERR",
-#                                                working_dir => $CLUSTER_SHARED_TEMPDIR,
-#                                                temp_base => $CLUSTER_SHARED_TEMPDIR,
-# #											   queue => "batch\@solanine"
-#                                              }
-#                                          );
-# 
-#         my (undef,$job_file) = tempfile( DIR=>$PATH, TEMPLATE=>"object_XXXXXX");
-# 		
-#         store($job, $job_file)
-# 	  or $page->message_page("An error occurred in the serializaton of the job object");
-
-#         #if (-e $job_file) { $page->message_page("Yes, it exists! $job_file". `ls $PATH`); }
-#         my $job_file_base = File::Basename::basename($job_file);
-# 
-#         print STDERR  "SUBMITTED JOB WITH JOBID: ".$job->job_id()."\n";
-# 		my $cds_temp_filename = File::Basename::basename($cds_temp_file);
-#         # url encode the destination pass_back page.
-# 		my $pass_back = "./align_viewer/show_align.pl?&amp;title=$title&amp;type=$type&amp;force_gap_cds=1&amp;cds_temp_file=$cds_temp_filename&amp;temp_file=";
-#         $pass_back =~ s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
-# 		my ($enc_title, $enc_type) = map { HTML::Entities::encode($_) } ($title, $type);
-# 		my $message = "Running Muscle v3.6 ($SEQ_COUNT sequences) on SGN Linux Cluster...";
-# 		
-# 		chdir $old_wd;
-# 		
-# 		$page->client_redirect("../wait.pl?tmp_app_dir=/align_viewer&amp;job_file=$job_file_base&amp;out_file_override=$filename.aln&amp;message=$message&amp;redirect=$pass_back");
- 		
-    }
+        }
 }
 
 
