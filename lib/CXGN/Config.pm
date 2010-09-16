@@ -301,9 +301,6 @@ $defaults =
      #the shared temp directory used by cluster nodes
      cluster_shared_tempdir   => '/data/prod/tmp',
 
-     #R qtl tempfiles (must be cluster accessible)
-     r_qtl_temp_path          => '/data/prod/tmp/r_qtl',
-
      #how verbose we want the warnings to be in the apache error log
      verbose_warnings         => 1,
 
