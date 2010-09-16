@@ -510,7 +510,7 @@ sub add_node_list {
     my $self = shift;
     my $node = shift;
     if (exists($self->{nodes}->{$node->get_unique_id()})) { 
-	warn "Node named ".$node->get_unique_id()." already exists!";
+	#warn "Node named ".$node->get_unique_id()." already exists!";
 	return 1;
     }
     $self->{nodes}->{$node->get_unique_id()}=$node;
@@ -688,7 +688,7 @@ sub layout {
 
 	my @n = $self->get_nodes_by_level($level);
 
-	print STDERR "Layout: level $level, laying out nodes ".(join " ", @n)."\n";
+	#print STDERR "Layout: level $level, laying out nodes ".(join " ", @n)."\n";
 
 	for (my $i=0; $i<@n; $i++) { 
 
@@ -702,9 +702,9 @@ sub layout {
 	    
 	    $self->get_node($n[$i])->set_X($x + int($self->get_image_width()/2));
 	    $self->get_node($n[$i])->set_Y($y + int($self->get_image_height()/2));
-	    print STDERR "Node $i:\n";
-	    print STDERR "X: ".$self->get_node($n[$i])->get_X()."\n";
-	    print STDERR "Y: ".$self->get_node($n[$i])->get_Y()."\n";
+	    #print STDERR "Node $i:\n";
+	    #print STDERR "X: ".$self->get_node($n[$i])->get_X()."\n";
+	    #print STDERR "Y: ".$self->get_node($n[$i])->get_Y()."\n";
 	}
     }
 }
@@ -740,11 +740,11 @@ sub calculate_nodes_by_level {
     $level_nodes[0]->{$ref} =1;
     
     foreach my $l (1..$level) { 
-	print STDERR "Generating the unique nodes for level $l...\n";
+	#print STDERR "Generating the unique nodes for level $l...\n";
 
 	foreach my $n (keys (%{$level_nodes[$l-1]})) { 
 	    foreach my $neighbor ($self->get_graph()->neighbours($n)) { 
-		print STDERR "NEIGHBOR of $n is $neighbor\n";
+		#print STDERR "NEIGHBOR of $n is $neighbor\n";
 		$level_nodes[$l]->{$neighbor}=1;
 	    }
 	}
@@ -920,7 +920,7 @@ sub render {
 	    
 	}
 	my $relationship_id = $self->get_graph()->get_edge_attribute($start_node->get_unique_id(), $end_node->get_unique_id(), "relationship_type");
-	print STDERR "RELATIONSHIP_ID = $relationship_id\n";
+	#print STDERR "RELATIONSHIP_ID = $relationship_id\n";
 	
 	
 	
@@ -935,7 +935,7 @@ sub render {
     }
     
     foreach my $level (0..$self->get_level_depth()) { 
-	print STDERR "Rendering level $level...\n";
+	#print STDERR "Rendering level $level...\n";
 	
 
 	$self->get_image->arc($self->get_reference_node()->get_X(),
