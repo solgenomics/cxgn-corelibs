@@ -1,15 +1,13 @@
-#!/usr/bin/perl
+package CXGN::BioTools::CapsDesigner2;
 
-##CAPS Designer 2: tool for multiple sequences
-
-#Summer Intern Hannah De Jong, August 6, 2009
-#Based on CapsDesigner.pm
 
 =head1 NAME
 
-/CXGN/BioTools/CapsDesigner2.pm
+CXGN::BioTools::CapsDesigner2
 
 =head1 DESCRIPTION
+
+CAPS Designer 2: tool for multiple sequences
 
 
 =cut
@@ -24,7 +22,6 @@ use File::Temp;
 use Bio::Restriction::Analysis;
 use Bio::PrimarySeq;
 
-package CXGN::BioTools::CapsDesigner2;
 
 
 =head2 check_fasta
@@ -143,11 +140,11 @@ sub format_input_file {
   my $fasta;
   if ($format eq 'fasta'){
 
-    # unaligned sequences    
-      print STDERR "CALLING clustalw -INFILE=$input -OUTPUT=CLUSTAL\n\n";
-    my $status = system ("clustalw", "-INFILE=$input", "-OUTPUT=CLUSTAL");
-    if ( $status != 0) {
-      return;
+    # unaligned sequences
+    {
+        use autodie qw/:all/;
+        my $status = system ("clustalw", '-quiet', "-INFILE=$input");
+        no autodie;
     }
     $format = 'clustalw';
     $input .= '.aln';
