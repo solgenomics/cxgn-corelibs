@@ -140,12 +140,9 @@ sub format_input_file {
   my $fasta;
   if ($format eq 'fasta'){
 
-    # unaligned sequences
-    {
-        use autodie qw/:all/;
-        my $status = system ("clustalw", '-quiet', "-INFILE=$input");
-        no autodie;
-    }
+    my $status = system ("clustalw", '-quiet', "-INFILE=$input");
+    return if $status;
+
     $format = 'clustalw';
     $input .= '.aln';
   }
