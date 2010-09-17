@@ -155,11 +155,12 @@ sub store {
 	my $existing_id= $self->exists_in_database();
 	if (!$existing_id) {
 	    #insert the new dbxref 
-	    my $query = "INSERT INTO public.dbxref (db_id, accession, description, version) VALUES(?,?,?,?)";
+	    my $query = "INSERT INTO public.dbxref (db_id, accession, description, version) VALUES(?,?,?,?) RETURNING dbxref_id";
 	    my $sth= $self->get_dbh()->prepare($query);
 	    if (!$self->get_version()) { $self->set_version(""); } #version field is not null
 	    $sth->execute($self->get_db_id, $self->get_accession, $self->get_description, $self->get_version());
-	    $dbxref_id=  $self->get_dbh()->last_insert_id("dbxref", "public");
+	    ($dbxref_id) = $sth->fetchrow_array();
+
 	    $self->set_dbxref_id($dbxref_id);
 	} else { $self->set_dbxref_id($existing_id); }
     }else {	 # do an update
