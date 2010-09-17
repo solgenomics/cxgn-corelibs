@@ -135,17 +135,24 @@ sub read_enzyme_file {
 =cut
 sub format_input_file { 
   
-  my $format = shift or die "Missing parameter(s)!";
-  my $input = shift or die "Missing parameter(s)!";
+  my $format = shift or die "Missing format parameter!";
+  my $input = shift or die "Missing input parameter!";
   my $fasta;
   if ($format eq 'fasta'){
 
-    my $status = system ("clustalw", '-quiet', "-INFILE=$input");
+    open my $stdout, ">&STDOUT"  or die "Can't dup STDOUT: $!";
+    open STDOUT, '>', "/dev/null" or die "Can't redirect STDOUT: $!";
+
+    my $status = system (qw/clustalw -quiet/,"-INFILE=$input");
     return if $status;
+
+    # replace STDOUT
+    open STDOUT, '>&', $stdout or die "Can't replace STDOUT: $!";
 
     $format = 'clustalw';
     $input .= '.aln';
   }
+
   if ($format eq 'clustalw') {
     #clustalw file
     my $in = Bio::AlignIO -> new (-file => $input,
