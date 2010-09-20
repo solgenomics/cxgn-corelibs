@@ -40,8 +40,8 @@ sub new {
     my $class = shift;
     my $schema = shift;
     my $id = shift;
-
-    ### First, bless the class to create the object and set the schema into the object.
+    
+     ### First, bless the class to create the object and set the schema into the object.
     my $self = $class->SUPER::new($schema);
     my $stock;
     if (defined $id) {
@@ -124,6 +124,23 @@ sub exists_in_database {
 	})->single(); #  ->single() for retrieving a single row (there sould be only one uniquename entry)
     if ($s) { return $s->stock_id(); }
     return undef;
+}
+
+=head2 get_obsolete
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_obsolete {
+    my $self = shift;
+    $self->{obsolete} = 'f';
+    return $self->{obsolete};
 }
 
 
