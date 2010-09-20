@@ -71,6 +71,14 @@ extends 'CXGN::Metadata::Dbpatch';
     ##
  }
 
+ return 1
+###
+
+Now you can run the db patch like this:
+
+mx-run MyDbpatch -H dbhost -D dbname -u username 
+
+
 =head1 AUTHORS
 
 Naama Menda<nm249@cornell.edu>
@@ -176,7 +184,6 @@ sub run {
     
     $self->dbh($dbh);
     
-    print STDOUT "\nCreating the Metadata Schema object.\n";
     
     my $metadata_schema = CXGN::Metadata::Schema->connect(   
 	sub { $dbh },
@@ -209,10 +216,7 @@ sub run {
     
     $dbversion->store($metadata);
     
-    print STDOUT "DONE!\n";
-    
     $dbh->commit;
-    
 }
 
 
