@@ -114,6 +114,7 @@ my $last_expdesign_id = $last_ids{'gem.ge_experimental_design_experimental_desig
 my $last_dbxref_id = $last_ids{'public.dbxref_dbxref_id_seq'} || 0;
 my $last_pub_id = $last_ids{'public.pub_pub_id_seq'} || 0;
 
+
 ## Create a empty metadata object to use in the database store functions
 my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $ENV{GEMTEST_METALOADER});
 my $creation_date = $metadbdata->get_object_creation_date();

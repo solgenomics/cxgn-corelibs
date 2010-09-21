@@ -218,22 +218,37 @@ sub get_all_last_ids {
 	if ( $schema->exists_dbtable($table_name) ) {
 
 	    my ($primary_key_col) = $source->primary_columns();
- 
-	    my $primary_key_col_info = $source->column_info($primary_key_col)
-		                              ->{'default_value'};
+
+	    my $primary_key_col_info;
+	    my $primary_key_col_info_href = $source->column_info($primary_key_col);
+	    if (exists $primary_key_col_info_href->{'default_value'}) {
+		$primary_key_col_info = $primary_key_col_info_href->{'default_value'};
+	    }
+	    elsif (exists $primary_key_col_info_href->{'sequence'}) {
+		$primary_key_col_info = $primary_key_col_info_href->{'sequence'};
+	    }
 	    
 	    my $last_value = $schema->resultset($source_name)
                                     ->get_column($primary_key_col)
                                     ->max();
 	    my $seq_name;
+
 	    if (defined $primary_key_col_info) {
-		if ($primary_key_col_info =~ m/\'(\w+\..*?_seq)\'/) {
-		    $seq_name = $1;
+		if (exists $primary_key_col_info_href->{'default_value'}) {
+		    if ($primary_key_col_info =~ m/\'(.*?_seq)\'/) {
+			$seq_name = $1;
+		    }
+		}
+		elsif (exists $primary_key_col_info_href->{'sequence'}) {
+		    if ($primary_key_col_info =~ m/(.*?_seq)/) {
+			$seq_name = $1;
+		    }
 		}
 	    } 
 	    else {
 		print STDERR "The source:$source_name ($source) with primary_key_col:$primary_key_col hasn't any primary_key_col_info.\n";
 	    }
+
 	    if (defined $seq_name) {
 		$last_ids{$seq_name} = $last_value || 0;
 	    }

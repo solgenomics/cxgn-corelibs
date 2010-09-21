@@ -373,7 +373,7 @@ eval {
 
     my $sample = CXGN::Biosource::Sample->new($schema);
     $sample->set_sample_name('sample_test');
-    $sample->set_sample_type('test');
+    ### deprecated new CXGN::Biosource::Sample ### $sample->set_sample_type('test');
     $sample->set_description('This is a description test');
     $sample->set_contact_by_username($ENV{GEMTEST_METALOADER});
 
