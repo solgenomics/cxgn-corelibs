@@ -1,15 +1,13 @@
-#!/usr/bin/perl
+package CXGN::BioTools::CapsDesigner2;
 
-##CAPS Designer 2: tool for multiple sequences
-
-#Summer Intern Hannah De Jong, August 6, 2009
-#Based on CapsDesigner.pm
 
 =head1 NAME
 
-/CXGN/BioTools/CapsDesigner2.pm
+CXGN::BioTools::CapsDesigner2
 
 =head1 DESCRIPTION
+
+CAPS Designer 2: tool for multiple sequences
 
 
 =cut
@@ -24,7 +22,6 @@ use File::Temp;
 use Bio::Restriction::Analysis;
 use Bio::PrimarySeq;
 
-package CXGN::BioTools::CapsDesigner2;
 
 
 =head2 check_fasta
@@ -138,20 +135,24 @@ sub read_enzyme_file {
 =cut
 sub format_input_file { 
   
-  my $format = shift or die "Missing parameter(s)!";
-  my $input = shift or die "Missing parameter(s)!";
+  my $format = shift or die "Missing format parameter!";
+  my $input = shift or die "Missing input parameter!";
   my $fasta;
   if ($format eq 'fasta'){
 
-    # unaligned sequences    
-      print STDERR "CALLING clustalw -INFILE=$input -OUTPUT=CLUSTAL\n\n";
-    my $status = system ("clustalw", "-INFILE=$input", "-OUTPUT=CLUSTAL");
-    if ( $status != 0) {
-      return;
-    }
+    open my $stdout, ">&STDOUT"  or die "Can't dup STDOUT: $!";
+    open STDOUT, '>', "/dev/null" or die "Can't redirect STDOUT: $!";
+
+    my $status = system (qw/clustalw -quiet/,"-INFILE=$input");
+    return if $status;
+
+    # replace STDOUT
+    open STDOUT, '>&', $stdout or die "Can't replace STDOUT: $!";
+
     $format = 'clustalw';
     $input .= '.aln';
   }
+
   if ($format eq 'clustalw') {
     #clustalw file
     my $in = Bio::AlignIO -> new (-file => $input,

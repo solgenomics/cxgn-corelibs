@@ -102,7 +102,7 @@ sub set_url {
   my $url = shift;
   $url =~ s/\\//g; 
   $self->{url}=$url;
-  print STDERR " **** SET URL $url\n";
+  #print STDERR " **** SET URL $url\n";
 }
 
 

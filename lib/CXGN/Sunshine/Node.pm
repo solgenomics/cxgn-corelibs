@@ -135,7 +135,7 @@ sub render {
     
     $self->layout();
 
-    print STDERR "Rendering node ".$self->get_name()."\n";
+    #print STDERR "Rendering node ".$self->get_name()."\n";
     my $margin = 5;
 
     my $fgcolor = $image->colorAllocate($self->get_fgcolor());
@@ -148,8 +148,8 @@ sub render {
     $self->set_width($self->get_font()->width() * length($self->get_name())+ 2*$margin);
     $self->set_height($self->get_font()->height() + 2* $margin);
 
-    print STDERR "Width: ".$self->get_width()."\n";
-    print STDERR "Heigh: ".$self->get_height()."\n";
+    #print STDERR "Width: ".$self->get_width()."\n";
+    #print STDERR "Heigh: ".$self->get_height()."\n";
 
     $image->filledRectangle($self->get_enclosing_rect(), $bgcolor);
 
@@ -186,7 +186,7 @@ sub get_image_map {
     my $self = shift;
     
     my $s= "";
-    print STDERR "Generating image map for node ".$self->get_name()."\n";
+    #print STDERR "Generating image map for node ".$self->get_name()."\n";
      if ($self->get_url()) { 
 	 my $coords = join(", ", ($self->get_enclosing_rect()));
 	 my $url = $self->get_url();
