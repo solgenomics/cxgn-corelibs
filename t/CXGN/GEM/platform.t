@@ -178,7 +178,7 @@ foreach my $rootfunction (@function_keys) {
 
 ## Testing the die results (TEST 12 to 23)
 
-throws_ok { CXGN::GEM::Platform->new() } qr/PARAMETER ERROR: None schema/, 
+throws_ok { CXGN::GEM::Platform->new() } qr/PARAMETER ERROR: No schema/, 
     'TESTING DIE ERROR when none schema is supplied to new() function';
 
 throws_ok { CXGN::GEM::Platform->new($schema, 'no integer')} qr/DATA TYPE ERROR/, 
@@ -368,7 +368,7 @@ throws_ok { CXGN::GEM::Platform->new($schema)->set_contact_by_username('fake_use
      foreach my $sample_name (@sample_names) {
 	 my $sample1 = CXGN::Biosource::Sample->new($schema);
 	 $sample1->set_sample_name($sample_name);
-	 $sample1->set_sample_type('test');
+	 ### deprecated new CXGN::Biosource::Sample ### $sample1->set_sample_type('test');
 	 $sample1->set_description('test description for sample');
 
 	 $sample1->store($metadbdata);
@@ -461,7 +461,7 @@ throws_ok { CXGN::GEM::Platform->new($schema)->set_contact_by_username('fake_use
 
      my $sample2 = CXGN::Biosource::Sample->new($schema);
      $sample2->set_sample_name('sample_test3');
-     $sample2->set_sample_type('test');
+     #$sample2->set_sample_type('test');
      $sample2->set_description('test description for sample');
 
      $sample2->store($metadbdata);
