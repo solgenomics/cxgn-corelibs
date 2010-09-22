@@ -191,7 +191,7 @@ foreach my $rootfunction (@function_keys) {
 
 my %last_ids = $schema->get_last_id();
 
-my $last_metadata_id = $last_ids{'md_metadata_metadata_id_seq'};
+my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'};
 
 eval {
 

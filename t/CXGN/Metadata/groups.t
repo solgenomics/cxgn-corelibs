@@ -146,9 +146,9 @@ $schema->txn_begin();
 
 ## Get the last values
 my %last_ids = $schema->get_last_id();
-my $last_metadata_id = $last_ids{'md_metadata_metadata_id_seq'};
-my $last_group_id = $last_ids{'md_groups_group_id_seq'};
-my $last_dbiref_id = $last_ids{'md_dbiref_dbiref_id_seq'};
+my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'};
+my $last_group_id = $last_ids{'metadata.md_groups_group_id_seq'};
+my $last_dbiref_id = $last_ids{'metadata.md_dbiref_dbiref_id_seq'};
 
 ## Create a empty metadata object to use in the database store functions
 my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $metadata_creation_user);

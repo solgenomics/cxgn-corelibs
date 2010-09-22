@@ -11,7 +11,7 @@ __PACKAGE__->add_columns(
   "tag_id",
   {
     data_type => "integer",
-    default_value => "nextval('md_tag_tag_id_seq'::regclass)",
+    default_value => "nextval('metadata.md_tag_tag_id_seq'::regclass)",
     is_nullable => 0,
     size => 4,
   },

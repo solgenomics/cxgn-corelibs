@@ -11,7 +11,7 @@ __PACKAGE__->add_columns(
   "role_id",
   {
     data_type => "bigint",
-    default_value => "nextval('roles_role_id_seq'::regclass)",
+    default_value => "nextval('metadata.roles_role_id_seq'::regclass)",
     is_nullable => 0,
     size => 8,
   },

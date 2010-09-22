@@ -11,7 +11,7 @@ __PACKAGE__->add_columns(
   "image_id",
   {
     data_type => "integer",
-    default_value => "nextval('md_image_image_id_seq'::regclass)",
+    default_value => "nextval('metadata.md_image_image_id_seq'::regclass)",
     is_nullable => 0,
     size => 4,
   },

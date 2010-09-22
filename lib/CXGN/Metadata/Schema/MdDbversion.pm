@@ -11,7 +11,7 @@ __PACKAGE__->add_columns(
   "dbversion_id",
   {
     data_type => "integer",
-    default_value => "nextval('md_dbversion_dbversion_id_seq'::regclass)",
+    default_value => "nextval('metadata.md_dbversion_dbversion_id_seq'::regclass)",
     is_nullable => 0,
     size => 4,
   },
