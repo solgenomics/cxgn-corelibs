@@ -46,9 +46,10 @@ extends 'CXGN::Metadata::Dbpatch';
 #now override init_patch() and patch()
  sub init_patch  {
     my $self=shift;
-    #your patch name has to be in the following format:
-    #number_name
-    my $name='00001_my_dbpatch_name;
+    # You can name your patch any way you want, 
+    # but it is easiest just to name it with the package name:
+    #
+    my $name=__PACKAGE__;
     my $description = 'my dbpatch description';
     my @prev_patches = (); # list any prerequisites of other patches
     
@@ -56,10 +57,10 @@ extends 'CXGN::Metadata::Dbpatch';
     $self->name($name);
     $self->description($description);
     $self->prereq(\@prev_patches);
-  }
+}
 
 
- sub patch {
+sub patch {
     my $self=shift;
     ### Now you can insert the data using different options:
     
@@ -69,21 +70,22 @@ extends 'CXGN::Metadata::Dbpatch';
     ##
     ##  3- Using DBIx::Class first level objects
     ##
- }
+}
 
- return 1
+return 1
 ###
-
-Now you can run the db patch like this:
-
+    
+    
+Now you can run the db patch from the command line like this:
+    
 mx-run MyDbpatch -H dbhost -D dbname -u username 
-
-
+    
+    
 =head1 AUTHORS
 
-Naama Menda<nm249@cornell.edu>
-Lukas Mueller<lam87@cornell.edu>
-Aureliano Bombarely<ab782@cornell.edu>
+ Naama Menda<nm249@cornell.edu>
+ Lukas Mueller<lam87@cornell.edu>
+ Aureliano Bombarely<ab782@cornell.edu>
 
 =head1 COPYRIGHT & LICENSE
 
