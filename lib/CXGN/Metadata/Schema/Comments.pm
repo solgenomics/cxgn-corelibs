@@ -11,7 +11,7 @@ __PACKAGE__->add_columns(
   "comment_id",
   {
     data_type => "bigint",
-    default_value => "nextval('comments_comment_id_seq'::regclass)",
+    default_value => "nextval('metadata.comments_comment_id_seq'::regclass)",
     is_nullable => 0,
     size => 8,
   },

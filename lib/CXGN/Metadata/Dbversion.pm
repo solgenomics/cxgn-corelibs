@@ -680,7 +680,8 @@ sub obsolete {
 
 sub get_patch_number {
     my $self = shift;
-
+    warn("get_patch_number is DEPRECATED! We are no longer using consecutive patch numbering, since each db patch lives in a different component , and should be named '__MyPackageName__' . The name assignment happens automatically if you write your db_patch as a subclass of CXGN::Metadata::Dbpatch");
+    
     my $patch_name = shift || $self->get_patch_name();
 
     my $patch_number;
@@ -769,6 +770,8 @@ sub exists_dbpatch {
 
 sub check_previous_dbpatches {
     my $self = shift;
+    warn("check_previous_dbpatches is DEPRECATED! \n We are no longer using consecutive numbers for dbpatches, since each component has it's own patches.");
+    
     my $patch_name = shift || $self->get_patch_name();  ## If don't exists argument it will
                                                         ## take the patch name from the object
 
@@ -920,34 +923,6 @@ sub complete_checking {
 		    die($ms2);
 		}
 	    }
-	    
-	}
-	else {
-
-	    my %check_previous = $self->check_previous_dbpatches();
-	    my @absent_patches = ();
-
-	    foreach my $prepatch (sort keys %check_previous) {
-		
-		if ($check_previous{$prepatch} == 0) {
-		    
-		    push @absent_patches, $prepatch;
-		    
-		}
-	    }
-       
-	    if (scalar(@absent_patches) > 0) {
-		my $missing_patches = join("\n\t- ", @absent_patches);
-		my $ms3 = "PREVIOUS DB_PATCH by default ERROR: The previous patches\n\t- $missing_patches \nhave not been executed\n"; 
-		
-		if (defined $opt{'force'} && $opt{'force'} == 1) {
-		    print STDERR "$ms3\n";
-		}
-		else {
-		    die($ms3);
-		}
-	    }
-	    
 	}
     }
     return $self;
