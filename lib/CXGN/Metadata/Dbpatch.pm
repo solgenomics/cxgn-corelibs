@@ -209,13 +209,19 @@ sub run {
     my $metadata = CXGN::Metadata::Metadbdata->new($metadata_schema, $self->username);
     
     #Get a new metadata_id (if you are using store function you only need to supply $metadbdata object)
-    
-    my $metadata_id = $metadata->store()->get_metadata_id();
-    
+   
     #override this in the sub-class
-    $self->patch;
+    my $error = $self->patch;
+    if ($error ne '1') {
+	print "Failed! Rolling back! \n $error \n ";
+	$dbh->rollback();
+	exit();
+    }
     ##
     
+    $metadata->get_dbh->do('set search_path to metadata');
+    
+    my $metadata_id = $metadata->store()->get_metadata_id();
     $dbversion->store($metadata);
     
     $dbh->commit;
