@@ -139,7 +139,9 @@ sub exists_in_database {
 
 sub get_obsolete {
     my $self = shift;
-    $self->{obsolete} = 'f';
+    my $is_obsolete = $self->get_object_row()->is_obsolete();
+    
+    $self->{obsolete} = $is_obsolete;
     return $self->{obsolete};
 }
 
