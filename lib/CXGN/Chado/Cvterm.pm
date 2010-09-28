@@ -623,10 +623,19 @@ sub get_full_accession {
 sub get_parents {
     
     my $self=shift;
-    my $parents_sth = $self->get_dbh()->prepare("SELECT cvterm_relationship.object_id, cvterm_relationship.type_id, cvterm.name FROM cvterm_relationship join cvterm ON cvterm.cvterm_id=cvterm_relationship.object_id join dbxref on (cvterm.dbxref_id=dbxref.dbxref_id)  JOIN public.db USING (db_id) WHERE cvterm_relationship.subject_id= ?  and cvterm.is_obsolete = 0 AND db.name=? order by cvterm.name asc");
-
-#SELECT cvterm_relationship.object_id, cvterm_relationship.type_id, cvterm.name FROM cvterm_relationship join cvterm ON cvterm.cvterm_id=cvterm_relationship.object_id left join cvtermsynonym on cvtermsynonym.synonym=cvterm.name WHERE cvterm_relationship.subject_id= ? and cvtermsynonym.synonym is null and cvterm.is_obsolete = 0 order by cvterm.name asc");
-    $parents_sth->execute($self->get_cvterm_id(), $self->get_db_name() );
+    
+    my $parents_q =  "SELECT distinct(cvtermpath.object_id) , cvterm_relationship.type_id, cvterm.name
+                       FROM cvterm_relationship 
+                       JOIN cvtermpath USING (subject_id) 
+                       JOIN cvterm ON (cvterm_relationship.subject_id = cvterm_id) 
+                       WHERE cvtermpath.subject_id = ?  AND cvterm.is_obsolete = 0 and pathdistance = ? 
+                       ORDER BY cvterm.name ASC";
+    
+    my $parents_sth = $self->get_dbh()->prepare($parents_q);
+    
+#("SELECT cvterm_relationship.object_id, cvterm_relationship.type_id, cvterm.name FROM cvterm_relationship join cvterm ON cvterm.cvterm_id=cvterm_relationship.object_id join dbxref on (cvterm.dbxref_id=dbxref.dbxref_id)  JOIN public.db USING (db_id) WHERE cvterm_relationship.subject_id= ?  and cvterm.is_obsolete = 0 AND db.name=? order by cvterm.name asc");
+    
+    $parents_sth->execute($self->get_cvterm_id(), 1 );
     my @parents = ();
     while (my ($parent_term_id, $type_id, $cvterm_name) = $parents_sth->fetchrow_array()) { 
 	my $parent_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $parent_term_id);
@@ -684,7 +693,7 @@ sub get_children {
                        FROM cvterm_relationship 
                        JOIN cvtermpath USING (subject_id) 
                        JOIN cvterm ON (cvterm_relationship.subject_id = cvterm_id) 
-                       WHERE cvtermpath.object_id = ?  AND pathdistance = ? 
+                       WHERE cvtermpath.object_id = ?  AND pathdistance = ? AND cvterm.is_obsolete = 0 
                        ORDER BY cvterm.name ASC";
 
     #my $children_sth = $self->get_dbh()->prepare("SELECT distinct(cvterm_relationship.subject_id), cvterm_relationship.type_id, cvterm.name FROM cvterm_relationship join cvterm ON (cvterm.cvterm_id=cvterm_relationship.subject_id) JOIN public.dbxref USING (dbxref_id) JOIN public.db USING (db_id) WHERE cvterm_relationship.object_id= ?  and cvterm.is_obsolete = 0 AND  order by cvterm.name asc");
