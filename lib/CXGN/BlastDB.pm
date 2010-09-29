@@ -68,7 +68,7 @@ This is a handle on a BLAST database we manage.  Each of
 these objects corresponds to a row in the sgn.blast_db table and
 a set of files in the filesystem. at a place specified by this class's
 dbpath() data member (see dbpath docs below).  This path defaults to
-the value of the 'blast_db_path' configuration variable (see L<CXGN::VHost>).
+the value of the 'blast_db_path' configuration variable (see L<CXGN::Config>).
 
 =head1 METHODS
 
