@@ -248,11 +248,10 @@ sub store {
 	    #store new feature
 	    my $organism=CXGN::Chado::Organism->new_with_taxon_id($dbh, $self->get_organism_taxon_id());
 	    my $organism_id=$organism->get_organism_id() || die "No organism id exists in public.organism table for genbank taxon id ". $self->get_organism_taxon_id() . " (organism name = ". $self->get_organism_name() . "! Cannot store new feature without an organism id\n. You might want to store this organism in the database first or check your input\n";
-	    my $query= "INSERT INTO feature (dbxref_id, organism_id, name, uniquename, residues, seqlen, type_id) VALUES (?,?,?,?,?,?, (SELECT cvterm_id FROM cvterm WHERE name = ?))";
+	    my $query= "INSERT INTO feature (dbxref_id, organism_id, name, uniquename, residues, seqlen, type_id) VALUES (?,?,?,?,?,?, (SELECT cvterm_id FROM cvterm WHERE name = ?)) RETURNING feature.feature_id";
 	    my $sth=$dbh->prepare($query);
-	    $sth->execute($dbxref_id, $organism_id, $self->get_name, $self->get_uniquename, $self->get_residues, $self->get_seqlen(), $self->get_molecule_type());
+	    $feature_id = $sth->execute($dbxref_id, $organism_id, $self->get_name, $self->get_uniquename, $self->get_residues, $self->get_seqlen(), $self->get_molecule_type());
 	    ####
-	    $feature_id = $dbh->last_insert_id('feature', 'public');
 	    $self->set_feature_id($feature_id);
 	    
 	    #this statement is for inserting into the feature_dbxref table 
