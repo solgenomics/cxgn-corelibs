@@ -11,22 +11,21 @@
 
  perl metadata.t
 
- Note: To run the complete test the database connection should be done as postgres user 
+ Note: To run the complete test the database connection should be 
+ done as postgres user 
  (web_usr have not privileges to insert new data into the sed tables)  
 
  this test need some environment variables:
 
-   export METADATA_TEST_METALOADER= 'metaloader user'
-   export METADATA_TEST_DBDSN= 'database dsn as: dbi:DriverName:database=database_name;host=hostname;port=port'
-   export METADATA_TEST_DBUSER= 'database user with insert permissions'
-   export METADATA_TEST_DBPASS= 'database password'
+   export METADATA_TEST_METALOADER='metaloader user'
+   export METADATA_TEST_DBDSN='database dsn as: 
+    dbi:DriverName:database=database_name;host=hostname;port=port'
 
- also is recommendable set the reset dbseq after run the script
-    export RESET_DBSEQ=1
-
- if it is not set, after one run all the test that depends of a primary id
- (as metadata_id) will fail because it is calculated based in the last
- primary id and not in the current sequence for this primary id
+   example: 
+    export METADATA_TEST_DBDSN='dbi:Pg:database=sandbox;host=localhost;'
+    
+   export METADATA_TEST_DBUSER='database user with insert permissions'
+   export METADATA_TEST_DBPASS='database password'
 
 =head1 DESCRIPTION
 
@@ -76,8 +75,6 @@ BEGIN {
     ## Env. variables have been changed to use biosource specific ones
 
     my @env_variables = qw/METADATA_TEST_METALOADER METADATA_TEST_DBDSN METADATA_TEST_DBUSER METADATA_TEST_DBPASS/;
-
-    ## RESET_DBSEQ is an optional env. variable, it doesn't need to check it
 
     for my $env (@env_variables) {
         unless (defined $ENV{$env}) {
@@ -189,9 +186,10 @@ foreach my $rootfunction (@function_keys) {
  ## It was runned as eval { }, because in the end of the test we need restore the database data (and if die... )
   ##  now we are going to store, but before could be a good idea get the last_id to set the seq after all the process.
 
-my %last_ids = $schema->get_last_id();
+## my %last_ids = $schema->get_last_id();
+my %nextvals = $schema->get_nextval();
 
-my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'};
+my $last_metadata_id = $nextvals{'md_metadata'};
 
 eval {
 
@@ -436,10 +434,7 @@ $schema->txn_rollback();
       ##   The option 1 leave the seq information in a original state except if there aren't any value in the seq, that it is
        ##   more as the option 2 
 
-if ($ENV{RESET_DBSEQ}) {
-    $schema->set_sqlseq(\%last_ids);
-}
-
+## But the tests do not reset the sequences anymore.
 
 #####
 1; ##
