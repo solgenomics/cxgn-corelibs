@@ -143,7 +143,7 @@ sub format_input_file {
     open my $stdout, ">&STDOUT"  or die "Can't dup STDOUT: $!";
     open STDOUT, '>', "/dev/null" or die "Can't redirect STDOUT: $!";
 
-    my $status = system (qw/clustalw -quiet/,"-INFILE=$input");
+    my $status = system (qw/clustalw/,"-INFILE=$input");
     return if $status;
 
     # replace STDOUT
