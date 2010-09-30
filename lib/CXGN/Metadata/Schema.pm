@@ -76,6 +76,8 @@ __PACKAGE__->load_classes;
 sub get_last_id {
     my $schema = shift 
 	|| die("None argument was supplied to the subroutine get_all_last_ids()");
+
+    warn("WARNING: $schema->get_last_id() is a deprecated method. Use get_nextval().\n");
     
     my $sqlseq = shift;
 
@@ -93,8 +95,6 @@ sub get_last_id {
         if (defined $primary_key_col_info) {
             if ($primary_key_col_info =~ m/\'(.+?_seq)\'/) {
                 $seq_name = $1;
-		## my $query = "SELECT currval($seq_name)";
-		## ($last_value) = $schema->storage()->dbh()->selectrow_array("$query")
             }
         } 
 	else {
@@ -137,6 +137,8 @@ sub set_sqlseq {
     my $seqvalues_href = shift 
 	|| die("None argument was supplied to the subroutine set_sqlseq_values_to_original_state().\n");
     my $on_message = shift;  ## To enable messages
+
+    warn("WARNING: $schema->set_sqlseq is a deprecated method. Table sequences should be set manually.\n");
 
     my %seqvalues = %{ $seqvalues_href };
 
