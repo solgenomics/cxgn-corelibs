@@ -54,7 +54,7 @@ __PACKAGE__->load_classes;
 
 
 
-=head2 get_last_id
+=head2 get_last_id (deprecated)
 
   Usage: my %last_id = $schema->get_last_id();
          my $last_table_id = $schema->get_last_id($tableseq_name)
@@ -113,7 +113,7 @@ sub get_last_id {
     }
 }
 
-=head2 set_sqlseq
+=head2 set_sqlseq (deprecated)
 
   Usage: $schema->set_sqlseq($seqvalues_href);
  
