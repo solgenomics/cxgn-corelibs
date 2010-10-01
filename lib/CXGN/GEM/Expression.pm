@@ -9,9 +9,11 @@ use CXGN::Biosource::Schema;
 use CXGN::Metadata::Metadbdata;
 use CXGN::GEM::Template;
 
+use Math::BigFloat;
 use Chart::Clicker;
 use Chart::Clicker::Data::Series;
 use Chart::Clicker::Data::DataSet;
+use Chart::Clicker::Renderer::Bar;
 
 use Carp qw| croak cluck carp |;
 
@@ -1315,42 +1317,172 @@ sub get_hybridization_object {
 
 sub graph_experiment {
    my $self = shift;
+   my $filename = shift;
    
    ## Cliker graph needs a hash ref with keys=experiment_name and
    ## values=value
 
-   my %expression_mean = ();
-   my %expression_sd = ();
+   my @expression_experiments = ();
+   my @expression_experiments_names = ();
+   my @expression_mean = ();
+   my @expression_highs = ();
+   my @expression_lows = ();
 
    my %experiment = $self->get_experiment();
-   
+   my $expdesign_name;
+
+   my $n = 1;
    foreach my $experiment_id (keys %experiment) {
        
        my $mean = $experiment{$experiment_id}->{'mean'};
        my $sd = $experiment{$experiment_id}->{'standard_desviation'};
-       my $experiment = CXGN::GEM::Experiment->new();
+       my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $experiment_id);
        my $experiment_name = $experiment->get_experiment_name();
+       my $expdesign = $experiment->get_experimental_design();
+       $expdesign_name = $expdesign->get_experimental_design_name();
+       
+       $experiment_name =~ s/\s+/_/g;
 
-       $expression_mean{$experiment_name} = $mean; 
+       push @expression_experiments, $experiment_id;
+       push @expression_experiments_names, $experiment_name;
+       push @expression_mean, $mean;
+       push @expression_highs, $mean+$sd;
+       push @expression_lows, $mean-$sd;
+   }
+
+   my $root_name = $self->get_root_name(\@expression_experiments_names);
+   
+   if (defined $root_name) {
+       $root_name .= '_';
+       my @formated_names = ();
+       foreach my $names (@expression_experiments_names) {
+	   $names =~ s/$root_name//;
+	   push @formated_names, ucfirst($names);
+       }
+       @expression_experiments_names = @formated_names;
    }
 
    ## Now it will create a new Chart::Clicker object
 
-   my $cc = Chart::Clicker->new(width => 500, height => 250);
+
+   ## Define the ranges for the graph rounding
+
+   my @max_sort_mean = sort({$b <=> $a} @expression_mean);
+   my $x = Math::BigFloat->new($max_sort_mean[0]);
+   $x->bceil();
+   my $xl = $x->length();
+   if ($xl > 1) {
+       $xl -= 1;
+   }
+   $x->bfround($xl);
+   my $max_rounded = $x->bstr();
+   my $unit = 1;
+   my $dec = 1;
+   if ($max_rounded < $max_sort_mean[0]) {
+       while ($dec < $xl) {
+	   $unit .= 0;
+	   $dec++;
+       }
+       $max_rounded += $unit;
+   }
+
+   my $range_v = Chart::Clicker::Data::Range->new({ lower => 0, upper => $max_rounded });
+
+   my @max_sort_exp = sort({$b <=> $a} @expression_experiments);
+   my @min_sort_exp = sort({$a <=> $b} @expression_experiments);
+
+   my $range_h = Chart::Clicker::Data::Range->new({ lower => $min_sort_exp[0] - 1, upper => $max_sort_exp[0] + 1 });
+
+   ## Now it will create the graph
+
+   my $chart = Chart::Clicker->new(width => 600, height => 600);
+
+   $chart->title->text($expdesign_name);
+   $chart->title->font->size(15);
+   $chart->title->padding->bottom(5);
 
    ## And the Seried object too
    
-   my $series1 = Chart::Clicker::Data::Series->new(\%expression_mean);
+   ## my $series = Chart::Clicker::Data::Series->new( keys => \@expression_experiments, values => \@expression_mean);
+   my $series = Chart::Clicker::Data::Series->new( keys   => \@expression_experiments, 
+						   values => \@expression_mean, 
+                                                   highs  => \@expression_highs, 
+                                                   lows   => \@expression_lows 
+                                                 );
 
-   my $ds = Chart::Clicker::Data::DataSet->new(series => [$series1]);
+   my $ds = Chart::Clicker::Data::DataSet->new(series => [$series]);
 
-   $cc->add_to_datasets($ds);
+   $chart->add_to_datasets($ds);
 
-   return $cc;
+   my $def = $chart->get_context('default');
+
+   my $area = Chart::Clicker::Renderer::Bar->new(opacity => .6, bar_padding => 8, bar_width => 15);
+   $area->brush->width(2);
+   $def->renderer($area);
+   $def->range_axis->range($range_v);
+   $def->range_axis->label('Expression_Units');
+   $def->range_axis->format('%d');
+   $def->domain_axis->range($range_h);
+   $def->domain_axis->label('Experiment');
+   $def->domain_axis->tick_values(\@expression_experiments);
+   $def->domain_axis->format('%d');
+   $def->domain_axis->tick_labels(\@expression_experiments_names);
+   $def->domain_axis->tick_font->size(10);
+   $def->domain_axis->tick_label_angle(1.57);
+
+   return $chart;
 }
 
 
+=head2 get_root_name
 
+  Usage: my $root_name = $expression->get_root_name($array_ref)
+
+  Desc: Extract the root of an array of names
+
+  Ret:  $root_name, a scalar or undef
+
+  Args: $array_ref, an array of references
+
+  Side_Effects: none
+
+  Example: my $root_name = $expression->get_root_name($array_ref)
+
+=cut
+
+sub get_root_name {
+    my $self = shift;
+    my $aref = shift;
+
+    my @root = ();
+
+    my @data = @{$aref};
+    my $element_names_n = scalar(@data);
+    
+    my %element;
+
+    foreach my $name (@data) {
+	my @name_elements = split(/_/, $name);
+	foreach my $el (@name_elements) {
+	    if (exists $element{$el}) {
+		$element{$el}++;
+	    }
+	    else {
+		$element{$el} = 1;
+	    }
+	    if ($element{$el} == $element_names_n) {
+		push @root, $el;
+	    }
+	}
+    }
+    if (scalar(@root) > 0) {
+	my $root_name = join('_', @root);
+	return $root_name;
+    }
+    else {
+	return undef;
+    }
+}
 
 ####
 1;##
