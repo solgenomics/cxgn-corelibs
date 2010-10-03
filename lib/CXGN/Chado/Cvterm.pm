@@ -608,10 +608,10 @@ sub get_full_accession {
 }
 
 
-=head2 get_parents
+=head2 get_recursive_parents
 
- Usage: my @parents = $self->get_parents()
- Desc:  a method for finding all the parent terms of a cv term and their relationship
+ Usage: my @parents = $self->get_recursive_parents()
+ Desc:  a method for finding all the parents up to the root of the  cvterm, and the cvterm-parent relationship
  Ret:   a list of listrefs containing CXGN::Chado::Cvterm objects and relationship types
  Args:  none
  Side Effects: none
@@ -620,7 +620,7 @@ sub get_full_accession {
 =cut
 
 
-sub get_parents {
+sub get_recursive_parents {
     
     my $self=shift;
     
@@ -647,34 +647,33 @@ sub get_parents {
 }
     
 
+=head2 get_parents
 
-sub get_ancestors { 
-    my $self = shift;
-    my %ancestors = $self->recursive_ancestors();
-    my @ancestor_list = ();
-    foreach my $k (%ancestors) { 
-	if (defined($ancestors{$k})) { push @ancestor_list, [ $ancestors{$k}->[0], $ancestors{$k}->[1] ]; }
-    }
-    return @ancestor_list;
-}
+ Usage: $self->get_parents 
+ Desc: find the direct parents of the cvterm 
+ Ret:  a list of listrefs containing CXGN::Chado::Cvterm objects and relationship types
+ Args: none 
+ Side Effects: none 
+ Example:
 
-sub recursive_ancestors { 
-    my $self = shift;
-    my %ancestors = @_;
-    my %a = ();
-    foreach my $p ($self->get_parents()) { 
-	$self->d( "ANCESTOR LIST: adding ".($p->[0]->get_db_name().":".$p->[0]->get_accession() . "rel_type:" . $p->[1]->get_cvterm_name())."\n" );
-	$ancestors{$p->[0]->get_accession()} =  [ $p->[0], $p->[1] ];
-        %a = $p->[0]->recursive_ancestors(%ancestors);
-	foreach my $k (keys(%a)) { 
-	    
-	    $ancestors{$k} = [ $a{$k}->[0], $a{$k}->[1] ];
-	}
-    }
-    return %ancestors;
-}
+=cut
 
+sub get_parents {
+    my $self=shift;
+    my $parents_q =  "SELECT object_id , type_id 
+                       FROM cvterm_relationship 
+                      WHERE subject_id = ? ";
+    my $parents_sth = $self->get_dbh()->prepare($parents_q);
+    $parents_sth->execute($self->get_cvterm_id() );
+    my @parents = ();
+    while (my ($parent_term_id, $type_id) = $parents_sth->fetchrow_array()) { 
+	my $parent_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $parent_term_id);
+	my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
 	
+	push @parents, [ $parent_term, $relationship_term ];
+    }
+    return (@parents);
+}
 
 =head2 get_children
   
@@ -708,6 +707,38 @@ sub get_children {
 }
 
 
+=head2 get_recursive_children
+
+ Usage: $self->get_recursive_children
+ Desc: find all  recursive child terms of this cvterm
+ Ret:   a list of lists with two elements: a cvterm object for the child and a
+         cvterm object for the relationship
+ Args: none
+ Side Effects: none
+ Example:
+
+=cut
+
+sub get_recursive_children {
+    my $self=shift;
+    my $q =  "SELECT distinct(cvtermpath.object_id), cvterm_relationship.type_id  
+                       FROM cvtermpath 
+                       JOIN cvterm_relationship USING (subject_id) 
+                       JOIN cvterm ON (cvtermpath.object_id = cvterm_id) 
+                       WHERE cvtermpath.subject_id =? AND cvterm.is_obsolete=0 AND pathdistance<0 ";
+    
+    my $sth = $self->get_dbh()->prepare($q);
+    $sth->execute($self->get_cvterm_id() );
+    my @children = ();
+    while (my ($child_term_id, $type_id) = $sth->fetchrow_array()) { 
+	my $child_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $child_term_id);
+	my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
+	
+	push @children, [ $child_term, $relationship_term ];
+    }
+    return (@children);
+}
+
 =head2 count_children
 
  Usage: my $childrenNumber = $self->count_children()
@@ -723,50 +754,16 @@ sub count_children {
     my $self = shift;
     my $childNumber = 0;
 
-    my $child_sth = $self->get_dbh()->prepare("SELECT count( cvterm_relationship.subject_id )FROM cvterm_relationship join cvterm on cvterm.cvterm_id = cvterm_relationship.subject_id JOIN dbxref USING (dbxref_id) JOIN db USING (db_id) WHERE cvterm_relationship.object_id= ? and cvterm.is_obsolete = 0 AND db.name = ?");
-    $child_sth->execute($self->get_cvterm_id(), $self->get_db_name() );
+    my $child_sth = $self->get_dbh()->prepare("SELECT count( cvterm_relationship.subject_id )FROM cvterm_relationship join cvterm on cvterm.cvterm_id = cvterm_relationship.subject_id JOIN dbxref USING (dbxref_id)  WHERE cvterm_relationship.object_id= ? and cvterm.is_obsolete = 0 ");
+    $child_sth->execute($self->get_cvterm_id() );
     ($childNumber) = $child_sth->fetchrow_array();
     return $childNumber;
 }
 
-=head2 get_recursive_children
-
- Usage: $self->get_recursive_children
- Desc: find all  recursive child terms of this cvterm
- Ret:  a list of cvterm objects
- Args: none
- Side Effects: none
- Example:
-
-=cut
-
-sub get_recursive_children {
-    my $self=shift;
-    my %children= $self->recursive_children();
-    $children{$self->get_cvterm_id()}= $self;
-    my @cvterm_list = map( $_ , (values %children) ); #list of cvterm objects for all recursive child terms 
-	
-    return @cvterm_list;
-}
-sub recursive_children {
-    my $self=shift;
-    my %children=@_;
-    my %c=();
-    foreach my $child($self->get_children()) {
-	$children{$child->[0]->get_cvterm_id()} = $child->[0];
-	
-	%c=$child->[0]->recursive_children(%children);
-	foreach my $key (keys %c) {
-	    $children{$key} = $c{$key};
-	}
-    }
-    return %children;
-}
-    
 
 
 =head2 get_synonyms
-
+    
  Usage: my @synonyms = $self->get_synonyms()
  Desc:  a method for fetching all synonyms of a cvterm 
  Ret:   an array  of  synonyms
@@ -780,7 +777,7 @@ sub get_synonyms {
     my $self=shift;
     
     my $cvterm_id= $self->get_cvterm_id();
-    my $query=  "SELECT  synonym FROM cvtermsynonym WHERE cvterm_id= ?";
+    my $query=  "SELECT synonym FROM cvtermsynonym WHERE cvterm_id= ?";
 
     my $synonym_sth = $self->get_dbh()->prepare($query);
 
