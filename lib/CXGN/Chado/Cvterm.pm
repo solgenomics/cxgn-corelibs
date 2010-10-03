@@ -633,13 +633,6 @@ sub get_parents {
                       ";
 
 
-#"SELECT distinct(cvtermpath.object_id) , cvterm_relationship.type_id, cvterm.name
-#                       FROM cvterm_relationship 
-#                       JOIN cvtermpath USING (subject_id) 
- #                      JOIN cvterm ON (cvterm_relationship.subject_id = cvterm_id) 
- #                      WHERE cvtermpath.subject_id = ?  AND cvterm.is_obsolete = 0 and pathdistance = ? 
- #                      ORDER BY cvterm.name ASC";
- #   
     my $parents_sth = $self->get_dbh()->prepare($parents_q);
     
     $parents_sth->execute($self->get_cvterm_id() );
@@ -698,16 +691,10 @@ sub recursive_ancestors {
 sub get_children {
     
     my $self=shift;
-    my $children_q = "SELECT distinct(subject_id) , cvterm_relationship.type_id, cvterm.name  
-                       FROM cvterm_relationship 
-                       JOIN cvtermpath USING (subject_id) 
-                       JOIN cvterm ON (cvterm_relationship.subject_id = cvterm_id) 
-                       WHERE cvtermpath.object_id = ?  AND pathdistance = ? AND cvterm.is_obsolete = 0 
-                       ORDER BY cvterm.name ASC";
-
-    #my $children_sth = $self->get_dbh()->prepare("SELECT distinct(cvterm_relationship.subject_id), cvterm_relationship.type_id, cvterm.name FROM cvterm_relationship join cvterm ON (cvterm.cvterm_id=cvterm_relationship.subject_id) JOIN public.dbxref USING (dbxref_id) JOIN public.db USING (db_id) WHERE cvterm_relationship.object_id= ?  and cvterm.is_obsolete = 0 AND  order by cvterm.name asc");
+    my $children_q = "select subject_id , type_id , name from cvterm_relationship join cvterm on (subject_id = cvterm_id ) where object_id =? ";
+	
     my $children_sth= $self->get_dbh()->prepare($children_q);
-    $children_sth->execute( $self->get_cvterm_id() , 1 );
+    $children_sth->execute( $self->get_cvterm_id() );
     $self->d( "Parent cvterm id = ".$self->get_cvterm_id()."\n" );
     my @children = ();
     while (my ($child_term_id, $type_id, $cvterm_name) = $children_sth->fetchrow_array()) { 
