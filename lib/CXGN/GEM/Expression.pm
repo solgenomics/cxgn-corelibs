@@ -13,7 +13,10 @@ use Math::BigFloat;
 use Chart::Clicker;
 use Chart::Clicker::Data::Series;
 use Chart::Clicker::Data::DataSet;
+use Chart::Clicker::Data::Series::HighLow;
 use Chart::Clicker::Renderer::Bar;
+use Chart::Clicker::Decoration::Legend::Tabular;
+use Chart::Clicker::Renderer::CandleStick;
 
 use Carp qw| croak cluck carp |;
 
@@ -1298,9 +1301,11 @@ sub get_hybridization_object {
 ## Graph Methods ##
 ###################
 
-=head2 graph_experiment
 
-  Usage: my $graph_object = $expression->graph_experiment()
+
+=head2 get_experiment_graph
+
+  Usage: my $graph_object = $expression->get_experiment_graph()
 
   Desc: Create a graph object with the expression data for 
         experiments
@@ -1311,89 +1316,54 @@ sub get_hybridization_object {
 
   Side_Effects: none
 
-  Example: my $graph_object = $expression->graph_experiment()
+  Example: my $graph_object = $expression->get_experiment_graph()
 
 =cut
 
-sub graph_experiment {
+sub get_experiment_graph {
    my $self = shift;
    my $filename = shift;
    
-   ## Cliker graph needs a hash ref with keys=experiment_name and
-   ## values=value
+   ## First, get the arrays with the data
 
-   my @expression_experiments = ();
-   my @expression_experiments_names = ();
-   my @expression_mean = ();
-   my @expression_highs = ();
-   my @expression_lows = ();
+   my ( $expdesign_name, 
+        $x_values_aref, 
+	$x_errorvals_aref, 
+	$x_tags_aref, 
+	$y_values_aref, 
+	$y_high_errorvals_aref, 
+	$y_low_errorvals_aref, 
+      ) = $self->expression_input_graph();
+   
+   ## Second, cut the prefix in the experiment_names (shorter = most easy to show)
 
-   my %experiment = $self->get_experiment();
-   my $expdesign_name;
-
-   my $n = 1;
-   foreach my $experiment_id (keys %experiment) {
-       
-       my $mean = $experiment{$experiment_id}->{'mean'};
-       my $sd = $experiment{$experiment_id}->{'standard_desviation'};
-       my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $experiment_id);
-       my $experiment_name = $experiment->get_experiment_name();
-       my $expdesign = $experiment->get_experimental_design();
-       $expdesign_name = $expdesign->get_experimental_design_name();
-       
-       $experiment_name =~ s/\s+/_/g;
-
-       push @expression_experiments, $experiment_id;
-       push @expression_experiments_names, $experiment_name;
-       push @expression_mean, $mean;
-       push @expression_highs, $mean+$sd;
-       push @expression_lows, $mean-$sd;
-   }
-
-   my $root_name = $self->get_root_name(\@expression_experiments_names);
+   my $root_name = $self->get_prefix_name($x_tags_aref);
    
    if (defined $root_name) {
        $root_name .= '_';
        my @formated_names = ();
-       foreach my $names (@expression_experiments_names) {
+       foreach my $names (@{$x_tags_aref}) {
 	   $names =~ s/$root_name//;
 	   push @formated_names, ucfirst($names);
        }
-       @expression_experiments_names = @formated_names;
+       $x_tags_aref = \@formated_names;
    }
 
-   ## Now it will create a new Chart::Clicker object
+   ## Third, get the highest range value for Y-axis and define the graph ranges.
 
+   my $y_max_range = $self->get_ymax_range($y_high_errorvals_aref);
 
-   ## Define the ranges for the graph rounding
-
-   my @max_sort_mean = sort({$b <=> $a} @expression_mean);
-   my $x = Math::BigFloat->new($max_sort_mean[0]);
-   $x->bceil();
-   my $xl = $x->length();
-   if ($xl > 1) {
-       $xl -= 1;
-   }
-   $x->bfround($xl);
-   my $max_rounded = $x->bstr();
-   my $unit = 1;
-   my $dec = 1;
-   if ($max_rounded < $max_sort_mean[0]) {
-       while ($dec < $xl) {
-	   $unit .= 0;
-	   $dec++;
-       }
-       $max_rounded += $unit;
-   }
-
-   my $range_v = Chart::Clicker::Data::Range->new({ lower => 0, upper => $max_rounded });
-
-   my @max_sort_exp = sort({$b <=> $a} @expression_experiments);
-   my @min_sort_exp = sort({$a <=> $b} @expression_experiments);
+   my @max_sort_exp = sort({$b <=> $a} @{$x_values_aref});
+   my @min_sort_exp = sort({$a <=> $b} @{$x_values_aref});
 
    my $range_h = Chart::Clicker::Data::Range->new({ lower => $min_sort_exp[0] - 1, upper => $max_sort_exp[0] + 1 });
+   my $range_v = Chart::Clicker::Data::Range->new({ lower => 0, upper => $y_max_range });
 
-   ## Now it will create the graph
+   ## Forth, the graph will composed by three parts, the base chart made with Bars, using the default context 
+   ## in the Chart::Clicker, and two CandleSticks rendered charts overlapped with the base chart. This two
+   ## CandleStick graphs are used to draw the error bars.
+
+   ## 1) Create the basic chart object
 
    my $chart = Chart::Clicker->new(width => 600, height => 600);
 
@@ -1401,42 +1371,187 @@ sub graph_experiment {
    $chart->title->font->size(15);
    $chart->title->padding->bottom(5);
 
-   ## And the Seried object too
-   
-   ## my $series = Chart::Clicker::Data::Series->new( keys => \@expression_experiments, values => \@expression_mean);
-   my $series = Chart::Clicker::Data::Series->new( keys   => \@expression_experiments, 
-						   values => \@expression_mean, 
-                                                   highs  => \@expression_highs, 
-                                                   lows   => \@expression_lows 
-                                                 );
+   $chart->legend->visible(0);  ## Switch off the legend.
 
-   my $ds = Chart::Clicker::Data::DataSet->new(series => [$series]);
+   ## 2) Create the series (base, error_high and error_low)
 
-   $chart->add_to_datasets($ds);
+   my $series_base = Chart::Clicker::Data::Series->new( keys   => $x_values_aref, 
+						        values => $y_values_aref, 
+                                                      );
+
+   ## The CandleStick series are moved 0.5 to the left, to correct that the keys used
+   ## have +0.5
+
+   my $series_error_up = Chart::Clicker::Data::Series::HighLow->new( keys   => $x_errorvals_aref, 
+								     values => $y_high_errorvals_aref, 
+								     opens  => $y_high_errorvals_aref, 
+								     highs  => $y_high_errorvals_aref, 
+								     lows   => $y_values_aref,
+                                                                   );
+
+   my $series_error_down = Chart::Clicker::Data::Series::HighLow->new( keys   => $x_errorvals_aref, 
+								       values => $y_low_errorvals_aref, 
+								       opens  => $y_low_errorvals_aref, 
+								       highs  => $y_low_errorvals_aref, 
+								       lows   => $y_values_aref,
+                                                                      );
+
+   ## 3) Define the colors, bars blue and errobars black
+
+   my $blue = Graphics::Color::RGB->new(
+       red => 35 / 255, green => 35 / 255, blue => 142 / 255, alpha => 1
+       );
+   my $black = Graphics::Color::RGB->new(
+       red => .0, green => .0, blue => .0, alpha => 1
+       );
+   $chart->color_allocator->colors([ $blue, $black, $black]);
+
+   ## 4) Define the three datasets (base, error_high and error_low)
+
+   my $ds0 = Chart::Clicker::Data::DataSet->new(series => [$series_base]);
+   my $ds1 = Chart::Clicker::Data::DataSet->new(series => [$series_error_up]);
+   my $ds2 = Chart::Clicker::Data::DataSet->new(series => [$series_error_down]);
+
+   ## 5) Add the base dataset to the chart under 'default' context
+
+   $chart->add_to_datasets($ds0);
 
    my $def = $chart->get_context('default');
+   $ds0->context('default');
+   
+   ## 6) Create two new context for the error bars and add to them the datasets
+   ##    sharing the axis with the default context
 
-   my $area = Chart::Clicker::Renderer::Bar->new(opacity => .6, bar_padding => 8, bar_width => 15);
-   $area->brush->width(2);
-   $def->renderer($area);
+   my $error_up_context = Chart::Clicker::Context->new( name => 'errorbars_up');
+   $error_up_context->share_axes_with($def);
+
+   $ds1->context('errorbars_up');
+   $chart->add_to_contexts($error_up_context);
+
+   $chart->add_to_datasets($ds1);
+
+   my $error_down_context = Chart::Clicker::Context->new( name => 'errorbars_down');
+   $error_down_context->share_axes_with($def);
+
+   $ds2->context('errorbars_down');
+   $chart->add_to_contexts($error_down_context);
+
+   $chart->add_to_datasets($ds2);
+
+   ## 7) Create the base chart with the ranged defined before and some titles
+
+   my $bar = Chart::Clicker::Renderer::Bar->new(opacity => .6, bar_padding => 8, bar_width => 15);
+   $bar->brush->width(2);
+   $def->renderer($bar);
    $def->range_axis->range($range_v);
    $def->range_axis->label('Expression_Units');
    $def->range_axis->format('%d');
    $def->domain_axis->range($range_h);
    $def->domain_axis->label('Experiment');
-   $def->domain_axis->tick_values(\@expression_experiments);
+   $def->domain_axis->tick_values($x_values_aref);
    $def->domain_axis->format('%d');
-   $def->domain_axis->tick_labels(\@expression_experiments_names);
+   $def->domain_axis->tick_labels($x_tags_aref);
    $def->domain_axis->tick_font->size(10);
    $def->domain_axis->tick_label_angle(1.57);
+
+   ## 8) Add the CandleStick Rendered to the error contexts
+
+   my $barerror_up = Chart::Clicker::Renderer::CandleStick->new(opacity => .6);
+   $barerror_up->brush->width(2);
+   $error_up_context->renderer($barerror_up);
+
+   my $barerror_down = Chart::Clicker::Renderer::CandleStick->new(opacity => .6);
+   $barerror_down->brush->width(2);
+   $error_down_context->renderer($barerror_down); 
 
    return $chart;
 }
 
+=head2 expression_input_graph
 
-=head2 get_root_name
+  Usage: my @data = $expression->expression_input_graph()
 
-  Usage: my $root_name = $expression->get_root_name($array_ref)
+  Desc: Generate an array with the following array refs:
+         + $x_values (experiment_id),
+         + $x_error (experiment_id+0.5),
+         + $x_tags (experiment_names);
+         + $y_values (mean)
+         + $y_high_error (mean + SD)
+         + $y_low_error (mean - SD)
+
+        And the following scalar:
+         + $expdesign_name (experimental_design_name)
+
+  Ret:  An array with 6 array refernces
+
+  Args: $parameter_href, a parameter hash reference with the
+        following keys:
+         + PO_order (order experiments by PO annotations)
+
+  Side_Effects: Replace the spaces in the experiment_name with
+                underlines
+
+  Example: my @data = $expression->expression_input_graph()
+
+=cut
+
+sub expression_input_graph {
+    my $self = shift;
+    my $param_href = shift;
+
+    ## Define the arrays
+
+    my @x_values = ();
+    my @x_errorvals = ();
+    my @x_tags = ();
+    my @y_values = ();
+    my @y_high_errorvals = ();
+    my @y_low_errorvals = ();
+
+   my %experiment = $self->get_experiment();
+   my $expdesign_name;
+
+   my $n = 1;
+   foreach my $experiment_id (keys %experiment) {
+
+       ## Get expression data
+
+       my $mean = $experiment{$experiment_id}->{'mean'};
+       my $sd = $experiment{$experiment_id}->{'standard_desviation'};
+      
+       ## Get experiment data and experimental design data
+
+       my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $experiment_id);
+       my $experiment_name = $experiment->get_experiment_name();
+       my $expdesign = $experiment->get_experimental_design();
+       $expdesign_name = $expdesign->get_experimental_design_name();
+       
+       ## Chart::Cliker give problems to draw names with spaces, this function
+       ## replace with underlines (_)
+
+       $experiment_name =~ s/\s+/_/g;
+       
+       ## Put the data into the arrays
+
+       push @x_values, $experiment_id;
+       push @x_errorvals, $experiment_id + 0.5;
+       push @x_tags, $experiment_name;
+       push @y_values, $mean;
+       push @y_high_errorvals, $mean+$sd;
+       push @y_low_errorvals, $mean-$sd;
+   }
+    
+    ## Create the array ref.
+
+    my @data = ($expdesign_name, \@x_values, \@x_errorvals, \@x_tags, \@y_values, \@y_high_errorvals, \@y_low_errorvals);
+
+    return @data;
+}
+
+
+=head2 get_prefix_name
+
+  Usage: my $root_name = $expression->get_prefix_name($array_ref)
 
   Desc: Extract the root of an array of names
 
@@ -1446,11 +1561,11 @@ sub graph_experiment {
 
   Side_Effects: none
 
-  Example: my $root_name = $expression->get_root_name($array_ref)
+  Example: my $root_name = $expression->get_prefix_name($array_ref)
 
 =cut
 
-sub get_root_name {
+sub get_prefix_name {
     my $self = shift;
     my $aref = shift;
 
@@ -1482,6 +1597,67 @@ sub get_root_name {
     else {
 	return undef;
     }
+}
+
+=head2 get_ymax_range
+
+  Usage: my $ymax_range = $expression->get_ymax_range($number_aref)
+
+  Desc: Calculate the high range for a chart, based in the next rounded
+        value of a list of values, for example:
+        [23, 45, 60, 32, 81], the $y_max_range will be 90
+        (highest value = 81, rounded = 80, next rounded = 90)
+
+  Ret:  $y_max_range, a scalar
+
+  Args: None
+
+  Side_Effects: None
+
+  Example: my $y_max_range = $expression->get_ymax_range($number_aref)
+
+=cut
+
+sub get_ymax_range {
+    my $self = shift;
+    my $data_aref = shift 
+	|| croak('DATA ARGUMENT ERROR: No data array reference was supplied to $self->get_ymax_range() function.\n');
+    
+    if (ref($data_aref) ne 'ARRAY') {
+	croak('DATA ARGUMENT ERROR: The array reference supplied to $self->get_ymax_range() function IS NOT AN ARRAY REFERENCE.\n');
+    }
+
+    ## Order from highest to lowest and take the first element (highest)
+
+    my @max_sort = sort({$b <=> $a} @{$data_aref});
+    my $x = Math::BigFloat->new($max_sort[0]);
+
+    ## Round
+
+    $x->bceil();
+
+    ## Calculate the magnitude order and round highest value with it
+
+    my $xl = $x->length();
+    if ($xl > 1) {
+	$xl -= 1;
+    }
+    $x->bfround($xl);
+    my $max_rounded = $x->bstr();
+
+    ## Calculate the unit for that magnitude order and sum to the max.
+
+    my $unit = 1;
+    my $dec = 1;
+    if ($max_rounded < $max_sort[0]) {
+	while ($dec < $xl) {
+	    $unit .= 0;
+	    $dec++;
+	}
+	$max_rounded += $unit;
+    }
+    
+    return $max_rounded;
 }
 
 ####
