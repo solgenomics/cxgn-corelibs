@@ -154,6 +154,9 @@ my $build = Module::Build->new(
         'XML::Simple' => 0,
         'XML::Twig' => 0,
         'XML::Writer' => 0,
+
+	## Modules for GEM Graphs
+	'Chart::Clicker' => 0,
     },
     build_requires => {
 
