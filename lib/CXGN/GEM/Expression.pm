@@ -15,8 +15,9 @@ use Chart::Clicker::Data::Series;
 use Chart::Clicker::Data::DataSet;
 use Chart::Clicker::Data::Series::HighLow;
 use Chart::Clicker::Renderer::Bar;
-use Chart::Clicker::Decoration::Legend::Tabular;
 use Chart::Clicker::Renderer::CandleStick;
+use Chart::Clicker::Decoration::Legend::Tabular;
+
 
 use Carp qw| croak cluck carp |;
 
@@ -1508,43 +1509,53 @@ sub expression_input_graph {
     my @y_high_errorvals = ();
     my @y_low_errorvals = ();
 
-   my %experiment = $self->get_experiment();
-   my $expdesign_name;
+    my %experiment = $self->get_experiment();
 
-   my $n = 1;
-   foreach my $experiment_id (keys %experiment) {
+    my @experiments_ordered = ();
 
-       ## Get expression data
+    if (defined $param_href->{'PO_order'}) {
+	
+    }
+    else {
+	@experiments_ordered = keys %experiment;
+    }
 
-       my $mean = $experiment{$experiment_id}->{'mean'};
-       my $sd = $experiment{$experiment_id}->{'standard_desviation'};
+    my $expdesign_name;
+
+    my $n = 1;
+    foreach my $experiment_id (@experiments_ordered) {
+
+	## Get expression data
+
+	my $mean = $experiment{$experiment_id}->{'mean'} || 0;
+	my $sd = $experiment{$experiment_id}->{'standard_desviation'} || 0;
       
-       ## Get experiment data and experimental design data
+	## Get experiment data and experimental design data
 
-       my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $experiment_id);
-       my $experiment_name = $experiment->get_experiment_name();
-       my $expdesign = $experiment->get_experimental_design();
-       $expdesign_name = $expdesign->get_experimental_design_name();
+	my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $experiment_id);
+	my $experiment_name = $experiment->get_experiment_name();
+	my $expdesign = $experiment->get_experimental_design();
+	$expdesign_name = $expdesign->get_experimental_design_name();
+       	   
+	## Chart::Cliker give problems to draw names with spaces, this function
+	## replace with underlines (_)
+
+	$experiment_name =~ s/\s+/_/g;
        
-       ## Chart::Cliker give problems to draw names with spaces, this function
-       ## replace with underlines (_)
+	## Put the data into the arrays
 
-       $experiment_name =~ s/\s+/_/g;
-       
-       ## Put the data into the arrays
-
-       push @x_values, $experiment_id;
-       push @x_errorvals, $experiment_id + 0.5;
-       push @x_tags, $experiment_name;
-       push @y_values, $mean;
-       push @y_high_errorvals, $mean+$sd;
-       push @y_low_errorvals, $mean-$sd;
-   }
+	push @x_values, $experiment_id;
+	push @x_errorvals, $experiment_id + 0.5;
+	push @x_tags, $experiment_name;
+	push @y_values, $mean;
+	push @y_high_errorvals, $mean+$sd;
+	push @y_low_errorvals, $mean-$sd;
+    }
     
     ## Create the array ref.
-
+    
     my @data = ($expdesign_name, \@x_values, \@x_errorvals, \@x_tags, \@y_values, \@y_high_errorvals, \@y_low_errorvals);
-
+    
     return @data;
 }
 
