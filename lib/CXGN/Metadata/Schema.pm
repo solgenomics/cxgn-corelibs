@@ -54,7 +54,7 @@ __PACKAGE__->load_classes;
 
 
 
-=head2 get_last_id
+=head2 get_last_id (deprecated)
 
   Usage: my %last_id = $schema->get_last_id();
          my $last_table_id = $schema->get_last_id($tableseq_name)
@@ -76,6 +76,8 @@ __PACKAGE__->load_classes;
 sub get_last_id {
     my $schema = shift 
 	|| die("None argument was supplied to the subroutine get_all_last_ids()");
+
+    warn("WARNING: $schema->get_last_id() is a deprecated method. Use get_nextval().\n");
     
     my $sqlseq = shift;
 
@@ -91,7 +93,6 @@ sub get_last_id {
 
         my $seq_name;
         if (defined $primary_key_col_info) {
-
             if ($primary_key_col_info =~ m/\'(.+?_seq)\'/) {
                 $seq_name = $1;
             }
@@ -112,7 +113,7 @@ sub get_last_id {
     }
 }
 
-=head2 set_sqlseq
+=head2 set_sqlseq (deprecated)
 
   Usage: $schema->set_sqlseq($seqvalues_href);
  
@@ -136,6 +137,8 @@ sub set_sqlseq {
     my $seqvalues_href = shift 
 	|| die("None argument was supplied to the subroutine set_sqlseq_values_to_original_state().\n");
     my $on_message = shift;  ## To enable messages
+
+    warn("WARNING: $schema->set_sqlseq is a deprecated method. Table sequences should be set manually.\n");
 
     my %seqvalues = %{ $seqvalues_href };
 
@@ -223,8 +226,143 @@ sub exists_data {
     }
 }
 
+##############################################
+## New function to replace get_all_last_ids ##
+##############################################
+
+=head2 get_nextval
+
+  Usage: my %nextval = $schema->get_nextval();
+ 
+  Desc: Get all the next values from the table sequences
+        and store into hash using SELECT nextval()
+ 
+  Ret: %nextval, a hash with keys = SQL_sequence_name 
+       and value = nextval
+ 
+  Args: $schema, a CXGN::GEM::Schema object
+ 
+  Side Effects: If the table has not primary_key or 
+                default value sequence, it will be ignore. 
+ 
+  Example: my %nextval = $schema->get_nextval();
+
+=cut
+
+sub get_nextval {
+    my $schema = shift 
+	|| die("None argument was supplied to the subroutine get_nextval()");
+    
+    my %nextval;
+    my @source_names = $schema->sources();
+    
+    my $dbh = $schema->storage()
+	             ->dbh();
+
+    foreach my $source_name (sort @source_names) {
+
+        my $source = $schema->source($source_name);
+	my $table_name = $schema->class($source_name)
+                                ->table();
+
+	## To get the sequence
+	## 1) Get primary key
+
+	my $seq_name;
+	my ($prikey) = $dbh->primary_key(undef, undef, $table_name);
+	
+	if (defined $prikey) {
+
+	    ## 2) Get default for primary key
+
+	    my $sth = $dbh->column_info( undef, undef, $table_name, $prikey);
+	    my ($rel) = (@{$sth->fetchall_arrayref({})});
+	    my $default_val = $rel->{'COLUMN_DEF'};
+	
+	    ## 3) Extract the seq_name
+
+	    if ($default_val =~ m/nextval\('(.+)'::regclass\)/) {
+		$seq_name = $1;
+	    }
+	}
+	
+	if (defined $seq_name) {
+	    if ($schema->is_table($table_name)) {
+		
+                ## Get the nextval (it is not using currval, because
+                ## you can not use it without use nextval before).
+
+		my $query = "SELECT nextval('$seq_name')";
+		my ($nextval) = $dbh->selectrow_array($query);
+		
+		$nextval{$table_name} = $nextval || 0;
+	    }
+	}
+	
+    }
+    return %nextval;
+}
+
+=head2 is_table
+
+  Usage: $schema->is_table($tablename, $schemaname);
+ 
+  Desc: Return 0/1 if exists or not a table into the 
+        database
+ 
+  Ret: 0 or 1
+ 
+  Args: $schema, a CXGN::GEM::Schema object
+        $tablename, name of a table
+        $schemaname, name of a schema
+ 
+  Side Effects: If $tablename is undef. it will return
+                0.
+                If $schemaname is undef. it will search
+                for the tablename in all the schemas.
+ 
+  Example: if ($schema->is_table('ge_experiment')) {
+                  ## Do something
+           }
+
+=cut
+
+sub is_table {
+    my $schema = shift 
+	|| die("None argument was supplied to the subroutine is_table()");
+ 
+    my $tablename = shift;
+    my $schemaname = shift;
+
+    ## Get the dbh
+
+    my $dbh = $schema->storage()
+	             ->dbh();
+
+    ## Define the hash with the tablenames
+
+    my %tables;
+
+    ## Get all the tables with the tablename
+
+    my $presence = 0;
+
+    if (defined $tablename) {
+	my $sth = $dbh->table_info('', $schemaname, $tablename, 'TABLE');
+	for my $rel (@{$sth->fetchall_arrayref({})}) {
+	
+	    ## It will search based in LIKE so it need to check the right anme
+	    if ($rel->{TABLE_NAME} eq $tablename) {
+		$presence = 1;
+	    }
+	}
+    }
+
+    return $presence;
+}
 
 
 
-1;
-
+####
+1;##
+####

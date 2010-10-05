@@ -9,6 +9,7 @@ use CXGN::Biosource::Schema;
 use CXGN::Metadata::Metadbdata;
 use CXGN::GEM::Template;
 
+<<<<<<< HEAD
 use Math::BigFloat;
 use Chart::Clicker;
 use Chart::Clicker::Data::Series;
@@ -19,6 +20,8 @@ use Chart::Clicker::Renderer::CandleStick;
 use Chart::Clicker::Decoration::Legend::Tabular;
 
 
+=======
+>>>>>>> master
 use Carp qw| croak cluck carp |;
 
 
@@ -1296,6 +1299,7 @@ sub get_hybridization_object {
 }
 
 
+<<<<<<< HEAD
 
 
 ###################
@@ -1671,6 +1675,8 @@ sub get_ymax_range {
     return $max_rounded;
 }
 
+=======
+>>>>>>> master
 ####
 1;##
 ####
