@@ -198,7 +198,7 @@ sub run {
 	->complete_checking( { 
 	    patch_name  => $self->name,
 	    patch_descr => $self->description, 
-	    prepatch_req => $self->prereq,
+	    prepatch => $self->prereq,
 	    force => $self->force 
 			     } 
 	);

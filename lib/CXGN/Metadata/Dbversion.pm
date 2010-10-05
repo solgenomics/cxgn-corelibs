@@ -900,7 +900,6 @@ sub complete_checking {
     } 
     else {
 	## Check if the previous patches have been executed
-
 	if (defined $opt{'prepatch'} && ref($opt{'prepatch'}) eq 'ARRAY') {
 	    my @prev_patches = @{$opt{'prepatch'}};
 	    
