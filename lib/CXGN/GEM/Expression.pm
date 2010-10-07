@@ -9,7 +9,6 @@ use CXGN::Biosource::Schema;
 use CXGN::Metadata::Metadbdata;
 use CXGN::GEM::Template;
 
-<<<<<<< HEAD
 use Math::BigFloat;
 use Chart::Clicker;
 use Chart::Clicker::Data::Series;
@@ -20,8 +19,6 @@ use Chart::Clicker::Renderer::CandleStick;
 use Chart::Clicker::Decoration::Legend::Tabular;
 
 
-=======
->>>>>>> master
 use Carp qw| croak cluck carp |;
 
 
@@ -1299,8 +1296,6 @@ sub get_hybridization_object {
 }
 
 
-<<<<<<< HEAD
-
 
 ###################
 ## Graph Methods ##
@@ -1317,7 +1312,16 @@ sub get_hybridization_object {
 
   Ret:  A Chart::Clicker object
 
-  Args: none
+  Args: $arg_href, a hash reference with different options.
+        x_axis_sort => 'PO' (alphabetical by default)
+        bar_color   => { red   => 35 / 255, 
+                         green => 35 / 255, 
+                         blue  => 142 / 255, 
+                         alpha => 1 } ## By default (blue)
+        errorbar_color => { red   => 0 / 255, 
+                            green => 0 / 255, 
+                            blue  => 0 / 255, 
+                            alpha => 1 } ## By default (black)
 
   Side_Effects: none
 
@@ -1327,8 +1331,28 @@ sub get_hybridization_object {
 
 sub get_experiment_graph {
    my $self = shift;
-   my $filename = shift;
-   
+   my $args_href = shift;
+
+   ## Arguments handle by this function
+   ## * 'x_axis_sort', a scalar (PO or undef) (undef by default) 
+   ## * 'bar_color', a hash reference with color ({ red => $int, green => $int, blue => $int, alpha => $int})(blue color by default)
+   ## * 'errorbar_color', same than bar_color (black by default) 
+   ## * 'title', a scalar, the title of the graph ($experimental_design_name by default) 
+   ## * 'x_axis_label', a scalar, the title for the x axis ('Experiment' by default) 
+   ## * 'y_axis_label', a scalar, the title for the y axis ('Expression_Units_(Fluorescence_Intensity)')
+  
+   my $x_axis_sort = $args_href->{'x_axis_sort'}; 
+   my $bar_color_href = $args_href->{'bar_color'} 
+      || {red => 35 / 255, green => 35 / 255, blue => 142 / 255, alpha => 1};
+   my $errorbar_color_href = $args_href->{'errorbar_color'} 
+      || {red => 0 / 255, green => 0 / 255, blue => 0 / 255, alpha => 1}; 
+   my $title = $args_href->{'title'};  ## The default value will be applied after get the data if it is undef
+   my $x_axis_label = $args_href->{'x_axis_label'} 
+      || 'Experiment'; 
+   my $y_axis_label = $args_href->{'y_axis_label'} 
+      || 'Expression_Units_(Fluorescence_Intensity)'; 
+
+
    ## First, get the arrays with the data
 
    my ( $expdesign_name, 
@@ -1338,8 +1362,14 @@ sub get_experiment_graph {
 	$y_values_aref, 
 	$y_high_errorvals_aref, 
 	$y_low_errorvals_aref, 
-      ) = $self->expression_input_graph();
+      ) = $self->expression_input_graph({ sort => $x_axis_sort});
    
+   ## Replace title if it is undef
+
+   unless (defined $title) {
+       $title = $expdesign_name;
+   }
+
    ## Second, cut the prefix in the experiment_names (shorter = most easy to show)
 
    my $root_name = $self->get_prefix_name($x_tags_aref);
@@ -1372,7 +1402,7 @@ sub get_experiment_graph {
 
    my $chart = Chart::Clicker->new(width => 600, height => 600);
 
-   $chart->title->text($expdesign_name);
+   $chart->title->text($title);
    $chart->title->font->size(15);
    $chart->title->padding->bottom(5);
 
@@ -1402,14 +1432,25 @@ sub get_experiment_graph {
                                                                       );
 
    ## 3) Define the colors, bars blue and errobars black
+ 
+   if ($args_href->{'bar_color'}) {
+       unless (ref($args_href->{'bar_color'}) eq 'HASH') {
+	   carp("WARNING: 'bar_color' argument is not a hash reference with keys = ('red', 'green', 'blue', 'alpha'). Ignoring argument.\n");
+       } 
+   }
+   my %bar_colordata = %{$bar_color_href};
 
-   my $blue = Graphics::Color::RGB->new(
-       red => 35 / 255, green => 35 / 255, blue => 142 / 255, alpha => 1
-       );
-   my $black = Graphics::Color::RGB->new(
-       red => .0, green => .0, blue => .0, alpha => 1
-       );
-   $chart->color_allocator->colors([ $blue, $black, $black]);
+   if ($args_href->{'errorbar_color'}) {
+       unless (ref($args_href->{'errorbar_color'}) eq 'HASH') {
+	   carp("WARNING: 'errorbar_color' argument is not a hash reference with keys = ('red', 'green', 'blue', 'alpha'). Ignoring argument.\n");
+       } 
+   }
+   my %errorbar_colordata = %{$errorbar_color_href};
+   
+
+   my $bar_color = Graphics::Color::RGB->new(%bar_colordata);
+   my $errorbar_color = Graphics::Color::RGB->new(%errorbar_colordata);
+   $chart->color_allocator->colors([ $bar_color, $errorbar_color, $errorbar_color]);
 
    ## 4) Define the three datasets (base, error_high and error_low)
 
@@ -1449,10 +1490,10 @@ sub get_experiment_graph {
    $bar->brush->width(2);
    $def->renderer($bar);
    $def->range_axis->range($range_v);
-   $def->range_axis->label('Expression_Units');
+   $def->range_axis->label($y_axis_label);
    $def->range_axis->format('%d');
    $def->domain_axis->range($range_h);
-   $def->domain_axis->label('Experiment');
+   $def->domain_axis->label($x_axis_label);
    $def->domain_axis->tick_values($x_values_aref);
    $def->domain_axis->format('%d');
    $def->domain_axis->tick_labels($x_tags_aref);
@@ -1491,7 +1532,7 @@ sub get_experiment_graph {
 
   Args: $parameter_href, a parameter hash reference with the
         following keys:
-         + PO_order (order experiments by PO annotations)
+         + sort (values PO, alphabetical by default)
 
   Side_Effects: Replace the spaces in the experiment_name with
                 underlines
@@ -1515,10 +1556,31 @@ sub expression_input_graph {
 
     my %experiment = $self->get_experiment();
 
+    ## First get all the possible experiment_designs
+
+    my %expdesign = ();
+    foreach my $exp_id (keys %experiment) {
+	my $exp = CXGN::GEM::Experiment->new($self->get_schema(), $exp_id);
+	my $expdesign_id = $exp->get_experimental_design_id();
+	$expdesign{$expdesign_id} = 1;
+    }
+
     my @experiments_ordered = ();
 
-    if (defined $param_href->{'PO_order'}) {
-	
+    if (defined $param_href->{'sort'} && $param_href->{'sort'} eq 'PO') {
+	my @exp_from_expdesign = ();
+	foreach my $expdsg_id (keys %expdesign) {
+	    my $expdesign_obj = CXGN::GEM::ExperimentalDesign->new($self->get_schema(), $expdsg_id);
+	    my @explist_ordered = $expdesign_obj->get_po_sorted_experiment_list();
+	    
+	    ## Now it will add only the experiments from the expression object
+	    foreach my $expobj (@explist_ordered) {
+		my $exp_po_id = $expobj->get_experiment_id();
+		if (exists $experiment{$exp_po_id}) {
+		    push @experiments_ordered, $exp_po_id;
+		}
+	    }
+	}
     }
     else {
 	@experiments_ordered = keys %experiment;
@@ -1527,6 +1589,7 @@ sub expression_input_graph {
     my $expdesign_name;
 
     my $n = 1;
+    my $x = 1;
     foreach my $experiment_id (@experiments_ordered) {
 
 	## Get expression data
@@ -1548,12 +1611,13 @@ sub expression_input_graph {
        
 	## Put the data into the arrays
 
-	push @x_values, $experiment_id;
-	push @x_errorvals, $experiment_id + 0.5;
+	push @x_values, $x;
+	push @x_errorvals, $x + 0.5;
 	push @x_tags, $experiment_name;
 	push @y_values, $mean;
 	push @y_high_errorvals, $mean+$sd;
 	push @y_low_errorvals, $mean-$sd;
+	$x++;
     }
     
     ## Create the array ref.
@@ -1675,8 +1739,6 @@ sub get_ymax_range {
     return $max_rounded;
 }
 
-=======
->>>>>>> master
 ####
 1;##
 ####
