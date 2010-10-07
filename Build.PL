@@ -81,6 +81,7 @@ my $build = Module::Build->new(
         'Catalyst::Utils' => 0,
         'CGI::Session' => 0,
         'CGI::Session::ID::md5' => 0,
+	'Chart::Clicker' => 0, #< for GEM graphs
         'Class::Accessor' => 0,
         'Class::Data::Inheritable' => 0,
         'Class::DBI' => 0,
@@ -154,9 +155,6 @@ my $build = Module::Build->new(
         'XML::Simple' => 0,
         'XML::Twig' => 0,
         'XML::Writer' => 0,
-
-	## Modules for GEM Graphs
-	'Chart::Clicker' => 0,
     },
     build_requires => {
 
