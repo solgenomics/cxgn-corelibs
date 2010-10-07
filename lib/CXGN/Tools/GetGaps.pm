@@ -46,10 +46,15 @@ sub run {
     my $io = Bio::SeqIO->new(-format=>'largefasta', -file=>$self->fasta_file());
 
     my $gap_no = 1;
+    my $old_id = "";
 
     while (my $s = $io->next_seq()) { 
 	my $seq = $s->seq();
 	my $id = $s->id();
+
+	if ($id ne $old_id) { 
+	    $gap_no =1;
+	}
 
 	warn "Processing sequence $id (".$s->length()." nucleotides)...\n";
 	
