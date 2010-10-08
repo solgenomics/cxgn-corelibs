@@ -75,7 +75,7 @@ CXGN::GEM::Schema->can('connect')
     or BAIL_OUT('could not load the CXGN::GEM::Schema module');
 
 ## Variables predefined
-my $creation_user_name = $ENV{GEM_TEST_METALOADER};
+my $creation_user_name = $gem_test->metaloader_user;
 
 ## The GEM schema contain all the metadata, chado and biosource classes so don't need to create another Metadata schema
 
