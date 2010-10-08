@@ -128,6 +128,7 @@ my $build = Module::Build->new(
 	'Moose::Role' => 0,
 	'Moose::Util::TypeConstraints' => 0,
         'MooseX::Getopt' => 0,
+	'MooseX::Role::DBIx::Connector' =>0,
 	'MooseX::Runnable' =>0,
 	'namespace::autoclean' => 0,
         'Params::Validate' => 0,
