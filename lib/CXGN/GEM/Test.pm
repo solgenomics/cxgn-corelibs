@@ -57,14 +57,14 @@ Readonly. Arrayref of schemas to search.
 
 Defaults to
 
-  [qw[ gem sgn biosource metadata public ]]
+  [qw[ gem biosource metadata public ]]
 
 =cut
 
 has 'db_search_path' => (
     is  => 'ro',
     isa => 'ArrayRef',
-    default => sub { [qw[ gem sgn biosource metadata public ]] },
+    default => sub { [qw[ gem biosource metadata public ]] },
    );
 
 has 'metaloader_user' => (
