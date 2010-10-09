@@ -1,47 +1,8 @@
-#!/usr/bin/perl
+=head1 GEM TESTS
 
-=head1 NAME
-
-  platform.t
-  A piece of code to test the CXGN::GEM::Platform module
+  For GEM test suite documentation, see L<CXGN::GEM::Test>.
 
 =cut
-
-=head1 SYNOPSIS
-
- perl platform.t
-
- Note: To run the complete test the database connection should be done as 
-       postgres user 
- (web_usr have not privileges to insert new data into the gem tables)  
-
- prove platform.t
-
- This test needs some env. variables.
-  export GEM_TEST_METALOADER='metaloader user'
-  export GEM_TEST_DBDSN='database dsn as: 
-     'dbi:DriverName:database=database_name;host=hostname;port=port'
-
-  Example:
-    export GEM_TEST_DBDSN='dbi:Pg:database=sandbox;host=localhost;'
-
-  export GEM_TEST_DBUSER='database user with insert permissions'
-  export GEM_TEST_DBPASS='database password'
-
-=head1 DESCRIPTION
-
- This script check 118 variables to test the right operation of the 
- CXGN::GEM::Platform module:
-
-=cut
-
-=head1 AUTHORS
-
- Aureliano Bombarely Gomez
- (ab782@cornell.edu)
-
-=cut
-
 
 use strict;
 use warnings;
