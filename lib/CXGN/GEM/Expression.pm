@@ -50,12 +50,12 @@ $VERSION = eval $VERSION;
   my %expression_by_experiment = $expression->get_experiment();
   my %expression_by_hybridization = $expression->get_hybridization();
 
-  $expression->set_experiment({ experiment_id   => $experiment_id, 
-                                replicates_used => $rep, 
+  $expression->set_experiment({ experiment_id   => $experiment_id,
+                                replicates_used => $rep,
                                 mean            => $mean });
 
-  $expression->set_hybridization({ hybridization_id     => $experiment_id, 
-                                   template_signal      => $value, 
+  $expression->set_hybridization({ hybridization_id     => $experiment_id,
+                                   template_signal      => $value,
                                    template_signal_type => $type });
 
 
@@ -66,9 +66,9 @@ $VERSION = eval $VERSION;
   my $median = $expression_by_experiment{'MyExperiment'}->{'median'}
 
  ## Accessors hashref keys for hybridization:
- ## (hybridization_id, template_id, template_signal, template_signal_type, 
+ ## (hybridization_id, template_id, template_signal, template_signal_type,
  ## statistical_value, statistical_value_type, flag)
- 
+
   my $flag = $expression_by_hybridization{'MyHybridization'}->{'flag'}
 
 
@@ -125,10 +125,10 @@ sub new {
     my $schema = shift ||
 	croak("PARAMETER ERROR: None schema object was supplied to the $class->new() function.\n");
     my $id = shift;
-    
+
     ### First, bless the class to create the object and set the schema into de object
     ### (set_schema comes from CXGN::DB::Object).
-    
+
     my $self = $class->SUPER::new($schema);
     $self->set_schema($schema);
 
@@ -154,9 +154,9 @@ sub new {
 
 	@template_hybridization_rows = $schema->resultset('GeTemplateExpression')
 			                      ->search( { template_id => $id } );
-	
+
     }
-    
+
     ## Finally it will load the rows into the object.
     $self->set_getemplateexperiment_row(\@template_experiment_rows);
     $self->set_getemplatehybridization_row(\@template_hybridization_rows);
@@ -174,7 +174,7 @@ sub new {
   Usage: my @template_experiment_rows = $expression->get_getemplateexperiment_row();
          $expression->set_getemplateexperiment_row(\@template_experiment_rows);
 
-  Desc: Get or set an array reference of GeExpressionByExperiment object into 
+  Desc: Get or set an array reference of GeExpressionByExperiment object into
         a expression object
 
   Ret:   Get => array of $getemplate_experiment_row object, a row object
@@ -222,7 +222,7 @@ sub set_getemplateexperiment_row {
   Usage: my @template_hybridization_rows = $expression->get_getemplatehybridization_row();
          $expression->set_getemplatehybridization_row(\@template_hybridization_rows);
 
-  Desc: Get or set an array reference of GeTemplateExpression object into 
+  Desc: Get or set an array reference of GeTemplateExpression object into
         a expression object
 
   Ret:   Get => array of $getemplate_hybridization_row object, a row object
@@ -275,8 +275,8 @@ sub set_getemplatehybridization_row {
 	 $expression->force_set_template_id($template_id);
 
   Desc: get or set a template_id in an expression object.
-	set method change the template_id for 
-        CXGN::GEM::Schema::GeTemplateExpression and 
+	set method change the template_id for
+        CXGN::GEM::Schema::GeTemplateExpression and
 	CXGN::GEM::Schema::GeExpressionByExperiment rows
         stored in the expression object.
 
@@ -327,7 +327,7 @@ sub force_set_template_id {
   foreach my $template_hybridization_row (@template_hybridization_rows) {
       $template_hybridization_row->set_column( template_id => $data );
   }
-  
+
   my @template_experiment_rows = $self->get_getemplateexperiment_row();
   foreach my $template_experiment_row (@template_experiment_rows) {
       $template_experiment_row->set_column( template_id => $data );
@@ -340,7 +340,7 @@ sub force_set_template_id {
 	 $expression->set_experiment($experiment_data_href);
 
   Desc: get or set a expression data in an expression object.
-	set method change some variables for 
+	set method change some variables for
 	CXGN::GEM::Schema::GeExpressionByExperiment row
         and set template_id for them. If it does not exist
         an row object with the parameters set, it will add
@@ -350,7 +350,7 @@ sub force_set_template_id {
   Ret:  get=> %experiment, a hash with KEYS=experiment_id
               and VALUES=hash reference with keys=data_type
               and values=data_value.
-              data_types are: experiment_id, replicates_used, 
+              data_types are: experiment_id, replicates_used,
               mean, median, standard_desviation, coefficient_of_variance
               and dataset_id
 	set=> none
@@ -359,19 +359,19 @@ sub force_set_template_id {
 	set=> \%experiment, a hash ref. with KEYS=experiment_id
               and VALUES=hash reference with keys=data_type
               and values=data_value.
-              data_types are: experiment_id, replicates_used, 
+              data_types are: experiment_id, replicates_used,
               mean, median, standard_desviation, coefficient_of_variance
               and dataset_id.
 
-  Side_Effects: Die if the argument is not a hash reference or if it do not have 
+  Side_Effects: Die if the argument is not a hash reference or if it do not have
                 experiment_id
 
   Example: my %experiment = $expression->get_experiment();
 	   $expression->set_experiment({
                                         experiment_id       => $id,
-                                        replicates_used     => 3, 
-                                        mean                => 10, 
-                                        median              => 10.5, 
+                                        replicates_used     => 3,
+                                        mean                => 10,
+                                        median              => 10.5,
                                         standard_desviation => 0.5,
                                        });
 
@@ -383,10 +383,10 @@ sub get_experiment {
      my %experiment = ();
 
      my @template_experiment_rows = $self->get_getemplateexperiment_row();
-     
+
      foreach my $template_exp_row (@template_experiment_rows) {
 	 my %template_exp_col = $template_exp_row->get_columns();
-	 
+
 	 $experiment{$template_exp_col{'experiment_id'}} = \%template_exp_col;
      }
      return %experiment;
@@ -394,7 +394,7 @@ sub get_experiment {
 
 sub set_experiment {
     my $self = shift;
-    
+
     my $data_href = shift ||
       croak("FUNCTION PARAMETER ERROR: None experiment data hash ref. was supplied for set_experiment function.\n");
 
@@ -413,16 +413,16 @@ sub set_experiment {
 
     my %right_keys = ('experiment_id'           => 1,
 		      'template_id'             => 1,
-		      'replicates_used'         => 1, 
-		      'mean'                    => 1, 
-		      'median'                  => 1, 
-		      'standard_desviation'     => 1, 
-		      'coefficient_of_variance' => 1, 
+		      'replicates_used'         => 1,
+		      'mean'                    => 1,
+		      'median'                  => 1,
+		      'standard_desviation'     => 1,
+		      'coefficient_of_variance' => 1,
 		      'dataset_id'              => 1
 	             );
 
     my @keys = keys %{$data_href};
-    
+
     foreach my $key (@keys) {
 	if ($key eq 'template_id' && defined $template_id) {
 	    carp("\nWARNING: template_id argument will be overwrite by the object's template_id.\n");
@@ -430,7 +430,7 @@ sub set_experiment {
 	elsif ($key eq 'metadata_id') {
 	    carp("\nWARNING: metadata_id argument will be ignore. It will be overwrite by the store function\n")
 	}
-	
+
 	unless (exists $right_keys{$key}) {
 	    carp("\nWARNING: $key is not a valid parameter. It will be ignore.\n");
 	}
@@ -441,10 +441,10 @@ sub set_experiment {
     my $match = 'none';
 
     my @template_experiment_rows = $self->get_getemplateexperiment_row();
-        
+
     foreach my $template_exp_row (@template_experiment_rows) {
 	my %template_exp_col = $template_exp_row->get_columns();
-	
+
 	if ($template_exp_col{'experiment_id'} == $data_href->{'experiment_id'}) {
 	    $match = $template_exp_row;
 	}
@@ -457,7 +457,7 @@ sub set_experiment {
     }
 
     ## And set the row
-    
+
     if ($match eq 'none') { ## Then it will add a new row
 
 	my $new_row = $self->get_schema()
@@ -495,7 +495,7 @@ sub set_experiment {
 	 $expression->set_hybridization($hybridization_data_href);
 
   Desc: get or set a expression data in an expression object.
-	set method change some variables for 
+	set method change some variables for
 	CXGN::GEM::Schema::GeTemplateExpression row
         and set template_id for them. If it does not exist
         an row object with the parameters set, it will add
@@ -505,8 +505,8 @@ sub set_experiment {
   Ret:  get=> %hybridization, a hash with KEYS=hybridization_id
               and VALUES=hash reference with keys=data_type
               and values=data_value.
-              data_types are: hybridization_id, template_signal, 
-              template_signal_type, statistical_value, statistical_value_type, 
+              data_types are: hybridization_id, template_signal,
+              template_signal_type, statistical_value, statistical_value_type,
               flag and dataset_id
 	set=> none
 
@@ -514,15 +514,15 @@ sub set_experiment {
 	set=> \%hybridization, a hash ref. with KEYS=hybridization_id
               and VALUES=hash reference with keys=data_type
               and values=data_value.
-              data_types are: hybridization_id, template_signal, 
-              template_signal_type, statistical_value, statistical_value_type, 
+              data_types are: hybridization_id, template_signal,
+              template_signal_type, statistical_value, statistical_value_type,
               flag and dataset_id
 
-  Side_Effects: Die if the argument is not a hash reference or if it do not have 
+  Side_Effects: Die if the argument is not a hash reference or if it do not have
                 hybridization_id
 
   Example: my %hybridization = $hybridization->get_hybridization();
-	   $expression->set_hybridization({ 
+	   $expression->set_hybridization({
                                             hybridization_id       => $id,
                                             template_signal        => 200,
                                             template_signal_type   => 'normalized fluorescence'
@@ -538,7 +538,7 @@ sub get_hybridization {
      my %hybridization = ();
 
      my @template_hybridization_rows = $self->get_getemplatehybridization_row();
-     
+
      foreach my $template_hyb_row (@template_hybridization_rows) {
 	 my %template_hyb_col = $template_hyb_row->get_columns();
 
@@ -549,7 +549,7 @@ sub get_hybridization {
 
 sub set_hybridization {
     my $self = shift;
-    
+
     my $data_href = shift ||
       croak("FUNCTION PARAMETER ERROR: No hybridization data hash ref. was supplied for set_hybridization function.\n");
 
@@ -568,16 +568,16 @@ sub set_hybridization {
 
     my %right_keys = ('hybridization_id'       => 1,
 		      'template_id'            => 1,
-		      'template_signal'        => 1, 
-		      'template_signal_type'   => 1, 
-		      'statistical_value'      => 1, 
-		      'statistical_value_type' => 1, 
+		      'template_signal'        => 1,
+		      'template_signal_type'   => 1,
+		      'statistical_value'      => 1,
+		      'statistical_value_type' => 1,
 		      'flag'                   => 1,
 		      'dataset_id'             => 1
 	             );
 
     my @keys = keys %{$data_href};
-    
+
     foreach my $key (@keys) {
 	if ($key eq 'template_id' && defined $template_id) {
 	    carp("\nWARNING: template_id argument will be overwrite by the object's template_id.\n");
@@ -585,7 +585,7 @@ sub set_hybridization {
 	elsif ($key eq 'metadata_id') {
 	    carp("\nWARNING: metadata_id argument will be ignore. It will be overwrite by the store function\n")
 	}
-	
+
 	unless (exists $right_keys{$key}) {
 	    carp("\nWARNING: $key is not a valid parameter. It will be ignore.\n");
 	}
@@ -596,23 +596,23 @@ sub set_hybridization {
     my $match = 'none';
 
     my @template_hybridization_rows = $self->get_getemplatehybridization_row();
-        
+
     foreach my $template_hyb_row (@template_hybridization_rows) {
 	my %template_hyb_col = $template_hyb_row->get_columns();
-	
+
 	if ($template_hyb_col{'hybridization_id'} == $data_href->{'hybridization_id'}) {
 	    $match = $template_hyb_row;
 	}
     }
 
     ## Now it will overwrite the template_id (metadata_id will be overwrite with store function)
-    
+
     if (defined $template_id) {
 	$data_href->{'template_id'} = $template_id;
     }
 
     ## And set the row
-    
+
     if ($match eq 'none') { ## Then it will add a new row
 
 	my $new_row = $self->get_schema()
@@ -623,10 +623,10 @@ sub set_hybridization {
     }
     else {  ## Then it will modify only the fields that are different
 	my %row_data = $match->get_columns();
-	
+
 	foreach my $data_key (keys %row_data) {
-	    
-	    if (defined $row_data{$data_key}) { 
+
+	    if (defined $row_data{$data_key}) {
 		if ($row_data{$data_key} =~ m/^\d+\.?\d*/) {
 		    if (exists $data_href->{$data_key} && $row_data{$data_key} != $data_href->{$data_key}) {
 			$match->set_column( $data_key => $data_href->{$data_key} );
@@ -835,7 +835,7 @@ sub is_template_hybridization_obsolete {
 
   Desc: Store in the database the all expression data for the
 	expression object.
-	See the methods store_template_experiment and 
+	See the methods store_template_experiment and
         store_template_hybridization for more details
 
   Ret: None
@@ -946,7 +946,7 @@ sub store_template_experiment {
 		$getemplateexperiment_row->set_column( metadata_id => $mod_metadata_id );
 
 		$getemplateexperiment_row->update()
-	 	                         ->discard_changes();
+		                         ->discard_changes();
 	    }
 	}
     }
@@ -978,7 +978,7 @@ sub store_template_experiment {
 
 sub obsolete_template_experiment {
     my $self = shift;
-    
+
     ## FIRST, check the metadata_id supplied as parameter
 
     my $metadata = shift
@@ -1013,7 +1013,7 @@ sub obsolete_template_experiment {
     my %astempexper_metadata = $self->get_template_experiment_metadbdata($metadata);
     if (exists $astempexper_metadata{$experiment_id}) {
 	$mod_metadata_id = $astempexper_metadata{$experiment_id}->store( { modification_note => $modification_note,
-							    	              obsolete          => $obsolete,
+								              obsolete          => $obsolete,
 								              obsolete_note     => $obsolete_note } )
 							           ->get_metadata_id();
 	## Modify the group row in the database
@@ -1093,7 +1093,7 @@ sub store_template_hybridization {
 	else {                                                                    ## UPDATE IF SOMETHING has change
 
 	    my @columns_changed = $getemplatehybridization_row->is_changed();
-	    
+
 	    if (scalar(@columns_changed) > 0) {                         ## ...something has change, it will take
 
 		my @modification_note_list;                             ## the changes and the old metadata object for
@@ -1157,7 +1157,7 @@ sub obsolete_template_hybridization {
 
     my $hybridization_id = shift
 	|| croak("OBSOLETE ERROR: None hybridization_id was supplied to $self->obsolete_template_hybridization().\n");
-    
+
     my $revert_tag = shift;
 
 
@@ -1175,7 +1175,7 @@ sub obsolete_template_hybridization {
     my %astemphyb_metadata = $self->get_template_hybridization_metadbdata($metadata);
     if (exists $astemphyb_metadata{$hybridization_id}) {
 	my $mod_metadata_id = $astemphyb_metadata{$hybridization_id}->store( { modification_note => $modification_note,
-		  	      			       	                       obsolete          => $obsolete,
+							                       obsolete          => $obsolete,
 								               obsolete_note     => $obsolete_note } )
 							            ->get_metadata_id();
 
@@ -1196,7 +1196,7 @@ sub obsolete_template_hybridization {
 	 croak("OBSOLETE ERROR: Hybridization_id ($hybridization_id) supplied to $self->obsolete_template_hybridization() does not exist for this expression object.\n");
     }
 
-    
+
 }
 
 
@@ -1307,20 +1307,20 @@ sub get_hybridization_object {
 
   Usage: my $graph_object = $expression->get_experiment_graph()
 
-  Desc: Create a graph object with the expression data for 
+  Desc: Create a graph object with the expression data for
         experiments
 
   Ret:  A Chart::Clicker object
 
   Args: $arg_href, a hash reference with different options.
         x_axis_sort => 'PO' (alphabetical by default)
-        bar_color   => { red   => 35 / 255, 
-                         green => 35 / 255, 
-                         blue  => 142 / 255, 
+        bar_color   => { red   => 35 / 255,
+                         green => 35 / 255,
+                         blue  => 142 / 255,
                          alpha => 1 } ## By default (blue)
-        errorbar_color => { red   => 0 / 255, 
-                            green => 0 / 255, 
-                            blue  => 0 / 255, 
+        errorbar_color => { red   => 0 / 255,
+                            green => 0 / 255,
+                            blue  => 0 / 255,
                             alpha => 1 } ## By default (black)
 
   Side_Effects: none
@@ -1334,36 +1334,36 @@ sub get_experiment_graph {
    my $args_href = shift;
 
    ## Arguments handle by this function
-   ## * 'x_axis_sort', a scalar (PO or undef) (undef by default) 
+   ## * 'x_axis_sort', a scalar (PO or undef) (undef by default)
    ## * 'bar_color', a hash reference with color ({ red => $int, green => $int, blue => $int, alpha => $int})(blue color by default)
-   ## * 'errorbar_color', same than bar_color (black by default) 
-   ## * 'title', a scalar, the title of the graph ($experimental_design_name by default) 
-   ## * 'x_axis_label', a scalar, the title for the x axis ('Experiment' by default) 
+   ## * 'errorbar_color', same than bar_color (black by default)
+   ## * 'title', a scalar, the title of the graph ($experimental_design_name by default)
+   ## * 'x_axis_label', a scalar, the title for the x axis ('Experiment' by default)
    ## * 'y_axis_label', a scalar, the title for the y axis ('Expression_Units_(Fluorescence_Intensity)')
-  
-   my $x_axis_sort = $args_href->{'x_axis_sort'}; 
-   my $bar_color_href = $args_href->{'bar_color'} 
+
+   my $x_axis_sort = $args_href->{'x_axis_sort'};
+   my $bar_color_href = $args_href->{'bar_color'}
       || {red => 35 / 255, green => 35 / 255, blue => 142 / 255, alpha => 1};
-   my $errorbar_color_href = $args_href->{'errorbar_color'} 
-      || {red => 0 / 255, green => 0 / 255, blue => 0 / 255, alpha => 1}; 
+   my $errorbar_color_href = $args_href->{'errorbar_color'}
+      || {red => 0 / 255, green => 0 / 255, blue => 0 / 255, alpha => 1};
    my $title = $args_href->{'title'};  ## The default value will be applied after get the data if it is undef
-   my $x_axis_label = $args_href->{'x_axis_label'} 
-      || 'Experiment'; 
-   my $y_axis_label = $args_href->{'y_axis_label'} 
-      || 'Expression_Units_(Fluorescence_Intensity)'; 
+   my $x_axis_label = $args_href->{'x_axis_label'}
+      || 'Experiment';
+   my $y_axis_label = $args_href->{'y_axis_label'}
+      || 'Expression_Units_(Fluorescence_Intensity)';
 
 
    ## First, get the arrays with the data
 
-   my ( $expdesign_name, 
-        $x_values_aref, 
-	$x_errorvals_aref, 
-	$x_tags_aref, 
-	$y_values_aref, 
-	$y_high_errorvals_aref, 
-	$y_low_errorvals_aref, 
+   my ( $expdesign_name,
+        $x_values_aref,
+	$x_errorvals_aref,
+	$x_tags_aref,
+	$y_values_aref,
+	$y_high_errorvals_aref,
+	$y_low_errorvals_aref,
       ) = $self->expression_input_graph({ sort => $x_axis_sort});
-   
+
    ## Replace title if it is undef
 
    unless (defined $title) {
@@ -1373,7 +1373,7 @@ sub get_experiment_graph {
    ## Second, cut the prefix in the experiment_names (shorter = most easy to show)
 
    my $root_name = $self->get_prefix_name($x_tags_aref);
-   
+
    if (defined $root_name) {
        $root_name .= '_';
        my @formated_names = ();
@@ -1394,7 +1394,7 @@ sub get_experiment_graph {
    my $range_h = Chart::Clicker::Data::Range->new({ lower => $min_sort_exp[0] - 1, upper => $max_sort_exp[0] + 1 });
    my $range_v = Chart::Clicker::Data::Range->new({ lower => 0, upper => $y_max_range });
 
-   ## Forth, the graph will composed by three parts, the base chart made with Bars, using the default context 
+   ## Forth, the graph will composed by three parts, the base chart made with Bars, using the default context
    ## in the Chart::Clicker, and two CandleSticks rendered charts overlapped with the base chart. This two
    ## CandleStick graphs are used to draw the error bars.
 
@@ -1410,43 +1410,43 @@ sub get_experiment_graph {
 
    ## 2) Create the series (base, error_high and error_low)
 
-   my $series_base = Chart::Clicker::Data::Series->new( keys   => $x_values_aref, 
-						        values => $y_values_aref, 
+   my $series_base = Chart::Clicker::Data::Series->new( keys   => $x_values_aref,
+						        values => $y_values_aref,
                                                       );
 
    ## The CandleStick series are moved 0.5 to the left, to correct that the keys used
    ## have +0.5
 
-   my $series_error_up = Chart::Clicker::Data::Series::HighLow->new( keys   => $x_errorvals_aref, 
-								     values => $y_high_errorvals_aref, 
-								     opens  => $y_high_errorvals_aref, 
-								     highs  => $y_high_errorvals_aref, 
+   my $series_error_up = Chart::Clicker::Data::Series::HighLow->new( keys   => $x_errorvals_aref,
+								     values => $y_high_errorvals_aref,
+								     opens  => $y_high_errorvals_aref,
+								     highs  => $y_high_errorvals_aref,
 								     lows   => $y_values_aref,
                                                                    );
 
-   my $series_error_down = Chart::Clicker::Data::Series::HighLow->new( keys   => $x_errorvals_aref, 
-								       values => $y_low_errorvals_aref, 
-								       opens  => $y_low_errorvals_aref, 
-								       highs  => $y_low_errorvals_aref, 
+   my $series_error_down = Chart::Clicker::Data::Series::HighLow->new( keys   => $x_errorvals_aref,
+								       values => $y_low_errorvals_aref,
+								       opens  => $y_low_errorvals_aref,
+								       highs  => $y_low_errorvals_aref,
 								       lows   => $y_values_aref,
                                                                       );
 
    ## 3) Define the colors, bars blue and errobars black
- 
+
    if ($args_href->{'bar_color'}) {
        unless (ref($args_href->{'bar_color'}) eq 'HASH') {
 	   carp("WARNING: 'bar_color' argument is not a hash reference with keys = ('red', 'green', 'blue', 'alpha'). Ignoring argument.\n");
-       } 
+       }
    }
    my %bar_colordata = %{$bar_color_href};
 
    if ($args_href->{'errorbar_color'}) {
        unless (ref($args_href->{'errorbar_color'}) eq 'HASH') {
 	   carp("WARNING: 'errorbar_color' argument is not a hash reference with keys = ('red', 'green', 'blue', 'alpha'). Ignoring argument.\n");
-       } 
+       }
    }
    my %errorbar_colordata = %{$errorbar_color_href};
-   
+
 
    my $bar_color = Graphics::Color::RGB->new(%bar_colordata);
    my $errorbar_color = Graphics::Color::RGB->new(%errorbar_colordata);
@@ -1464,7 +1464,7 @@ sub get_experiment_graph {
 
    my $def = $chart->get_context('default');
    $ds0->context('default');
-   
+
    ## 6) Create two new context for the error bars and add to them the datasets
    ##    sharing the axis with the default context
 
@@ -1508,7 +1508,7 @@ sub get_experiment_graph {
 
    my $barerror_down = Chart::Clicker::Renderer::CandleStick->new(opacity => .6);
    $barerror_down->brush->width(2);
-   $error_down_context->renderer($barerror_down); 
+   $error_down_context->renderer($barerror_down);
 
    return $chart;
 }
@@ -1572,7 +1572,7 @@ sub expression_input_graph {
 	foreach my $expdsg_id (keys %expdesign) {
 	    my $expdesign_obj = CXGN::GEM::ExperimentalDesign->new($self->get_schema(), $expdsg_id);
 	    my @explist_ordered = $expdesign_obj->get_po_sorted_experiment_list();
-	    
+
 	    ## Now it will add only the experiments from the expression object
 	    foreach my $expobj (@explist_ordered) {
 		my $exp_po_id = $expobj->get_experiment_id();
@@ -1596,19 +1596,19 @@ sub expression_input_graph {
 
 	my $mean = $experiment{$experiment_id}->{'mean'} || 0;
 	my $sd = $experiment{$experiment_id}->{'standard_desviation'} || 0;
-      
+
 	## Get experiment data and experimental design data
 
 	my $experiment = CXGN::GEM::Experiment->new($self->get_schema(), $experiment_id);
 	my $experiment_name = $experiment->get_experiment_name();
 	my $expdesign = $experiment->get_experimental_design();
 	$expdesign_name = $expdesign->get_experimental_design_name();
-       	   
+
 	## Chart::Cliker give problems to draw names with spaces, this function
 	## replace with underlines (_)
 
 	$experiment_name =~ s/\s+/_/g;
-       
+
 	## Put the data into the arrays
 
 	push @x_values, $x;
@@ -1619,11 +1619,11 @@ sub expression_input_graph {
 	push @y_low_errorvals, $mean-$sd;
 	$x++;
     }
-    
+
     ## Create the array ref.
-    
+
     my @data = ($expdesign_name, \@x_values, \@x_errorvals, \@x_tags, \@y_values, \@y_high_errorvals, \@y_low_errorvals);
-    
+
     return @data;
 }
 
@@ -1652,7 +1652,7 @@ sub get_prefix_name {
 
     my @data = @{$aref};
     my $element_names_n = scalar(@data);
-    
+
     my %element;
 
     foreach my $name (@data) {
@@ -1699,9 +1699,9 @@ sub get_prefix_name {
 
 sub get_ymax_range {
     my $self = shift;
-    my $data_aref = shift 
+    my $data_aref = shift
 	|| croak('DATA ARGUMENT ERROR: No data array reference was supplied to $self->get_ymax_range() function.\n');
-    
+
     if (ref($data_aref) ne 'ARRAY') {
 	croak('DATA ARGUMENT ERROR: The array reference supplied to $self->get_ymax_range() function IS NOT AN ARRAY REFERENCE.\n');
     }
@@ -1735,7 +1735,7 @@ sub get_ymax_range {
 	}
 	$max_rounded += $unit;
     }
-    
+
     return $max_rounded;
 }
 
