@@ -47,85 +47,32 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
 use Test::More;
 use Test::Exception;
 
-use CXGN::DB::Connection;
+use CXGN::GEM::Test;
 
+my $gem_test = CXGN::GEM::Test->new;
 
-## The tests still need search_path
+plan tests => 93;
 
-my @schema_list = ('gem', 'biosource', 'metadata', 'public');
-my $schema_list = join(',', @schema_list);
-my $set_path = "SET search_path TO $schema_list";
-
-## First check env. variables and connection
-
-BEGIN {
-
-    ## Env. variables have been changed to use biosource specific ones
-
-    my @env_variables = qw/GEM_TEST_METALOADER GEM_TEST_DBDSN GEM_TEST_DBUSER GEM_TEST_DBPASS/;
-
-    for my $env (@env_variables) {
-        unless (defined $ENV{$env}) {
-            plan skip_all => "Environment variable $env not set, aborting";
-        }
-    }
-
-    eval { 
-        CXGN::DB::Connection->new( 
-                                   $ENV{GEM_TEST_DBDSN}, 
-                                   $ENV{GEM_TEST_DBUSER}, 
-                                   $ENV{GEM_TEST_DBPASS}, 
-                                   {on_connect_do => $set_path}
-                                 ); 
-    };
-
-    if ($@ =~ m/DBI connect/) {
-
-        plan skip_all => "Could not connect to database";
-    }
-
-    plan tests => 93;
-}
-
-
-BEGIN {
-    use_ok('CXGN::GEM::Schema');             ## TEST1
-    use_ok('CXGN::GEM::Expression');         ## TEST2
-    use_ok('CXGN::Metadata::Metadbdata');    ## TEST3
-    use_ok('CXGN::GEM::TechnologyType');     ## TEST4
-    use_ok('CXGN::GEM::Platform');           ## TEST5
-    use_ok('CXGN::GEM::Template');           ## TEST6
-    use_ok('CXGN::GEM::ExperimentalDesign'); ## TEST7
-    use_ok('CXGN::GEM::Experiment');         ## TEST8
-    use_ok('CXGN::GEM::Target');             ## TEST9
-    use_ok('CXGN::GEM::Hybridization');      ## TEST10
-}
-
-
-#if we cannot load the Schema modules, no point in continuing
-CXGN::Biosource::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::Biosource::Schema module');
-CXGN::Metadata::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::Metadata::Schema module');
-Bio::Chado::Schema->can('connect')
-    or BAIL_OUT('could not load the Bio::Chado::Schema module');
-CXGN::GEM::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::GEM::Schema module');
+use_ok('CXGN::GEM::Schema');    ## TEST1
+use_ok('CXGN::GEM::Expression'); ## TEST2
+use_ok('CXGN::Metadata::Metadbdata'); ## TEST3
+use_ok('CXGN::GEM::TechnologyType'); ## TEST4
+use_ok('CXGN::GEM::Platform');  ## TEST5
+use_ok('CXGN::GEM::Template');  ## TEST6
+use_ok('CXGN::GEM::ExperimentalDesign'); ## TEST7
+use_ok('CXGN::GEM::Experiment'); ## TEST8
+use_ok('CXGN::GEM::Target');    ## TEST9
+use_ok('CXGN::GEM::Hybridization'); ## TEST10
 
 ## Variables predifined by environment variables
-my $creation_user_name = $ENV{GEM_TEST_METALOADER};
+my $creation_user_name = $gem_test->metaloader_user;
 
 ## The GEM schema contain all the metadata, chado and biosource classes so don't need to create another Metadata schema
 
-my $schema = CXGN::GEM::Schema->connect( $ENV{GEM_TEST_DBDSN}, 
-                                         $ENV{GEM_TEST_DBUSER}, 
-                                         $ENV{GEM_TEST_DBPASS}, 
-                                         {on_connect_do => $set_path});
-
+my $schema = $gem_test->dbic_schema('CXGN::GEM::Schema');
 $schema->txn_begin();
 
 ## Get the last values
