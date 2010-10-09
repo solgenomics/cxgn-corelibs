@@ -11,6 +11,18 @@ dbic connections in the GEM test suite
 
   my $metaloader_username = $gem_test->metaloader_user;
 
+=head1 DESCRIPTION
+
+GEM Tests require the following environment variables to be set:
+
+=head3 GEM_TEST_DBDSN, GEM_TEST_DBUSER, GEM_TEST_DBPASSWORD
+
+DBI DSN, username, and password to use for connecting to the testing database.
+
+=head3 GEM_TEST_METALOADER
+
+SGN username of the user running this test.
+
 =cut
 
 package CXGN::GEM::Test;
