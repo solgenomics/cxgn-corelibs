@@ -5,6 +5,7 @@ use warnings;
 use POSIX;
 
 use IO::Pipe;
+use IPC::Cmd qw/ can_run /;
 
 use Carp;
 use Memoize;
@@ -270,16 +271,16 @@ sub _ver_cmp { #compares two version numbers like '2.2.10' and '2.2.14'
 
 memoize('_check_external_tools');
 sub _check_external_tools {
-  my $croak;
+
+  my @missing;
   for my $tool ( qw/ formatdb fastacmd / ) {
-    unless( `which $tool` ) {
-      warn "External tool `$tool` not found in path.  Please install it\n";
-      $croak = 1;
-    }
+      unless( can_run( $tool ) ) {
+          push @missing, "External tool `$tool` not found in path.  Please install it.\n";
+      }
   }
 
-  croak "Please install missing tools before using ".__PACKAGE__.".\n"
-    if $croak;
+  croak @missing, "Please install missing tools before using ".__PACKAGE__.".\n"
+    if @missing;
 
   return;
 }
