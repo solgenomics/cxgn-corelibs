@@ -107,7 +107,6 @@ A tomato BAC contig, e.g. C12.4_contig1
 
 A generic scaffold identifier, e.g. scaffold12345
 
-
 =item tair_locus
 
 TAIR locus identifiers like 'At1g67700.1'
@@ -226,7 +225,6 @@ BEGIN {
 }
 use base qw/Exporter/;
 
-use CXGN::DB::Connection;
 use CXGN::Genomic::Clone;
 use CXGN::Genomic::CloneIdentifiers qw/ parse_clone_ident assemble_clone_ident /;
 use CXGN::Genomic::GSS;
@@ -450,18 +448,6 @@ file (they are in comments, not POD).
         be able to clean it.
 
 =cut
-#'
-our $sgn_db;
-#write an accessor routine that makes sure our connection does
-#not go away due to timeouts or whatever
-sub _sgn_db {
-  $sgn_db ||= CXGN::DB::Connection->new();
-  unless($sgn_db->ping) {
-    $sgn_db = undef;
-    $sgn_db = _sgn_db();
-  }
-  return $sgn_db;
-}
 
 ######## sgn_u
 sub is_sgn_u {
@@ -482,9 +468,7 @@ sub is_cgn_u {
 }
 sub url_cgn_u {
   my ($cgnid) = shift =~ /(\d+)/ or return undef;
-  my ($sgnid) = _sgn_db->selectrow_array('SELECT unigene_id FROM unigene WHERE sequence_name = ? AND database_name=? ',undef,$cgnid,'CGN')
-    or return undef;
-  return "/search/unigene.pl?unigene_id=".$urlencode{uc($sgnid)};
+  return "/search/unigene.pl?unigene_id=CGN-U$cgnid";
 }
 sub clean_cgn_u {
   clean_letter_identifier('cgn','u',shift);
