@@ -201,8 +201,7 @@ our %link_tests =
 }
 
 use Test::More tests=> 1 + 4*scalar(keys our %tests)
-  + scalar(keys our %link_tests)
-  + 6; #< unique_identifier tests
+  + scalar(keys our %link_tests);
 
 BEGIN {
  use_ok( 'CXGN::Tools::Identifiers', qw(
@@ -247,13 +246,3 @@ while(my($ident,$match) = each our %link_tests) {
   }
 }
 
-
-#now test the unique_identifier function
-is(unique_identifier('foobar'),'foobar',"unique_identifier doesn't touch an ident it hasn't seen before");
-is(unique_identifier('foobar','_'),'foobar_1',"unique_identifier DOES touch one that it has seen before");
-is(unique_identifier('foobar'),'foobar_2',"default unique separator is '_'");
-my $store = {};
-is(unique_identifier('foobar','_',$store),'foobar',"unique_identifier accepts an external data store");
-is(unique_identifier('foobar','_',$store),'foobar_1',"unique_identifier really accepts an external data store");
-
-is(unique_identifier('monkeys',undef,undef,1),'monkeys_0','unique_identifier force option works');

@@ -22,11 +22,6 @@ identifiers, like SGN-E23412
   my $clean = clean_identifier('SGNE3423');
   #returns SGN-E3423, or undef if the identifier was not recognized
 
-  my $uniq = unique_identifier('SGN-E3423');
-  #returns 'SGN-E3423'
-  $uniq = unique_identifier('SGN-E3423');
-  #do it again, returns 'SGN-E3423_1'
-
   my $contents = parse_identifier('SGN-E12345');
 
 =head1 DESCRIPTION
@@ -408,42 +403,6 @@ sub parse_identifier {
     or return;
   $p->{namespace} = $ns;
   return $p;
-}
-
-
-=head2 unique_identifier
-
-  Usage: my $uniq = unique_identifier($ident,'_',$ident_store);
-  Desc : ensure this string is unique within the context of either the run
-	 of this script, or some other context.  The 'some other context' part
-	 comes in when you pass this function a reference to a (maybe tied)
-	 hash it should use for looking up and storing identifiers that have
-	 already been seen.
-  Ret  : the identifier, possibly with a $sep.$cnt++ appended to it, where $sep
-	 is the given separator string and $cnt is the number of times this
-	 identifier string has been seen before
-  Args : identifier string,
-         (optional) separator string (default '_'),
-         (optional) ref to identifier-storing hash,
-         (optional) true value if you want to force appending to all identifiers
-                    regardless of whether they have been seen before
-  Side Effects: reads from and writes to the given hash or tied hash.
-                DOES NOT look up identifiers anywhere except in that
-                hash
-
-=cut
-
-our $global_unique_store = {};
-sub unique_identifier {
-  my ($ident,$sep,$store,$force) = @_;
-  $sep   ||= '_';
-  $store ||= $global_unique_store;
-
-  if(my $prevcnt = $store->{$ident}++ || 0 or $force) {
-    return $ident.$sep.$prevcnt;
-  } else {
-    return $ident;
-  }
 }
 
 =head1 NAMESPACE FUNCTIONS
