@@ -136,24 +136,44 @@ sub exists_in_database {
     return undef;
 }
 
-=head2 get_obsolete
+=head2 get_organism
 
- Usage:
- Desc:
- Ret:
- Args:
- Side Effects:
+ Usage: $self->get_organism
+ Desc:  find the organism object of this stock
+ Ret:   L<Bio::Chado::Schema::Organism::Organism> object
+ Args:  none
+ Side Effects: none 
  Example:
 
 =cut
 
-sub get_obsolete {
+sub get_organism {
     my $self = shift;
-    my $is_obsolete = $self->get_object_row()->is_obsolete();
-    
-    $self->{obsolete} = $is_obsolete;
-    return $self->{obsolete};
+    if ($self->get_organism_id) {
+	return $self->get_object_row()->find_related('organism');
+    }
+    return undef;
 }
+
+=head2 get_type
+
+ Usage: $self->get_type
+ Desc:  find the cvterm type of this stock
+ Ret:   L<Bio::Chado::Schema::Cv::Cvterm> object
+ Args:   none 
+ Side Effects: none 
+ Example:
+
+=cut
+
+sub get_type {
+    my $self = shift;
+    if ($self->get_type_id) {
+	return  $self->get_object_row()->find_related('type');
+    }
+    return undef;
+}
+
 
 
 sub get_object_row {
