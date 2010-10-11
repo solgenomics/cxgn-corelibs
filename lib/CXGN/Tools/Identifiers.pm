@@ -818,30 +818,6 @@ sub clean_bac_fragment {
 sub parse_bac_fragment {
   parse_clone_ident(shift,qw/ versioned_bac_seq / );
 }
-#sgn_marker
-# sub is_sgn_marker {
-#   my $ident = shift;
-#   $ident = clean_sgn_marker($ident);
-#   my @ids = marker_name_to_ids(_sgn_db,$ident);
-#   return 1 if @ids == 1;
-#   return 0;
-# }
-# sub url_sgn_marker {
-#   my $ident = shift;
-#   $ident = clean_sgn_marker($ident);
-#   my @ids = marker_name_to_ids(_sgn_db,$ident);
-#   return unless @ids == 1;
-#   return "/search/markers/markerinfo.pl?marker_id=$ids[0]"
-# }
-# sub clean_sgn_marker {
-#   my $ident = shift;
-#   $ident =~ s/-(FPRIMER|RPRIMER|F|R)$//;
-#   return clean_marker_name($ident);
-# }
-# sub parse_sgn_marker {
-#   warn 'parsing sgn_marker not implemented';
-#   return;
-# }
 #tair_locus
 sub is_tair_locus {
   return 1 if shift =~ /^AT[1-5MC]G\d{5}$/i;
