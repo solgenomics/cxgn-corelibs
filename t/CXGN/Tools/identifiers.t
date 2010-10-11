@@ -151,8 +151,6 @@ BEGIN {
      'tus1A9'          => ['est','TUS-1-A9',qr/est\.pl/],
      'cLEC-1-E23'      => ['est','cLEC-1-E23',qr/est\.pl/],
      'clec1E23'        => ['est','cLEC-1-E23',qr/est\.pl/],
-     'apple   of sodom ' => ['species_common','Apple of Sodom',qr/wikipedia/,{ common_name => 'apple   of sodom'}],
-     '   peTunIa  '    => ['species_common','Petunia',qr/wikipedia/, { common_name => 'peTunIa'}],
      'L. esculentum'   => ['species_binomial','L. esculentum',qr/wikipedia/, { genus => 'L', species => 'esculentum' }],
      'S. lycopersicum' => ['species_binomial','S. lycopersicum',qr/wikipedia/, { genus => 'S', species => 'lycopersicum'}],
      's.Lycopersicum'  => ['species_binomial','S. lycopersicum',qr/wikipedia/, { genus => 's', species => 'Lycopersicum'}],
@@ -185,7 +183,6 @@ BEGIN {
 our %link_tests =
   (
    'SGN-E12313' => qr/^<a.+href=".+est\.pl\?.+".*>SGN-E12313<\/a>/,
-   'petunia' => qr/wikipedia/,
    'E42' => undef,
    'tus1A9' => qr/^<a.+href=".+est\.pl\?.+".*>TUS-1-A9<\/a>/,
    'lehba4J16_T7_1231' => qr/^<a.+href=".+clone_read_info\.pl\?.+".*>LE_HBa0004J16_T7_1231<\/a>/,

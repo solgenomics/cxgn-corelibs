@@ -116,10 +116,6 @@ TAIR locus identifiers like 'At1g67700.1'
 
 e.g. 'Arabidopsis thaliana', 'Solanum lycopersicum'
 
-=item species_common
-
-e.g. 'Tomato' or 'Apple of Sodom'
-
 =item genbank_gi
 
 A genbank identifier containing a stable GI identification number.
@@ -186,7 +182,6 @@ our @namespace_list = qw/
                          uniref_accession
 			 genbank_gi
 			 species_binomial
-			 species_common
 			 genbank_cdd
 			 genbank_accession
 		        /;
@@ -885,37 +880,6 @@ sub _wikipedia_link {
   $ident =~ s/\s+/_/g;
   return 'http://en.wikipedia.org/wiki/Special:Search/'.$ident;
 }
-#species short name
-sub is_species_common {
-  my $ident = shift;
-  $ident =~ s/\s+/ /g;
-  return undef if $ident =~ /\d/;
-  my $q = _sgn_db->prepare_cached(<<EOSQL,{},1);
-select common_name from common_name where common_name ilike ?
-EOSQL
-  $q->execute($ident);
-  return 1 if $q->rows > 0;
-  return 0;
-}
-sub url_species_common {
-  _wikipedia_link(@_);
-}
-sub clean_species_common {
-  my $ident = shift;
-  $ident =~ s/\s+/ /g;
-  return undef if $ident =~ /\d/;
-  my $q = _sgn_db->prepare_cached(<<EOSQL,{},1);
-select common_name from common_name where common_name ilike ?
-EOSQL
-  $q->execute($ident);
-  return undef unless $q->rows > 0;
-  my ($clean) = @{$q->fetchrow_arrayref};
-  return $clean;
-}
-sub parse_species_common {
-  { common_name => shift }
-}
-
 #uniprotKB-swissprot_accession
 sub is_swissprot_accession {
     my ($ident) = @_;
