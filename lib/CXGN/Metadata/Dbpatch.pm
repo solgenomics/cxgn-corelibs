@@ -1,4 +1,3 @@
-
 =head1 NAME
 
 CXGN::Metadata::Dbpatch
@@ -32,54 +31,52 @@ which help us keep track of running db patches on the database.
     using -F
 
 
-This class has to be sub-classed by a dbpatch script.
-    The subclass script has to be named exactly the same as the package name
+This class has to be sub-classed by a dbpatch script.  The subclass
+script has to be named exactly the same as the package name
 
-    example: MyDbpatch.pm
+=head2 Example MyDbpatch.pm
 
-    package MyDbpatch;
+  package MyDbpatch;
 
-use Moose;
-extends 'CXGN::Metadata::Dbpatch';
-
-
-#now override init_patch() and patch()
- sub init_patch  {
-    my $self=shift;
-    # You can name your patch any way you want,
-    # but it is easiest just to name it with the package name:
-    #
-    my $name=__PACKAGE__;
-    my $description = 'my dbpatch description';
-    my @prev_patches = (); # list any prerequisites of other patches
-
-    # now set the  above 3 params
-    $self->name($name);
-    $self->description($description);
-    $self->prereq(\@prev_patches);
-}
+  use Moose;
+  extends 'CXGN::Metadata::Dbpatch';
 
 
-sub patch {
-    my $self=shift;
-    ### Now you can insert the data using different options:
+  #now override init_patch() and patch()
+   sub init_patch  {
+      my $self=shift;
+      # You can name your patch any way you want,
+      # but it is easiest just to name it with the package name:
+      #
+      my $name=__PACKAGE__;
+      my $description = 'my dbpatch description';
+      my @prev_patches = (); # list any prerequisites of other patches
 
-    ##  1- By sql queryes using $dbh->do(<<EOSQL); and detailing in the tag the queries
-    ##
-    ##  2- Using objects with the store function
-    ##
-    ##  3- Using DBIx::Class first level objects
-    ##
-}
+      # now set the  above 3 params
+      $self->name($name);
+      $self->description($description);
+      $self->prereq(\@prev_patches);
+  }
 
-return 1
-###
+
+  sub patch {
+      my $self=shift;
+      ### Now you can insert the data using different options:
+
+      ##  1- By sql queryes using $dbh->do(<<EOSQL); and detailing in the tag the queries
+      ##
+      ##  2- Using objects with the store function
+      ##
+      ##  3- Using DBIx::Class first level objects
+      ##
+  }
+
+  1;
 
 
 Now you can run the db patch from the command line like this:
 
 mx-run MyDbpatch -H dbhost -D dbname -u username
-
 
 =head1 AUTHORS
 
