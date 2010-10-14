@@ -108,74 +108,80 @@ use Moose;
 with 'MooseX::Getopt';
 with 'MooseX::Runnable';
 
+has "md_schema" => (
+    is       => 'rw',
+    isa      => 'CXGN::Metadata::Schema',
+    required => 0,
+    traits   => ['NoGetopt'],
+);
 
-has "md_schema" => ( is=>'rw',
-		     isa=>'CXGN::Metadata::Schema',
-		     required=>0,
-                     traits => ['NoGetopt'],
+has "dbh" => (
+    is       => 'rw',
+    isa      => 'Ref',
+    traits   => ['NoGetopt'],
+    required => 0,
+);
 
-                   );
+has "dbhost" => (
+    is            => 'rw',
+    isa           => 'Str',
+    required      => 1,
+    traits        => ['Getopt'],
+    cmd_aliases   => 'H',
+    documentation => 'required, database host',
+);
 
-has "dbh" => ( is => 'rw',
-	       isa => 'Ref',
-               traits => ['NoGetopt'],
-	       required => 0,
-    );
+has "dbname" => (
+    is            => 'rw',
+    isa           => 'Str',
+    required      => 1,
+    traits        => ['Getopt'],
+    documentation => 'required, database name',
+    cmd_aliases   => 'D',
+);
 
-has "dbhost" => ( is => 'rw',
-		  isa => 'Str',
-		  required => 1,
-		  traits => ['Getopt'],
-		  cmd_aliases => 'H',
-                  documentation => 'required, database host',
-    );
+has "name" => (
+    is       => 'rw',
+    isa      => 'Str',
+    traits   => ['NoGetopt'],
+    required => 0,
+);
 
-has "dbname" => ( is => 'rw',
-		  isa => 'Str',
-		  required => 1,
-		  traits => ['Getopt'],
-                  documentation => 'required, database name',
-		  cmd_aliases => 'D',
-    );
+has "description" => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 0,
+    traits   => ['NoGetopt'],
+);
 
+has "username" => (
+    is            => 'rw',
+    isa           => 'Str',
+    required      => 1,
+    traits        => ['Getopt'],
+    documentation => 'required, your SGN site login name',
+    cmd_aliases   => 'u'
+);
 
-has "name" => ( is => 'rw',
-		isa => 'Str',
-                traits => ['NoGetopt'],
-		required => 0,
-    );
+has "prereq" => (
+    is       => 'rw',
+    isa      => 'ArrayRef',
+    required => 0,
+    traits   => ['NoGetopt'],
+    default  => sub { [] }
 
+);
 
-has "description" => (is=>'rw',
-		      isa=>'Str',
-		      required=>0,
-                      traits => ['NoGetopt'],
-    );
-
-has "username" => (is=>'rw',
-		   isa=>'Str',
-		   required=>1,
-		   traits=> ['Getopt'],
-                   documentation => 'required, your SGN site login name',
-		   cmd_aliases => 'u'
-    );
-
-has "prereq" => (is => 'rw',
-		 isa => 'ArrayRef',
-		 required => 0,
-                 traits => ['NoGetopt'],
-		 default => sub { [] }
-
-    );
-
-has 'force' => (is=>'rw',
-		isa=>'Bool',
-		required=>0,
-		default=>0,
-		traits => ['Getopt'],
-		cmd_aliases => 'F',
-                documentation => 'force apply, ignoring prereqs and possible duplicate application',
-    );
+has 'force' => (
+    is          => 'rw',
+    isa         => 'Bool',
+    required    => 0,
+    default     => 0,
+    traits      => ['Getopt'],
+    cmd_aliases => 'F',
+    documentation =>
+      'force apply, ignoring prereqs and possible duplicate application',
+);
 
 sub run {
     my $self = shift;
