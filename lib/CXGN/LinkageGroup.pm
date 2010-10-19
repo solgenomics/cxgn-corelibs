@@ -234,27 +234,6 @@ sub set_linkage_group_ids {
     $self->{linkage_group_ids}=shift;
 }
 
-=head2 accessors set_map_version_id, get_map_version_id
-
-  Property:	
-  Setter Args:	
-  Getter Args:	
-  Getter Ret:	
-  Side Effects:	
-  Description:	
-
-=cut
-
-sub get_map_version_id { 
-    my $self=shift;
-    return $self->{map_version_id};
-}
-
-sub set_map_version_id { 
-    my $self=shift;
-    $self->{map_version_id}=shift;
-}
-
 =head2 get_lg_id
 
   Property:	
