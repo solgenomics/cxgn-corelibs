@@ -82,6 +82,7 @@ my $build = Module::Build->new(
         'CGI::Session' => 0,
         'CGI::Session::ID::md5' => 0,
         'Class::Accessor' => 0,
+        'Class::Accessor::Fast' => 0,
         'Class::Data::Inheritable' => 0,
         'Class::DBI' => 0,
         'Config::Any'     => 0,
