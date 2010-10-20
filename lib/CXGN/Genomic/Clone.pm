@@ -982,10 +982,11 @@ sub _cvterm_type_ids {
   return our $_cvterm_type_ids ||= do {
     my %a = flatten $self->db_Main->selectall_arrayref(<<EOQ);
 select ct.name,ct.cvterm_id
-from cvterm ct
-join cv using(cv_id)
-where lower(cv.name) = 'sequence'
-  and ct.name like '\%_clone'
+from db
+join dbxref dx using(db_id)
+join cvterm ct on( ct.dbxref_id = dx.dbxref_id )
+where db.name = 'SO'
+  and dx.accession IN ('0000764','0000763')
 EOQ
     \%a
   };
