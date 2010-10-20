@@ -7,3 +7,4 @@ blib/*
 *.sw?
 cover_db/
 *.bak
+core
