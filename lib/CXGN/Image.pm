@@ -591,7 +591,7 @@ sub process_image {
 
     # move the image into the md5sum subdirectory
     #
-    my $original_file_path = $self->get_processing_dir()."/".$self->get_original_filename();
+    my $original_file_path = $self->get_processing_dir()."/".$self->get_original_filename().$self->get_file_ext();
 
 
 #    print STDERR "calcualting md5sum\n";
@@ -757,11 +757,6 @@ sub calculate_md5sum {
 
     my $md5sum = $md5->hexdigest();
     $md5->reset();
-
-#    my $md5sum2 = `md5sum "$file"`;
-#    $md5sum2 = (split /\s+/, $md5sum2)[0];
-#    if ($md5sum2 != $md5sum) { print STDERR "MD5sums don't match!\n"; }
-
 
     return $md5sum;
 }
