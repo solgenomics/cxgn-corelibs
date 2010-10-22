@@ -56,7 +56,7 @@ our $THUMBNAIL_IMAGE_SIZE = 100;
 =head2 new
 
  Usage:        my $image = CXGN::Image->new(dbh=>$dbh, image_id=>23423
-               image_dir => $image_dir, static_files_dir=> $static_files_dir)
+               image_dir => $image_dir)
  Desc:         constructor
  Ret:
  Args:         a hash of a database handle, optional identifier, and the
@@ -871,7 +871,7 @@ sub get_filename {
 	return File::Spec->catfile($image_dir, 'large.jpg');
     }
     if ($size eq "original") { 
-	return File::Spec->catfile($image_dir, $self->get_original_filename().".".$self->get_file_ext());
+	return File::Spec->catfile($image_dir, $self->get_original_filename().$self->get_file_ext());
     }
     return File::Spec->catfile($image_dir, 'medium.jpg');
 }
