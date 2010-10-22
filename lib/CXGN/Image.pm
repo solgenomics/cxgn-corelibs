@@ -9,9 +9,9 @@ Image.pm - a class for accessing the md_metadata.image table.
 This class provides database access and store functions
 and functions to associate tags with the image.
 
-
 Image uploads are handled by the SGN::Image subclass.
 
+The implementation how images are stored has been changed. Whereas the images were stored in the image root dir keyed to the image_id, it is now keyed to the md5sum of the original image, with the md5sum stemmed into two byte directories. The constructor now takes a hash instead of positional arguments.
 
 =head1 AUTHOR(S)
 
@@ -31,23 +31,36 @@ The following functions are provided in this class:
 
 use strict;
 
-use CXGN::DB::Connection;
-
-use CXGN::Tag;
-
-
 package CXGN::Image;
+
+use Carp;
+use Digest::MD5;
+use File::Path 'make_path';
+use File::Spec;
+use File::Temp 'tempdir';
+use File::Copy qw| copy move |;
+use CXGN::DB::Connection;
+use CXGN::Tag;
 
 use base qw | CXGN::DB::ModifiableI |;
 
 
+# some pseudo constant definitions
+#
+our $LARGE_IMAGE_SIZE     = 800;
+our $MEDIUM_IMAGE_SIZE    = 400;
+our $SMALL_IMAGE_SIZE     = 200;
+our $THUMBNAIL_IMAGE_SIZE = 100;
+
 
 =head2 new
 
- Usage:        my $image = CXGN::Image->new($dbh, 23423)
+ Usage:        my $image = CXGN::Image->new(dbh=>$dbh, image_id=>23423
+               image_dir => $image_dir, static_files_dir=> $static_files_dir)
  Desc:         constructor
  Ret:
- Args:         a database handle, optional identifier
+ Args:         a hash of a database handle, optional identifier, and the
+               path to the root image_dir, with keys dbh, image_id and image_dir.
  Side Effects: if an identifier is specified, the image object
                will be populated from the database, otherwise
                an empty object is returned.
@@ -58,15 +71,18 @@ use base qw | CXGN::DB::ModifiableI |;
 
 sub new {
     my $class = shift;
-    my $dbh=shift;
-    my $id = shift;
+    my %args = @_;
 
-    my $self = $class->SUPER::new($dbh, $id, @_);
+    my $self = $class->SUPER::new($args{dbh}, $args{image_id});
 
-    $self->set_dbh($dbh);
+    if (!exists($args{dbh}) || !exists($args{image_dir})) { 
+	die "Required arguments: dbh, image_dir";
+    }
+    $self->set_image_dir($args{image_dir});
+    $self->set_dbh($args{dbh});
 
-    if ($id) {
-	$self->set_image_id($id);
+    if (exists($args{image_id})) {
+	$self->set_image_id($args{image_id});
 	$self->fetch_image();
     }
     return $self;
@@ -81,7 +97,8 @@ sub fetch_image {
                         file_ext,
                         sp_person_id,
                         modified_date,
-                        create_date
+                        create_date,
+                        md5sum
                  FROM   metadata.md_image
                  WHERE  image_id=?
                         and obsolete != 't' ";
@@ -89,7 +106,7 @@ sub fetch_image {
     my $sth = $self->get_dbh()->prepare($query);
     $sth->execute($self->get_image_id()) ;
 
-    my ( $image_id, $name, $description, $original_filename, $file_ext, $sp_person_id, $modified_date, $create_date) =
+    my ( $image_id, $name, $description, $original_filename, $file_ext, $sp_person_id, $modified_date, $create_date, $md5sum) =
 	$sth->fetchrow_array();
 
 
@@ -100,9 +117,13 @@ sub fetch_image {
     $self->set_sp_person_id($sp_person_id);
     $self->set_create_date($create_date);
     $self->set_modification_date($modified_date);
-    $self->set_image_id($image_id); # we do this that if is an image that has been deleted,
+    $self->set_image_id($image_id);
+    $self->set_md5sum($md5sum);# we do this that if is an image that has been deleted,
                                     # the object will get the NULL from the database and not
                                     # the image_id that was fed into the object.
+
+    #print STDERR  "Loaded image $image_id, $md5sum, $name, $original_filename, $file_ext\n";
+
 }
 
 =head2 store
@@ -133,19 +154,22 @@ sub store {
                             original_filename=?,
                             file_ext=?,
                             sp_person_id =?,
-                            modified_date = now()
+                            modified_date = now(),
+                            md5sum =?
                       WHERE md_image.image_id=?";
 
 	my $sth = $self->get_dbh()->prepare($query);
 
 	$sth->execute(
-		      $self->get_name(),
-		      $self->get_description(),
-		      $self->get_original_filename(),
-		      $self->get_file_ext(),
-		      $self->get_sp_person_id(),
-		      $self->get_image_id()
-		      );
+	    $self->get_name(),
+	    $self->get_description(),
+	    $self->get_original_filename(),
+	    $self->get_file_ext(),
+	    $self->get_sp_person_id(),
+	    $self->get_md5sum(),
+	    $self->get_image_id(),
+	
+	    );
 	return $self->get_image_id();
     }
     else {
@@ -159,8 +183,9 @@ sub store {
                             file_ext,
                             sp_person_id,
                             obsolete,
-                            modified_date)
-                     VALUES (?, ?, ?, ?, ?, ?, now())";
+                            modified_date,
+                            md5sum)
+                     VALUES (?, ?, ?, ?, ?, ?, now(), ?)";
 	my $sth = $self->get_dbh()->prepare($query);
 	$sth->execute(
 		       $self->get_name(),
@@ -168,7 +193,8 @@ sub store {
 		       $self->get_original_filename(),
 		       $self->get_file_ext(),
 		       $self->get_sp_person_id(),
-		       $self->get_obsolete()
+		       $self->get_obsolete(),
+	               $self->get_md5sum(),
 		       );
 	my $image_id= $self->get_currval("metadata.md_image_image_id_seq");
 	$self->set_image_id($image_id);
@@ -324,190 +350,656 @@ sub set_file_ext {
     $self->{file_ext}=shift;
 }
 
+=head2 accessors get_image_dir(), set_image_dir()
+
+ Usage:        returns the image dir
+ Desc:         
+ Ret:
+ Args:         
+ Side Effects: 
+ Example:     
+
+=cut
+
+sub get_image_dir {
+    my $self  = shift;
+    return $self->{image_dir};
+}
+
+sub set_image_dir { 
+    my $self = shift;
+    $self->{image_dir} = shift;
+}
+
+#     my $which = shift;
+
+#     my $dir = $self->get_configuration_object()->get_conf("image_dir");
+#     if ( !$dir ) {
+#         die
+# "Need a configuration variable called image_dir set in SGN.conf  Please contact SGN for help.";
+#     }
+#     if ( $which eq "full" ) {
+#         $dir =
+#           $self->get_configuration_object()
+#           ->get_conf("static_datasets_path") . "/$dir";
+#     }
+#     return $dir;
+#}
+
+
+
+=head2 process_image
+
+ Usage:        $return_code = $image -> process_image($filename);
+ Desc:         processes the image that has been uploaded with the upload command.
+ Ret:          the image id of the image in the database as a positive number,
+               error conditions as negative numbers.
+ Args:         the filename of the file (complete path)
+ Side Effects: generates a new subdirectory in the image_dir for the image files,
+               copies the image file to a temp dir directory where it is processed
+               (resized thumnbnails and other views for the image). After that
+               is done, the image object is stored in the database, and the 
+               image files are moved to the final location in the filesystem.
+ Example:
+
+=cut
+
+
+
+sub process_image {
+    my $self      = shift;
+    my $file_name = shift;
+    my $type      = shift;
+    my $type_id   = shift;
+
+    if ( my $id = $self->get_image_id() ) {
+        warn
+"process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
+        die "I'm dying now. Ouch!\n";
+    }
+
+    my ($processing_dir) =
+      File::Temp::tempdir( "process_XXXXXX",
+        DIR => $self->get_image_dir() );
+    system("chmod 775 $processing_dir");
+    $self->set_processing_dir($processing_dir);
+
+    # process image
+    #
+    $processing_dir = $self->get_processing_dir();
+
+    # copy unmodified image to be fullsize image
+    #
+    my $basename = File::Basename::basename($file_name);
+
+    # deanx - preserver original filename
+    my $original_filename = $basename;
+
+    my $dest_name = $self->get_processing_dir() . "/" . $basename;
+    #print STDERR "Copying $file_name to $dest_name...\n";
+
+    #    eval {
+    File::Copy::copy( $file_name, $dest_name )
+      || die "Can't copy file $file_name to $dest_name";
+    my $chmod = "chmod 664 '$dest_name'";
+
+    ### Multi Page Document Support
+    #    deanx - nov. 16 2007
+    #   PDF, PS, EPS documents are now supported by ImageMagick/Ghostscript
+    #   A primary impact is these types can multipage.  'mogrify' produces
+    #   one image per page, labelled filename-0.jpg, filename-1.jpg ...
+    #   This code detects multipage documents and copies the first page for
+    #   thumbnail processing
+
+    my @image_pages = `/usr/bin/identify "$dest_name"`;
+
+    if ( $#image_pages > 0 ) {    # multipage, pdf, ps or eps
+
+#	eval  {
+# note mogrify used since 'convert' will not correctly reformat (convert makes blank images)
+# if  (! (`mogrify -format jpg '$dest_name'`)) {die "Sorry, can't convert image $basename";}
+# if ( system("/usr/bin/mogrify -format jpg","$upload_dir/$basename") != 0) {die "Sorry, can't convert image $basename";}
+# my $chmod = "chmod 664 '$upload_dir/$basename'";
+# Convert and mogrify both dislike the format of our filenames intensely if ghostscript
+#   is envoked ... change filename to something beign like temp.<ext>
+
+        my $newname;
+        if ( $basename =~ /(.*)\.(.{1,4})$/ )
+        {                         #note; mogrify will create files name
+                                  # basename-0.jpg, basename-1.jpg
+            my $mogrified_first_image = $processing_dir . "/temp-0.jpg";
+            my $tempname =
+              $processing_dir . "/temp." . $2;    # retrieve file extension
+            $newname = $basename . ".jpg";    #
+            my $new_dest = $processing_dir . "/" . $newname;
+
+            # use temp name for mogrify/ghostscript
+            File::Copy::copy( $dest_name, $tempname )
+              || die "Can't copy file $basename to $tempname";
+
+            if ( (`mogrify -format jpg '$tempname'`) ) {
+                die "Sorry, can't convert image $basename";
+            }
+
+            File::Copy::copy( $mogrified_first_image, $new_dest )
+              || die "Can't copy file $mogrified_first_image to $newname";
+
+        }
+        #print STDERR "Successfully converted $basename to $newname\n";
+        $basename = $newname;
+
+        #	};
+
+        #	  if ($@) {
+        #	      return -2;
+        #	  }
+
+    }         #Multi-page non-image file eg: pdf, ps, eps
+    else {    # appears to be a regular simple image
+
+        #	eval {
+        my $newname = "";
+        if ( !(`mogrify -format jpg '$dest_name'`) ) {
+            if ( $basename !~ /(.*)\.(jpeg|jpg)$/i ) {    # has no jpg extension
+                $newname = $1 . ".JPG";    # convert it to extention .JPG
+            }
+            elsif ( $basename !~ /(.*)\.(.{1,4})$/ ) { # has no extension at all
+                $newname = $basename . ".JPG";         # add an extension .JPG
+            }
+            else {
+                $newname = $basename;    # apparently, it has a JPG extension
+            }
+            if (
+                system(
+                    "/usr/bin/convert", "$processing_dir/$basename",
+                    "$processing_dir/$newname"
+                ) != 0
+              )
+            {
+                die "Sorry, can't convert image $basename to $newname";
+            }
+
+            #print STDERR "Successfully converted $basename to $newname\n";
+            $original_filename = $newname;
+            $basename          = $newname;
+        }
+
+        #	};
+        #	if ($@) {
+        #	    return -2;
+        #	}
+
+    }
+
+    #    eval {
+
+    # create large image
+    $self->copy_image_resize(
+        "$processing_dir/$basename",
+        $self->get_processing_dir() . "/large.jpg",
+        $self->get_image_size("large")
+    );
+
+    # create midsize images
+    $self->copy_image_resize(
+        "$processing_dir/$basename",
+        $self->get_processing_dir() . "/medium.jpg",
+        $self->get_image_size("medium")
+    );
+
+    # create small image
+    $self->copy_image_resize(
+        "$processing_dir/$basename",
+        $self->get_processing_dir() . "/small.jpg",
+        $self->get_image_size("small")
+    );
+
+    # create thumbnail
+    $self->copy_image_resize(
+        "$processing_dir/$basename",
+        $self->get_processing_dir() . "/thumbnail.jpg",
+        $self->get_image_size("thumbnail")
+    );
+
+    #    };
+    #	  if ($@) {
+    #	      return -3;
+    #	  }
+
+    # enter preliminary image data into database
+    #$tag_table->insert_image($experiment_id, $unix_file, ${safe_ext});
+    #
+    my $ext = "";
+
+    # if ($basename =~ /(.*)(\.{1,4})$/) {
+    # deanx - nov 21 2007 - logic changed ... preserve original name from above
+    #     use this to extract file extension. note prior regex was wrong
+    if ( $original_filename =~ /(.*)(\.\S{1,4})$/ ) {
+        $original_filename = $1;
+        $ext               = $2;
+    }
+
+    $self->set_original_filename($original_filename);
+    $self->set_file_ext($ext);
+
+    # start transaction, store the image object, and associate it to
+    # the given type and type_id.
+    #
+    my $image_id = 0;
+
+    #    eval {
+
+    # move the image into the md5sum subdirectory
+    #
+    my $original_file_path = $self->get_processing_dir()."/".$self->get_original_filename();
+
+
+#    print STDERR "calcualting md5sum\n";
+    my $md5sum = $self->calculate_md5sum($original_file_path);
+
+    
+    $self->set_md5sum($md5sum);
+
+#    print STDERR "creating dirs...\n";
+    $self->make_dirs();
+
+#    print STDERR "copying to final location\n";
+    $self->finalize_location($processing_dir);
+
+    $self->set_image_id($image_id);
+
+#    print STDERR "Storing...\n";
+    $self->store();
+
+    return $image_id;
+    
+}
+
+=head2 make_dirs
+
+ Usage:
+ Desc:         creates the directory structure for image from 
+               image_dir onwards (a split md5sum)
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub make_dirs { 
+    my $self = shift;
+    my $image_sub_path = $self->image_subpath();
+    
+    my $path = join "/", ($self->get_image_dir(), $image_sub_path);
+    if (my $dirs = make_path($path) ) { 
+	#print STDERR  "Created $dirs Dirs (should be 4)\n";
+    }
+}
+
+
+=head2 finalize_location
+
+ Usage:
+ Desc:
+ Ret:
+ Args:          the source location as a path to a dir
+ Side Effects:
+ Example:
+
+=cut
+
+sub finalize_location {
+    my $self = shift;
+    my $processing_dir = shift;
+
+    my $image_dir = $self->get_image_dir() ."/".$self->image_subpath();
+    foreach my $f (glob($processing_dir."/*")) { 
+	
+	File::Copy::move( $f, $image_dir )
+	    || die "Couldn't move temp dir to image dir ($f, $image_dir)";
+	#print STDERR "Moved image file $f to final location $image_dir...\n";
+	
+    }
+
+}
+
+# used for migration
+
+sub copy_location {
+    my $self = shift;
+    my $source_dir = shift;
+
+    my $image_dir = $self->get_image_dir() ."/".$self->image_subpath();
+    foreach my $f (glob($source_dir."/*")) { 
+	
+	File::Copy::copy( "$f", "$image_dir/" )
+	    || die "Couldn't move temp dir to image dir ($f, $image_dir). $!";
+	#print STDERR "Moved image file $f to final location $image_dir...\n";
+	
+    }
+
+}
+
+# =head2 import
+
+#  Usage:        $one_image->import($another_image)
+#  Desc:         imports the data in $another_image into this image.
+#  Ret:          nothing
+#  Args:         an image object
+#  Side Effects: $one_image is now the same as $another_image
+#  Example:      used for transferring images to new directory structures.
+
+# =cut
+
+
+
+# sub import { 
+#     my $self =shift;
+#     my $image = shift;
+
+#     foreach my $s (qw | thumbnail small medium large original |) { 
+	
+# 	File::Copy::copy( $image->get_filename() );
+#     }
+
+# }
+
+=head2 image_subpath
+
+ Usage:         
+ Desc:          returns the image subpath, which is a md5sum on an image file,
+                divided into 16 directory levels at 2 bytes length each.
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub image_subpath { 
+    my $self = shift;
+
+    my $md5sum = $self->get_md5sum();
+###    if (!$md5sum) { return $self->get_image_id(); }
+    my @image_path = ();
+
+    my @md5sum = split //, $md5sum;
+    for (my $i = 0; $i<32; $i+=2) { 
+	push @image_path, $md5sum[$i].$md5sum[$i+1];
+    }
+	
+
+
+    return join "/", @image_path;
+}
+
+=head2 calculate_md5sum
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub calculate_md5sum { 
+    my $self = shift;
+    my $file = shift;
+
+    open (my $F, "<", $file) || confess "Can't open $file ";
+    binmode($F);
+    my $md5 = Digest::MD5->new();
+    $md5->addfile($F);
+    close($F);
+
+    my $md5sum = $md5->hexdigest();
+    $md5->reset();
+
+#    my $md5sum2 = `md5sum "$file"`;
+#    $md5sum2 = (split /\s+/, $md5sum2)[0];
+#    if ($md5sum2 != $md5sum) { print STDERR "MD5sums don't match!\n"; }
+
+
+    return $md5sum;
+}
+
+sub copy_image_resize {
+    my $self = shift;
+    my ( $original_image, $new_image, $width ) = @_;
+
+    # first copy the file
+    my $copy = "cp '$original_image' '$new_image'";
+
+    #print STDERR "COPYING: $copy\n";
+    #system($copy);
+    File::Copy::copy( $original_image, $new_image );
+    my $chmod = "chmod 664 '$new_image'";
+
+    #    print STDERR "CHMODing: $chmod\n";
+    #system($chmod);
+    #my $chown = "chown www-data:www-data '$new_image'";
+
+    #   print STDERR "CHOWNing: $chown\n";
+    #system($chown);
+
+    # now resize the new file, and ensure it is a jpeg
+    my $resize = `mogrify -format jpg -geometry $width '$new_image'`;
+
+}
+
+
+=head2 get_image_size_hash
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_image_size_hash {
+    my $self = shift;
+    return my %hash = (
+        large     => $LARGE_IMAGE_SIZE,
+        medium    => $MEDIUM_IMAGE_SIZE,
+        small     => $SMALL_IMAGE_SIZE,
+        thumbnail => $THUMBNAIL_IMAGE_SIZE,
+    );
+}
+
+=head2 get_image_size
+
+ Usage:
+ Desc:
+ Ret:
+ Args:         "large" | "medium" | "small" | "thumbnail"
+               default is medium
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_image_size {
+    my $self = shift;
+    my $size = shift;
+    my %hash = $self->get_image_size_hash();
+    if ( exists( $hash{$size} ) ) {
+        return $hash{$size};
+    }
+
+    # default
+    #
+    return $MEDIUM_IMAGE_SIZE;
+}
+
 
 =head2 get_filename
 
  Usage:
  Desc:
  Ret:
- Args:         "full" | "relative", "original" | "large" | "medium" | "small" | "thumbnail"
+ Args:
  Side Effects:
  Example:
 
 =cut
 
-# sub get_filename {
-#     my $self = shift;
-#     my $which = shift;
-#     my $size = shift;
-
-#     my $path = $self->get_image_dir($which)."/".$self->get_image_id();
-#     if ($size eq "original") {
-#       return $path."/".($self->get_original_filename()).($self->get_file_ext());
-#     }
-#     elsif ($size eq "medium") {
-# 	return $path."/medium.jpg";
-#     }
-#     elsif ($size eq "small") {
-# 	return $path."/small.jpg";
-#     }
-#     elsif ($size eq "thumbnail") {
-# 	return $path."/thumbnail.jpg";
-#     }
-
-#     # default is medium
-#     #
-#     return $path."/medium.jpg";
-
-# }
-
-
-
-=head2 associate_individual
-
- Usage:        $image->associate_individual($individual_id)
- Desc:         associate a CXGN::Phenome::Individual with this image
- Ret:          a database id (individual_image)
- Args:         individual_id
- Side Effects:
- Example:
-
-=cut
-
-sub associate_individual {
+sub get_filename {
     my $self = shift;
-    my $individual_id = shift;
-    my $query = "INSERT INTO phenome.individual_image
-                   (individual_id, image_id) VALUES (?, ?)";
-    my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($individual_id, $self->get_image_id());
-
-    my $id= $self->get_currval("phenome.individual_image_individual_image_id_seq");
-    return $id;
-}
-
-=head2 get_individuals
-
- Usage: $self->get_individuals()
- Desc:  find associated individuals with the image
- Ret:   list of 'Individual' objects
- Args:  none
- Side Effects: none
- Example:
-
-=cut
-
-sub get_individuals {
-    my $self = shift;
-    my $query = "SELECT individual_id FROM phenome.individual_image WHERE individual_image.image_id=?";
-    my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($self->get_image_id());
-    my @individuals;
-    while (my ($individual_id) = $sth->fetchrow_array()) {
-	my $i = CXGN::Phenome::Individual->new($self->get_dbh(), $individual_id);
-	if ( $i->get_individual_id() ) { push @individuals, $i; } #obsolete individuals should be ignored!
+    my $size = shift;
+    my $type = shift; # full or partial
+    
+    my $image_dir = "";
+    if ($type eq 'partial') { 
+	$image_dir = $self->image_subpath();
     }
-    return @individuals;
+    else { 
+	$image_dir = $self->get_image_dir()."/".$self->image_subpath();
+    }
+    if ($size eq "thumbnail") { 
+	return File::Spec->catfile($image_dir, 'thumbnail.jpg');
+    }
+    if ($size eq "small") { 
+	return File::Spec->catfile($image_dir, 'small.jpg');
+    }
+    if ($size eq "large") { 
+	return File::Spec->catfile($image_dir, 'large.jpg');
+    }
+    if ($size eq "original") { 
+	return File::Spec->catfile($image_dir, $self->get_original_filename().".".$self->get_file_ext());
+    }
+    return File::Spec->catfile($image_dir, 'medium.jpg');
 }
 
 
-=head2 associate_experiment
 
- Usage: $image->associate_experiment($experiment_id);
- Desc:  associate and image with and insitu experiment
- Ret:   a database id
- Args:  experiment_id
- Side Effects:
- Example:
-
-=cut
-
-sub associate_experiment {
-    my $self = shift;
-    my $experiment_id = shift;
-    my $query = "INSERT INTO insitu.experiment_image
-                 (image_id, experiment_id)
-                 VALUES (?, ?)";
-    my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($self->get_image_id(), $experiment_id);
-    my $id= $self->get_currval("insitu.experiment_image_experiment_image_id_seq");
-    return $id;
-
-}
-
-=head2 get_experiments
+=head2 get_processing_dir
 
  Usage:
  Desc:
- Ret:          a list of CXGN::Insitu::Experiment objects associated
-               with this image
+ Ret:
  Args:
  Side Effects:
  Example:
 
 =cut
 
-sub get_experiments {
+sub get_processing_dir {
     my $self = shift;
-    my $query = "SELECT experiment_id FROM insitu.experiment_image
-                 WHERE image_id=?";
-    my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($self->get_image_id());
-    my @experiments = ();
-    while (my ($experiment_id) = $sth->fetchrow_array()) {
-	push @experiments, CXGN::Insitu::Experiment->new($self->get_dbh(), $experiment_id);
-    }
-    return @experiments;
+    return $self->{processing_dir};
+
 }
 
-=head2 associate_fish_result
+sub set_processing_dir {
+    my $self = shift;
+    $self->{processing_dir} = shift;
+}
 
- Usage:        $image->associate_fish_result($fish_result_id)
- Desc:         associate a CXGN::Phenome::Individual with this image
- Ret:          database_id
- Args:         fish_result_id
+
+=head2 function get_copyright, set_copyright
+
+  Synopsis:	$copyright = $image->get_copyright(); 
+                $image->set_copyright("Copyright (c) 2001 by Picasso");
+  Arguments:	getter: the copyright information string
+  Returns:	setter: the copyright information string
+  Side effects:	will be stored in the database in the copyright column.
+  Description:	
+
+=cut
+
+sub get_copyright {
+    my $self = shift;
+    return $self->{copyright};
+}
+
+sub set_copyright {
+    my $self = shift;
+    $self->{copyright} = shift;
+}
+
+=head2 accessors get_md5sum, set_md5sum
+
+ Usage:
+ Desc:
+ Property
  Side Effects:
  Example:
 
 =cut
 
-sub associate_fish_result {
-    my $self = shift;
-    my $fish_result_id = shift;
-    my $query = "INSERT INTO sgn.fish_result_image
-                   (fish_result_id, image_id) VALUES (?, ?)";
-    my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($fish_result_id, $self->get_image_id());
-    my $id= $self->get_currval("sgn.fish_result_image_fish_result_image_id_seq");
-    return $id;
+sub get_md5sum {
+  my $self = shift;
+  return $self->{md5sum}; 
 }
 
-=head2 get_fish_result_clone_ids
+sub set_md5sum {
+  my $self = shift;
+  $self->{md5sum} = shift;
+}
 
- Usage:        my @clone_ids = $image->get_fish_result_clones();
- Desc:         because fish results are associated with genomic
-               clones, this function returns the genomic clone ids
-               that are associated through the fish results to
-               this image. The clone ids can be used to construct
-               links to the BAC detail page.
- Ret:          A list of clone_ids
- Args:
- Side Effects:
- Example:
+
+=head2 iconify_file
+
+Usage:   Iconify_file ($filename)
+Desc:    This is used only for PDF, PS and EPS files during Upload processing to produce a thumbnail image
+         for these filetypes for the CONFIRM screen.  Results end up on disk but are not used other than to t
+	 produce the thumbnail
+Ret:
+Args:    Full Filename of PDF file
+Side Effects:  
+Example:
 
 =cut
 
-sub get_fish_result_clone_ids {
-    my $self = shift;
-    my $query = "SELECT distinct(clone_id) FROM sgn.fish_result_image join sgn.fish_result using(fish_result_id)  WHERE fish_result_image.image_id=?";
-    my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($self->get_image_id());
-    my @fish_result_clone_ids = ();
-    while (my ($fish_result_clone_id) = $sth->fetchrow_array()) {
-	push @fish_result_clone_ids, $fish_result_clone_id;
+sub iconify_file {
+    my $file_name = shift;
+
+    my $basename = File::Basename::basename($file_name);
+
+    my $self = SGN::Context->new()
+      ;    # merely used to retrieve correct temp dir on this host
+    my $temp_dir =
+        $self->get_conf("basepath") . "/"
+      . $self->get_conf("tempfiles_subdir")
+      . "/temp_images";
+
+    my @image_pages = `/usr/bin/identify $file_name`;
+
+    my $mogrified_image;
+    my $newname;
+    if ( $basename =~ /(.*)\.(.{1,4})$/ )
+    {      #note; mogrify will create files name
+            # basename-0.jpg, basename-1.jpg
+        if ( $#image_pages > 0 ) {    # multipage, pdf, ps or eps
+            $mogrified_image = $temp_dir . "/temp-0.jpg";
+        }
+        else {
+            $mogrified_image = $temp_dir . "/temp.jpg";
+        }
+        my $tempname = $temp_dir . "/temp." . $2;    # retrieve file extension
+        $newname = $basename . ".jpg";               #
+        my $new_dest = $temp_dir . "/" . $newname;
+
+        # use temp name for mogrify/ghostscript
+        File::Copy::copy( $file_name, $tempname )
+          || die "Can't copy file $basename to $tempname";
+
+        if ( (`mogrify -format jpg '$tempname'`) ) {
+            die "Sorry, can't convert image $basename";
+        }
+
+        File::Copy::copy( $mogrified_image, $new_dest )
+          || die "Can't copy file $mogrified_image to $newname";
+
     }
-    return @fish_result_clone_ids;
+    return;
 }
+
 
 =head2 add_tag
 
@@ -610,82 +1102,6 @@ sub exists_tag_image_named {
 }
 
 
-
-=head2 function get_associated_objects
-
-  Synopsis:
-  Arguments:
-  Returns:
-  Side effects:
-  Description:
-
-=cut
-
-sub get_associated_objects {
-    my $self = shift;
-    my @associations = ();
-    my @individuals=$self->get_individuals();
-    foreach my $ind (@individuals) {
-	print STDERR  "found individual '$ind' !!\n";
-	my $individual_id = $ind->get_individual_id();
-	my $individual_name = $ind->get_name();
-	push @associations, [ "individual", $individual_id, $individual_name ];
-
-#	print "<a href=\"/phenome/individual.pl?individual_id=$individual_id\">".($ind->get_name())."</a>";
-    }
-
-    foreach my $exp ($self->get_experiments()) {
-	my $experiment_id = $exp->get_experiment_id();
-	my $experiment_name = $exp->get_name();
-
-	push @associations, [ "experiment", $experiment_id, $experiment_name ];
-
-	#print "<a href=\"/insitu/detail/experiment.pl?experiment_id=$experiment_id&amp;action=view\">".($exp->get_name())."</a>";
-    }
-
-    foreach my $fish_result_clone_id ($self->get_fish_result_clone_ids()) {
-	push @associations, [ "fished_clone", $fish_result_clone_id ];
-    }
-    foreach my $locus ($self->get_loci() ) {
-	push @associations, ["locus", $locus->get_locus_id(), $locus->get_locus_name];
-    }
-    return @associations;
-}
-
-=head2 function get_associated_object_links
-
-  Synopsis:
-  Arguments:
-  Returns:	a string
-  Side effects:
-  Description:	gets the associated objects as links in tabular format
-
-=cut
-
-sub get_associated_object_links {
-    my $self = shift;
-    my $s = "";
-    foreach my $assoc ($self->get_associated_objects()) {
-
-	if ($assoc->[0] eq "individual") {
-	    $s .= "<a href=\"/phenome/individual.pl?individual_id=$assoc->[1]\">Individual name: $assoc->[2].</a>";
-	}
-
-	if ($assoc->[0] eq "experiment") {
-	    $s .= "<a href=\"/insitu/detail/experiment.pl?experiment_id=$assoc->[1]&amp;action=view\">insitu experiment $assoc->[2]</a>";
-	}
-
-        if ($assoc->[0] eq "fished_clone") {
-	    $s .= qq { <a href="/maps/physical/clone_info.pl?id=$assoc->[1]">FISHed clone id:$assoc->[1]</a> };
-
-	}
-      if ($assoc->[0] eq "locus" ) {
-	  $s .= qq { <a href="/phenome/locus_display.pl?locus_id=$assoc->[1]">Locus name:$assoc->[2]</a> };
-      }
-
-    }
-    return $s;
-}
 
 
 =head2 create_schema
