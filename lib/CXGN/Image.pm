@@ -430,12 +430,13 @@ sub process_image {
 
     # copy unmodified image to be fullsize image
     #
-    my $basename = File::Basename::basename($file_name);
-
+    my ($basename, $directories, $file_ext) = File::Basename::fileparse($file_name, qr/\..+/);
+    #print STDERR "BASENAME $basename, DIR $directories, EXT: $file_ext\n";
     # deanx - preserver original filename
     my $original_filename = $basename;
+    my $original_file_ext = $file_ext;
 
-    my $dest_name = $self->get_processing_dir() . "/" . $basename;
+    my $dest_name = $self->get_processing_dir() . "/" . $basename.$file_ext;
     #print STDERR "Copying $file_name to $dest_name...\n";
 
     #    eval {
@@ -464,12 +465,13 @@ sub process_image {
 #   is envoked ... change filename to something beign like temp.<ext>
 
         my $newname;
-        if ( $basename =~ /(.*)\.(.{1,4})$/ )
-        {                         #note; mogrify will create files name
-                                  # basename-0.jpg, basename-1.jpg
+        #if ( $basename =~ /(.*)\.(.{1,4})$/ )
+	if ($file_ext) {
+            #note; mogrify will create files name
+            # basename-0.jpg, basename-1.jpg
             my $mogrified_first_image = $processing_dir . "/temp-0.jpg";
             my $tempname =
-              $processing_dir . "/temp." . $2;    # retrieve file extension
+              $processing_dir . "/temp" . $file_ext;    # retrieve file extension
             $newname = $basename . ".jpg";    #
             my $new_dest = $processing_dir . "/" . $newname;
 
@@ -499,24 +501,31 @@ sub process_image {
 
         #	eval {
         my $newname = "";
+
         if ( !(`mogrify -format jpg '$dest_name'`) ) {
-            if ( $basename !~ /(.*)\.(jpeg|jpg)$/i ) {    # has no jpg extension
-                $newname = $1 . ".JPG";    # convert it to extention .JPG
+            #if ( $basename !~ /(.*)\.(jpeg|jpg)$/i ) {    # has no jpg extension
+	    if ($file_ext !~ /jpg|jpeg/i) { 
+                $newname = $original_filename . ".JPG";    # convert it to extention .JPG
+		#print STDERR "NEWNAME = $newname\n\n";
             }
-            elsif ( $basename !~ /(.*)\.(.{1,4})$/ ) { # has no extension at all
-                $newname = $basename . ".JPG";         # add an extension .JPG
+            #elsif ( $basename !~ /(.*)\.(.{1,4})$/ ) { # has no extension at all
+	    elsif (!$file_ext) { 
+                $newname = $original_filename . ".JPG";         # add an extension .JPG
             }
             else {
-                $newname = $basename;    # apparently, it has a JPG extension
+                $newname = $original_filename.".JPG"; # add standard JPG file extension.   
             }
+	    
+	    #print STDERR "converting $processing_dir/$basename to $processing_dir/$newname...\n";
             if (
+
                 system(
-                    "/usr/bin/convert", "$processing_dir/$basename",
+                    "/usr/bin/convert", "$processing_dir/$basename$file_ext",
                     "$processing_dir/$newname"
                 ) != 0
               )
             {
-                die "Sorry, can't convert image $basename to $newname";
+                die "Sorry, can't convert image $basename$file_ext to $newname";
             }
 
             #print STDERR "Successfully converted $basename to $newname\n";
@@ -580,7 +589,7 @@ sub process_image {
     }
 
     $self->set_original_filename($original_filename);
-    $self->set_file_ext($ext);
+    $self->set_file_ext($file_ext); # this is the original file
 
     # start transaction, store the image object, and associate it to
     # the given type and type_id.
@@ -662,6 +671,8 @@ sub finalize_location {
 	
     }
 
+    rmdir $processing_dir;
+
 }
 
 # used for migration
@@ -672,7 +683,10 @@ sub copy_location {
 
     my $image_dir = $self->get_image_dir() ."/".$self->image_subpath();
     foreach my $f (glob($source_dir."/*")) { 
-	
+	if (! -e $f) { 
+	    print STDERR "$f does not exist... moving on...\n";
+	    return; 
+	}
 	File::Copy::copy( "$f", "$image_dir/" )
 	    || die "Couldn't move temp dir to image dir ($f, $image_dir). $!";
 	#print STDERR "Moved image file $f to final location $image_dir...\n";
@@ -868,6 +882,9 @@ sub get_filename {
     if ($size eq "original") { 
 	return File::Spec->catfile($image_dir, $self->get_original_filename().$self->get_file_ext());
     }
+    if ($size eq "original_converted") { 
+	return File::Spec->catfile($image_dir, $self->get_original_filename().".JPG");
+    }
     return File::Spec->catfile($image_dir, 'medium.jpg');
 }
 
@@ -994,6 +1011,67 @@ sub iconify_file {
     }
     return;
 }
+
+
+=head2 hard_delete
+
+ Usage:        $image->hard_delete()
+ Desc:         "hard" deletes the image. 
+               NEVER USE THIS FUNCTION!
+ Ret:          nothing
+ Args:         none
+ Side Effects: completely removes all the traces of this image.
+ Example:      to be used in testing scripts only. Deletion should be
+               implemented using the 'obsolete' flag.
+
+=cut
+
+sub hard_delete {
+    my $self = shift;
+
+    if ($self->pointer_count() < 2) { 
+	foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') { 
+	    my $filename = $self->get_filename('$size');
+	    print STDERR "Hard deleting image $filename\n";
+	    unlink $filename;
+	}
+    }
+
+    eval { 
+	my $image_id = $self->get_image_id();
+	my $sql = "DELETE FROM metadata.md_image WHERE image_id=?";
+	my $sth = $self->get_dbh()->prepare($sql);
+	$sth->execute($image_id);
+    };
+    if ($@) { 
+	warn "Probably insufficient privileges to remove images from db table.";
+    }
+    
+    
+}
+
+=head2 pointer_count
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub pointer_count {
+    my $self = shift;
+
+    my $sql = "SELECT count(distinct(image_id)) from metadata.md_image WHERE md5sum=?";
+    my $sth = $self->get_dbh()->prepare($sql);
+    $sth->execute($self->get_md5sum());
+    my ($count) = $sth->fetchrow_array();
+    return $count;
+}
+
+
 
 
 =head2 add_tag
@@ -1127,10 +1205,11 @@ sub create_schema {
 						    sp_person_id bigint REFERENCES sgn_people.sp_person,
 						    modified_date timestamp with time zone,
 						    create_date timestamp with time zone,
+                                                    md5sum text,
 						    obsolete boolean default false
 						    )");
 
-	$self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON metadata.md_image TO web_usr");
+	$self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT, DELETE ON metadata.md_image TO web_usr");
 	$self->get_dbh()->do("GRANT select, update ON metadata.md_image_image_id_seq TO web_usr");
 
 	$self->get_dbh()->do(
@@ -1197,66 +1276,6 @@ sub create_schema {
     }
     print STDERR "Schemas created.\n";
 }
-
-### deanx additions - Nov 13, 2007
-
-=head2 associate_locus
-
- Usage:        $image->associate_locus($locus_id)
- Desc:         associate a locus with this image
- Ret:          database_id
- Args:         locus_id
- Side Effects:
- Example:
-
-=cut
-
-sub associate_locus {
-    my $self = shift;
-    my $locus_id = shift;
-    my $sp_person_id= $self->get_sp_person_id();
-    my $query = "INSERT INTO phenome.locus_image
-                   (locus_id,
-		   sp_person_id,
-		   image_id)
-		 VALUES (?, ?, ?)";
-    my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute(
-    		$locus_id,
-    		$sp_person_id,
-    		$self->get_image_id()
-		);
-
-    my $locus_image_id= $self->get_currval("phenome.locus_image_locus_image_id_seq");
-    return $locus_image_id;
-}
-
-
-=head2 get_loci
-
- Usage:   $self->get_loci
- Desc:    find the locus objects asociated with this image
- Ret:     a list of locus objects
- Args:    none
- Side Effects: none
- Example:
-
-=cut
-
-sub get_loci {
-    my $self = shift;
-    my $query = "SELECT locus_id FROM phenome.locus_image WHERE locus_image.obsolete = 'f' and locus_image.image_id=?";
-    my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($self->get_image_id());
-    my $locus;
-    my @loci = ();
-    while (my ($locus_id) = $sth->fetchrow_array()) {
-       $locus = CXGN::Phenome::Locus->new($self->get_dbh(), $locus_id);
-        push @loci, $locus;
-    }
-    return @loci;
-}
-
 
 ###########
 1;#########
