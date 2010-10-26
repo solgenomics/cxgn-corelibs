@@ -2351,8 +2351,8 @@ sub find_mindl_node{
 	my $species_newick_string = $species_t->generate_newick();
 	$species_newick_string =~ s/\s//g; 
 
-#	my $rerooted_newick = `/data/local/cxgn/core/sgn-tools/family/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
-	my $rerooted_newick = `/data/local/cxgn/core/perllib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+#	my $rerooted_newick = `/data/local/cxgn/core/perllib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 #	my $rerooted_newick = `urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 
 	#	print STDERR "gene_newick_string: \n $gene_newick_string   \n\nspecies_newick_string: \n $species_newick_string.\n\n";
