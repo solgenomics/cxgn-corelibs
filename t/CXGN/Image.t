@@ -16,7 +16,7 @@ my @image_ids = (); #keep track of image ids created to remove them later
 
 
 
-foreach my $image_file ('CXGN/data/tv_test_1.png', 'CXGN/data/tv_test_1.JPG', 'CXGN/data/test.pdf') { 
+foreach my $image_file ('t/CXGN/data/tv_test_1.png', 't/CXGN/data/tv_test_1.JPG', 't/CXGN/data/test.pdf') { 
     my ($filename, $dir, $ext) = File::Basename::fileparse($image_file, qr/\..*/);
     my $image = CXGN::Image->new(dbh=>$dbh, image_id=>undef, image_dir=>$image_dir);
     
