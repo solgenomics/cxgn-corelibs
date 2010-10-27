@@ -1125,87 +1125,76 @@ sub exists_tag_image_named {
 sub create_schema {
     my $self = shift;
 
-    eval {
+    $self->get_dbh()->do(
+                     "CREATE table metadata.md_image (
+                                                image_id serial primary key,
+                                                name varchar(100),
+                                                description text,
+                                                original_filename varchar(100),
+                                                file_ext varchar(20),
+                                                sp_person_id bigint REFERENCES sgn_people.sp_person,
+                                                modified_date timestamp with time zone,
+                                                create_date timestamp with time zone,
+                                                md5sum text,
+                                                obsolete boolean default false
+                                                )");
 
-        $self->get_dbh()->do(
-                         "CREATE table metadata.md_image (
-                                                    image_id serial primary key,
-                                                    name varchar(100),
-                                                    description text,
-                                                    original_filename varchar(100),
-                                                    file_ext varchar(20),
-                                                    sp_person_id bigint REFERENCES sgn_people.sp_person,
-                                                    modified_date timestamp with time zone,
-                                                    create_date timestamp with time zone,
-                                                    md5sum text,
-                                                    obsolete boolean default false
-                                                    )");
+    $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT, DELETE ON metadata.md_image TO web_usr");
+    $self->get_dbh()->do("GRANT select, update ON metadata.md_image_image_id_seq TO web_usr");
 
-        $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT, DELETE ON metadata.md_image TO web_usr");
-        $self->get_dbh()->do("GRANT select, update ON metadata.md_image_image_id_seq TO web_usr");
+    $self->get_dbh()->do(
+                     "CREATE table phenome.individual_image (
+                                                individual_image_id serial primary key,
+                                                image_id bigint references metadata.md_image,
+                                                individual_id bigint references phenome.individual,
+                                                obsolete boolean DEFAULT 'false',
+                                                sp_person_id integer REFERENCES sgn_people.sp_person(sp_person_id),
+                                                create_date timestamp with time zone DEFAULT now(),
+                                                modified_date timestamp with time zone
+                   )");
 
-        $self->get_dbh()->do(
-                         "CREATE table phenome.individual_image (
-                                                    individual_image_id serial primary key,
-                                                    image_id bigint references metadata.md_image,
-                                                    individual_id bigint references phenome.individual,
-                                                    obsolete boolean DEFAULT 'false',
-                                                    sp_person_id integer REFERENCES sgn_people.sp_person(sp_person_id),
-                                                    create_date timestamp with time zone DEFAULT now(),
-                                                    modified_date timestamp with time zone
-                       )");
+    $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON phenome.individual_image TO web_usr");
+    $self->get_dbh()->do("GRANT select, update ON phenome.individual_image_individual_image_id_seq TO web_usr");
 
-        $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON phenome.individual_image TO web_usr");
-        $self->get_dbh()->do("GRANT select, update ON phenome.individual_image_individual_image_id_seq TO web_usr");
+    $self->get_dbh()->do(
+        "CREATE table phenome.locus_image (
+                                                locus_image_id serial primary key,
+                                                image_id bigint references metadata.md_image,
+                                                locus_id bigint references phenome.locus,
+                                                obsolete boolean DEFAULT 'false',
+                                                sp_person_id integer REFERENCES sgn_people.sp_person(sp_person_id),
+                                                create_date timestamp with time zone DEFAULT now(),
+                                                modified_date timestamp with time zone
+                   )");
 
-        $self->get_dbh()->do(
-            "CREATE table phenome.locus_image (
-                                                    locus_image_id serial primary key,
-                                                    image_id bigint references metadata.md_image,
-                                                    locus_id bigint references phenome.locus,
-                                                    obsolete boolean DEFAULT 'false',
-                                                    sp_person_id integer REFERENCES sgn_people.sp_person(sp_person_id),
-                                                    create_date timestamp with time zone DEFAULT now(),
-                                                    modified_date timestamp with time zone
-                       )");
-
-        $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON phenome.locus_image TO web_usr");
-        $self->get_dbh()->do("GRANT select, update ON phenome.locus_image_locus_image_id_seq TO web_usr");
+    $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON phenome.locus_image TO web_usr");
+    $self->get_dbh()->do("GRANT select, update ON phenome.locus_image_locus_image_id_seq TO web_usr");
 
 
-        $self->get_dbh()->do(
-                         "CREATE table insitu.experiment_image (
-                                                     experiment_image_id serial primary key,
-                                                     image_id bigint references metadata.md_image,
-                                                     experiment_id bigint references insitu.experiment,
-                                                      obsolete boolean DEFAULT 'false',
-                                                    sp_person_id integer REFERENCES sgn_people.sp_person(sp_person_id),
-                                                    create_date timestamp with time zone DEFAULT now(),
-                                                    modified_date timestamp with time zone
-                      )");
+    $self->get_dbh()->do(
+                     "CREATE table insitu.experiment_image (
+                                                 experiment_image_id serial primary key,
+                                                 image_id bigint references metadata.md_image,
+                                                 experiment_id bigint references insitu.experiment,
+                                                  obsolete boolean DEFAULT 'false',
+                                                sp_person_id integer REFERENCES sgn_people.sp_person(sp_person_id),
+                                                create_date timestamp with time zone DEFAULT now(),
+                                                modified_date timestamp with time zone
+                  )");
 
-        $self->get_dbh()->do ("GRANT SELECT, UPDATE, INSERT ON insitu.experiment_image TO web_usr");
-        $self->get_dbh()->do ("GRANT select, update ON insitu.experiment_image_experiment_image_id_seq TO web_usr");
+    $self->get_dbh()->do ("GRANT SELECT, UPDATE, INSERT ON insitu.experiment_image TO web_usr");
+    $self->get_dbh()->do ("GRANT select, update ON insitu.experiment_image_experiment_image_id_seq TO web_usr");
 
-        $self->get_dbh()->do ("CREATE table sgn.fish_result_image (
-                                                      fish_result_image_id serial primary key,
-                                                      image_id bigint references metadata.md_image,
-                                                      fish_result_id bigint references sgn.fish_result
-                        )");
-        $self->get_dbh()->do ("GRANT SELECT ON sgn.fish_result_image TO web_usr");
-        $self->get_dbh()->do ("GRANT select ON sgn.fish_result_image_fish_result_image_id_seq TO web_usr");
-        # we don't grant access to webusr for image_fish_result because as of now users cannot submit
-        # these image directly themselves.
+    $self->get_dbh()->do ("CREATE table sgn.fish_result_image (
+                                                  fish_result_image_id serial primary key,
+                                                  image_id bigint references metadata.md_image,
+                                                  fish_result_id bigint references sgn.fish_result
+                    )");
+    $self->get_dbh()->do ("GRANT SELECT ON sgn.fish_result_image TO web_usr");
+    $self->get_dbh()->do ("GRANT select ON sgn.fish_result_image_fish_result_image_id_seq TO web_usr");
+    # we don't grant access to webusr for image_fish_result because as of now users cannot submit
+    # these image directly themselves.
 
-    };
-    if ($@) {
-	$self->get_dbh()->rollback();
-	die "An error occurred while instantiating the schemas. The commands have been rolled back.\n";
-
-    }
-    else {
-	$self->get_dbh()->commit();
-    }
     print STDERR "Schemas created.\n";
 }
 
