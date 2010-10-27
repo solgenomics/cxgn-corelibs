@@ -82,12 +82,12 @@ sub new {
 
     if (exists($args{image_id})) {
 	$self->set_image_id($args{image_id});
-	$self->fetch_image();
+	$self->_fetch_image();
     }
     return $self;
 }
 
-sub fetch_image {
+sub _fetch_image {
     my $self = shift;
     my $query = "SELECT image_id,
                         name,
