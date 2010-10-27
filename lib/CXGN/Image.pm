@@ -39,7 +39,6 @@ use File::Path 'make_path';
 use File::Spec;
 use File::Temp 'tempdir';
 use File::Copy qw| copy move |;
-use CXGN::DB::Connection;
 use CXGN::Tag;
 
 use base qw | CXGN::DB::ModifiableI |;
