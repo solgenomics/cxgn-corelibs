@@ -2,18 +2,19 @@ use strict;
 use warnings;
 
 use File::Basename;
+use File::Temp;
+
 use Test::More tests=> 3 * 11;
+
 use CXGN::Image;
 use CXGN::DB::Connection;
 
 my $dbh = CXGN::DB::Connection->new();
 
-my $image_dir = '/tmp/test_images';
-mkdir ($image_dir);
+my $image_dir = File::Temp->newdir;
 
-my @image_ids = (); #keep track of image ids created to remove them later
-
-
+# keep track of image ids created to remove them later
+my @image_ids;
 
 foreach my $image_file ('t/CXGN/data/tv_test_1.png', 't/CXGN/data/tv_test_1.JPG', 't/CXGN/data/test.pdf') {
     my ($filename, $dir, $ext) = File::Basename::fileparse($image_file, qr/\..*/);
