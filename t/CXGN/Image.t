@@ -9,7 +9,7 @@ use Test::More tests=> 3 * 11;
 use CXGN::Image;
 use CXGN::DB::Connection;
 
-my $dbh = CXGN::DB::Connection->new();
+my $dbh = CXGN::DB::Connection->new; #< note that this connection has autocommit off
 
 my $image_dir = File::Temp->newdir;
 
@@ -51,11 +51,11 @@ foreach my $image_file ('t/CXGN/data/tv_test_1.png', 't/CXGN/data/tv_test_1.JPG'
 
 
 }
-$dbh->commit();
 
 foreach my $id (@image_ids) {
     my $image = CXGN::Image->new(dbh=>$dbh, image_id=>$id, image_dir=>$image_dir);
     $image->hard_delete(); ### only works with postgres user right now.
 }
 
+$dbh->commit();
 $dbh->disconnect();
