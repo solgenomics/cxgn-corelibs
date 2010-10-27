@@ -963,7 +963,7 @@ sub hard_delete {
 
     if ($self->pointer_count() < 2) {
 	foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') {
-	    my $filename = $self->get_filename('$size');
+	    my $filename = $self->get_filename($size);
 	    print STDERR "Hard deleting image $filename\n";
 	    unlink $filename;
 	}
