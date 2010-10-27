@@ -74,13 +74,13 @@ sub new {
 
     my $self = $class->SUPER::new($args{dbh}, $args{image_id});
 
-    if (!exists($args{dbh}) || !exists($args{image_dir})) {
+    unless( exists $args{dbh} && exists $args{image_dir} ) {
 	die "Required arguments: dbh, image_dir";
     }
     $self->set_image_dir($args{image_dir});
     $self->set_dbh($args{dbh});
 
-    if (exists($args{image_id})) {
+    if( exists $args{image_id} ) {
 	$self->set_image_id($args{image_id});
 	$self->_fetch_image();
     }
