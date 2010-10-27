@@ -20,14 +20,10 @@ foreach my $image_file ('t/CXGN/data/tv_test_1.png', 't/CXGN/data/tv_test_1.JPG'
     my ($filename, $dir, $ext) = File::Basename::fileparse($image_file, qr/\..*/);
     my $image = CXGN::Image->new(dbh=>$dbh, image_id=>undef, image_dir=>$image_dir);
 
-    #diag("processing image");
     $image->process_image($image_file);
-
-    #diag("calculating md5sum");
 
     my $md5sum = $image->get_md5sum();
 
-    #diag("checking files");
     my $image_full_dir = $image->get_image_dir()."/".$image->image_subpath();
     ok(-e $image_full_dir, "image path test");
     ok(-e $image->get_filename('thumbnail'), "thumbnail test");
@@ -48,12 +44,10 @@ foreach my $image_file ('t/CXGN/data/tv_test_1.png', 't/CXGN/data/tv_test_1.JPG'
     is($image->get_name(), "foo", "image name test");
 
     push @image_ids, $image->get_image_id();
-
-
 }
 
 foreach my $id (@image_ids) {
-    my $image = CXGN::Image->new(dbh=>$dbh, image_id=>$id, image_dir=>$image_dir);
+    my $image = CXGN::Image->new( dbh => $dbh, image_id => $id, image_dir => $image_dir );
     $image->hard_delete(); ### only works with postgres user right now.
 }
 
