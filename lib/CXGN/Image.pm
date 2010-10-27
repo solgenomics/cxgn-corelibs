@@ -671,9 +671,7 @@ sub image_subpath {
     my $md5sum = $self->get_md5sum
         or die 'cannot calculate image_subpath, no md5sum!';
 
-    my @image_path = $md5sum =~ /^(..)(..)(..)(..)(.+)$/;
-
-    return File::Spec->catdir( @image_path );
+    return join '/', $md5sum =~ /^(..)(..)(..)(..)(.+)$/;
 }
 
 =head2 calculate_md5sum

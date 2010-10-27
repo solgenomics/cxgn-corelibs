@@ -33,7 +33,10 @@ foreach my $image_file ('t/CXGN/data/tv_test_1.png', 't/CXGN/data/tv_test_1.JPG'
 
     is(length($md5sum), 32, "md5sum length check");
 
-    is(scalar( my @foo = split '/', $image->image_subpath()), 16, "image path length check");
+    like( $image->image_subpath,
+          qr! ( [0-9A-Fa-f]{2} / ){4}  [0-9A-Fa-f]{16} !x,
+          'image subpath looks right',
+         );
 
     $image->set_description("Blablabla");
     is($image->get_description(), "Blablabla", "description test");
