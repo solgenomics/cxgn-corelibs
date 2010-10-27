@@ -1341,17 +1341,26 @@ sub get_experiment_graph {
    ## * 'x_axis_label', a scalar, the title for the x axis ('Experiment' by default)
    ## * 'y_axis_label', a scalar, the title for the y axis ('Expression_Units_(Fluorescence_Intensity)')
 
-   my $x_axis_sort = $args_href->{'x_axis_sort'};
+   my $x_axis_sort    = $args_href->{'x_axis_sort'};
    my $bar_color_href = $args_href->{'bar_color'}
-      || {red => 35 / 255, green => 35 / 255, blue => 142 / 255, alpha => 1};
+       || {
+           red   =>  75 / 255,
+           green =>  70 / 255,
+           blue  => 179 / 255,
+           alpha => 1,
+          };
    my $errorbar_color_href = $args_href->{'errorbar_color'}
-      || {red => 0 / 255, green => 0 / 255, blue => 0 / 255, alpha => 1};
-   my $title = $args_href->{'title'};  ## The default value will be applied after get the data if it is undef
-   my $x_axis_label = $args_href->{'x_axis_label'}
-      || 'Experiment';
-   my $y_axis_label = $args_href->{'y_axis_label'}
-      || 'Expression_Units_(Fluorescence_Intensity)';
-
+      || {
+          red   => 0 / 255,
+          green => 0 / 255,
+          blue  => 0 / 255,
+          alpha => 1,
+         };
+   my $title = $args_href->{'title'};
+   my $x_axis_label =
+       $args_href->{'x_axis_label'} || 'Experiment';
+   my $y_axis_label =
+       $args_href->{'y_axis_label'} || 'Expression_(Fluor._Intensity)';
 
    ## First, get the arrays with the data
 
@@ -1364,11 +1373,7 @@ sub get_experiment_graph {
 	$y_low_errorvals_aref,
       ) = $self->expression_input_graph({ sort => $x_axis_sort});
 
-   ## Replace title if it is undef
-
-   unless (defined $title) {
-       $title = $expdesign_name;
-   }
+   $title = $expdesign_name unless defined $title;
 
    ## Second, cut the prefix in the experiment_names (shorter = most easy to show)
 
@@ -1400,11 +1405,12 @@ sub get_experiment_graph {
 
    ## 1) Create the basic chart object
 
-   my $chart = Chart::Clicker->new(width => 600, height => 600);
+   my $chart = Chart::Clicker->new(width => 680, height => 420);
 
    $chart->title->text($title);
    $chart->title->font->size(15);
-   $chart->title->padding->bottom(5);
+   $chart->title->padding->bottom(10);
+   $chart->title->padding->top(10);
 
    $chart->legend->visible(0);  ## Switch off the legend.
 
@@ -1486,8 +1492,7 @@ sub get_experiment_graph {
 
    ## 7) Create the base chart with the ranged defined before and some titles
 
-   my $bar = Chart::Clicker::Renderer::Bar->new(opacity => .6, bar_padding => 8, bar_width => 15);
-   $bar->brush->width(2);
+   my $bar = Chart::Clicker::Renderer::Bar->new( bar_padding => 8 );
    $def->renderer($bar);
    $def->range_axis->range($range_v);
    $def->range_axis->label($y_axis_label);
@@ -1497,17 +1502,17 @@ sub get_experiment_graph {
    $def->domain_axis->tick_values($x_values_aref);
    $def->domain_axis->format('%d');
    $def->domain_axis->tick_labels($x_tags_aref);
-   $def->domain_axis->tick_font->size(10);
+   $def->domain_axis->tick_font->size(9);
    $def->domain_axis->tick_label_angle(1.57);
 
    ## 8) Add the CandleStick Rendered to the error contexts
 
-   my $barerror_up = Chart::Clicker::Renderer::CandleStick->new(opacity => .6);
-   $barerror_up->brush->width(2);
+   my $barerror_up = Chart::Clicker::Renderer::CandleStick->new();
+   $barerror_up->brush->width(1);
    $error_up_context->renderer($barerror_up);
 
-   my $barerror_down = Chart::Clicker::Renderer::CandleStick->new(opacity => .6);
-   $barerror_down->brush->width(2);
+   my $barerror_down = Chart::Clicker::Renderer::CandleStick->new();
+   $barerror_down->brush->width(1);
    $error_down_context->renderer($barerror_down);
 
    return $chart;
