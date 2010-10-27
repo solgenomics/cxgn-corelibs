@@ -74,7 +74,7 @@ sub new {
 
     my $self = $class->SUPER::new($args{dbh}, $args{image_id});
 
-    if (!exists($args{dbh}) || !exists($args{image_dir})) { 
+    if (!exists($args{dbh}) || !exists($args{image_dir})) {
 	die "Required arguments: dbh, image_dir";
     }
     $self->set_image_dir($args{image_dir});
@@ -167,7 +167,7 @@ sub store {
 	    $self->get_sp_person_id(),
 	    $self->get_md5sum(),
 	    $self->get_image_id(),
-	
+
 	    );
 	return $self->get_image_id();
     }
@@ -352,11 +352,11 @@ sub set_file_ext {
 =head2 accessors get_image_dir(), set_image_dir()
 
  Usage:        returns the image dir
- Desc:         
+ Desc:
  Ret:
- Args:         
- Side Effects: 
- Example:     
+ Args:
+ Side Effects:
+ Example:
 
 =cut
 
@@ -365,7 +365,7 @@ sub get_image_dir {
     return $self->{image_dir};
 }
 
-sub set_image_dir { 
+sub set_image_dir {
     my $self = shift;
     $self->{image_dir} = shift;
 }
@@ -397,7 +397,7 @@ sub set_image_dir {
  Side Effects: generates a new subdirectory in the image_dir for the image files,
                copies the image file to a temp dir directory where it is processed
                (resized thumnbnails and other views for the image). After that
-               is done, the image object is stored in the database, and the 
+               is done, the image object is stored in the database, and the
                image files are moved to the final location in the filesystem.
  Example:
 
@@ -503,18 +503,18 @@ sub process_image {
 
         if ( !(`mogrify -format jpg '$dest_name'`) ) {
             #if ( $basename !~ /(.*)\.(jpeg|jpg)$/i ) {    # has no jpg extension
-	    if ($file_ext !~ /jpg|jpeg/i) { 
+	    if ($file_ext !~ /jpg|jpeg/i) {
                 $newname = $original_filename . ".JPG";    # convert it to extention .JPG
 		#print STDERR "NEWNAME = $newname\n\n";
             }
             #elsif ( $basename !~ /(.*)\.(.{1,4})$/ ) { # has no extension at all
-	    elsif (!$file_ext) { 
+	    elsif (!$file_ext) {
                 $newname = $original_filename . ".JPG";         # add an extension .JPG
             }
             else {
-                $newname = $original_filename.".JPG"; # add standard JPG file extension.   
+                $newname = $original_filename.".JPG"; # add standard JPG file extension.
             }
-	    
+
 	    #print STDERR "converting $processing_dir/$basename to $processing_dir/$newname...\n";
             if (
 
@@ -605,7 +605,7 @@ sub process_image {
 #    print STDERR "calcualting md5sum\n";
     my $md5sum = $self->calculate_md5sum($original_file_path);
 
-    
+
     $self->set_md5sum($md5sum);
 
 #    print STDERR "creating dirs...\n";
@@ -620,13 +620,13 @@ sub process_image {
     $self->store();
 
     return $image_id;
-    
+
 }
 
 =head2 make_dirs
 
  Usage:
- Desc:         creates the directory structure for image from 
+ Desc:         creates the directory structure for image from
                image_dir onwards (a split md5sum)
  Ret:
  Args:
@@ -635,12 +635,12 @@ sub process_image {
 
 =cut
 
-sub make_dirs { 
+sub make_dirs {
     my $self = shift;
     my $image_sub_path = $self->image_subpath();
-    
+
     my $path = join "/", ($self->get_image_dir(), $image_sub_path);
-    if (my $dirs = make_path($path) ) { 
+    if (my $dirs = make_path($path) ) {
 	#print STDERR  "Created $dirs Dirs (should be 4)\n";
     }
 }
@@ -662,12 +662,12 @@ sub finalize_location {
     my $processing_dir = shift;
 
     my $image_dir = $self->get_image_dir() ."/".$self->image_subpath();
-    foreach my $f (glob($processing_dir."/*")) { 
-	
+    foreach my $f (glob($processing_dir."/*")) {
+
 	File::Copy::move( $f, $image_dir )
 	    || die "Couldn't move temp dir to image dir ($f, $image_dir)";
 	#print STDERR "Moved image file $f to final location $image_dir...\n";
-	
+
     }
 
     rmdir $processing_dir;
@@ -681,15 +681,15 @@ sub copy_location {
     my $source_dir = shift;
 
     my $image_dir = $self->get_image_dir() ."/".$self->image_subpath();
-    foreach my $f (glob($source_dir."/*")) { 
-	if (! -e $f) { 
+    foreach my $f (glob($source_dir."/*")) {
+	if (! -e $f) {
 	    print STDERR "$f does not exist... moving on...\n";
-	    return; 
+	    return;
 	}
 	File::Copy::copy( "$f", "$image_dir/" )
 	    || die "Couldn't move temp dir to image dir ($f, $image_dir). $!";
 	#print STDERR "Moved image file $f to final location $image_dir...\n";
-	
+
     }
 
 }
@@ -707,12 +707,12 @@ sub copy_location {
 
 
 
-# sub import { 
+# sub import {
 #     my $self =shift;
 #     my $image = shift;
 
-#     foreach my $s (qw | thumbnail small medium large original |) { 
-	
+#     foreach my $s (qw | thumbnail small medium large original |) {
+
 # 	File::Copy::copy( $image->get_filename() );
 #     }
 
@@ -720,7 +720,7 @@ sub copy_location {
 
 =head2 image_subpath
 
- Usage:         
+ Usage:
  Desc:          returns the image subpath, which is a md5sum on an image file,
                 divided into 16 directory levels at 2 bytes length each.
  Ret:
@@ -730,7 +730,7 @@ sub copy_location {
 
 =cut
 
-sub image_subpath { 
+sub image_subpath {
     my $self = shift;
 
     my $md5sum = $self->get_md5sum();
@@ -738,10 +738,10 @@ sub image_subpath {
     my @image_path = ();
 
     my @md5sum = split //, $md5sum;
-    for (my $i = 0; $i<32; $i+=2) { 
+    for (my $i = 0; $i<32; $i+=2) {
 	push @image_path, $md5sum[$i].$md5sum[$i+1];
     }
-	
+
 
 
     return join "/", @image_path;
@@ -758,7 +758,7 @@ sub image_subpath {
 
 =cut
 
-sub calculate_md5sum { 
+sub calculate_md5sum {
     my $self = shift;
     my $file = shift;
 
@@ -861,27 +861,27 @@ sub get_filename {
     my $self = shift;
     my $size = shift;
     my $type = shift; # full or partial
-    
+
     my $image_dir = "";
-    if ($type eq 'partial') { 
+    if ($type eq 'partial') {
 	$image_dir = $self->image_subpath();
     }
-    else { 
+    else {
 	$image_dir = $self->get_image_dir()."/".$self->image_subpath();
     }
-    if ($size eq "thumbnail") { 
+    if ($size eq "thumbnail") {
 	return File::Spec->catfile($image_dir, 'thumbnail.jpg');
     }
-    if ($size eq "small") { 
+    if ($size eq "small") {
 	return File::Spec->catfile($image_dir, 'small.jpg');
     }
-    if ($size eq "large") { 
+    if ($size eq "large") {
 	return File::Spec->catfile($image_dir, 'large.jpg');
     }
-    if ($size eq "original") { 
+    if ($size eq "original") {
 	return File::Spec->catfile($image_dir, $self->get_original_filename().$self->get_file_ext());
     }
-    if ($size eq "original_converted") { 
+    if ($size eq "original_converted") {
 	return File::Spec->catfile($image_dir, $self->get_original_filename().".JPG");
     }
     return File::Spec->catfile($image_dir, 'medium.jpg');
@@ -914,12 +914,12 @@ sub set_processing_dir {
 
 =head2 function get_copyright, set_copyright
 
-  Synopsis:	$copyright = $image->get_copyright(); 
+  Synopsis:	$copyright = $image->get_copyright();
                 $image->set_copyright("Copyright (c) 2001 by Picasso");
   Arguments:	getter: the copyright information string
   Returns:	setter: the copyright information string
   Side effects:	will be stored in the database in the copyright column.
-  Description:	
+  Description:
 
 =cut
 
@@ -945,7 +945,7 @@ sub set_copyright {
 
 sub get_md5sum {
   my $self = shift;
-  return $self->{md5sum}; 
+  return $self->{md5sum};
 }
 
 sub set_md5sum {
@@ -962,7 +962,7 @@ Desc:    This is used only for PDF, PS and EPS files during Upload processing to
 	 produce the thumbnail
 Ret:
 Args:    Full Filename of PDF file
-Side Effects:  
+Side Effects:
 Example:
 
 =cut
@@ -1015,7 +1015,7 @@ sub iconify_file {
 =head2 hard_delete
 
  Usage:        $image->hard_delete()
- Desc:         "hard" deletes the image. 
+ Desc:         "hard" deletes the image.
                NEVER USE THIS FUNCTION!
  Ret:          nothing
  Args:         none
@@ -1028,25 +1028,25 @@ sub iconify_file {
 sub hard_delete {
     my $self = shift;
 
-    if ($self->pointer_count() < 2) { 
-	foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') { 
+    if ($self->pointer_count() < 2) {
+	foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') {
 	    my $filename = $self->get_filename('$size');
 	    print STDERR "Hard deleting image $filename\n";
 	    unlink $filename;
 	}
     }
 
-    eval { 
+    eval {
 	my $image_id = $self->get_image_id();
 	my $sql = "DELETE FROM metadata.md_image WHERE image_id=?";
 	my $sth = $self->get_dbh()->prepare($sql);
 	$sth->execute($image_id);
     };
-    if ($@) { 
+    if ($@) {
 	warn "Probably insufficient privileges to remove images from db table.";
     }
-    
-    
+
+
 }
 
 =head2 pointer_count
@@ -1194,54 +1194,54 @@ sub create_schema {
 
     eval {
 
-	$self->get_dbh()->do(
-			 "CREATE table metadata.md_image (
-						    image_id serial primary key,
-						    name varchar(100),
-						    description text,
-						    original_filename varchar(100),
-						    file_ext varchar(20),
-						    sp_person_id bigint REFERENCES sgn_people.sp_person,
-						    modified_date timestamp with time zone,
-						    create_date timestamp with time zone,
+        $self->get_dbh()->do(
+                         "CREATE table metadata.md_image (
+                                                    image_id serial primary key,
+                                                    name varchar(100),
+                                                    description text,
+                                                    original_filename varchar(100),
+                                                    file_ext varchar(20),
+                                                    sp_person_id bigint REFERENCES sgn_people.sp_person,
+                                                    modified_date timestamp with time zone,
+                                                    create_date timestamp with time zone,
                                                     md5sum text,
-						    obsolete boolean default false
-						    )");
+                                                    obsolete boolean default false
+                                                    )");
 
-	$self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT, DELETE ON metadata.md_image TO web_usr");
-	$self->get_dbh()->do("GRANT select, update ON metadata.md_image_image_id_seq TO web_usr");
+        $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT, DELETE ON metadata.md_image TO web_usr");
+        $self->get_dbh()->do("GRANT select, update ON metadata.md_image_image_id_seq TO web_usr");
 
-	$self->get_dbh()->do(
+        $self->get_dbh()->do(
                          "CREATE table phenome.individual_image (
-				                    individual_image_id serial primary key,
-						    image_id bigint references metadata.md_image,
-						    individual_id bigint references phenome.individual,
+                                                    individual_image_id serial primary key,
+                                                    image_id bigint references metadata.md_image,
+                                                    individual_id bigint references phenome.individual,
                                                     obsolete boolean DEFAULT 'false',
                                                     sp_person_id integer REFERENCES sgn_people.sp_person(sp_person_id),
                                                     create_date timestamp with time zone DEFAULT now(),
                                                     modified_date timestamp with time zone
-	               )");
+                       )");
 
-	$self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON phenome.individual_image TO web_usr");
-	$self->get_dbh()->do("GRANT select, update ON phenome.individual_image_individual_image_id_seq TO web_usr");
+        $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON phenome.individual_image TO web_usr");
+        $self->get_dbh()->do("GRANT select, update ON phenome.individual_image_individual_image_id_seq TO web_usr");
 
-	$self->get_dbh()->do(
-	    "CREATE table phenome.locus_image (
-				                    locus_image_id serial primary key,
-						    image_id bigint references metadata.md_image,
-						    locus_id bigint references phenome.locus,
+        $self->get_dbh()->do(
+            "CREATE table phenome.locus_image (
+                                                    locus_image_id serial primary key,
+                                                    image_id bigint references metadata.md_image,
+                                                    locus_id bigint references phenome.locus,
                                                     obsolete boolean DEFAULT 'false',
                                                     sp_person_id integer REFERENCES sgn_people.sp_person(sp_person_id),
                                                     create_date timestamp with time zone DEFAULT now(),
                                                     modified_date timestamp with time zone
-	               )");
+                       )");
 
-	$self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON phenome.locus_image TO web_usr");
-	$self->get_dbh()->do("GRANT select, update ON phenome.locus_image_locus_image_id_seq TO web_usr");
+        $self->get_dbh()->do("GRANT SELECT, UPDATE, INSERT ON phenome.locus_image TO web_usr");
+        $self->get_dbh()->do("GRANT select, update ON phenome.locus_image_locus_image_id_seq TO web_usr");
 
 
-	$self->get_dbh()->do(
-			 "CREATE table insitu.experiment_image (
+        $self->get_dbh()->do(
+                         "CREATE table insitu.experiment_image (
                                                      experiment_image_id serial primary key,
                                                      image_id bigint references metadata.md_image,
                                                      experiment_id bigint references insitu.experiment,
@@ -1251,18 +1251,18 @@ sub create_schema {
                                                     modified_date timestamp with time zone
                       )");
 
-	$self->get_dbh()->do ("GRANT SELECT, UPDATE, INSERT ON insitu.experiment_image TO web_usr");
-	$self->get_dbh()->do ("GRANT select, update ON insitu.experiment_image_experiment_image_id_seq TO web_usr");
+        $self->get_dbh()->do ("GRANT SELECT, UPDATE, INSERT ON insitu.experiment_image TO web_usr");
+        $self->get_dbh()->do ("GRANT select, update ON insitu.experiment_image_experiment_image_id_seq TO web_usr");
 
-	$self->get_dbh()->do ("CREATE table sgn.fish_result_image (
+        $self->get_dbh()->do ("CREATE table sgn.fish_result_image (
                                                       fish_result_image_id serial primary key,
                                                       image_id bigint references metadata.md_image,
                                                       fish_result_id bigint references sgn.fish_result
                         )");
-	$self->get_dbh()->do ("GRANT SELECT ON sgn.fish_result_image TO web_usr");
-	$self->get_dbh()->do ("GRANT select ON sgn.fish_result_image_fish_result_image_id_seq TO web_usr");
-	# we don't grant access to webusr for image_fish_result because as of now users cannot submit
-	# these image directly themselves.
+        $self->get_dbh()->do ("GRANT SELECT ON sgn.fish_result_image TO web_usr");
+        $self->get_dbh()->do ("GRANT select ON sgn.fish_result_image_fish_result_image_id_seq TO web_usr");
+        # we don't grant access to webusr for image_fish_result because as of now users cannot submit
+        # these image directly themselves.
 
     };
     if ($@) {
