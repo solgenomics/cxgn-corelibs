@@ -673,7 +673,7 @@ sub image_subpath {
     my $self = shift;
 
     my $md5sum = $self->get_md5sum
-        or die 'cannot calculate image_subpath, no md5sum!';
+        or confess 'cannot calculate image_subpath, no md5sum!';
 
     return join '/', $md5sum =~ /^(..)(..)(..)(..)(.+)$/;
 }
