@@ -793,7 +793,7 @@ sub get_image_size {
 sub get_filename {
     my $self = shift;
     my $size = shift;
-    my $type = shift; # full or partial
+    my $type = shift || ''; # full or partial
 
     my $image_dir = "";
     if ($type eq 'partial') {
