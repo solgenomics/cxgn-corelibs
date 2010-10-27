@@ -370,22 +370,6 @@ sub set_image_dir {
     $self->{image_dir} = shift;
 }
 
-#     my $which = shift;
-
-#     my $dir = $self->get_configuration_object()->get_conf("image_dir");
-#     if ( !$dir ) {
-#         die
-# "Need a configuration variable called image_dir set in SGN.conf  Please contact SGN for help.";
-#     }
-#     if ( $which eq "full" ) {
-#         $dir =
-#           $self->get_configuration_object()
-#           ->get_conf("static_datasets_path") . "/$dir";
-#     }
-#     return $dir;
-#}
-
-
 
 =head2 process_image
 
@@ -502,12 +486,12 @@ sub process_image {
         my $newname = "";
 
         if ( !(`mogrify -format jpg '$dest_name'`) ) {
-            #if ( $basename !~ /(.*)\.(jpeg|jpg)$/i ) {    # has no jpg extension
+            # has no jpg extension
 	    if ($file_ext !~ /jpg|jpeg/i) {
                 $newname = $original_filename . ".JPG";    # convert it to extention .JPG
 		#print STDERR "NEWNAME = $newname\n\n";
             }
-            #elsif ( $basename !~ /(.*)\.(.{1,4})$/ ) { # has no extension at all
+            # has no extension at all
 	    elsif (!$file_ext) {
                 $newname = $original_filename . ".JPG";         # add an extension .JPG
             }
@@ -531,15 +515,7 @@ sub process_image {
             $original_filename = $newname;
             $basename          = $newname;
         }
-
-        #	};
-        #	if ($@) {
-        #	    return -2;
-        #	}
-
     }
-
-    #    eval {
 
     # create large image
     $self->copy_image_resize(
@@ -569,19 +545,10 @@ sub process_image {
         $self->get_image_size("thumbnail")
     );
 
-    #    };
-    #	  if ($@) {
-    #	      return -3;
-    #	  }
-
     # enter preliminary image data into database
     #$tag_table->insert_image($experiment_id, $unix_file, ${safe_ext});
     #
     my $ext = "";
-
-    # if ($basename =~ /(.*)(\.{1,4})$/) {
-    # deanx - nov 21 2007 - logic changed ... preserve original name from above
-    #     use this to extract file extension. note prior regex was wrong
     if ( $original_filename =~ /(.*)(\.\S{1,4})$/ ) {
         $original_filename = $1;
         $ext               = $2;
@@ -592,31 +559,22 @@ sub process_image {
 
     # start transaction, store the image object, and associate it to
     # the given type and type_id.
-    #
     my $image_id = 0;
-
-    #    eval {
 
     # move the image into the md5sum subdirectory
     #
     my $original_file_path = $self->get_processing_dir()."/".$self->get_original_filename().$self->get_file_ext();
 
 
-#    print STDERR "calcualting md5sum\n";
     my $md5sum = $self->calculate_md5sum($original_file_path);
-
-
     $self->set_md5sum($md5sum);
 
-#    print STDERR "creating dirs...\n";
     $self->make_dirs();
 
-#    print STDERR "copying to final location\n";
     $self->finalize_location($processing_dir);
 
     $self->set_image_id($image_id);
 
-#    print STDERR "Storing...\n";
     $self->store();
 
     return $image_id;
@@ -694,29 +652,6 @@ sub copy_location {
 
 }
 
-# =head2 import
-
-#  Usage:        $one_image->import($another_image)
-#  Desc:         imports the data in $another_image into this image.
-#  Ret:          nothing
-#  Args:         an image object
-#  Side Effects: $one_image is now the same as $another_image
-#  Example:      used for transferring images to new directory structures.
-
-# =cut
-
-
-
-# sub import {
-#     my $self =shift;
-#     my $image = shift;
-
-#     foreach my $s (qw | thumbnail small medium large original |) {
-
-# 	File::Copy::copy( $image->get_filename() );
-#     }
-
-# }
 
 =head2 image_subpath
 
@@ -735,14 +670,12 @@ sub image_subpath {
 
     my $md5sum = $self->get_md5sum();
 ###    if (!$md5sum) { return $self->get_image_id(); }
-    my @image_path = ();
+    my @image_path;
 
     my @md5sum = split //, $md5sum;
     for (my $i = 0; $i<32; $i+=2) {
 	push @image_path, $md5sum[$i].$md5sum[$i+1];
     }
-
-
 
     return join "/", @image_path;
 }
@@ -1115,7 +1048,7 @@ sub get_tags {
     my $query = "SELECT tag_id FROM metadata.md_tag_image WHERE image_id=?";
     my $sth = $self->get_dbh()->prepare($query);
     $sth->execute($self->get_image_id());
-    my @tags = ();
+    my @tags;
     while (my ($tag_id) = $sth->fetchrow_array()) {
 	push @tags, CXGN::Tag->new($self->get_dbh(), $tag_id);
     }
