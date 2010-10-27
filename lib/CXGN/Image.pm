@@ -970,10 +970,10 @@ sub hard_delete {
     }
 
     eval {
-	my $image_id = $self->get_image_id();
-	my $sql = "DELETE FROM metadata.md_image WHERE image_id=?";
-	my $sth = $self->get_dbh()->prepare($sql);
-	$sth->execute($image_id);
+
+        $self->get_dbh->do( <<'', undef, $self->get_image_id );
+DELETE from md_image WHERE image_id = ?
+
     };
     if ($@) {
 	warn "Probably insufficient privileges to remove images from db table.";
@@ -994,16 +994,12 @@ sub hard_delete {
 =cut
 
 sub pointer_count {
-    my $self = shift;
+    my ($self) = @_;
 
-    my $sql = "SELECT count(distinct(image_id)) from metadata.md_image WHERE md5sum=?";
-    my $sth = $self->get_dbh()->prepare($sql);
-    $sth->execute($self->get_md5sum());
-    my ($count) = $sth->fetchrow_array();
-    return $count;
+    return $self->get_dbh->selectrow_array( <<'', undef, $self->get_md5sum );
+SELECT count( distinct( image_id ) ) from md_image WHERE md5sum=?
+
 }
-
-
 
 
 =head2 add_tag
