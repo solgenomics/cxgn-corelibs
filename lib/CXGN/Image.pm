@@ -668,16 +668,12 @@ sub copy_location {
 sub image_subpath {
     my $self = shift;
 
-    my $md5sum = $self->get_md5sum();
-###    if (!$md5sum) { return $self->get_image_id(); }
-    my @image_path;
+    my $md5sum = $self->get_md5sum
+        or die 'cannot calculate image_subpath, no md5sum!';
 
-    my @md5sum = split //, $md5sum;
-    for (my $i = 0; $i<32; $i+=2) {
-	push @image_path, $md5sum[$i].$md5sum[$i+1];
-    }
+    my @image_path = $md5sum =~ /^(..)(..)(..)(..)(.+)$/;
 
-    return join "/", @image_path;
+    return File::Spec->catdir( @image_path );
 }
 
 =head2 calculate_md5sum
