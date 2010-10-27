@@ -11,7 +11,11 @@ and functions to associate tags with the image.
 
 Image uploads are handled by the SGN::Image subclass.
 
-The implementation how images are stored has been changed. Whereas the images were stored in the image root dir keyed to the image_id, it is now keyed to the md5sum of the original image, with the md5sum stemmed into two byte directories. The constructor now takes a hash instead of positional arguments.
+The implementation how images are stored has been changed. Whereas the
+images were stored in the image root dir keyed to the image_id, it is
+now keyed to the md5sum of the original image, with the md5sum stemmed
+into two byte directories. The constructor now takes a hash instead of
+positional arguments.
 
 =head1 AUTHOR(S)
 
