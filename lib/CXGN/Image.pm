@@ -82,7 +82,7 @@ sub new {
 
     if( exists $args{image_id} ) {
 	$self->set_image_id($args{image_id});
-	$self->_fetch_image();
+	$self->_fetch_image() if $args{image_id};
     }
     return $self;
 }
