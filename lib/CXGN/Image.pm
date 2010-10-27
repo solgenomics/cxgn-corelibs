@@ -984,12 +984,11 @@ DELETE from md_image WHERE image_id = ?
 
 =head2 pointer_count
 
- Usage:
- Desc:
- Ret:
- Args:
- Side Effects:
- Example:
+ Usage: print $image->pointer_count." db rows reference this image"
+ Desc: get a count of how many rows in the db refer to the same image file
+ Ret: integer number
+ Args: none
+ Side Effects: queries the db
 
 =cut
 
