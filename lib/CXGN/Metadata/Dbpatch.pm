@@ -25,6 +25,8 @@ which help us keep track of running db patches on the database.
     -F force to run this script and don't stop it by
     missing previous db_patches
 
+    -t test run. Rollback the transaction.
+
   Note: If the first time that you run this script, obviously
     you have no previous dbversion row in the md_dbversion
     table, so you need to force the execution of this script
@@ -183,6 +185,17 @@ has 'force' => (
       'force apply, ignoring prereqs and possible duplicate application',
 );
 
+has 'trial' => (
+    is          => 'rw',
+    isa         => 'Bool',
+    required    => 0,
+    default     => 0,
+    traits      => ['Getopt'],
+    cmd_aliases => 't',
+    documentation =>
+      'Test run. Rollback the transaction.',
+);
+
 sub run {
     my $self = shift;
 
@@ -236,8 +249,8 @@ sub run {
 
     my $metadata_id = $metadata->store()->get_metadata_id();
     $dbversion->store($metadata);
-
-    $dbh->commit;
+    if ($self->trial) { $dbh->rollback; }
+    else { $dbh->commit; }
 }
 
 
