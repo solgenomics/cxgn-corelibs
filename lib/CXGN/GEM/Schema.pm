@@ -390,6 +390,9 @@ sub get_nextval {
     my $dbh = $schema->storage()
 	             ->dbh();
 
+    my ($search_path) = $dbh->selectrow_array("SHOW search_path"); 
+    my @schemas_path = split(/, /, $search_path);
+
     foreach my $source_name (sort @source_names) {
 
         my $source = $schema->source($source_name);
@@ -400,7 +403,14 @@ sub get_nextval {
 	## 1) Get primary key
 
 	my $seq_name;
-	my ($prikey) = $dbh->primary_key(undef, undef, $table_name);
+	my $prikey;
+
+	foreach my $schema_name (@schemas_path) {
+	   my ($primary_key) = $dbh->primary_key(undef, $schema_name, $table_name);
+	   if (defined $primary_key) {
+	       $prikey = $primary_key;
+	   }
+	}
 	
 	if (defined $prikey) {
 
@@ -416,6 +426,7 @@ sub get_nextval {
 		$seq_name = $1;
 	    }
 	}
+	
 	
 	if (defined $seq_name) {
 	    if ($schema->is_table($table_name)) {

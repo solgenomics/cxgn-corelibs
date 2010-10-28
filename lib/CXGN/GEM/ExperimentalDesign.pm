@@ -1637,6 +1637,224 @@ sub get_experiment_list {
    return @experiments;
 }
 
+
+=head2 get_po_sorted_experiment_list
+
+  Usage: my @experiments = $expdesign->get_po_sorted_experiment_list();
+  
+  Desc: Get a list of CXGN::GEM::Experiment objects, ordered by its PO
+  
+  Ret:  An array with a list of CXGN::GEM::Experiment objects.
+  
+  Args: none
+  
+  Side_Effects: die if the experiment_design_object have not any 
+                experimental_design_id
+  
+  Example: my @experiments = $expdesign->get_experiment_list();
+
+=cut
+
+sub get_po_sorted_experiment_list {
+   my $self = shift;
+
+   my @experiments_sorted = ();
+   my @experiments = $self->get_experiment_list();
+
+   ## Define the PO Root accessions (they will be used to define the 
+   ## shortest path and to sepparate PO in structure or develop based
+   ## in its path)
+ 
+   my $po_structure_root = 'PO:0009011';
+   my $po_development_root = 'PO:0009012';
+   
+   ## First, transfer the PO annotations from sample to experiments
+
+   ## Define the hash that will contain the paths
+ 
+   my %experiment_objs = ();
+   my %default_experiment_objs = ();
+   my %exp_structure_popath = ();
+   my %exp_develop_popath = ();
+   my %str_popath_count = ();
+   my %dev_popath_count = ();
+
+   foreach my $exp (@experiments) {
+       
+       my %exp_po = ();
+       my @targets = $exp->get_target_list();
+       my $experiment_id = $exp->get_experiment_id();
+       
+       ## Store the experiment objects in a hash with key=experiment_id
+       ## to access to them faster after the order
+
+       my $exp_name = $exp->get_experiment_name();
+       $experiment_objs{$experiment_id} = $exp;
+
+       ## Store the names to sort alphabetically by default if none dbxref is associated 
+       ## with the experiments of this expdesign
+       $default_experiment_objs{$exp_name} = $exp;
+
+
+       foreach my $target (@targets) {
+	   
+	   my $target_name = $target->get_target_name();
+	   my @samples = $target->get_sample_list();
+	   
+	   foreach my $sample (@samples) {
+	       
+	       my $sample_name = $sample->get_sample_name();
+	       my %dbxref_po = $sample->get_dbxref_related('PO');
+	       
+	       foreach my $dbxref_id (keys %dbxref_po) {
+		   unless (exists $exp_po{$dbxref_id}) {
+		       $exp_po{$dbxref_id} = $dbxref_po{$dbxref_id}; 
+		   }
+	       }
+	   }
+       }
+       
+       ## Now it will take the path as PO:XXXXXXXX from each cvterm (PO)
+       ## (It will use PO:XXXXXX instead cvterm_id to be able to have the same
+       ## order independently from the cvterm load in the database).
+       ## The last element will be always the cvterm.name, so after the path
+       ## it will be orther by name
+
+       foreach my $dbxrefid (keys %exp_po) {
+
+	   ## Define the path
+
+	   my @path;
+
+	   my $cvterm_id = $exp_po{$dbxrefid}->{'cvterm.cvterm_id'};
+	   my $complete_accession = $exp_po{$dbxrefid}->{'db.name'} . ':' . $exp_po{$dbxrefid}->{'dbxref.accession'};
+
+	   ## Last element in the path (first element to be added) will be the cvterm.name
+
+	   push @path, $exp_po{$dbxrefid}->{'cvterm.name'};
+
+	   ## It will take the path for that cvterm (only parents... so pathdistance > 0)
+
+	   my @cvtermpath_rows = $self->get_schema()
+	                              ->resultset('Cv::Cvtermpath')
+				      ->search(
+	                                        { subject_id => $cvterm_id, pathdistance => { '>', 0 }  },
+				                { order_by => 'pathdistance',  }
+				              );
+
+	   ## This will get all the path for this cvterm, they are redundant so
+	   ## it will remove this redundancy using a hash
+
+	   my %parent_po_terms = ();
+
+	   foreach my $cvtermpath_row (@cvtermpath_rows) {
+	       
+	       my $parent_cvterm_id = $cvtermpath_row->get_column('object_id');
+	       my $parent_distance = $cvtermpath_row->get_column('pathdistance');
+
+	       my ($parent_cvterm_row) = $self->get_schema()
+		                              ->resultset('Cv::Cvterm')
+		                              ->search({'cvterm_id' => $parent_cvterm_id});
+
+	       my ($dbxref_row) = $self->get_schema()
+	                                      ->resultset('General::Dbxref')
+		 		              ->search({'dbxref_id' => $parent_cvterm_row->get_column('dbxref_id')});
+
+	       my ($db_row) = $self->get_schema()
+	                           ->resultset('General::Db')
+		  	           ->search({'db_id' => $dbxref_row->get_column('db_id')});
+	       
+	       ## Now it will add the po_terms from closest to farest... in the array the first element will be the root
+	       ## (the farest parent po term)
+
+	       if (defined $dbxref_row && defined $db_row) {
+
+		   my $po_term = $db_row->get_column('name') . ':' . $dbxref_row->get_column('accession');
+		   unless (exists $parent_po_terms{$po_term}) {
+		       
+                       ## The last po_term added should be the roots 'PO:0009011' or 'PO:0009012'
+		       
+		       my $last = 0;
+		       if (defined $path[0]) {
+			   if ($path[0] eq $po_structure_root) {
+			       $last = 1;
+			   }
+			   elsif ($path[0] eq $po_development_root) {
+			       $last = 1;
+			   }
+		       }
+
+		       if ($last == 0) {
+			   unshift @path, $po_term;
+		       }
+		       
+		       $parent_po_terms{$po_term} = $parent_distance;
+		   }
+	       }
+	   }
+	   
+	   ## Now it will add the path to two different hashes, po_structure and po_development, corresponding with the two
+	   ## different roots for po terms ()
+
+	   ## Each parent-root will be $path[0]
+	   ## Define the po_path, and store the count for each po_path. Later, if some po_path_count (by structure) > 0
+	   ## it will take a secondary order (by development)
+	   	   
+	   my $po_path = join(',', @path);
+	   
+	   if ($path[0] eq $po_structure_root) { ## That means 'plant structure'
+	       unless (exists $exp_structure_popath{$experiment_id}) {
+		   $exp_structure_popath{$experiment_id} = $po_path;
+		   unless (exists $str_popath_count{$po_path}) {
+		       $str_popath_count{$po_path} = 1;
+		   }
+		   else {
+		       $str_popath_count{$po_path}++;
+		   }
+	       }
+	   }
+	   elsif ($path[0] eq $po_development_root) { ## That means 'plant growth and development stages'
+	       unless (exists $exp_develop_popath{$experiment_id}) {
+		   $exp_develop_popath{$experiment_id} = $po_path;
+		   unless (exists $dev_popath_count{$po_path}) {
+		       $dev_popath_count{$po_path} = 1;
+		   }
+		   else {
+		       $dev_popath_count{$po_path}++;
+		   }
+	       }
+	   }
+       }
+   }
+   
+   ## Now it will take all the experiments from the object
+
+   my %exp_combined_po;
+
+   foreach my $exp_id (keys %experiment_objs) {
+       my $exp_str_po = $exp_structure_popath{$exp_id} || 'Z';
+       my $exp_dev_po = $exp_develop_popath{$exp_id} || 'Z';
+       
+       $exp_combined_po{$exp_id} = $exp_str_po . '-' . $exp_dev_po . '-' . $experiment_objs{$exp_id}->get_experiment_name();
+   }
+
+   ## Finally it will be sorted by the values in the exp_combined_po... if there are some dbxref associated with these
+   ## experiments, if not, return a list sorted by default by alphabetical name
+
+   if (scalar(keys %exp_structure_popath) > 0 && scalar(keys %exp_develop_popath) > 0) {
+       foreach my $sort_exp_id (sort {$exp_combined_po{$a} cmp $exp_combined_po{$b}} keys %exp_combined_po) {
+	   push @experiments_sorted, $experiment_objs{$sort_exp_id};
+       }
+   }
+   else {
+       foreach my $experim_name (sort keys %default_experiment_objs) {
+	   push @experiments_sorted, $default_experiment_objs{$experim_name};
+       }
+   }
+   
+   return @experiments_sorted;
+}
+
 =head2 get_target_list
 
   Usage: my @targets = $expdesign->get_target_list();
