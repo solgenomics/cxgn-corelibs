@@ -678,24 +678,11 @@ sub copy_image_resize {
     my $self = shift;
     my ( $original_image, $new_image, $width ) = @_;
 
-    # first copy the file
-    my $copy = "cp '$original_image' '$new_image'";
-
-    #print STDERR "COPYING: $copy\n";
-    #system($copy);
     File::Copy::copy( $original_image, $new_image );
     my $chmod = "chmod 664 '$new_image'";
 
-    #    print STDERR "CHMODing: $chmod\n";
-    #system($chmod);
-    #my $chown = "chown www-data:www-data '$new_image'";
-
-    #   print STDERR "CHOWNing: $chown\n";
-    #system($chown);
-
     # now resize the new file, and ensure it is a jpeg
     my $resize = `mogrify -format jpg -geometry $width '$new_image'`;
-
 }
 
 
@@ -712,7 +699,7 @@ sub copy_image_resize {
 
 sub get_image_size_hash {
     my $self = shift;
-    return my %hash = (
+    return (
         large     => $LARGE_IMAGE_SIZE,
         medium    => $MEDIUM_IMAGE_SIZE,
         small     => $SMALL_IMAGE_SIZE,
