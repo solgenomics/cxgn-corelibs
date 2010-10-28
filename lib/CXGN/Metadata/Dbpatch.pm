@@ -210,8 +210,9 @@ sub run {
 	}
 	)->get_actual_dbh();
 
-    $self->dbh($dbh);
+    $dbh->{AutoCommit} = 1;
 
+    $self->dbh($dbh);
 
     my $metadata_schema = CXGN::Metadata::Schema->connect(
 	sub { $dbh },
@@ -240,17 +241,14 @@ sub run {
     my $error = $self->patch;
     if ($error ne '1') {
 	print "Failed! Rolling back! \n $error \n ";
-	$dbh->rollback();
 	exit();
+    } elsif ( $self->trial) {
+        print "Trial mode! Not storing new metadata and dbversion rows\n";
+    } else {
+        $metadata->get_dbh->do('set search_path to metadata');
+        my $metadata_id = $metadata->store()->get_metadata_id();
+        $dbversion->store($metadata);
     }
-    ##
-
-    $metadata->get_dbh->do('set search_path to metadata');
-
-    my $metadata_id = $metadata->store()->get_metadata_id();
-    $dbversion->store($metadata);
-    if ($self->trial) { $dbh->rollback; }
-    else { $dbh->commit; }
 }
 
 
