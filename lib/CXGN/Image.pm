@@ -601,7 +601,7 @@ sub make_dirs {
     my $self = shift;
     my $image_sub_path = $self->image_subpath();
 
-    my $path = join "/", ($self->get_image_dir(), $image_sub_path);
+    my $path = File::Spec->catdir( $self->get_image_dir(), $image_sub_path );
     if (my $dirs = make_path($path) ) {
 	#print STDERR  "Created $dirs Dirs (should be 4)\n";
     }
@@ -623,7 +623,7 @@ sub finalize_location {
     my $self = shift;
     my $processing_dir = shift;
 
-    my $image_dir = $self->get_image_dir() ."/".$self->image_subpath();
+    my $image_dir = File::Spec->catdir( $self->get_image_dir, $self->image_subpath );
     foreach my $f (glob($processing_dir."/*")) {
 
 	File::Copy::move( $f, $image_dir )
