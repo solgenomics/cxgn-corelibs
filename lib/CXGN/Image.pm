@@ -400,9 +400,7 @@ sub process_image {
     my $type_id   = shift;
 
     if ( my $id = $self->get_image_id() ) {
-        warn
-"process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
-        die "I'm dying now. Ouch!\n";
+        die "process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
     }
 
     my ($processing_dir) =
@@ -418,15 +416,12 @@ sub process_image {
     # copy unmodified image to be fullsize image
     #
     my ($basename, $directories, $file_ext) = File::Basename::fileparse($file_name, qr/\..+/);
-    #print STDERR "BASENAME $basename, DIR $directories, EXT: $file_ext\n";
-    # deanx - preserver original filename
+
     my $original_filename = $basename;
     my $original_file_ext = $file_ext;
 
     my $dest_name = $self->get_processing_dir() . "/" . $basename.$file_ext;
-    #print STDERR "Copying $file_name to $dest_name...\n";
 
-    #    eval {
     File::Copy::copy( $file_name, $dest_name )
       || die "Can't copy file $file_name to $dest_name";
     my $chmod = "chmod 664 '$dest_name'";
@@ -443,30 +438,26 @@ sub process_image {
 
     if ( $#image_pages > 0 ) {    # multipage, pdf, ps or eps
 
-#	eval  {
-# note mogrify used since 'convert' will not correctly reformat (convert makes blank images)
-# if  (! (`mogrify -format jpg '$dest_name'`)) {die "Sorry, can't convert image $basename";}
-# if ( system("/usr/bin/mogrify -format jpg","$upload_dir/$basename") != 0) {die "Sorry, can't convert image $basename";}
-# my $chmod = "chmod 664 '$upload_dir/$basename'";
-# Convert and mogrify both dislike the format of our filenames intensely if ghostscript
-#   is envoked ... change filename to something beign like temp.<ext>
+
+        # note mogrify used since 'convert' will not correctly
+        # reformat (convert makes blank images) Convert and mogrify
+        # both dislike the format of our filenames intensely if
+        # ghostscript is envoked ... change filename to something
+        # beign like temp.<ext>
 
         my $newname;
-        #if ( $basename =~ /(.*)\.(.{1,4})$/ )
-	if ($file_ext) {
-            #note; mogrify will create files name
-            # basename-0.jpg, basename-1.jpg
+	if ( $file_ext ) {
+            # note; mogrify will create files named basename-0.jpg, basename-1.jpg
             my $mogrified_first_image = $processing_dir . "/temp-0.jpg";
-            my $tempname =
-              $processing_dir . "/temp" . $file_ext;    # retrieve file extension
-            $newname = $basename . ".jpg";    #
+            my $tempname = $processing_dir . "/temp" . $file_ext;
+            $newname = $basename . ".jpg";
             my $new_dest = $processing_dir . "/" . $newname;
 
             # use temp name for mogrify/ghostscript
             File::Copy::copy( $dest_name, $tempname )
               || die "Can't copy file $basename to $tempname";
 
-            if ( (`mogrify -format jpg '$tempname'`) ) {
+            if ( `mogrify -format jpg '$tempname'` ) {
                 die "Sorry, can't convert image $basename";
             }
 
@@ -474,26 +465,17 @@ sub process_image {
               || die "Can't copy file $mogrified_first_image to $newname";
 
         }
-        #print STDERR "Successfully converted $basename to $newname\n";
         $basename = $newname;
 
-        #	};
+    }
+    else { # appears to be a regular simple image
 
-        #	  if ($@) {
-        #	      return -2;
-        #	  }
-
-    }         #Multi-page non-image file eg: pdf, ps, eps
-    else {    # appears to be a regular simple image
-
-        #	eval {
         my $newname = "";
 
-        if ( !(`mogrify -format jpg '$dest_name'`) ) {
+        if ( ! `mogrify -format jpg '$dest_name'` ) {
             # has no jpg extension
 	    if ($file_ext !~ /jpg|jpeg/i) {
                 $newname = $original_filename . ".JPG";    # convert it to extention .JPG
-		#print STDERR "NEWNAME = $newname\n\n";
             }
             # has no extension at all
 	    elsif (!$file_ext) {
@@ -503,19 +485,9 @@ sub process_image {
                 $newname = $original_filename.".JPG"; # add standard JPG file extension.
             }
 
-	    #print STDERR "converting $processing_dir/$basename to $processing_dir/$newname...\n";
-            if (
+            system( "convert", "$processing_dir/$basename$file_ext", "$processing_dir/$newname" );
+            $? and die "Sorry, can't convert image $basename$file_ext to $newname";
 
-                system(
-                    "/usr/bin/convert", "$processing_dir/$basename$file_ext",
-                    "$processing_dir/$newname"
-                ) != 0
-              )
-            {
-                die "Sorry, can't convert image $basename$file_ext to $newname";
-            }
-
-            #print STDERR "Successfully converted $basename to $newname\n";
             $original_filename = $newname;
             $basename          = $newname;
         }
@@ -550,8 +522,6 @@ sub process_image {
     );
 
     # enter preliminary image data into database
-    #$tag_table->insert_image($experiment_id, $unix_file, ${safe_ext});
-    #
     my $ext = "";
     if ( $original_filename =~ /(.*)(\.\S{1,4})$/ ) {
         $original_filename = $1;
@@ -568,7 +538,6 @@ sub process_image {
     # move the image into the md5sum subdirectory
     #
     my $original_file_path = $self->get_processing_dir()."/".$self->get_original_filename().$self->get_file_ext();
-
 
     my $md5sum = $self->calculate_md5sum($original_file_path);
     $self->set_md5sum($md5sum);
