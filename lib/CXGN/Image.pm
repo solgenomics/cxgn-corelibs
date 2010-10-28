@@ -749,13 +749,11 @@ sub get_filename {
     my $size = shift;
     my $type = shift || ''; # full or partial
 
-    my $image_dir = "";
-    if ($type eq 'partial') {
-	$image_dir = $self->image_subpath();
-    }
-    else {
-	$image_dir = $self->get_image_dir()."/".$self->image_subpath();
-    }
+    my $image_dir =
+        $type eq 'partial'
+            ? $self->image_subpath
+            : File::Spec->catdir( $self->get_image_dir, $self->image_subpath );
+
     if ($size eq "thumbnail") {
 	return File::Spec->catfile($image_dir, 'thumbnail.jpg');
     }
@@ -773,7 +771,6 @@ sub get_filename {
     }
     return File::Spec->catfile($image_dir, 'medium.jpg');
 }
-
 
 
 =head2 get_processing_dir
