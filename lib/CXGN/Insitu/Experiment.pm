@@ -10,7 +10,7 @@ Lukas Mueller (lam87@cornell.edu)
 use strict;
 
 use CXGN::People;
-use CXGN::Image;
+use SGN::Image;
 use CXGN::Tag;
 use CXGN::Insitu::Probe;
 
@@ -81,7 +81,7 @@ sub fetch_experiment {
     my $image_h = $self->get_dbh()->prepare($image_q);
     $image_h->execute($self->get_experiment_id());
     while (my ($id) = $image_h->fetchrow_array()) { 
-	$self->add_image(CXGN::Image->new($self->get_dbh(), $id));
+	$self->add_image(SGN::Image->new($self->get_dbh(), $id));
 	$self->add_image_id($id);
     }
 
