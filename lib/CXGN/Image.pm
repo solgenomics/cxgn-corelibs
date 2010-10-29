@@ -37,7 +37,7 @@ use strict;
 
 package CXGN::Image;
 
-use Carp;
+use Carp qw/ cluck carp confess /;
 use Digest::MD5;
 use File::Path 'make_path';
 use File::Spec;
@@ -641,8 +641,13 @@ sub copy_location {
 sub image_subpath {
     my $self = shift;
 
-    my $md5sum = $self->get_md5sum
-        or confess 'cannot calculate image_subpath, no md5sum!';
+    my $md5sum = $self->get_md5sum;
+    unless( $md5sum ) {
+        # if the image has no md5sum, either from the database or for
+        # some other reason, warn copiously about it but don't die
+        cluck 'cannot calculate image_subpath, no md5sum set for image_id '.$self->get_image_id;
+        $md5sum = 'X'x32;
+    }
 
     return join '/', $md5sum =~ /^(..)(..)(..)(..)(.+)$/;
 }
