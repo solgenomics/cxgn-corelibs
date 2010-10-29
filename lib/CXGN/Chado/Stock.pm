@@ -41,14 +41,17 @@ sub new {
     my $schema = shift;
     my $id = shift;
     
+    
      ### First, bless the class to create the object and set the schema into the object.
-    my $self = $class->SUPER::new($schema);
+    #my $self = $class->SUPER::new($schema);
+    my $self = bless {}, $class;
+    $self->set_schema($schema);
     my $stock;
     if (defined $id) {
 	$stock = $self->get_resultset('Stock::Stock')->find({ stock_id => $id });
     } else {
-	$self->debug("Creating a new empty Stock object! " . $self->get_resultset('Stock::Stock'));
-	$stock = $self->get_resultset('Stock::Stock')->new( {} );   ### Create an empty resultset object;
+	### Create an empty resultset object;
+	$stock = $self->get_resultset('Stock::Stock')->new( {} );   
     }
     ###It's important to set the object row for using the accesor in other class functions
     $self->set_object_row($stock);
@@ -70,32 +73,24 @@ sub new {
 
 sub store {
     my $self=shift;
-    my $id= $self->get_object_row->stock_id();
+    my $id = $self->get_stock_id();
     my $schema=$self->get_schema();
     #no stock id . Check first if the name  exists in te database
     if (!$id) {
 	my $exists= $self->exists_in_database();
 	if (!$exists) {
-	    
 	    my $new_row = $self->get_object_row();
 	    $new_row->insert();
 	    
 	    $id=$new_row->stock_id();
-	    
-	    $self->d(  "Inserted a new stock  " . $new_row->stock_id()  ." \n");
 	}else {
-	    ##$self->set_stock_id($exists);
 	    my $existing_stock=$self->get_resultset('Stock::Stock')->find($exists);
 	    #don't update here if stock already exist. User should call from the code exist_in_database
 	    #and instantiate a new stock object with the database id
 	    #updating here is not a good idea, since it might not be what the user intended to do
             #and it can mess up the database.
-
-	    $self->debug("stock " . $id .   " exists in database!");
-
 	}
     }else { # id exists
-	$self->d( "Updating existing stock_id $id\n");
 	$self->get_object_row()->update();
     }
     return $id
@@ -117,33 +112,70 @@ sub store {
 
 sub exists_in_database {
     my $self=shift;
-    my $uniquename = $self->get_row_object()->uniquename || '' ;
-    my $s = $self->get_resultset('Stock::Stock')->search( 
+    my $stock_id = $self->get_stock_id();
+    my $uniquename = $self->get_uniquename || '' ;
+    my ($s) = $self->get_resultset('Stock::Stock')->search( 
 	{
 	    uniquename  => { 'ilike' => $uniquename },
-	})->single(); #  ->single() for retrieving a single row (there sould be only one uniquename entry)
-    if ($s) { return $s->stock_id(); }
+	});
+    #loading new stock - $stock_id is undef
+    if (defined($s) && !$stock_id ) {  return $s->stock_id ; }
+    
+    #updating an existing stock
+    elsif ($stock_id && defined($s) ) {
+	if ( ($s->stock_id == $stock_id) ) {
+	    return 0; 
+	    #trying to update the uniquename 
+	} elsif ( $s->stock_id != $stock_id ) {
+	    return " Can't update an existing stock $stock_id uniquename:$uniquename.";
+	    # if the new name we're trying to update/insert does not exist in the stock table.. 
+	} elsif ($stock_id && !$s->stock_id) {
+	    return 0; 
+	}
+    }
     return undef;
 }
 
-=head2 get_obsolete
+=head2 get_organism
 
- Usage:
- Desc:
- Ret:
- Args:
- Side Effects:
+ Usage: $self->get_organism
+ Desc:  find the organism object of this stock
+ Ret:   L<Bio::Chado::Schema::Organism::Organism> object
+ Args:  none
+ Side Effects: none 
  Example:
 
 =cut
 
-sub get_obsolete {
+sub get_organism {
     my $self = shift;
-    my $is_obsolete = $self->get_object_row()->is_obsolete();
-    
-    $self->{obsolete} = $is_obsolete;
-    return $self->{obsolete};
+    if ($self->get_organism_id) {
+	return $self->get_object_row()->find_related('organism');
+    }
+    return undef;
 }
+
+=head2 get_type
+
+ Usage: $self->get_type
+ Desc:  find the cvterm type of this stock
+ Ret:   L<Bio::Chado::Schema::Cv::Cvterm> object
+ Args:   none 
+ Side Effects: none 
+ Example:
+
+=cut
+
+sub get_type {
+    my $self = shift;
+
+    if ($self->get_type_id) {
+	return  $self->get_object_row()->find_related('type');
+    }
+    return undef;
+
+}
+
 
 
 sub get_object_row {
@@ -172,6 +204,170 @@ sub get_resultset {
     my $source = shift;
     return $self->get_schema()->resultset("$source");
 }
+
+=head2 accessors get_schema, set_schema
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_schema {
+  my $self = shift;
+  return $self->{schema}; 
+}
+
+sub set_schema {
+  my $self = shift;
+  $self->{schema} = shift;
+}
+
+
+###mapping accessors to DBIC 
+
+=head2 accessors get_name, set_name
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_name {
+    my $self = shift;
+    return $self->get_object_row()->get_column("name"); 
+}
+
+sub set_name {
+    my $self = shift;
+    $self->get_object_row()->set_column(name => shift);
+}
+
+=head2 accessors get_uniquename, set_uniquename
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_uniquename {
+    my $self = shift;
+    return $self->get_object_row()->get_column("uniquename"); 
+}
+
+sub set_uniquename {
+    my $self = shift;
+    $self->get_object_row()->set_column(uniquename => shift);
+}
+
+=head2 accessors get_organism_id, set_organism_id
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_organism_id {
+    my $self = shift;
+    return $self->get_object_row()->get_column("organism_id"); 
+}
+
+sub set_organism_id {
+    my $self = shift;
+    $self->get_object_row()->set_column(organism_id => shift);
+}
+
+=head2 accessors get_type_id, set_type_id
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_type_id {
+    my $self = shift;
+    return $self->get_object_row()->get_column("type_id"); 
+}
+
+sub set_type_id {
+    my $self = shift;
+    $self->get_object_row()->set_column(type_id => shift);
+}
+
+=head2 accessors get_description, set_description
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_description {
+    my $self = shift;
+    return $self->get_object_row()->get_column("description"); 
+}
+
+sub set_description {
+    my $self = shift;
+    $self->get_object_row()->set_column(description => shift);
+}
+
+=head2 accessors get_stock_id, set_stock_id
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_stock_id {
+    my $self = shift;
+    return $self->get_object_row()->get_column("stock_id"); 
+}
+
+sub set_stock_id {
+    my $self = shift;
+    $self->get_object_row()->set_column(stock_id => shift);
+}
+
+=head2 accessors get_is_obsolete, set_is_obsolete
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_is_obsolete {
+    my $self = shift;
+    return $self->get_object_row()->get_column("is_obsolete"); 
+}
+
+sub set_is_obsolete {
+    my $self = shift;
+    $self->get_object_row()->set_column(is_obsolete => shift);
+}
+
 
 
 ##########

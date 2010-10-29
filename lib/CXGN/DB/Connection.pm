@@ -241,13 +241,13 @@ sub new_no_connect {
           or croak "invalid config, must be a hashref like { varname => value, }";
 
   } else {
-      # if we didn't get a config object, make an SGN::Config if running under SGN, otherwise die
+      # if we didn't get a config object, get the configuration from SGN if running under SGN, otherwise die
       if( defined $ENV{PROJECT_NAME} && $ENV{PROJECT_NAME} eq 'SGN' ) {
-          #carp "WARNING: CXGN::DB::Connection needs to be explicitly configured with host, user, etc.  Falling back to SGN::Config since we seem to be running under the SGN site";
-          require SGN::Config;
-          $conf = SGN::Config->load;
+          our $c;
+          require CatalystX::GlobalContext;
+          CatalystX::GlobalContext->import('$c');
+          $conf = $c->config;
       } else {
-         #carp "WARNING: CXGN::DB::Connection needs to be explicitly configured with host, user, etc.  Falling back to values from CXGN::Config";
           require CXGN::Config;
           $conf = CXGN::Config->load;
       }

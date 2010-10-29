@@ -19,19 +19,6 @@ use CXGN::Tools::List qw/str_in flatten collate/;
 CXGN::Genomic::CloneIdentifiers - functions for parsing and generating
 clone identifiers.  Supersedes L<CXGN::Genomic::CloneNameParser>.
 
-=head1 SYNOPSIS
-
-
-=head1 CONFIGURATION
-
-Set the $Config_Class variable in this package to set which
-CXGN::Config - based class is used to configure the database connection.
-
-Example:
-
-  $CXGN::Genomic::CloneIdentifiers::Config_Class = 'SGN::Config';
-
-
 =head1 FUNCTIONS
 
 All functions below are EXPORT_OK.

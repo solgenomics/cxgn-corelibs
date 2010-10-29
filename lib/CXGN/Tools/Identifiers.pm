@@ -22,11 +22,6 @@ identifiers, like SGN-E23412
   my $clean = clean_identifier('SGNE3423');
   #returns SGN-E3423, or undef if the identifier was not recognized
 
-  my $uniq = unique_identifier('SGN-E3423');
-  #returns 'SGN-E3423'
-  $uniq = unique_identifier('SGN-E3423');
-  #do it again, returns 'SGN-E3423_1'
-
   my $contents = parse_identifier('SGN-E12345');
 
 =head1 DESCRIPTION
@@ -112,7 +107,6 @@ A tomato BAC contig, e.g. C12.4_contig1
 
 A generic scaffold identifier, e.g. scaffold12345
 
-
 =item tair_locus
 
 TAIR locus identifiers like 'At1g67700.1'
@@ -120,10 +114,6 @@ TAIR locus identifiers like 'At1g67700.1'
 =item species_binomial
 
 e.g. 'Arabidopsis thaliana', 'Solanum lycopersicum'
-
-=item species_common
-
-e.g. 'Tomato' or 'Apple of Sodom'
 
 =item genbank_gi
 
@@ -191,7 +181,6 @@ our @namespace_list = qw/
                          uniref_accession
 			 genbank_gi
 			 species_binomial
-			 species_common
 			 genbank_cdd
 			 genbank_accession
 		        /;
@@ -236,7 +225,6 @@ BEGIN {
 }
 use base qw/Exporter/;
 
-use CXGN::DB::Connection;
 use CXGN::Genomic::Clone;
 use CXGN::Genomic::CloneIdentifiers qw/ parse_clone_ident assemble_clone_ident /;
 use CXGN::Genomic::GSS;
@@ -410,42 +398,6 @@ sub parse_identifier {
   return $p;
 }
 
-
-=head2 unique_identifier
-
-  Usage: my $uniq = unique_identifier($ident,'_',$ident_store);
-  Desc : ensure this string is unique within the context of either the run
-	 of this script, or some other context.  The 'some other context' part
-	 comes in when you pass this function a reference to a (maybe tied)
-	 hash it should use for looking up and storing identifiers that have
-	 already been seen.
-  Ret  : the identifier, possibly with a $sep.$cnt++ appended to it, where $sep
-	 is the given separator string and $cnt is the number of times this
-	 identifier string has been seen before
-  Args : identifier string,
-         (optional) separator string (default '_'),
-         (optional) ref to identifier-storing hash,
-         (optional) true value if you want to force appending to all identifiers
-                    regardless of whether they have been seen before
-  Side Effects: reads from and writes to the given hash or tied hash.
-                DOES NOT look up identifiers anywhere except in that
-                hash
-
-=cut
-
-our $global_unique_store = {};
-sub unique_identifier {
-  my ($ident,$sep,$store,$force) = @_;
-  $sep   ||= '_';
-  $store ||= $global_unique_store;
-
-  if(my $prevcnt = $store->{$ident}++ || 0 or $force) {
-    return $ident.$sep.$prevcnt;
-  } else {
-    return $ident;
-  }
-}
-
 =head1 NAMESPACE FUNCTIONS
 
 These functions are not exported, and
@@ -496,18 +448,6 @@ file (they are in comments, not POD).
         be able to clean it.
 
 =cut
-#'
-our $sgn_db;
-#write an accessor routine that makes sure our connection does
-#not go away due to timeouts or whatever
-sub _sgn_db {
-  $sgn_db ||= CXGN::DB::Connection->new();
-  unless($sgn_db->ping) {
-    $sgn_db = undef;
-    $sgn_db = _sgn_db();
-  }
-  return $sgn_db;
-}
 
 ######## sgn_u
 sub is_sgn_u {
@@ -528,9 +468,7 @@ sub is_cgn_u {
 }
 sub url_cgn_u {
   my ($cgnid) = shift =~ /(\d+)/ or return undef;
-  my ($sgnid) = _sgn_db->selectrow_array('SELECT unigene_id FROM unigene WHERE sequence_name = ? AND database_name=? ',undef,$cgnid,'CGN')
-    or return undef;
-  return "/search/unigene.pl?unigene_id=".$urlencode{uc($sgnid)};
+  return "/search/unigene.pl?unigene_id=CGN-U$cgnid";
 }
 sub clean_cgn_u {
   clean_letter_identifier('cgn','u',shift);
@@ -859,30 +797,6 @@ sub clean_bac_fragment {
 sub parse_bac_fragment {
   parse_clone_ident(shift,qw/ versioned_bac_seq / );
 }
-#sgn_marker
-# sub is_sgn_marker {
-#   my $ident = shift;
-#   $ident = clean_sgn_marker($ident);
-#   my @ids = marker_name_to_ids(_sgn_db,$ident);
-#   return 1 if @ids == 1;
-#   return 0;
-# }
-# sub url_sgn_marker {
-#   my $ident = shift;
-#   $ident = clean_sgn_marker($ident);
-#   my @ids = marker_name_to_ids(_sgn_db,$ident);
-#   return unless @ids == 1;
-#   return "/search/markers/markerinfo.pl?marker_id=$ids[0]"
-# }
-# sub clean_sgn_marker {
-#   my $ident = shift;
-#   $ident =~ s/-(FPRIMER|RPRIMER|F|R)$//;
-#   return clean_marker_name($ident);
-# }
-# sub parse_sgn_marker {
-#   warn 'parsing sgn_marker not implemented';
-#   return;
-# }
 #tair_locus
 sub is_tair_locus {
   return 1 if shift =~ /^AT[1-5MC]G\d{5}$/i;
@@ -950,37 +864,6 @@ sub _wikipedia_link {
   $ident =~ s/\s+/_/g;
   return 'http://en.wikipedia.org/wiki/Special:Search/'.$ident;
 }
-#species short name
-sub is_species_common {
-  my $ident = shift;
-  $ident =~ s/\s+/ /g;
-  return undef if $ident =~ /\d/;
-  my $q = _sgn_db->prepare_cached(<<EOSQL,{},1);
-select common_name from common_name where common_name ilike ?
-EOSQL
-  $q->execute($ident);
-  return 1 if $q->rows > 0;
-  return 0;
-}
-sub url_species_common {
-  _wikipedia_link(@_);
-}
-sub clean_species_common {
-  my $ident = shift;
-  $ident =~ s/\s+/ /g;
-  return undef if $ident =~ /\d/;
-  my $q = _sgn_db->prepare_cached(<<EOSQL,{},1);
-select common_name from common_name where common_name ilike ?
-EOSQL
-  $q->execute($ident);
-  return undef unless $q->rows > 0;
-  my ($clean) = @{$q->fetchrow_arrayref};
-  return $clean;
-}
-sub parse_species_common {
-  { common_name => shift }
-}
-
 #uniprotKB-swissprot_accession
 sub is_swissprot_accession {
     my ($ident) = @_;

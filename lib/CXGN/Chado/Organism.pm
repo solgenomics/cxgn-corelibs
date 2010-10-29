@@ -685,15 +685,15 @@ sub new_with_taxon_id {
 
 sub _ensure_dbic {
     my ($self,$dbh) = @_;
-
     return $dbh if $dbh->can('resultset');
-
+    
+    $dbh = $dbh->get_actual_dbh  if $dbh->isa("CXGN::DB::Connection")  ;
+    
     require Bio::Chado::Schema;
-    return Bio::Chado::Schema->connect(
-        $dbh->get_connection_parameters,
-        { on_connect_do => ['SET search_path TO public'] },
-      );
-
+    return Bio::Chado::Schema->connect( sub { $dbh->clone },
+					{ on_connect_do => ['SET search_path TO public'] },
+	);
+    
 }
 
 

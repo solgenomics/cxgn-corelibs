@@ -15,8 +15,8 @@ BEGIN {
      'gnl|CDD|34868' => ['genbank_cdd','gnl|CDD|34868',qr/ncbi\.nlm\./, { id => 34868 } ],
      'sgn-u123442'  => ['sgn_u', 'SGN-U123442', qr/unigene\.pl/, { id => 123442 }],
      'SGNU1231'     => ['sgn_u', 'SGN-U1231',   qr/unigene\.pl/, { id => 1231 }],
-     'CGN-U1234'    => ['cgn_u', 'CGN-U1234', undef, {id => 1234}],
-     'CGNU1231'     => ['cgn_u', 'CGN-U1231',   undef, {id => 1231}],
+     'CGN-U1234'    => ['cgn_u', 'CGN-U1234', qr/unigene\.pl/, {id => 1234}],
+     'CGNU1231'     => ['cgn_u', 'CGN-U1231',   qr/unigene\.pl/, {id => 1231}],
      'CGN-U125230'  => ['cgn_u', 'CGN-U125230', qr/unigene\.pl/, {id => 125230}],
      'CGNU125230'   => ['cgn_u', 'CGN-U125230', qr/unigene\.pl/, {id => 125230}],
      'SGN-E123215'  => ['sgn_e', 'SGN-E123215', qr/est\.pl/, {id => 123215} ],
@@ -151,8 +151,6 @@ BEGIN {
      'tus1A9'          => ['est','TUS-1-A9',qr/est\.pl/],
      'cLEC-1-E23'      => ['est','cLEC-1-E23',qr/est\.pl/],
      'clec1E23'        => ['est','cLEC-1-E23',qr/est\.pl/],
-     'apple   of sodom ' => ['species_common','Apple of Sodom',qr/wikipedia/,{ common_name => 'apple   of sodom'}],
-     '   peTunIa  '    => ['species_common','Petunia',qr/wikipedia/, { common_name => 'peTunIa'}],
      'L. esculentum'   => ['species_binomial','L. esculentum',qr/wikipedia/, { genus => 'L', species => 'esculentum' }],
      'S. lycopersicum' => ['species_binomial','S. lycopersicum',qr/wikipedia/, { genus => 'S', species => 'lycopersicum'}],
      's.Lycopersicum'  => ['species_binomial','S. lycopersicum',qr/wikipedia/, { genus => 's', species => 'Lycopersicum'}],
@@ -185,7 +183,6 @@ BEGIN {
 our %link_tests =
   (
    'SGN-E12313' => qr/^<a.+href=".+est\.pl\?.+".*>SGN-E12313<\/a>/,
-   'petunia' => qr/wikipedia/,
    'E42' => undef,
    'tus1A9' => qr/^<a.+href=".+est\.pl\?.+".*>TUS-1-A9<\/a>/,
    'lehba4J16_T7_1231' => qr/^<a.+href=".+clone_read_info\.pl\?.+".*>LE_HBa0004J16_T7_1231<\/a>/,
@@ -201,8 +198,7 @@ our %link_tests =
 }
 
 use Test::More tests=> 1 + 4*scalar(keys our %tests)
-  + scalar(keys our %link_tests)
-  + 6; #< unique_identifier tests
+  + scalar(keys our %link_tests);
 
 BEGIN {
  use_ok( 'CXGN::Tools::Identifiers', qw(
@@ -247,13 +243,3 @@ while(my($ident,$match) = each our %link_tests) {
   }
 }
 
-
-#now test the unique_identifier function
-is(unique_identifier('foobar'),'foobar',"unique_identifier doesn't touch an ident it hasn't seen before");
-is(unique_identifier('foobar','_'),'foobar_1',"unique_identifier DOES touch one that it has seen before");
-is(unique_identifier('foobar'),'foobar_2',"default unique separator is '_'");
-my $store = {};
-is(unique_identifier('foobar','_',$store),'foobar',"unique_identifier accepts an external data store");
-is(unique_identifier('foobar','_',$store),'foobar_1',"unique_identifier really accepts an external data store");
-
-is(unique_identifier('monkeys',undef,undef,1),'monkeys_0','unique_identifier force option works');

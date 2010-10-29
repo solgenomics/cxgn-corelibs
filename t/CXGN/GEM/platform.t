@@ -1,124 +1,49 @@
-#!/usr/bin/perl
+=head1 GEM TESTS
 
-=head1 NAME
-
-  platform.t
-  A piece of code to test the CXGN::GEM::Platform module
+  For GEM test suite documentation, see L<CXGN::GEM::Test>.
 
 =cut
-
-=head1 SYNOPSIS
-
- perl platform.t
-
- Note: To run the complete test the database connection should be done as 
-       postgres user 
- (web_usr have not privileges to insert new data into the gem tables)  
-
- prove experimentaldesign.t
-
- this test needs some environment variables:
-    export GEMTEST_METALOADER= 'metaloader user'
-    export GEMTEST_DBUSER= 'database user with insert permissions'
-    export GEMTEST_DBPASS= 'database password'
-
- also is recommendable set the reset dbseq after run the script
-    export RESET_DBSEQ=1
-
- if it is not set, after one run all the test that depends of a primary id
- (as metadata_id) will fail because it is calculated based in the last
- primary id and not in the current sequence for this primary id
-
-
-=head1 DESCRIPTION
-
- This script check 118 variables to test the right operation of the 
- CXGN::GEM::Platform module:
-
-=cut
-
-=head1 AUTHORS
-
- Aureliano Bombarely Gomez
- (ab782@cornell.edu)
-
-=cut
-
 
 use strict;
 use warnings;
 
-use Data::Dumper;
-use Test::More tests => 118; # qw | no_plan |; # while developing the test
+use Test::More;
 use Test::Exception;
 use Test::Warn;
 
-use CXGN::DB::Connection;
-use CXGN::DB::DBICFactory;
+use CXGN::GEM::Test;
 
-BEGIN {
-    use_ok('CXGN::GEM::Schema');             ## TEST1
-    use_ok('CXGN::GEM::Platform');           ## TEST2
-    use_ok('CXGN::GEM::TechnologyType');     ## TEST3
-    use_ok('CXGN::GEM::Template');           ## TEST4
-    use_ok('CXGN::Biosource::Sample');       ## TEST5
-    use_ok('CXGN::Metadata::Metadbdata');    ## TEST6
-}
+my $gem_test = CXGN::GEM::Test->new;
 
-## Check the environment variables
-my @env_variables = ('GEMTEST_METALOADER', 'GEMTEST_DBUSER', 'GEMTEST_DBPASS', 'RESET_DBSEQ');
-foreach my $env (@env_variables) {
-    unless ($ENV{$env} =~ m/^\w+/) {
-	print STDERR "ENVIRONMENT VARIABLE WARNING: Environment variable $env was not set for this test. Use perldoc for more info.\n";
-    }
-}
+plan tests => 118;
 
-#if we cannot load the Schema modules, no point in continuing
-CXGN::Biosource::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::Biosource::Schema module');
-CXGN::Metadata::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::Metadata::Schema module');
-Bio::Chado::Schema->can('connect')
-    or BAIL_OUT('could not load the Bio::Chado::Schema module');
-CXGN::GEM::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::GEM::Schema module');
+use_ok('CXGN::GEM::Schema');    ## TEST1
+use_ok('CXGN::GEM::Platform');  ## TEST2
+use_ok('CXGN::GEM::TechnologyType'); ## TEST3
+use_ok('CXGN::GEM::Template');  ## TEST4
+use_ok('CXGN::Biosource::Sample'); ## TEST5
+use_ok('CXGN::Metadata::Metadbdata'); ## TEST6
 
 ## Variables predifined
-my $creation_user_name = $ENV{GEMTEST_METALOADER};
+my $creation_user_name = $gem_test->metaloader_user;
 
-## The GEM schema contain all the metadata, chado and biosource classes so don't need to create another Metadata schema
+## The GEM schema contain all the metadata, chado and biosource
+## classes so don't need to create another Metadata schema
 
-## The triggers need to set the search path to tsearch2 in the version of psql 8.1
-my $psqlv = `psql --version`;
-chomp($psqlv);
-
-my @schema_list = ('gem', 'biosource', 'metadata', 'public');
-if ($psqlv =~ /8\.1/) {
-    push @schema_list, 'tsearch2';
-}
-
-my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::GEM::Schema', 
-                                                 search_path => \@schema_list, 
-                                                 dbconn_args => 
-                                                                { 
-                                                                    dbuser => $ENV{GEMTEST_DBUSER},
-                                                                    dbpass => $ENV{GEMTEST_DBPASS},
-                                                                }
-                                               );
+my $schema = $gem_test->dbic_schema('CXGN::GEM::Schema');
 
 $schema->txn_begin();
 
-
 ## Get the last values
-my $all_last_ids_href = $schema->get_all_last_ids($schema);
-my %last_ids = %{$all_last_ids_href};
-my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'} || 0;
-my $last_platform_id = $last_ids{'gem.ge_platform_platform_id_seq'} || 0;
-my $last_techtype_id = $last_ids{'gem.ge_technology_type_technology_type_id_seq'} || 0;
-my $last_sample_id = $last_ids{'biosource.bs_sample_sample_id_seq'} || 0;
-my $last_dbxref_id = $last_ids{'public.dbxref_dbxref_id_seq'} || 0;
-my $last_pub_id = $last_ids{'public.pub_pub_id_seq'} || 0;
-my $last_contact_id = $last_ids{'sgn_people.sp_person_sp_person_id_seq'} || 0;
+
+my %nextvals = $schema->get_nextval();
+my $last_metadata_id = $nextvals{'md_metadata'} || 0;
+my $last_platform_id = $nextvals{'ge_platform'} || 0;
+my $last_techtype_id = $nextvals{'ge_technology_type'} || 0;
+my $last_sample_id = $nextvals{'bs_sample'} || 0;
+my $last_dbxref_id = $nextvals{'dbxref'} || 0;
+my $last_pub_id = $nextvals{'pub'} || 0;
+my $last_contact_id = $nextvals{'sp_person'} || 0;
 
 ## Create a empty metadata object to use in the database store functions
 my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $creation_user_name);
@@ -976,6 +901,9 @@ $schema->txn_rollback();
       ##   The option 1 leave the seq information in a original state except if there aren't any value in the seq, that it is
        ##   more as the option 2 
 
-if ($ENV{RESET_DBSEQ}) {
-    $schema->set_sqlseq_values_to_original_state(\%last_ids);
-}
+## This test does not set the table sequences (methods are deprecated)
+
+
+####
+1; #
+####

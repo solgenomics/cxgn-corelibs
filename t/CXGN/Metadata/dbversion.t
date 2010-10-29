@@ -19,18 +19,15 @@
 
  this test need some environment variables:
 
-   export METADATA_TEST_METALOADER= 'metaloader user'
-   export METADATA_TEST_DBDSN= 'database dsn as: dbi:DriverName:database=database_name;host=hostname;port=port'
-   export METADATA_TEST_DBUSER= 'database user with insert permissions'
-   export METADATA_TEST_DBPASS= 'database password'
+   export METADATA_TEST_METALOADER='metaloader user'
+   export METADATA_TEST_DBDSN='database dsn as: 
+    dbi:DriverName:database=database_name;host=hostname;port=port'
 
- also is recommendable set the reset dbseq after run the script
-    export RESET_DBSEQ=1
-
- if it is not set, after one run all the test that depends of a primary id
- (as metadata_id) will fail because it is calculated based in the last
- primary id and not in the current sequence for this primary id
-
+   example: 
+    export METADATA_TEST_DBDSN='dbi:Pg:database=sandbox;host=localhost;'
+    
+   export METADATA_TEST_DBUSER='database user with insert permissions'
+   export METADATA_TEST_DBPASS='database password'
 
 =head1 DESCRIPTION
 
@@ -100,7 +97,7 @@ BEGIN {
         plan skip_all => "Could not connect to database";
     }
 
-    plan tests => 33;
+    plan tests => 23;
 }
 
 BEGIN {
@@ -131,9 +128,9 @@ $schema->txn_begin();
 
 
 ## Get the last values
-my %last_ids = $schema->get_last_id();
-my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'};
-my $last_dbversion_id = $last_ids{'metadata.md_dbversion_dbversion_id_seq'};
+my %nextvals = $schema->get_nextval();
+my $last_metadata_id = $nextvals{'md_metadata'};
+my $last_dbversion_id = $nextvals{'md_dbversion'};
 
 ## Create a empty metadata object to use in the database store functions
 my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $metadata_creation_user);
@@ -246,102 +243,109 @@ eval {
     is($dbversion5->get_metadbdata()->get_metadata_id(), $last_metadata_id+4, 'REVERT OBSOLETE FUNTION test, checking new metadata_id')
 	or diag "Looks like this failed";
 
-    ## Cheking a get_patch_number (TEST 19 and 20)
-    my $patch_number = $dbversion5->get_patch_number();
-    is ($patch_number, 9999, 'GET PATCH NUMBER METHOD, checking patch number') 
-	or diag "Looks like this failed";
+    ##############################################################################
+    ## DEPRECATED METHODS (get_patch_number and check_previous_dbpatches)      ###
+    ##############################################################################
 
-    ## It will test too with a patch name with zeros
+    #### Cheking a get_patch_number (TEST 19 and 20) 
+    ## my $patch_number = $dbversion5->get_patch_number();
+    ## is ($patch_number, 9999, 'GET PATCH NUMBER METHOD, checking patch number') 
+    ##	or diag "Looks like this failed";
+
+    #### It will test too with a patch name with zeros
+    
     my $dbversion6 = CXGN::Metadata::Dbversion->new($schema);
     $dbversion6->set_patch_name('00023_patch_test');
-    is($dbversion6->get_patch_number(), 23, 'GET PATCH NUMBER METHOD, cheking patch number with zeros')
-	or diag "Looks like this failed";
+    
+    ## is($dbversion6->get_patch_number(), 23, 'GET PATCH NUMBER METHOD, cheking patch number with zeros')
+    ##	or diag "Looks like this failed";
 
-    ## Using exists dbpatches (TEST 21 and 22)
+    ## Using exists dbpatches (TEST 19 and 20)
 
     is($dbversion6->exists_dbpatch('9999_patch_test'), 1, 'EXISTS DBPATCH METHOD, checking boolean for a true value')
 	or diag "Looks like this failed";
     is($dbversion6->exists_dbpatch('0023_patch_test'), 0, 'EXISTS DBPATCH METHOD, cheking boolean for a false value')
 	or diag "Looks like this failed";
 
-    ## Using checking previous dbpatches. It will check this function in three different ways:
+    ## DEPRECATED METHOD
+    #### Using checking previous dbpatches. It will check this function in three different ways:
     
-     ## 1-With a specific value, 9999_patch_test. It should return 9998 keys into the hash, perhaps more if exists
-     ## patch names with the same patch number, for example if during this test exists an original 9998_something
+    ## ## 1-With a specific value, 9999_patch_test. It should return 9998 keys into the hash, perhaps more if exists
+    ## ## patch names with the same patch number, for example if during this test exists an original 9998_something
      
-     ## (TEST 23 to 26)
+    ## ## (TEST 23 to 26)
 
-    my %check_previous1 = $dbversion6->check_previous_dbpatches('9999_patch_test');
-    my $key_n1 = scalar(keys %check_previous1); 
+    ## my %check_previous1 = $dbversion6->check_previous_dbpatches('9999_patch_test');
+    ## my $key_n1 = scalar(keys %check_previous1); 
 
     ## It can have more than one patch with the same number, to fix that.
 
-    my %rep;
-    my $same_c = 0;
-    foreach my $p (keys %check_previous1) {
-	if ($p =~ m/^(\d+)/) {
-	    my $number = $1;
+    ## my %rep;
+    ## my $same_c = 0;
+    ## foreach my $p (keys %check_previous1) {
+    ##	if ($p =~ m/^(\d+)/) {
+    ##     my $number = $1;
 	
-	    if (exists $rep{$number}) {
-		$same_c++;
-	    }
-	    else {
-		$rep{$number} = 1;
-	    }
-	}
-    }
+    ##     if (exists $rep{$number}) {
+    ##	      $same_c++;
+    ##     }
+    ##     else {
+    ##	     $rep{$number} = 1;
+    ##     }
+    ##   }
+    ## }
 
-    my $expected_key_n = 9998;
-    if ($last_dbversion_id > 9998) {
-   	$expected_key_n = 9999;
-    }
-    $expected_key_n += $same_c;
+    ## my $expected_key_n = 9998;
+    ## if ($last_dbversion_id > 9998) {
+    ##	$expected_key_n = 9999;
+    ## }
+    ## $expected_key_n += $same_c;
 
-    is($key_n1, $expected_key_n, 'CHECKING PREVIOUS DBPATCHES METHOD, checking number of previous patch numbers (for 9999_patch_test)')
-	or diag "Looks like this failed";
+    ## is($key_n1, $expected_key_n, 'CHECKING PREVIOUS DBPATCHES METHOD, checking number of previous patch numbers (for 9999_patch_test)')
+    ##	or diag "Looks like this failed";
     
-    is($check_previous1{'9998_patch_test'}, 1, 'CHECKING PREVIOUS DBPATCHES METHOD, checking boolean for a known patch name (9998)')
-	or diag "Looks like this failed";
+    ## is($check_previous1{'9998_patch_test'}, 1, 'CHECKING PREVIOUS DBPATCHES METHOD, checking boolean for a known patch name (9998)')
+    ## or diag "Looks like this failed";
 
-    is($check_previous1{'0000_patch_test'}, undef, 'CHECKING PREVIOUS DBPATCHES METHOD, checking boolean for a unknown patch name (0000)')
-	or diag "Looks like this failed";
+    ## is($check_previous1{'0000_patch_test'}, undef, 'CHECKING PREVIOUS DBPATCHES METHOD, checking boolean for a unknown patch name (0000)')
+    ## or diag "Looks like this failed";
 
-    if ($last_dbversion_id < 9997) {
+    ## if ($last_dbversion_id < 9997) {
 
 	## 9997 should be a unknown number only if last_dbversion_id < 9997
-	is($check_previous1{'9997'}, 0, 'CHEKING PREVIOUS DBPATCHES METHOD, checking boolean for a unknown patch number (9997)')
-	    or diag "Looks like this failed";
+	## is($check_previous1{'9997'}, 0, 'CHEKING PREVIOUS DBPATCHES METHOD, checking boolean for a unknown patch number (9997)')
+	##    or diag "Looks like this failed";
 
-    }
-    else {
+    ##   }
+    ## else {
 
 	## It still should do the same number of test.. so
-	is($check_previous1{'9997'}, undef, 'CHEKING PREVIOUS DBPATCHES METHOD, checking boolean for a unknown patch name (9997)')
-	    or diag "Looks like this failed";
-    }
+    ##	is($check_previous1{'9997'}, undef, 'CHEKING PREVIOUS DBPATCHES METHOD, checking boolean for a unknown patch name (9997)')
+    ##	    or diag "Looks like this failed";
+    ##  }
 
      ## 2- Without any specific value, in this case should take the $patch_name for $dbversion6. 
      ## We don't know how many of the db_patches exists from 22 to 1 but we know that there are 22 patch numbers
     
      ## TEST 27
 
-    my %check_previous2 = $dbversion6->check_previous_dbpatches();
-    is(scalar( keys %check_previous2), 22, 'CHECKING PREVIOUS DBPATCHES METHOD, checking previous patch n for patch 0023_patch_test')
-	or diag "Looks like this failed";
+    ## my %check_previous2 = $dbversion6->check_previous_dbpatches();
+    ## is(scalar( keys %check_previous2), 22, 'CHECKING PREVIOUS DBPATCHES METHOD, checking previous patch n for patch 0023_patch_test')
+    ##	or diag "Looks like this failed";
     
 
     ## 3- In an object without any patch_name, it should take the last_dbversion_id (9999_test_patch for this case)
 
     ## TEST 28 and 29
 
-    my $empty_dbversion = CXGN::Metadata::Dbversion->new($schema);
-    my %check_previous3 = $empty_dbversion->check_previous_dbpatches();
+    ## my $empty_dbversion = CXGN::Metadata::Dbversion->new($schema);
+    ## my %check_previous3 = $empty_dbversion->check_previous_dbpatches();
 
-    is($key_n1, $expected_key_n, 'CHECKING PREVIOUS DBPATCHES METHOD, checking number of previous patch numbers in EMPTY OBJ')
-	or diag "Looks like this failed";
+    ## is($key_n1, $expected_key_n, 'CHECKING PREVIOUS DBPATCHES METHOD, checking number of previous patch numbers in EMPTY OBJ')
+    ##	or diag "Looks like this failed";
     
-    is($check_previous1{'9998_patch_test'}, 1, 'CHECKING PREVIOUS DBPATCHES METHOD, checking boolean for a known patch name in EMPTY OBJ')
-	or diag "Looks like this failed";
+    ## is($check_previous1{'9998_patch_test'}, 1, 'CHECKING PREVIOUS DBPATCHES METHOD, checking boolean for a known patch name in EMPTY OBJ')
+    ##  or diag "Looks like this failed";
 
     ## Testing the complete checking
 
@@ -352,10 +356,10 @@ eval {
     throws_ok { $dbversion7->complete_checking({ patch_name => '9998_patch_test'}) } qr/DBPATCH EXECUTION ERROR/,	   
                 "TESTING DIE for complete_checking when use patch_name";
 
-    ## Check that other previous patches by default (using patch number) has not been runned (TEST 31)
+    ## Check that other previous patches by default (using patch number) has not been runned (TEST 31) ## DEPRECATED ##
     
-    throws_ok { $dbversion7->complete_checking({ patch_name => '9999_other_test'}) } qr/PREVIOUS DB_PATCH by default ERROR/, 
-	        "TESTING DIE for complete_checking when previous patches that don't exists";
+    ## throws_ok { $dbversion7->complete_checking({ patch_name => '9999_other_test'}) } qr/PREVIOUS DB_PATCH by default ERROR/, 
+    ##	        "TESTING DIE for complete_checking when previous patches that don't exists";
       
     ## Check a list of previous patches using a list (TEST 32)
     
@@ -389,6 +393,8 @@ $schema->txn_rollback();
       ##   The option 1 leave the seq information in a original state except if there aren't any value in the seq, that it is
        ##   more as the option 2 
 
-if ($ENV{RESET_DBSEQ}) {
-    $schema->set_sqlseq(\%last_ids);
-}
+## The test does not reset the db sequences anymore.
+
+####
+1; #
+####

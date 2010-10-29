@@ -1,122 +1,45 @@
-#!/usr/bin/perl
+=head1 GEM TESTS
 
-=head1 NAME
-
-  experimentaldesign.t
-  A piece of code to test the CXGN::GEM::ExperimentalDesign module
+  For GEM test suite documentation, see L<CXGN::GEM::Test>.
 
 =cut
-
-=head1 SYNOPSIS
-
- perl experimentaldesign.t
-
- Note: To run the complete test the database connection should be done as 
-       postgres user 
- (web_usr have not privileges to insert new data into the gem tables)  
-
- prove experimentaldesign.t
-
- this test needs some environment variables:
-    export GEMTEST_METALOADER= 'metaloader user'
-    export GEMTEST_DBUSER= 'database user with insert permissions'
-    export GEMTEST_DBPASS= 'database password'
-
- also is recommendable set the reset dbseq after run the script
-    export RESET_DBSEQ=1
-
- if it is not set, after one run all the test that depends of a primary id
- (as metadata_id) will fail because it is calculated based in the last
- primary id and not in the current sequence for this primary id
-
-=head1 DESCRIPTION
-
- This script check 95 variables to test the right operation of the 
- CXGN::GEM::ExperimentalDesign module:
-
-=cut
-
-=head1 AUTHORS
-
- Aureliano Bombarely Gomez
- (ab782@cornell.edu)
-
-=cut
-
 
 use strict;
 use warnings;
 
-use Data::Dumper;
-use Test::More tests => 95; # qw | no_plan |; # while developing the test
+use Test::More;
 use Test::Exception;
 
-use CXGN::DB::Connection;
-use CXGN::DB::DBICFactory;
+use CXGN::GEM::Test;
 
-BEGIN {
-    use_ok('CXGN::GEM::Schema');             ## TEST1
-    use_ok('CXGN::GEM::ExperimentalDesign'); ## TEST2
-    use_ok('CXGN::GEM::Experiment');         ## TEST3
-    use_ok('CXGN::GEM::Target');             ## TEST4
-    use_ok('CXGN::Metadata::Metadbdata');    ## TEST5
-}
+my $gem_test = CXGN::GEM::Test->new;
 
-## Check the environment variables
-my @env_variables = ('GEMTEST_METALOADER', 'GEMTEST_DBUSER', 'GEMTEST_DBPASS', 'RESET_DBSEQ');
-foreach my $env (@env_variables) {
-    unless ($ENV{$env} =~ m/^\w+/) {
-	print STDERR "ENVIRONMENT VARIABLE WARNING: Environment variable $env was not set for this test. Use perldoc for more info.\n";
-    }
-}
+plan tests => 95;
 
-#if we cannot load the Schema modules, no point in continuing
-CXGN::Biosource::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::Biosource::Schema module');
-CXGN::Metadata::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::Metadata::Schema module');
-Bio::Chado::Schema->can('connect')
-    or BAIL_OUT('could not load the Bio::Chado::Schema module');
-CXGN::GEM::Schema->can('connect')
-    or BAIL_OUT('could not load the CXGN::GEM::Schema module');
+use_ok('CXGN::GEM::Schema');             ## TEST1
+use_ok('CXGN::GEM::ExperimentalDesign'); ## TEST2
+use_ok('CXGN::GEM::Experiment');         ## TEST3
+use_ok('CXGN::GEM::Target');             ## TEST4
+use_ok('CXGN::Metadata::Metadbdata');    ## TEST5
 
+my $creation_user_name = $gem_test->metaloader_user;
 
 ## The GEM schema contain all the metadata, chado and biosource classes so don't need to create another Metadata schema
 
-
-## The triggers need to set the search path to tsearch2 in the version of psql 8.1
-
-my $psqlv = `psql --version`;
-chomp($psqlv);
-
-my @schema_list = ('gem', 'biosource', 'metadata', 'public');
-if ($psqlv =~ /8\.1/) {
-    push @schema_list, 'tsearch2';
-}
-
-my $schema = CXGN::DB::DBICFactory->open_schema( 'CXGN::GEM::Schema', 
-                                                 search_path => \@schema_list, 
-                                                 dbconn_args => 
-                                                                { 
-                                                                    dbuser => $ENV{GEMTEST_DBUSER},
-                                                                    dbpass => $ENV{GEMTEST_DBPASS},
-                                                                }
-                                               );
-
+my $schema = $gem_test->dbic_schema('CXGN::GEM::Schema');
 $schema->txn_begin();
 
-
 ## Get the last values
-my $all_last_ids_href = $schema->get_all_last_ids($schema);
-my %last_ids = %{$all_last_ids_href};
-my $last_metadata_id = $last_ids{'metadata.md_metadata_metadata_id_seq'} || 0;
-my $last_expdesign_id = $last_ids{'gem.ge_experimental_design_experimental_design_id_seq'} || 0;
-my $last_dbxref_id = $last_ids{'public.dbxref_dbxref_id_seq'} || 0;
-my $last_pub_id = $last_ids{'public.pub_pub_id_seq'} || 0;
+
+my %nextvals = $schema->get_nextval();
+my $last_metadata_id = $nextvals{'md_metadata'} || 0;
+my $last_expdesign_id = $nextvals{'ge_experimental_design'} || 0;
+my $last_dbxref_id = $nextvals{'dbxref'} || 0;
+my $last_pub_id = $nextvals{'pub'} || 0;
 
 
 ## Create a empty metadata object to use in the database store functions
-my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $ENV{GEMTEST_METALOADER});
+my $metadbdata = CXGN::Metadata::Metadbdata->new($schema, $creation_user_name);
 my $creation_date = $metadbdata->get_object_creation_date();
 my $creation_user_id = $metadbdata->get_object_creation_user_by_id();
 
@@ -237,7 +160,7 @@ throws_ok { CXGN::GEM::ExperimentalDesign->new($schema)->set_design_type() } qr/
   	or diag "Looks like this failed";
       is($obj_metadbdata->get_create_date(), $creation_date, "TESTING GET_METADATA FUNCTION, checking create_date")
   	or diag "Looks like this failed";
-      is($obj_metadbdata->get_create_person_id_by_username, $ENV{GEMTEST_METALOADER}, 
+      is($obj_metadbdata->get_create_person_id_by_username, $creation_user_name, 
 	 "TESING GET_METADATA FUNCTION, checking create_person by username")
   	or diag "Looks like this failed";
     
@@ -796,6 +719,4 @@ $schema->txn_rollback();
       ##   The option 1 leave the seq information in a original state except if there aren't any value in the seq, that it is
        ##   more as the option 2 
 
-if ($ENV{RESET_DBSEQ}) {
-    $schema->set_sqlseq_values_to_original_state(\%last_ids);
-}
+## This test does not set the table sequence value anymore (these methods are deprecated)

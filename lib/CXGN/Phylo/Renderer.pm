@@ -628,7 +628,7 @@ sub get_html_image_map {
 	foreach my $bl_label (@{$self->{bl_labels}}){
 		next unless $bl_label->get_tooltip();
 		my $coords = join ",", ($bl_label->get_enclosing_rect);
-		print STDERR "--------RENDERED.PM------". $bl_label->get_onmouesover()."------";
+		#print STDERR "--------RENDERED.PM------". $bl_label->get_onmouseover()."------";
 		$map .= "\n<area coords=\"$coords\" title=\"hey yo\" \\>";
 	}
 
