@@ -628,13 +628,13 @@ sub copy_location {
 
 =head2 image_subpath
 
- Usage:
- Desc:          returns the image subpath, which is a md5sum on an image file,
-                divided into 16 directory levels at 2 bytes length each.
- Ret:
- Args:
- Side Effects:
- Example:
+ Usage: $image->image_subpath
+ Desc: returns the image subpath, which is a md5sum on an image file,
+       divided into 16 directory levels at 2 bytes length each.
+ Ret:  path part in which to store the various sizes of this image
+       under the image root dir, something like 'ab/cd/ef/01/ab1fab1fab1fab1fab1fab1f'
+ Args: none
+ Side Effects: none
 
 =cut
 
