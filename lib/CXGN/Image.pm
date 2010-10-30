@@ -209,7 +209,7 @@ sub store {
 
  Usage:  $self->delete()
  Desc:   set the image status to obsolete='t'
- Ret:    nothing
+ Ret:    true on success, false on failure
  Args:  none
  Side Effects: set to obsolete='t' in individual_image, and locus_image
  Example:
@@ -231,10 +231,11 @@ sub delete {
 	my $query3 = "UPDATE phenome.locus_image set obsolete = 't', modified_date = now() WHERE image_id = ?";
       	my $sth3 = $self->get_dbh()->prepare($query3);
 	$sth3->execute($self->get_image_id() );
-
+        return 1;
     }
     else {
 	warn("Image.pm: Trying to delete an image from the db that has not yet been stored.");
+        return 0;
     }
 
 }
