@@ -262,7 +262,11 @@ sub get_image_id {
 
 sub set_image_id {
     my $self=shift;
-    $self->{image_id}=shift;
+    my $id = $self->{image_id} = shift;
+
+    !defined $id || $id =~ /^\d+$/
+        or confess "invalid image_id '$id'";
+
 }
 
 
