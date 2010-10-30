@@ -38,6 +38,7 @@ use strict;
 package CXGN::Image;
 
 use Carp qw/ cluck carp confess /;
+
 use Digest::MD5;
 use File::Path 'make_path';
 use File::Spec;
@@ -922,7 +923,7 @@ sub iconify_file {
 sub hard_delete {
     my $self = shift;
 
-    if ($self->pointer_count() < 2) {
+    if ( $self->get_original_filename && $self->pointer_count() < 2) {
 	foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') {
 	    my $filename = $self->get_filename($size);
 	    unlink $filename;
