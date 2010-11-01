@@ -1457,7 +1457,7 @@ sub get_loci {
 
 sub get_recursive_loci {
     my $self=shift;
-    my $query = "select distinct locus_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.locus_dbxref using (dbxref_id )  join phenome.locus using (locus_id) where (cvtermpath.object_id = ?) and locus_dbxref.obsolete = 'f' and locus.obsolete = 'f' ";
+    my $query = "select distinct locus_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.locus_dbxref using (dbxref_id )  join phenome.locus using (locus_id) where (cvtermpath.object_id = ?) and locus_dbxref.obsolete = 'f' and locus.obsolete = 'f' and pathdistance > 0";
 
     my $sth=$self->get_dbh()->prepare($query);
     my @loci;
@@ -1484,7 +1484,7 @@ sub get_recursive_loci {
 sub get_recursive_individuals {
     my $self=shift;
     
-    my $query = "select distinct individual_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.individual_dbxref using (dbxref_id ) join phenome.individual using (individual_id) where ( cvtermpath.object_id =?) and individual_dbxref.obsolete = 'f' and individual.obsolete = 'f' ";
+    my $query = "select distinct individual_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.individual_dbxref using (dbxref_id ) join phenome.individual using (individual_id) where ( cvtermpath.object_id =?) and individual_dbxref.obsolete = 'f' and individual.obsolete = 'f' and pathdistance > 0 ";
 
 
     my $sth=$self->get_dbh()->prepare($query);;
