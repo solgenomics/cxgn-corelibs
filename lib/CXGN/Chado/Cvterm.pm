@@ -621,31 +621,31 @@ sub get_full_accession {
 
 
 sub get_recursive_parents {
-    
+
     my $self=shift;
-    
-    my $parents_q =  "SELECT distinct(cvtermpath.object_id), cvterm_relationship.type_id,
-                      cvterm.name   
-                       FROM cvtermpath 
-                       JOIN cvterm_relationship USING (subject_id) 
-                       JOIN cvterm ON (cvtermpath.object_id = cvterm_id) 
-                       WHERE cvtermpath.subject_id =? AND cvterm.is_obsolete=0 AND pathdistance>0 
-                      ";
 
+    my $parents_q =  "SELECT distinct(cvtermpath.object_id)
+                       FROM cvtermpath
+                       JOIN cvterm ON (cvtermpath.object_id = cvterm_id)
+                       WHERE cvtermpath.subject_id =? AND cvterm.is_obsolete=0 AND pathdistance>0";
 
+    my $type_q = "SELECT type_id FROM cvterm_relationship
+                  WHERE subject_id = ? AND object_id = ?";
+    my $type_sth = $self->get_dbh->prepare($type_q);
     my $parents_sth = $self->get_dbh()->prepare($parents_q);
-    
+
     $parents_sth->execute($self->get_cvterm_id() );
     my @parents = ();
-    while (my ($parent_term_id, $type_id, $cvterm_name) = $parents_sth->fetchrow_array()) { 
+    while (my ($parent_term_id) = $parents_sth->fetchrow_array()) {
 	my $parent_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $parent_term_id);
-	my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
-	
+        $type_sth->execute($self->get_cvterm_id, $parent_term_id);
+        my ($type_id) = $type_sth->fetchrow_array();
+        my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
+
 	push @parents, [ $parent_term, $relationship_term ];
     }
     return (@parents);
 }
-    
 
 =head2 get_parents
 
