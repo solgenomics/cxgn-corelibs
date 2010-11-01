@@ -1322,6 +1322,8 @@ sub get_hybridization_object {
                             green => 0 / 255,
                             blue  => 0 / 255,
                             alpha => 1 } ## By default (black)
+        Other arguments are: 'title', 'x_axis_label', 'y_axis_label', 
+                             'graph_width' and 'graph_height'
 
   Side_Effects: none
 
@@ -1340,6 +1342,8 @@ sub get_experiment_graph {
    ## * 'title', a scalar, the title of the graph ($experimental_design_name by default)
    ## * 'x_axis_label', a scalar, the title for the x axis ('Experiment' by default)
    ## * 'y_axis_label', a scalar, the title for the y axis ('Expression_Units_(Fluorescence_Intensity)')
+   ## * 'graph_width', a scalar (600 by default)
+   ## * 'graph_height', a scalar (6000 by default)
 
    my $x_axis_sort    = $args_href->{'x_axis_sort'};
    my $bar_color_href = $args_href->{'bar_color'}
