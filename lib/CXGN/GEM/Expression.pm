@@ -1361,6 +1361,9 @@ sub get_experiment_graph {
        $args_href->{'x_axis_label'} || 'Experiment';
    my $y_axis_label =
        $args_href->{'y_axis_label'} || 'Expression_(Fluor._Intensity)';
+   my $graph_width = $args_href->{'graph_width'} || 600;
+   my $graph_height = $args_href->{'graph_height'} || 600;
+
 
    ## First, get the arrays with the data
 
@@ -1405,7 +1408,7 @@ sub get_experiment_graph {
 
    ## 1) Create the basic chart object
 
-   my $chart = Chart::Clicker->new(width => 680, height => 420);
+   my $chart = Chart::Clicker->new(width => $graph_width, height => $graph_height);
 
    $chart->title->text($title);
    $chart->title->font->size(15);
