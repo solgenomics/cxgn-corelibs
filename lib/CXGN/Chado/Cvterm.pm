@@ -721,11 +721,11 @@ sub get_children {
 
 sub get_recursive_children {
     my $self=shift;
-    my $q =  "SELECT distinct(cvtermpath.object_id), cvterm_relationship.type_id  
+    my $q =  "SELECT distinct(cvtermpath.subject_id), cvterm_relationship.type_id  
                        FROM cvtermpath 
                        JOIN cvterm_relationship USING (subject_id) 
                        JOIN cvterm ON (cvtermpath.object_id = cvterm_id) 
-                       WHERE cvtermpath.subject_id =? AND cvterm.is_obsolete=0 AND pathdistance<0 ";
+                       WHERE cvtermpath.object_id =? AND cvterm.is_obsolete=0 AND pathdistance>0 ";
     
     my $sth = $self->get_dbh()->prepare($q);
     $sth->execute($self->get_cvterm_id() );
@@ -1459,14 +1459,14 @@ sub get_recursive_loci {
     my $self=shift;
     my $query = "select distinct locus_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.locus_dbxref using (dbxref_id )  join phenome.locus using (locus_id) where (cvtermpath.object_id = ?) and locus_dbxref.obsolete = 'f' and locus.obsolete = 'f' ";
 
-    my $sth=$self->get_dbh()->prepare($query);;
+    my $sth=$self->get_dbh()->prepare($query);
     my @loci;
     $sth->execute($self->get_cvterm_id() );
     while ( my ($locus_id) = $sth->fetchrow_array() ) {
 	my $locus= CXGN::Phenome::Locus->new($self->get_dbh(), $locus_id);
 	push @loci, $locus;
     }
-    
+
     return @loci;
 }
 
