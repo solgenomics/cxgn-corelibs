@@ -138,37 +138,36 @@ sub fetch {
 sub store {
     my $self= shift;
     my $dbxref_id= $self->get_dbxref_id() ;
-    if (!$dbxref_id) { #do an insert 
-	if (!$self->db_exists() ) { # insert a new db 
+    if (!$dbxref_id) { #do an insert
+    	if (!$self->db_exists() ) { # insert a new db 
 	    $self->d( "***Dbxref.pm: storing a new db '".$self->get_db_name() ."'.\n");
 	    my $db=CXGN::Chado::Db->new($self->get_dbh() );
 	    $db->set_db_name($self->get_db_name() );
 	    $db->store;
 	    $self->set_db_id($db->get_db_id() );
-	}else { 
+	}else {
 	    my $q= "SELECT db_id FROM db WHERE db.name = ?";
 	    my $s=$self->get_dbh()->prepare($q);
 	    $s->execute($self->get_db_name() ) ;
 	    my ($db_id)= $s->fetchrow_array();
 	    $self->set_db_id($db_id);
 	}
-	my $existing_id= $self->exists_in_database();
-	if (!$existing_id) {
-	    #insert the new dbxref 
-	    my $query = "INSERT INTO public.dbxref (db_id, accession, description, version) VALUES(?,?,?,?) RETURNING dbxref_id";
+        my $existing_id= $self->exists_in_database();
+        if (!$existing_id) {
+	    #insert the new dbxref
+            my $query = "INSERT INTO public.dbxref (db_id, accession, description, version) VALUES(?,?,?,?) RETURNING dbxref_id";
 	    my $sth= $self->get_dbh()->prepare($query);
 	    if (!$self->get_version()) { $self->set_version(""); } #version field is not null
 	    $sth->execute($self->get_db_id, $self->get_accession, $self->get_description, $self->get_version());
 	    ($dbxref_id) = $sth->fetchrow_array();
-
-	    $self->set_dbxref_id($dbxref_id);
+            $self->set_dbxref_id($dbxref_id);
 	} else { $self->set_dbxref_id($existing_id); }
     }else {	 # do an update
 	my $query = "UPDATE public.dbxref SET description=?, version=? WHERE dbxref_id=?";
 	my $sth= $self->get_dbh()->prepare($query);
 	$sth->execute($self->get_description(), $self->get_version(), $dbxref_id);
     }
-    return $dbxref_id; 
+    return $self->get_dbxref_id;
 }
 
 =head2 exists_in_database
