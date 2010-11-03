@@ -688,19 +688,18 @@ sub get_parents {
 =cut
 
 sub get_children {
-    
+
     my $self=shift;
-    my $children_q = "select subject_id , type_id , name from cvterm_relationship join cvterm on (subject_id = cvterm_id ) where object_id =? ";
-	
+    my $children_q = "select subject_id , type_id , name from cvterm_relationship join cvterm on (subject_id = cvterm_id ) where cv_id = ? AND object_id =? ";
+
     my $children_sth= $self->get_dbh()->prepare($children_q);
-    $children_sth->execute( $self->get_cvterm_id() );
+    $children_sth->execute( $self->get_cv_id, $self->get_cvterm_id() );
     $self->d( "Parent cvterm id = ".$self->get_cvterm_id()."\n" );
     my @children = ();
-    while (my ($child_term_id, $type_id, $cvterm_name) = $children_sth->fetchrow_array()) { 
+    while (my ($child_term_id, $type_id, $cvterm_name) = $children_sth->fetchrow_array()) {
 	$self->d( "retrieved child $child_term_id, $type_id\n" );
 	my $child_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $child_term_id);
 	my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
-	
 	push @children, [ $child_term, $relationship_term ];
     }
     return (@children);
