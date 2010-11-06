@@ -545,7 +545,7 @@ sub get_seqlen {
     if (exists($self->{seqlen}) && defined($self->{seqlen})) { 
 	return $self->{seqlen};
     }
-    elsif ($self->get_residues() ) { 
+    elsif ($self->get_residues() ) {
 	return length($self->get_residues()); 
     } else { return undef }
 }
