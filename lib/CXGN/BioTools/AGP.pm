@@ -143,7 +143,7 @@ sub agp_parse {
     } else {
       open my $f,$agpfile
 	or die "$! opening '$agpfile'\n";
-      ($f,basename $agpfile)
+      ($f,$agpfile)
     }
   };
 
@@ -166,7 +166,7 @@ sub agp_parse {
 
   my $last_end;
   my $last_partnum;
-  my $global_obj_name;
+  my $last_objname;
 
   my $assembled_sequence = '';
   while (my $line = <$agp_in>) {
@@ -196,15 +196,15 @@ sub agp_parse {
 
     #parse and check the first 5 cols
     @r{qw( objname ostart oend partnum type )} = splice @fields,0,5;
-    $global_obj_name ||= $r{objname};
-    $r{objname} eq $global_obj_name
-      or parse_error "object name must be the same on every line. '$r{obj_name}' is not the same as '$global_obj_name'";
+    $r{objname}
+      or parse_error "'$r{obj_name}' is a valid object name";
     #end
-    if ( defined $last_end ) {
+    if ( defined $last_end && defined $last_objname && $r{objname} eq $last_objname ) {
       $r{ostart} == $last_end+1
 	or parse_error "start coordinate not contiguous with previous line's end";
     }
     $last_end = $r{oend};
+    $last_objname = $r{objname};
 
     #start
     $r{oend} >= $r{ostart} or parse_error("end must be >= start");
@@ -217,10 +217,12 @@ sub agp_parse {
     $last_partnum = $r{partnum};
 
     #type
-    if ($r{type} eq 'N') {
+    if ( $r{type} =~ /^[NU]$/ ) {
       (@r{qw( length gap_type linkage)}, my $empty, my $undefined) = @fields;
       @fields = ();
-      $r{typedesc} = 'known_gap';
+      my %descmap = qw/ U unknown_gap N known_gap /;
+      $r{typedesc} = $descmap{$r{type}}
+	or parse_error("unregistered type $r{type}");
       $r{is_gap}   = 1;
 
       my $gap_size_to_use = $opt{gap_length} || $r{length};
@@ -239,7 +241,7 @@ sub agp_parse {
 
       push @records,\%r;
 
-    } elsif ( str_in( $r{type}, qw/A D F G O P W U/ ) ) {
+  } elsif ( $r{type} =~ /^[ADFGOPW]$/ ) {
       my %descmap = qw/A active_finishing D draft F finished G wgs_finishing N known_gap O other P predraft U unknown_gap W wgs_contig/;
       $r{typedesc} = $descmap{$r{type}}
 	or parse_error("unregistered type $r{type}");
