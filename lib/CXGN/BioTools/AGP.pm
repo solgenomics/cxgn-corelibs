@@ -313,7 +313,7 @@ sub agp_write {
 
     #and all other lines
     my @fields = @{$line}{qw(objname ostart oend partnum type)};
-    if( $line->{type} eq 'N') {
+    if( $line->{type} =~ /^[NU]$/ ) {
       push @fields, @{$line}{qw(length gap_type linkage)},'';
     } else {
       push @fields, @{$line}{qw(ident cstart cend orient)};
