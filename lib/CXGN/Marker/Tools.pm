@@ -22,10 +22,16 @@ Non-object-oriented functions for doing things with markers.
 =cut
 
 package CXGN::Marker::Tools;
+
+use strict;
+use warnings;
+
 use CXGN::DB::Connection;
 use Exporter;
 use DBI;
-push(@ISA, 'Exporter');
+
+our @ISA;
+push( @ISA, 'Exporter');
 our @EXPORT_OK = qw(
 clean_marker_name 
 fix_marker_name
@@ -175,6 +181,7 @@ sub marker_name_to_ids {
     my($dbh,$marker_name)=@_;
     unless(CXGN::DB::Connection::is_valid_dbh($dbh)){die"Invalid DBH";}
     my @ids;
+    my $caps_name;
     my $clean_name=&clean_marker_name($marker_name);
     my $dirty_caps_name=$marker_name."_CAPS";
     my $clean_caps_name=$clean_name."_CAPS";
@@ -240,7 +247,7 @@ sub insert {
     return $id;
 }
 
-=item sequence_to_id
+=item get_sequence_id
 
 Return the sequence_id for a given sequence
 
@@ -255,7 +262,7 @@ sub get_sequence_id {
 
     my ($sequence_id) = $q->fetchrow_array();
 
-    if (!$sequence_id) { die "no sequence_id found for sequence [$sequence]\n" }
+    if (!$sequence_id) { warn "no sequence_id found for sequence [$sequence]\n";  }
     return $sequence_id;
 }
 
@@ -442,7 +449,7 @@ If you get a list of dirty names back, your script should probably die, and they
 sub dirty_marker_names
 {
     my($dbh)=@_;
-    @dirty_names=();
+    my @dirty_names=();
     my $clean_alias_q=$dbh->prepare('select alias from marker_alias');
     $clean_alias_q->execute();
     while(my($alias)=$clean_alias_q->fetchrow_array())
