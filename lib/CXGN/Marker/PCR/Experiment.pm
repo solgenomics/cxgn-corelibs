@@ -722,7 +722,7 @@ sub protocol
     my($protocol)=@_;
     if($protocol)
     {
-        unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol eq 'unknown')
+        unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol eq 'unknown' or $protocol eq 'Indel')
         {
             croak"Protocol '$protocol' is invalid.";
         }
