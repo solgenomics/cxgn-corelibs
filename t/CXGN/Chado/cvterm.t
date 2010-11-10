@@ -34,22 +34,31 @@ ok( @root_namespaces > 0, "get_namespaces" );
 my @new_roots = CXGN::Chado::Cvterm::get_roots( $dbh, "GO" );
 ok( @new_roots == 3, "GO namespace get_roots" );
 
-my $cv_term = undef;
+my $cvterm = undef;
 
 my $cv_accession = "GO:0009536";
 
-$cv_term = CXGN::Chado::Cvterm->new_with_accession( $dbh, $cv_accession );
+$cvterm = CXGN::Chado::Cvterm->new_with_accession( $dbh, $cv_accession );
 
-is( $cv_term->get_cvterm_name(), "plastid", "get_cvterm_name function" );
-is( $cv_term->get_cv_name(), "cellular_component", "get_cv_name" );
-is( $cv_term->get_accession(), "0009536", 'get_accession' );
-@term_list = $cv_term->get_children();
-cmp_ok( scalar @term_list, '>=', 11, "get_children" );
+is( $cvterm->get_cvterm_name(), "plastid", "get_cvterm_name function" );
+is( $cvterm->get_cv_name(), "cellular_component", "get_cv_name" );
+is( $cvterm->get_accession(), "0009536", 'get_accession' );
+@term_list = $cvterm->get_children();
+#count direct children
+cmp_ok( scalar @term_list, '=', 12, "get_children" );
 
-@term_list = $cv_term->get_parents();
+@term_list = $cvterm->get_parents();
 ok( @term_list == 2, "get_parents" );
-is( $term_list[0]->[0]->identifier(), "0044444", "get_parents check 1" );
-is( $term_list[1]->[0]->identifier(), "0043231", "get_parents check 2" );
+my @parent_names = sort ( map ($_->[0]->identifier , @term_list) ) ;
+is( $parent_names[0], "0043231", "get_parents check 1" );
+is( $parent_names[1], "0044444", "get_parents check 2" );
+
+# now look at the recursive children and parents
+my @recursive_children = $cvterm->get_recursive_children;
+is( @recursive_children , 121 , "get_recursive_children");
+
+my @recursive_parents = $cvterm->get_recursive_parents;
+is( @recursive_parents , 11 , "get_recursive_parents");
 
 # make a new cterm and store it, all in a transaction.
 # then rollback to leave db content intact.
@@ -58,7 +67,7 @@ SKIP : {
     my $ontology = CXGN::Chado::Ontology->new_with_name( $dbh, "biological_process" );
     my $new_t = CXGN::Chado::Cvterm->new($dbh);
 
-    my $identifier = "0000001";
+    my $identifier = "1111111";
     $new_t->identifier($identifier);
     $new_t->set_obsolete(0);
 
@@ -105,7 +114,7 @@ SKIP : {
     is( @other_parent_info, 2, "go term two parent test" );
 
     @matches = $other_term->map_to_slim(@slim_terms);
-
+    print "term match = " . $matches[0] . "\n";
     my $p_term = CXGN::Chado::Cvterm->new_with_accession( $dbh, "GO:$matches[0]" );
     @parent_info = $p_term->get_parents();
     is( @parent_info, 1, "parent of parent test" );

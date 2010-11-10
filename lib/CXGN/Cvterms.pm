@@ -35,7 +35,7 @@ use CXGN::Phenome::Population;
 use CXGN::DB::Connection;
 use base qw/ CXGN::Search::DBI::Simple::WWWQuery /;
 
-sub _cached_dbh() { our $_cached_dbc ||= CXGN::DB::Connection->new('public') }
+sub _cached_dbh() { our $_cached_dbc ||= CXGN::DB::Connection->new }
 
 my $public = 'public';
 my $phenome = 'phenome';

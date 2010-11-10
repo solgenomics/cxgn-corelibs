@@ -261,32 +261,33 @@ sub associate_image {
     return $tag_image_id;
 }
 
-=head2 get_associated_images
+=head2 get_associated_image_ids
 
- Usage:        $tag->get_associated_images()
+ Usage:        $tag->get_associated_image_idss()
  Desc:         
- Ret:          retrieves the associates images as CXGN::Image objects
+ Ret:          retrieves the associates images as a list of image_ids
  Args:
  Side Effects: none
+ Notes:        this replaces the funcion get_associated_images to remove
+               a direct dependency on CXGN::Image
  Example:
 
 =cut
 
-sub get_associated_images {
+sub get_associated_image_ids {
     my $self = shift;
     my $query = "SELECT image_id 
                    FROM metadata.md_tag_image
                   WHERE tag_id=?";
     my $sth = $self->get_dbh()->prepare($query);
     $sth -> execute($query);
-    my @images = ();
+    my @image_ids = ();
     while (my ($image_id) = $sth->fetchrow_array()) { 
-	my $image = CXGN::Image->new($self->get_dbh(), $image_id);
-	push @images, $image;
+	push @image_ids, $image_id;
     }
-    return @images;
+    return @image_ids;
 
-}
+ }
 
 =head2 exists_tag_named
 

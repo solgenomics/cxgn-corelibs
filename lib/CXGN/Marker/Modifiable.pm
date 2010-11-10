@@ -295,7 +295,7 @@ sub add_experiment
     {
         croak"add_experiment must be called with a hash ref with key 'location' pointing to a location object, and/or key 'pcr_experiment' pointing to a pcr experiment object, and/or key 'rflp_experiment' pointing to an rflp experiment object";
     }
-    unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'dCAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol =~/DArT/i or $protocol =~ /OPA/i or $protocol eq 'unknown')
+    unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'dCAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol =~/DArT/i or $protocol =~ /OPA/i or $protocol eq 'Indel' or $protocol =~ /ASPE/i or $protocol eq 'unknown')
     {
         croak"Protocol '$protocol' is invalid.";
     }

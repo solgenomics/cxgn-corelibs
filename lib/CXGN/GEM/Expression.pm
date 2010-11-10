@@ -1322,6 +1322,8 @@ sub get_hybridization_object {
                             green => 0 / 255,
                             blue  => 0 / 255,
                             alpha => 1 } ## By default (black)
+        Other arguments are: 'title', 'x_axis_label', 'y_axis_label', 
+                             'graph_width' and 'graph_height'
 
   Side_Effects: none
 
@@ -1340,6 +1342,8 @@ sub get_experiment_graph {
    ## * 'title', a scalar, the title of the graph ($experimental_design_name by default)
    ## * 'x_axis_label', a scalar, the title for the x axis ('Experiment' by default)
    ## * 'y_axis_label', a scalar, the title for the y axis ('Expression_Units_(Fluorescence_Intensity)')
+   ## * 'graph_width', a scalar (600 by default)
+   ## * 'graph_height', a scalar (6000 by default)
 
    my $x_axis_sort    = $args_href->{'x_axis_sort'};
    my $bar_color_href = $args_href->{'bar_color'}
@@ -1361,6 +1365,9 @@ sub get_experiment_graph {
        $args_href->{'x_axis_label'} || 'Experiment';
    my $y_axis_label =
        $args_href->{'y_axis_label'} || 'Expression_(Fluor._Intensity)';
+   my $graph_width = $args_href->{'graph_width'} || 600;
+   my $graph_height = $args_href->{'graph_height'} || 600;
+
 
    ## First, get the arrays with the data
 
@@ -1405,7 +1412,7 @@ sub get_experiment_graph {
 
    ## 1) Create the basic chart object
 
-   my $chart = Chart::Clicker->new(width => 680, height => 420);
+   my $chart = Chart::Clicker->new(width => $graph_width, height => $graph_height);
 
    $chart->title->text($title);
    $chart->title->font->size(15);
