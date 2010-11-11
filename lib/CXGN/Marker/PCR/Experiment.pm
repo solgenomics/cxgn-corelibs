@@ -953,12 +953,12 @@ sub test_and_clean_bands
  Ret:  a database id
  Args: a string with sequence type, and the sequence string
        sequence types should be listed in the cvterm table with cv_name =
-       'sgn sequence type' (See L<Bio::Chado::Schema::Cv::Cvterm>->create_with for adding new sequence types)
- Side Effects: store a new sequence in sgn.sequence, if one does not exist. 
+       'sequence' (this is the namespace for SO http://song.cvs.sourceforge.net/viewvc/song/ontology/so.obo?view=log )
+ Side Effects: store a new sequence in sgn.sequence, if one does not exist.
                Sequences are converted to all upper-case.
 
 Example
-    my $id = $self->store_sequence('forward primer','ATCCGTGACGTAC');
+    my $id = $self->store_sequence('forward_primer','ATCCGTGACGTAC');
 
 =cut
 
@@ -972,9 +972,9 @@ sub store_sequence {
              WHERE name ilike ? AND cv_id =
              (SELECT cv_id FROM public.cv WHERE cv.name ilike ?) ";
     my $sth=$self->{dbh}->prepare($q);
-    $sth->execute($sequence_type,'sgn sequence type');
+    $sth->execute($sequence_type,'sequence');
     my ($type_id) = $sth->fetchrow_array();
-    die "Sequence type $sequence_type does not exist in the database!\n Expected to find cvterm $sequence_type with cv_name 'sgn sequence type'!\n Please check your databae\n " if !$type_id;
+    die "Sequence type $sequence_type does not exist in the database!\n Expected to find cvterm $sequence_type with cv_name 'sequence'!\n Please check your databae, and make sure Sequence Ontology is up-to-date\n " if !$type_id;
     ##
     $seq =~ s/\s//g;
     unless($seq=~/[ATGCatgc]+/)   {
