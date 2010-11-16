@@ -56,7 +56,7 @@ use base qw | CXGN::People::Login |;
 sub get_curators {
     my $dbh = shift;
     my $query =
-"SELECT sp_person_id FROM sgn_people.sp_person WHERE user_type='curator' ";
+"SELECT sp_person_id FROM sgn_people.sp_person_roles join sgn_people.sp_roles USING (sp_role_id) WHERE name='curator' ";
     my $sth = $dbh->prepare($query);
     $sth->execute();
     my @ids = ();
@@ -171,12 +171,12 @@ sub get_bacs_associated_with_person {
     my $person_id = $self->get_sp_person_id();
     my $bacs_query;
 
-    if ( $self->get_user_type() eq 'sequencer' ) {
+    if ( $self->has_role('sequencer') ) {
         $bacs_query = $self->get_sql('sequencer_bacs');
         $bacs_query->execute($person_id);
     }
 
-    elsif ( $self->get_user_type() eq 'curator' ) {
+    elsif ( $self->has_role('curator') ) {
         $bacs_query = $self->get_sql("curator_bacs");
         $bacs_query->execute($chr);
     }
@@ -210,7 +210,7 @@ sub get_bacs_associated_with_person {
 sub get_projects_associated_with_person {
     my $self = shift;
 
-    if ( $self->get_user_type() eq 'curator' ) {
+    if ( $self->has_role('curator') ) {
         my $sth = $self->get_sql('all_projects');
         $sth->execute();
         my $ary = $sth->fetchall_arrayref;
@@ -241,7 +241,7 @@ sub get_projects_associated_with_person {
 sub is_person_associated_with_project {
     my $self = shift;
     my ($project_id) = @_;
-    return 1 if ( $self->get_user_type() eq 'curator' );
+    return 1 if ( $self->has_role('curator') );
 
     our ($unmapped_project_id) ||= do {
         my $sth = $self->get_sql('project_by_name');
@@ -276,6 +276,11 @@ sub fetch {
     }
 
 }
+
+
+
+
+
 
 =head2 function store()
 
@@ -332,7 +337,7 @@ sub store {
             $self->get_contact_update(), $self->get_sp_person_id()
         );
         $return_value = $sth->rows();
-
+	$self->add_role($self->{user_type});
         #print STDERR "Affected rows: $return_value\n";
     }
 
@@ -367,6 +372,7 @@ sub store {
         #        my $query2 = "SELECT last_insert_id() FROM sp_person";
         my ($last) = $sth->fetchrow_array;
         $self->{sp_person_id} = $last;
+	$self->add_role($self->{user_type});
         $return_value = $self->get_sp_person_id();
     }
 
@@ -795,6 +801,9 @@ sub hard_delete {
         die "An error occurred during hard delete: $@";
     }
 }
+
+
+
 
 sub set_sql {
     my $self = shift;

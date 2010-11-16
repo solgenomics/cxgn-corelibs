@@ -40,21 +40,23 @@ All functions below are EXPORT_OK.
 
 =cut
 
-use base qw/Exporter CXGN::DB::Ima/;
+use base qw/ Exporter /;
 
-BEGIN {
-  our @EXPORT_OK = qw(
-		      agp_to_seq
-		      agp_parse
-		      agp_write
-		      agp_contigs
-
-		      agp_contig_seq
-
-		      agp_to_features
-		     );
-}
 our @EXPORT_OK;
+BEGIN {
+  @EXPORT_OK = qw(
+                  agp_to_seq
+                  agp_to_seqs
+                  agp_parse
+                  agp_write
+                  agp_contigs
+
+                  agp_contig_seq
+
+                  agp_to_features
+                 );
+}
+
 
 =head2 agp_parse
 
@@ -425,10 +427,10 @@ sub agp_contig_seq {
 }
 
 
-=head2 agp_to_seq
+=head2 agp_to_seqs
 
-  Usage: my $seq = agp_to_seq($filename, %options);
-  Desc : parse an AGP file and make a pseudomolecule sequence with
+  Usage: my $seq = agp_to_seq( $filename, %options );
+  Desc : parse an AGP file (or filehandle) and make a pseudomolecule sequence with
          it, fetching sequences using the given subroutine(s)
   Args : the AGP filename, plus hash-style options as:
            lowercase   => 1,   #< force lower-case sequence,
@@ -448,12 +450,12 @@ sub agp_contig_seq {
                                     # pad with Ns if true,
                                     # die if false.  default
                                     # false (die)
-  Ret  : a Bio::Seq::LargePrimarySeq object
+  Ret  : list of Bio::Seq::LargePrimarySeq objects
   Side Effects: warns and dies on errors
 
 =cut
 
-sub agp_to_seq {
+sub agp_to_seqs {
   my ($agpfile,%opt) = @_;
   $opt{gap_length} ||= 0;
   $opt{lowercase} ||= 0;
@@ -462,31 +464,44 @@ sub agp_to_seq {
   my $agplines = agp_parse($agpfile)
     or die "error parsing AGP file $agpfile\n";
 
-  my $objname;
+  my @seqs;
 
-  my $seq_obj = Bio::Seq::LargePrimarySeq->new();
-  foreach my $line (@$agplines) {
+  for my $line (@$agplines) {
+    next if exists $line->{comment}; #< skip comments
 
-    next if exists $line->{comment}; #< skip comment
-    $objname ||= $line->{objname};
+    push @seqs, Bio::Seq::LargePrimarySeq->new( -id => $line->{objname} )
+        unless $seqs[-1] && $seqs[-1]->id eq $line->{objname};
 
-    if( $line->{typedesc} eq 'known_gap' ) {
-      my $gap_size_to_use = $opt{gap_length} || $line->{length};
-      $seq_obj->add_sequence_as_string( $opt{no_seq_char}x$gap_size_to_use );
+    my $seq_obj = $seqs[-1];
+
+    if ( $line->{typedesc} =~ /^(un)?known_gap$/ ) {
+        my $gap_size_to_use = $opt{gap_length} || $line->{length};
+        $seq_obj->add_sequence_as_string( $opt{no_seq_char} x $gap_size_to_use );
     } else {
-      $seq_obj->add_sequence_as_string( agp_contig_seq([$line], %opt) );
+        $seq_obj->add_sequence_as_string( agp_contig_seq([$line], %opt) );
     }
   }
 
-  $seq_obj->id($objname);
-  return $seq_obj;
+  return @seqs;
+}
+
+
+=head2 agp_to_seq
+
+Like agp_to_seq, except only returns the first sequence in the AGP
+file.  Deprecated, but still exists for backward compatibility.
+
+=cut
+
+sub agp_to_seq {
+    ( shift->agp_to_seq(@_) )[0]
 }
 
 
 =head2 agp_to_features
 
   Usage: my @features = agp_to_features( $agp_file );
-  Desc : parse the AGP file and return it as a list of
+  Desc : parse the AGP file (or filehandle) and return it as a list of
          features located on the object that's being
          built
   Args : AGP file name,
@@ -548,7 +563,6 @@ sub agp_to_features {
 
   return @features;
 }
-
 
 =head1 AUTHOR(S)
 
