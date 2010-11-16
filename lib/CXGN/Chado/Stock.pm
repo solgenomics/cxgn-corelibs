@@ -147,10 +147,7 @@ sub exists_in_database {
 
 sub get_organism {
     my $self = shift;
-    if ($self->get_organism_id) {
-	return $self->get_object_row()->find_related('organism');
-    }
-    return undef;
+    return $self->get_object_row()->organism;
 }
 
 =head2 get_type
@@ -358,7 +355,8 @@ sub set_stock_id {
 
 sub get_is_obsolete {
     my $self = shift;
-    return $self->get_object_row()->get_column("is_obsolete"); 
+    my $stock = $self->get_object_row();
+    return $stock->get_column("is_obsolete") if $stock;
 }
 
 sub set_is_obsolete {
