@@ -7,9 +7,8 @@ Version:1.0
 =head1 DESCRIPTION
 
 Created to work with  CXGN::Page::Form::AjaxFormPage
-for eliminating hte need to refactor the  AjaxFormPage and Editable  to work with DBIC objects.
-Functions such as 'get_obsolete' , 'store' , and 'exists_in_database' are required , and do not 
-use standard DBIC syntax. 
+for eliminating the need to refactor the  AjaxFormPage and Editable  to work with DBIC objects.
+Functions such as 'get_obsolete' , 'store' , and 'exists_in_database' are required , and do not use standard DBIC syntax.
 
 =head1 AUTHOR
 
@@ -40,8 +39,7 @@ sub new {
     my $class = shift;
     my $schema = shift;
     my $id = shift;
-    
-    
+
      ### First, bless the class to create the object and set the schema into the object.
     #my $self = $class->SUPER::new($schema);
     my $self = bless {}, $class;
@@ -81,7 +79,7 @@ sub store {
 	if (!$exists) {
 	    my $new_row = $self->get_object_row();
 	    $new_row->insert();
-	    
+
 	    $id=$new_row->stock_id();
 	}else {
 	    my $existing_stock=$self->get_resultset('Stock::Stock')->find($exists);
@@ -120,7 +118,7 @@ sub exists_in_database {
 	});
     #loading new stock - $stock_id is undef
     if (defined($s) && !$stock_id ) {  return $s->stock_id ; }
-    
+
     #updating an existing stock
     elsif ($stock_id && defined($s) ) {
 	if ( ($s->stock_id == $stock_id) ) {
@@ -170,7 +168,7 @@ sub get_type {
     my $self = shift;
 
     if ($self->get_type_id) {
-	return  $self->get_object_row()->find_related('type');
+	return  $self->get_object_row()->type;
     }
     return undef;
 
