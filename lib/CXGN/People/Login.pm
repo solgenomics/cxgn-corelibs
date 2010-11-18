@@ -368,14 +368,13 @@ sub new_role {
 =cut
 
 sub exists_role {
-    my $self =shift;
-    my $role = shift;
-    # add role only if it does not exist
-    my $q = "SELECT sp_role_id FROM sgn_people.sp_roles WHERE name ilike ?";
-    my $s = $self->get_dbh()->prepare($q);
-    $s->execute($role);
-    my ($sp_role_id) = $s->fetchrow_array();
-    if (!$sp_role_id) { print STDERR "Role $role does not exist!\n";}
+    my ( $self, $role ) = @_;
+
+    my ($sp_role_id) = $self->get_dbh->selectrow_array(<<'', undef, $role );
+SELECT sp_role_id
+FROM sgn_people.sp_roles
+WHERE name ILIKE ?
+
     return $sp_role_id;
 }
 
