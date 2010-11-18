@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests=>21;
+use Test::More tests=>22;
 use CXGN::Debug;
 
 my $debug = 0;
@@ -49,7 +49,7 @@ is($q->get_organization(), "BTI", "organization test");
 is($q->get_user_type(), "user", "user type test");
 is($q->has_role('test_role'), 1,"user role test");
 is($q->has_role('test_role_2'), 1, "user role test 2");
-is($q->get_roles(), ('user', 'test_role', 'test_role_2'), "get_roles test");
+is_deeply( [$q->get_roles], ['user', 'test_role', 'test_role_2'], "get_roles test");
 $q->remove_role('test_role_2');
 is($q->has_role('test_role_2'), 0, "remove role test");
 
