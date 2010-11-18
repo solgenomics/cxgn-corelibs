@@ -93,7 +93,7 @@ sub _to_scalars {
     
     #this part defines the mapping from get/post data to search params 
     ($params{cvterm_name}) = $self->param_bindvalues('cvterm_name');
-    $params{cvterm_name} =~ s/%//g;   
+    $params{cvterm_name} =~ s/%//g if $params{cvterm_name};
    
     return %params;
 } 
@@ -116,7 +116,7 @@ sub to_html {
     my $cvterm_name = $self->uniqify_name('cvterm_name');
    
 
-    
+    no warnings 'uninitialized';
     my $cvterm_search =  qq|<input name="$cvterm_name" value="$scalars{cvterm_name}" size="30" >|;
   
     $pop_links = "<table align=center cellpadding=20px><tr><td><b>Browse traits/QTLs by population:</b><br/>$pop_links</td></tr></table>";
