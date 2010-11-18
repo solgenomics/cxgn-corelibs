@@ -185,6 +185,7 @@ my $build = Module::Build->new(
         'File::Slurp'          => 0,
         'Test::Class'          => '0.33',
         'MooseX::Runnable'     => 0,
+        'Modern::Perl'         => 0,
     },
 );
 $build->create_build_script;
