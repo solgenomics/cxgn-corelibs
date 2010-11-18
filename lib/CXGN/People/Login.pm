@@ -148,6 +148,7 @@ EOQ
             $self->get_user_type,
             $self->get_sp_person_id,
         );
+	$self->add_role($self->get_user_type());
 
     }
     else {
@@ -159,15 +160,15 @@ EOQ
         my $pwd   = $self->get_password();
         my $cc    = $self->get_confirm_code();
         my $dsa   = $self->get_disabled();
-        my $ut    = $self->get_user_type();
         my $fn  = '<a href="/solpeople/contact-info.pl">[click to update]</a>';
         my $ln  = '<a href="/solpeople/contact-info.pl">[click to update]</a>';
         my $sth = $self->get_sql("insert");
 
-        $sth->execute( $un, $prive, $pende, $pwd, $cc, $dsa, $ut, $fn, $ln );
+        $sth->execute( $un, $prive, $pende, $pwd, $cc, $dsa, $fn, $ln );
         my $person_id =
           $self->get_dbh()->last_insert_id( 'sp_person', 'sgn_people' );
         $self->{sp_person_id} = $person_id;
+	$self->add_role($self->get_user_type());
     }
     return 1;
 }
@@ -330,34 +331,233 @@ sub get_disabled {
     return $self->{disabled};
 }
 
-=head2 functions get_user_type(), set_user_type()
+=head2 new_role
 
-  Synopsis:	$p->set_user_type("sequencer");
-  Arguments:	the desired user type. Different types of users have
-                different access rights. Currently defined user types
-                are\: user (default), submitter, curator (has all access
-                rights, kind of the root user), sequencer (can set BAC 
-                sequencing statuses).
-  Returns:	
-  Side effects:	
-  Description:	
+ Usage:        $p->new_role($role)
+ Desc:         creates the role $role, without associating it to $p.
+               (see add_role()).
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub new_role {
+    my $self = shift;
+    my $role = shift;
+    my $sp_role_id = $self->exists_role($role);
+    if (!$sp_role_id) { 
+	my $q = "INSERT INTO sgn_people.sp_roles (name) VALUES (?) RETURNING sp_role_id";
+	my $s = $self->get_dbh()->prepare($q);
+	$s->execute(lc($role));
+	($sp_role_id) = $s->fetchrow_array();
+    }
+    return $sp_role_id;
+}
+
+=head2 exists_role
+
+ Usage:        $p->exists_role($role)
+ Desc:         returns true if the role $role exists (also outside of $p).
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub exists_role {
+    my ( $self, $role ) = @_;
+
+    my ($sp_role_id) = $self->get_dbh->selectrow_array(<<'', undef, $role );
+SELECT sp_role_id
+FROM sgn_people.sp_roles
+WHERE name ILIKE ?
+
+    return $sp_role_id;
+}
+
+
+
+=head2 add_role
+
+ Usage:        $p->add_role($role)
+ Desc:         adds role $role to person $p. Creates a new role if 
+               the role does not exist.
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub add_role {
+    my $self = shift;
+    my $role = shift;
+
+    my $sp_role_id = $self->exists_role($role);
+    
+    if (!$sp_role_id) { 
+	#warn "INSERTING NEW ROLE $role...\n";
+	$sp_role_id =$self->new_role($role);
+    }
+    my $q = "INSERT INTO sgn_people.sp_person_roles (sp_person_id, sp_role_id) VALUES (?, ?)";
+    my $s = $self->get_dbh()->prepare($q);
+    $s->execute($self->get_sp_person_id(), $sp_role_id);
+    return $sp_role_id;
+}
+
+
+=head2 remove_role
+
+ Usage:        $p->remove_role($role);
+ Desc:         removes the association of role $role from the person $p.
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub remove_role {
+    my $self = shift;
+    my $role = shift;
+    if (my $sp_role_id = $self->exists_role($role)) { 
+	my $q = "DELETE FROM sgn_people.sp_person_roles WHERE sp_person_id=? AND sp_role_id=?";
+	my $s = $self->get_dbh()->prepare($q);
+	my $count = $s->execute($self->get_sp_person_id(), $sp_role_id);
+	#warn "role $role removed ($count).\n";
+    }
+    else { 
+	warn "Role $role not associated with person ".$self->get_sp_person_id()."\n";
+    }
+}
+
+=head2 has_role
+
+ Usage:        $p->has_role('curator')
+ Desc:         returns true if $p is a curator, false otherwise
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub has_role {
+    my $self = shift;
+    my $role = shift;
+    my @roles = $self->get_roles();
+    foreach my $r (@roles) { 
+	if ($r eq $role) { 
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+=head2 get_roles
+
+ Usage:
+ Desc:         returns a list of roles.
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_roles {
+    my $self = shift;
+    my $q = "SELECT name FROM sgn_people.sp_person_roles JOIN sgn_people.sp_roles USING (sp_role_id) WHERE sp_person_id=? order by sp_role_id";
+    my $s = $self->get_dbh()->prepare($q);
+    $s->execute($self->get_sp_person_id);
+    my @roles = ();
+    while (my ($r) = $s->fetchrow_array()) {
+	push @roles, $r;
+    }
+    return @roles;
+}
+
+
+=head2 get_user_type
+
+ Usage:
+ Desc:          this get_user_type has been re-wired to get the 
+                highest ranking role (with the loweste id) to make it
+                compatible with the new roles system.
+                THIS FUNCTION IS DEPRECATED. use get_roles() or has_role()
+ Ret:
+ Args:
+ Side Effects:
+ Example:
 
 =cut
 
 sub get_user_type {
     my $self = shift;
-    if ( exists( $self->{user_type} ) ) {
-        return $self->{user_type};
+    if ($self->{user_type}) { 
+	return $self->{user_type};
     }
-    else {
-        return "user";
-    }
+    my @roles = $self->get_roles();
+    my $user_type =  shift(@roles);
+    # return the 'lowest' role
+    if (!$user_type) { return 'user'; }
+    else { return $user_type; }
+
 }
+
+=head2 set_user_type
+
+ Usage:        this sets a user_type, which will be stored as a role 
+               in store(). Access as $p->{user_type}.
+               THIS FUNCTION IS DEPRECATED. Use add_role()
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
 
 sub set_user_type {
     my $self = shift;
-    $self->{user_type} = shift;
+    my $role = shift;
+    
+    $self->{user_type}=$role;
 }
+
+
+
+# =head2 functions get_user_type(), set_user_type()
+
+#   Synopsis:	$p->set_user_type("sequencer");
+#   Arguments:	the desired user type. Different types of users have
+#                 different access rights. Currently defined user types
+#                 are\: user (default), submitter, curator (has all access
+#                 rights, kind of the root user), sequencer (can set BAC 
+#                 sequencing statuses).
+#   Returns:	
+#   Side effects:	
+#   Description:	
+
+# =cut
+
+# sub get_user_type {
+#     my $self = shift;
+#     if ( exists( $self->{user_type} ) ) {
+#         return $self->{user_type};
+#     }
+#     else {
+#         return "user";
+#     }
+# }
+
+# sub set_user_type {
+#     my $self = shift;
+#     $self->{user_type} = shift;
+# }
 
 sub set_sql {
     my $self = shift;
@@ -369,7 +569,7 @@ sub set_sql {
           "
 			SELECT 
 				sp_person_id, username, private_email, pending_email, 
-				password, confirm_code, disabled, user_type 
+				password, confirm_code, disabled 
 			FROM sgn_people.sp_person 
 			WHERE sp_person_id=?
 		",
@@ -385,11 +585,10 @@ sub set_sql {
                 password, 
                 confirm_code, 
                 disabled, 
-                user_type, 
                 first_name, 
                 last_name
             ) 
-            VALUES (?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?)
         ",
 
         get_login =>

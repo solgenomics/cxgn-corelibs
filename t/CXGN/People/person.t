@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use autodie;
 
-use Test::More tests=>18;
+use Test::More tests=>22;
 use CXGN::Debug;
 
 my $debug = 0;
@@ -26,11 +26,14 @@ $p->set_last_name("Darwin");
 $p->set_contact_email("cd1\@cornell.edu");
 $p->set_address("Tower Rd, Ithaca, NY 14853");
 $p->set_country("USA");
+$p->set_user_type("user");
 $p->set_webpage("http://sgn.cornell.edu");
 $p->set_organization("BTI");
 
 $d->d("Storing Person object...");
 my $person_id = $p->store();
+$p->add_role('test_role');
+$p->add_role('test_role_2');
 
 $d->d("Retrieving Person object...");
 my $q = CXGN::People::Person->new($dbh, $person_id);
@@ -44,6 +47,11 @@ is($q->get_country(), "USA", "country test");
 is($q->get_webpage(), "http://sgn.cornell.edu", "webpage test");
 is($q->get_organization(), "BTI", "organization test");
 is($q->get_user_type(), "user", "user type test");
+is($q->has_role('test_role'), 1,"user role test");
+is($q->has_role('test_role_2'), 1, "user role test 2");
+is_deeply( [$q->get_roles], ['user', 'test_role', 'test_role_2'], "get_roles test");
+$q->remove_role('test_role_2');
+is($q->has_role('test_role_2'), 0, "remove role test");
 
 my @projects = $q->get_projects_associated_with_person();
 is($projects[0], 14, "projects associated with person test"); # is only associated with unmapped project
@@ -61,6 +69,7 @@ my $cd_person_id = CXGN::People::Person->get_person_by_username($dbh,"charles_da
 is($cd_person_id, $person_id , "get_person_by_username test");
 my $c = CXGN::People::Person->new($dbh, $cd_person_id);
 $c->set_user_type("curator");
+$c->store();
 is($c->get_username(), "charles_darwin", "username test");
 is($c->get_user_type(), "curator", "curator usertype test");
 @projects = $c->get_projects_associated_with_person();
