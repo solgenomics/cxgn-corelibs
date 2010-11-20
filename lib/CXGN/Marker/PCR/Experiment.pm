@@ -984,13 +984,21 @@ sub store_sequence {
     ##
     my $sql = CXGN::DB::SQLWrappers->new( $self->{dbh} );
     my $sequence = $sql->insert_unless_exists('sequence',{'sequence'=>$seq });
-    #store the link
-    $q = "Insert INTO sgn.pcr_experiment_sequence (sequence_id, pcr_experiment_id, type_id) 
+    #does the link exist?
+    my @ids=$sql->select('pcr_experiment_sequence',{sequence_id=>$sequence->{id}, pcr_experiment_id=>$self->{pcr_experiment_id}, type_id=> $type_id});
+    if (!@ids) {
+        #store the link
+        $q = "Insert INTO sgn.pcr_experiment_sequence (sequence_id, pcr_experiment_id, type_id)
           VALUES (?,?,?) RETURNING pcr_experiment_sequence_id";
-    $sth=$self->{dbh}->prepare($q);
-    $sth->execute( $sequence->{id} ,  $self->{pcr_experiment_id} , $type_id );
+        $sth=$self->{dbh}->prepare($q);
+        $sth->execute( $sequence->{id} ,  $self->{pcr_experiment_id} , $type_id );
+        return ($sth->fetchrow_array());
+    } else {
+        warn("link exists , ids = @ids\n");
+        return $ids[0];
+    }
     #my $pcr_seq = $sql->insert_unless_exists('pcr_experiment_sequence' , { 'sequence_id' => $sequence->{id} , 'pcr_experiment_id' => $self->{pcr_experiment_id} , 'type_id' => $type_id } );
-    return ($sth->fetchrow_array());
+
 }
 
 
