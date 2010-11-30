@@ -792,6 +792,9 @@ sub hard_delete {
     }
 
     eval {
+	my $rdq  = "DELETE FROM sgn_people.sp_person_roles where sp_person_id=?";
+	my $rdqh = $self->get_dbh()->prepare($rdq);
+	$rdqh->execute( $self->get_sp_person_id() ); ### should be done using CASCADE delete
         my $pdq  = "DELETE FROM sgn_people.sp_person where sp_person_id=?";
         my $pdqh = $self->get_dbh()->prepare($pdq);
         $pdqh->execute( $self->get_sp_person_id() );
