@@ -31,10 +31,10 @@ use CXGN::DB::Connection;
 
 =cut
 
-sub new 
+sub new
 {
     my $class=shift;
-    my($dbh,$pcr_experiment_id)=@_; 
+    my($dbh,$pcr_experiment_id)=@_;
     my $self=bless({},$class);
     if(CXGN::DB::Connection::is_valid_dbh($dbh))
     {
@@ -50,24 +50,25 @@ sub new
         #find experiment data
         my $pcr_query=$self->{dbh}->prepare
         ("
-            SELECT 
+            SELECT
                 marker_experiment.marker_id,
                 marker_experiment.location_id,
-                pcr_experiment.pcr_experiment_id, 
+                pcr_experiment.pcr_experiment_id,
                 primer_id_fwd,
                 primer_id_rev,
                 primer_id_pd,
                 primer_type,
-                mg_concentration, 
-                annealing_temp, 
-                additional_enzymes, 
+                mg_concentration,
+                annealing_temp,
+                additional_enzymes,
                 protocol,
-                predicted
-            FROM 
+                predicted,
+                stock_id
+            FROM
                 pcr_experiment
                 left join marker_experiment using (pcr_experiment_id)
-            WHERE 
-                pcr_experiment_id=?                
+            WHERE
+                pcr_experiment_id=?
         ");
         $pcr_query->execute($pcr_experiment_id);
         my $pcr_hashref=$pcr_query->fetchrow_hashref();
@@ -329,7 +330,7 @@ sub store_unless_exists {
     if($self->rev_primer()) {
         my $rev_info = $sql->insert_unless_exists('sequence',{'sequence'=>$self->rev_primer()});
         $self->{rev_primer_id} = $rev_info->{id};
-    }         
+    }
 
     #print"INSERTING:\n".$self->as_string();
 
@@ -721,7 +722,7 @@ sub protocol
     my($protocol)=@_;
     if($protocol)
     {
-        unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol eq 'unknown')
+        unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol eq 'unknown' or $protocol =~ /Indel/i)
         {
             croak"Protocol '$protocol' is invalid.";
         }
@@ -941,5 +942,94 @@ sub test_and_clean_bands
     }    
     return $bands;
 }
+
+##store the primers, or any other sequnces linked, in the sequence table, and link to pcr_experiment##
+
+=head2 store_sequence
+
+ Usage: $self->store_sequence($sequence_name, $sequence);
+ Desc:  store a primer, or any other sequence type, of the pcr_experiment in the sequence table ,
+        and link to the experiment using pcr_experiment_sequence table.
+ Ret:  a database id
+ Args: a string with sequence type, and the sequence string
+       sequence types should be listed in the cvterm table with cv_name =
+       'sequence' (this is the namespace for SO http://song.cvs.sourceforge.net/viewvc/song/ontology/so.obo?view=log )
+ Side Effects: store a new sequence in sgn.sequence, if one does not exist.
+               Sequences are converted to all upper-case.
+
+Example
+    my $id = $self->store_sequence('forward_primer','ATCCGTGACGTAC');
+
+=cut
+
+sub store_sequence {
+    my $self = shift;
+    my $sequence_type = shift;
+    my $seq = shift || die 'No sequence for type $sequence_type passed to store_sequence function! \n';
+   
+    #find if the type is stored in the database
+    my $q = "SELECT cvterm_id FROM public.cvterm
+             WHERE name ilike ? AND cv_id =
+             (SELECT cv_id FROM public.cv WHERE cv.name ilike ?) ";
+    my $sth=$self->{dbh}->prepare($q);
+    $sth->execute($sequence_type,'sequence');
+    my ($type_id) = $sth->fetchrow_array();
+    die "Sequence type $sequence_type does not exist in the database!\n Expected to find cvterm $sequence_type with cv_name 'sequence'!\n Please check your databae, and make sure Sequence Ontology is up-to-date\n " if !$type_id;
+    ##
+    $seq =~ s/\s//g;
+    unless($seq=~/[ATGCatgc]+/)   {
+        croak"'$seq' is not a valid sequence";
+    }
+    $seq = uc($seq);#uppercase sequence data
+    ##
+    my $sql = CXGN::DB::SQLWrappers->new( $self->{dbh} );
+    my $sequence = $sql->insert_unless_exists('sequence',{'sequence'=>$seq });
+    #does the link exist?
+    my @ids=$sql->select('pcr_experiment_sequence',{sequence_id=>$sequence->{id}, pcr_experiment_id=>$self->{pcr_experiment_id}, type_id=> $type_id});
+    if (!@ids) {
+        #store the link
+        $q = "Insert INTO sgn.pcr_experiment_sequence (sequence_id, pcr_experiment_id, type_id)
+          VALUES (?,?,?) RETURNING pcr_experiment_sequence_id";
+        $sth=$self->{dbh}->prepare($q);
+        $sth->execute( $sequence->{id} ,  $self->{pcr_experiment_id} , $type_id );
+        return ($sth->fetchrow_array());
+    } else {
+        warn("link exists , ids = @ids\n");
+        return $ids[0];
+    }
+    #my $pcr_seq = $sql->insert_unless_exists('pcr_experiment_sequence' , { 'sequence_id' => $sequence->{id} , 'pcr_experiment_id' => $self->{pcr_experiment_id} , 'type_id' => $type_id } );
+
+}
+
+
+##get the associated sequences and their types from pcr_experiment_sequence##
+
+=head2 get_sequences
+
+ Usage: $self->get_sequences
+ Desc:  find the sequences associated with the marker, and their types
+ Ret:   hashref {$sequence_type => [$seq1, $seq2] }
+ Args:  none
+ Side Effects: none
+
+=cut
+
+sub get_sequences {
+    my $self = shift;
+    my $q = "SELECT cvterm.name, sequence FROM sgn.pcr_experiment
+             JOIN sgn.pcr_experiment_sequence USING (pcr_experiment_id)
+             JOIN sgn.sequence USING (sequence_id)
+             JOIN public.cvterm on cvterm_id = sgn.pcr_experiment_sequence.type_id
+             WHERE pcr_experiment.pcr_experiment_id = ?";
+    my $sth = $self->{dbh}->prepare($q);
+    $sth->execute($self->{pcr_experiment_id});
+    my %HoA;
+    while ( my ($sequence_type, $sequence) = $sth->fetchrow_array() ) {
+        push @ {$HoA{$sequence_type} }, $sequence ;
+    }
+    return \%HoA;
+}
+
+
 
 1;

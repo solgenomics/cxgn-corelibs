@@ -266,7 +266,7 @@ sub add_experiment
         unless($new_location->isa('CXGN::Marker::Location'))
         {
             croak"Parameter '$new_location' is not a CXGN::Marker::Location object";
-        }        
+        }
         unless($new_pcr or $new_rflp)#unless we can find the protocol from the experiment objects...
         {
             unless($protocol=$experiment->{protocol})#we will need to get the protocol from the caller right now
@@ -295,12 +295,12 @@ sub add_experiment
     {
         croak"add_experiment must be called with a hash ref with key 'location' pointing to a location object, and/or key 'pcr_experiment' pointing to a pcr experiment object, and/or key 'rflp_experiment' pointing to an rflp experiment object";
     }
-    unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'dCAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol =~/DArT/i or $protocol =~ /OPA/i or $protocol eq 'Indel' or $protocol =~ /ASPE/i or $protocol eq 'unknown')
+    unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'dCAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol =~/DArT/i or $protocol =~ /OPA/i or $protocol =~ /Indel/i or $protocol =~ /ASPE/i or $protocol eq 'unknown')
     {
         croak"Protocol '$protocol' is invalid.";
     }
     $experiment->{protocol}=$protocol;#ok, now we've gotten the protocol, one way or the other
-    
+
     #check to see we don't have this experiment-location already. if so, don't add it again.
     if($self->{experiments})#if we have some experiments, either retrieved from the db at creation time, or from previous calls to this method
     {
@@ -310,6 +310,7 @@ sub add_experiment
             my $existing_pcr=$existing_experiment->{pcr_experiment};
             my $existing_rflp=$existing_experiment->{rflp_experiment};
             my $existing_protocol=$existing_experiment->{protocol};
+            ##print "$existing_location, $existing_pcr, $existing_rflp, $existing_protocol\n\n";
             if(($existing_location xor $new_location) or ($existing_pcr xor $new_pcr) or ($existing_rflp xor $new_rflp))#if we have one but not the other filled in for each column of the marker_experiment table, then the rows are certainly not the same
             {
                 #continue towards the push below, because we have not found a possbile match                
