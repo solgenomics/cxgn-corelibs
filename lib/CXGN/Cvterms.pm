@@ -119,13 +119,13 @@ sub to_html {
     
     my $cvterm_search =  qq|<input name="$cvterm_name" value="$scalars{cvterm_name}" size="30" >|;
   
-    $pop_links = "<table align=center cellpadding=20px><tr><td><b>Browse traits/QTLs by population:</b><br/>$pop_links</td></tr></table>";
+    $pop_links = "<table align=center cellpadding=20px><tr><td><b>Browse QTL populations:</b><br/>$pop_links</td></tr></table>";
 
       
     my $html_ret = <<EOHTML;
     
     <table><tr></tr>
-     <tr><td colspan="2" ><b>Search by trait name</b> (<a href="../help/qtl_cvterm_search_help.pl" />help<a />)</td></tr>
+     <tr><td colspan="2" ><b>Search QTLs by trait name</b> (<a href="../help/qtl_cvterm_search_help.pl" />help<a />)</td></tr>
      <tr><td>$cvterm_search</td>
         <td><input type="submit" value="Search"/></td> 
         <td><a href="../phenome/qtl_form.pl">[Submit new QTL data]</a></td>       
