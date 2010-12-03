@@ -534,7 +534,7 @@ EOHTML
 
 =head2 qtl_search_form
 
-  Desc: returns the cvterm (traits with or with out qtl) search form
+  Desc: returns the qtl search form
   Args: CXGN::Page object
   Ret : string of HTML
 
