@@ -558,7 +558,7 @@ sub qtl_search_form {
     <h4><span class="search_form_title">QTL search </span></h4>
   </td>
   </tr></table>
-<form  action= "/search/cvterms_search.pl" method="get">
+<form  action= "/search/qtl_search.pl" method="get">
 $form<br/>
 
 </form>
