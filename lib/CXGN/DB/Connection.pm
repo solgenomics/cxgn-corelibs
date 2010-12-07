@@ -246,6 +246,7 @@ sub new_no_connect {
           our $c;
           require CatalystX::GlobalContext;
           CatalystX::GlobalContext->import('$c');
+          $c or confess "Catalyst context object not found.  Are we actually running under Catalyst?";
           $conf = $c->config;
       } else {
           require CXGN::Config;
