@@ -532,15 +532,15 @@ EOHTML
 
 }
 
-=head2 cvterm_search_form
+=head2 qtl_search_form
 
-  Desc: returns the cvterm (traits with or with out qtl) search form
+  Desc: returns the qtl search form
   Args: CXGN::Page object
   Ret : string of HTML
 
 =cut
 
-sub cvterm_search_form {
+sub qtl_search_form {
 
     my $page = shift;
     my $q    = shift;
@@ -549,19 +549,16 @@ sub cvterm_search_form {
 
     my $form = $q->to_html;    
     my $links = CXGN::Phenome::Qtl::Tools->new()->browse_traits();
-    my $trait_browser = "<table align=center cellpadding=20px><tr><td><b>Browse Traits: $links</b></td></tr></table>";
+    my $trait_browser = "<table align=center cellpadding=20px><tr><td><b>Browse traits with QTLs: $links</b></td></tr></table>";
    
     return <<EOHTML;
     $trait_browser
 <table class="search_form_title" summary="">
-
 <tr><td>
-    <h4><span class="search_form_title">QTL (trait) search </span></h4>
+    <h4><span class="search_form_title">QTL search </span></h4>
   </td>
   </tr></table>
-
-
-<form  action= "/search/cvterms_search.pl" method="get">
+<form  action= "/search/qtl_search.pl" method="get">
 $form<br/>
 
 </form>
