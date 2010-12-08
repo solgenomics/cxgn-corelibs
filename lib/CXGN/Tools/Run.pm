@@ -952,7 +952,8 @@ sub _diefile_exists {
     return -e $self->_diefile_name;
   } else {
     #have to do the opendir dance instead of caching, because NFS caches the stats
-    opendir my $tempdir, $self->tempdir;
+    opendir my $tempdir, $self->tempdir
+        or return 0;
     while(my $f = readdir $tempdir) {
       #dbp "is '$f' my diefile?\n";
       return 1 if $f eq 'died';
