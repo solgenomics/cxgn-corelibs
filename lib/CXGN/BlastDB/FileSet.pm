@@ -664,13 +664,17 @@ sub get_sequence {
 
     $seq =~ s/\s//g; #remove whitespace from the seq
 
-    return Bio::PrimarySeq->new( -id => $id,
-                                 -seq => $seq,
-                                 -desc => $def,
-                               );
+    my $seq_type = length $seq > 2**10
+        ? 'Bio::Seq::LargePrimarySeq'
+        : 'Bio::PrimarySeq';
+
+    eval "require $seq_type";
+
+    return $seq_type->new( -id => $id,
+                           -seq => $seq,
+                           -desc => $def,
+                          );
 }
-
-
 
 
 # internal function to set the title, sequence count, type,
