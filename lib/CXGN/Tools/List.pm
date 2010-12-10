@@ -285,10 +285,10 @@ sub balanced_split {
 
 =head2 balanced_split_sizes
 
-  Usage: my $pieces = balances_split_sizes( $num_elements )
+  Usage: my $pieces = balanced_split_sizes( $num_pieces, $num_elements )
   Desc : get the piece sizes to use for a balanced split,
          with the size of pieces differing by no more than 1
-  Args : number of elements in the set
+  Args : number of pieces desired, number of elements in the set
   Ret  : arrayref of piece sizes, e.g. [ 2, 2, 2, 1 ]
   Side Effects: none
   Example :
