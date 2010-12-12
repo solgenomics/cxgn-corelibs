@@ -70,7 +70,7 @@ sub run {
 	    else { 
 		if ($n_region_start) { $n_region_end = $i; }
 
-		my $gap_size = $n_region_end - $n_region_start + 1;
+		my $gap_size = $n_region_end - $n_region_start;
 		if ($gap_size >= $self->min_gap_size()) { 
 
 		    print "$id\_"; printf "%06d", "$gap_no"; print "\t$id\t$n_region_start\t$n_region_end\t$gap_size\n";
@@ -85,7 +85,9 @@ sub run {
 		
 	    
 	}
+	    $old_id = $id;
     }
+
 }
 
 
