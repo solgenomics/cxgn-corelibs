@@ -2,12 +2,12 @@ use strict;
 use CXGN::Phenome::Qtl::Tools;
 
 
-package CXGN::Cvterms;
+package CXGN::Qtls;
 use base qw/CXGN::Search::DBI::Simple CXGN::Search::WWWSearch/;
 
 
-__PACKAGE__->creates_result('CXGN::Cvterms::Result');
-__PACKAGE__->uses_query('CXGN::Cvterms::Query');
+__PACKAGE__->creates_result('CXGN::Qtls::Result');
+__PACKAGE__->uses_query('CXGN::Qtls::Query');
 
 
 
@@ -15,13 +15,13 @@ __PACKAGE__->uses_query('CXGN::Cvterms::Query');
 1;#do not remove
 ###
 
-package CXGN::Cvterms::Result;
+package CXGN::Qtls::Result;
 use base qw/CXGN::Search::BasicResult/;
 ###
 1;#do not remove
 ###
 
-package CXGN::Cvterms::Query;
+package CXGN::Qtls::Query;
 use CXGN::Page::FormattingHelpers qw/simple_selectbox_html
                                      info_table_html
 				     hierarchical_selectboxes_html
