@@ -10,7 +10,7 @@ use CXGN::Searches::Family;
 use CXGN::Unigene::Search;
 use CXGN::Phenome;
 use CXGN::Phenotypes;
-use CXGN::Cvterms;
+use CXGN::Qtls;
 use CXGN::Publication;
 use CXGN::Chado::Cvterm;
 use CXGN::Searches::GemTemplate;
@@ -545,7 +545,7 @@ sub qtl_search_form {
     my $page = shift;
     my $q    = shift;
 
-    $q ||= CXGN::Cvterms->new->new_query;
+    $q ||= CXGN::Qtls->new->new_query;
 
     my $form = $q->to_html;    
     my $links = CXGN::Phenome::Qtl::Tools->new()->browse_traits();
