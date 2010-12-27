@@ -148,7 +148,8 @@ EOQ
             $self->get_user_type,
             $self->get_sp_person_id,
         );
-	$self->add_role($self->get_user_type());
+	$self->add_role($self->get_user_type()); 
+	
 
     }
     else {
@@ -396,12 +397,20 @@ sub add_role {
     my $self = shift;
     my $role = shift;
 
+    if (!$role) { return; }
+
     my $sp_role_id = $self->exists_role($role);
     
     if (!$sp_role_id) { 
 	#warn "INSERTING NEW ROLE $role...\n";
 	$sp_role_id =$self->new_role($role);
     }
+    my $exists = $self->get_dbh()->do("SELECT count(*)  
+                                       FROM sgn_people.sp_person_roles
+                                       JOIN sgn_people.sp_roles using(sp_role_id) WHERE name='$role'");
+
+    if ($exists>1) { return; }
+
     my $q = "INSERT INTO sgn_people.sp_person_roles (sp_person_id, sp_role_id) VALUES (?, ?)";
     my $s = $self->get_dbh()->prepare($q);
     $s->execute($self->get_sp_person_id(), $sp_role_id);
