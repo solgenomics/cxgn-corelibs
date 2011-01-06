@@ -5,7 +5,7 @@ use English;
 
 use List::Util qw/sum/;
 
-use Test::More tests => 5;
+use Test::More;
 
 use CXGN::DB::Connection;
 
@@ -19,17 +19,10 @@ BEGIN {
 my $bac_status_log = CXGN::People::BACStatusLog->new($dbh);
 isa_ok( $bac_status_log, 'CXGN::People::BACStatusLog' );
 
-my @bacs_to_complete = $bac_status_log->get_number_bacs_to_complete();
-
-my $first = shift @bacs_to_complete;
-
-is( $first, sum( @bacs_to_complete ), 'get_number_bacs_to_complete returns sum, then other values');
-
-my @pct_finished = $bac_status_log->get_chromosomes_percent_finished();
-$first = shift @pct_finished;
-cmp_ok( $first, '<', 100, 'sum pct is in right range');
-cmp_ok( $first, '>', 1, 'sum pct in right range 2');
-
-$bac_status_log = undef;
+$bac_status_log->bac_by_bac_progress_statistics;
 
 $dbh->disconnect(42);
+
+done_testing;
+
+
