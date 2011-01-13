@@ -14,6 +14,7 @@ agp_to_fasta.pl foo.agp source.fasta > result.fasta
 
 use File::Temp;
 use Getopt::Std;
+use Pod::Usage;
 
 use Bio::Index::Fasta;
 
@@ -30,11 +31,19 @@ my ( $agp_file, $source_seqs ) = @ARGV;
 
 my $index = make_seqs_index( $source_seqs );
 
-my @seqs = agp_to_seqs( $agp_file, fetch_default => sub { $index->fetch( $_[0] ) } );
+my @seqs = agp_to_seqs(
+    $agp_file,
+    fetch_default => sub {
+        my $s = $index->fetch( $_[0] )
+            or return;
+        return $s->seq;
+    }
+   );
 
 my $o = Bio::SeqIO->new(
     -format => 'fasta',
     -fh     => \*STDOUT,
+    -width  => 80,
    );
 
 # the while/shift cuts down a bit on disk space usage
