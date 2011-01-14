@@ -410,8 +410,8 @@ sub process_image {
     }
 
     my ($processing_dir) =
-      File::Temp::tempdir( "process_XXXXXX",
-        DIR => $self->get_image_dir() );
+      File::Temp::tempdir( "process_XXXXXX" );
+
     system("chmod 775 $processing_dir");
     $self->set_processing_dir($processing_dir);
 
