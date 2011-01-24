@@ -440,6 +440,12 @@ sub agp_contig_seq {
                                   length, defaults to 0, meaning
                                   make gaps as big as the file
                                   says
+           no_large_seqs => 0, #< don't use Bio::Seq::LargePrimarySeq
+                                  objects to hold object sequences.
+                                  If there are many short objects,
+                                  using LargePrimarySeq objects for
+                                  them can sometimes use up all the
+                                  system's file descriptors.
            fetch_<ns> => sub { }
                                #function for fetching sequences
                                #in namespace <ns> as returned by
@@ -464,27 +470,42 @@ sub agp_to_seqs {
   my $agplines = agp_parse($agpfile)
     or die "error parsing AGP file $agpfile\n";
 
+  my $seq_class =
+      $opt{no_large_seqs} ? 'Bio::PrimarySeq'
+                          : 'Bio::Seq::LargePrimarySeq';
+
   my @seqs;
 
   for my $line (@$agplines) {
     next if exists $line->{comment}; #< skip comments
 
-    push @seqs, Bio::Seq::LargePrimarySeq->new( -id => $line->{objname} )
+    push @seqs, $seq_class->new( -id => $line->{objname} )
         unless $seqs[-1] && $seqs[-1]->id eq $line->{objname};
 
     my $seq_obj = $seqs[-1];
 
     if ( $line->{typedesc} =~ /^(un)?known_gap$/ ) {
         my $gap_size_to_use = $opt{gap_length} || $line->{length};
-        $seq_obj->add_sequence_as_string( $opt{no_seq_char} x $gap_size_to_use );
+        _add_sequence_as_string( $seq_obj, $opt{no_seq_char} x $gap_size_to_use );
     } else {
-        $seq_obj->add_sequence_as_string( agp_contig_seq([$line], %opt) );
+        _add_sequence_as_string( $seq_obj, agp_contig_seq([$line], %opt) );
     }
   }
 
   return @seqs;
 }
 
+
+sub _add_sequence_as_string {
+    my ( $seq_obj, $additional_seq ) = @_;
+
+    if( $seq_obj->can('add_sequence_as_string') ) {
+        $seq_obj->add_sequence_as_string( $additional_seq );
+    } else {
+        my $s = $seq_obj->seq || '';
+        $seq_obj->seq( $s . $additional_seq );
+    }
+}
 
 =head2 agp_to_seq
 
