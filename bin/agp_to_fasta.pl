@@ -10,6 +10,13 @@ agp_to_fasta.pl - assemble an AGP file into fasta
 
 agp_to_fasta.pl foo.agp source.fasta > result.fasta
 
+=head1 OPTIONS
+
+=head2 -w <num>
+
+Column width of fasta output, with 0 being unlimited (no additional
+newlines).  Default 80.
+
 =cut
 
 use File::Temp;
@@ -21,8 +28,11 @@ use Bio::Index::Fasta;
 use CXGN::BioTools::AGP qw/ agp_to_seqs /;
 
 my %opts;
-getopts( '', \%opts );
+getopts( 'w', \%opts );
+$opts{w} = 80 unless defined $opts{w};
 pod2usage() unless @ARGV;
+
+@ARGV == 2 or die "must pass exactly 2 file names as arguments\n";
 
 for( @ARGV ) {
     -r or die "cannot read file '$_'"
@@ -43,7 +53,7 @@ my @seqs = agp_to_seqs(
 my $o = Bio::SeqIO->new(
     -format => 'fasta',
     -fh     => \*STDOUT,
-    -width  => 80,
+    ( $opts{w} ? (-width  => 80) : () ),
    );
 
 # the while/shift cuts down a bit on disk space usage
