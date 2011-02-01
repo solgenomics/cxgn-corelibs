@@ -774,38 +774,6 @@ sub get_recursive_children {
 }
 
 
-=head2 get_recursive_children
-
- Usage: $self->get_recursive_children
- Desc: find all  recursive child terms of this cvterm
- Ret:   a list of lists with two elements: a cvterm object for the child and a
-         cvterm object for the relationship
- Args: none
- Side Effects: none
- Example:
-
-=cut
-
-sub get_recursive_children {
-    my $self=shift;
-    my $q =  "SELECT distinct(cvtermpath.object_id), cvterm_relationship.type_id  
-                       FROM cvtermpath 
-                       JOIN cvterm_relationship USING (subject_id) 
-                       JOIN cvterm ON (cvtermpath.object_id = cvterm_id) 
-                       WHERE cvtermpath.subject_id =? AND cvterm.is_obsolete=0 AND pathdistance<0 ";
-    
-    my $sth = $self->get_dbh()->prepare($q);
-    $sth->execute($self->get_cvterm_id() );
-    my @children = ();
-    while (my ($child_term_id, $type_id) = $sth->fetchrow_array()) { 
-	my $child_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $child_term_id);
-	my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
-	
-	push @children, [ $child_term, $relationship_term ];
-    }
-    return (@children);
-}
-
 =head2 count_children
 
  Usage: my $childrenNumber = $self->count_children()
