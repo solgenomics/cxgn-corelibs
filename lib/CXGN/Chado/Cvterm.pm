@@ -675,33 +675,6 @@ sub get_parents {
     return (@parents);
 }
 
-=head2 get_parents
-
- Usage: $self->get_parents
- Desc: find the direct parents of the cvterm
- Ret:  a list of listrefs containing CXGN::Chado::Cvterm objects and relationship types
- Args: none
- Side Effects: none
- Example:
-
-=cut
-
-sub get_parents {
-    my $self=shift;
-    my $parents_q =  "SELECT object_id , type_id
-                       FROM cvterm_relationship
-                      WHERE subject_id = ? ";
-    my $parents_sth = $self->get_dbh()->prepare($parents_q);
-    $parents_sth->execute($self->get_cvterm_id() );
-    my @parents = ();
-    while (my ($parent_term_id, $type_id) = $parents_sth->fetchrow_array()) {
-	my $parent_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $parent_term_id);
-	my $relationship_term = CXGN::Chado::Cvterm->new($self->get_dbh(), $type_id);
-
-	push @parents, [ $parent_term, $relationship_term ];
-    }
-    return (@parents);
-}
 
 =head2 get_children
 
