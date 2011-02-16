@@ -346,7 +346,7 @@ sub new_by_elements {
 	    my $getarget_element_row;
 	    foreach my $row (@getarget_element_rows) {
 		my $count = $schema->resultset('GeTargetElement')
-		                   ->search( target_id => $row->get_column('target_id') )
+		                   ->search({ target_id => $row->get_column('target_id') })
 				   ->count();
 		if ($count == $elements_n) {
 		    $getarget_element_row = $row;

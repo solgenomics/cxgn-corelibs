@@ -342,7 +342,7 @@ sub new_by_design {
 	    my $geplatform_design_row;
 	    foreach my $row (@geplatform_design_row) {
 		my $count = $schema->resultset('GePlatformDesign')
-		                   ->search( platform_id => $row->get_column('platform_id') )
+		                   ->search({ platform_id => $row->get_column('platform_id') })
 				   ->count();
 		if ($count == $elements_n) {
 		    $geplatform_design_row = $row;
