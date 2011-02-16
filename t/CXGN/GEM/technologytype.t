@@ -13,8 +13,6 @@ use Test::Warn;
 
 use CXGN::GEM::Test;
 
-plan tests => 44;
-
 my $gem_test = CXGN::GEM::Test->new;
 
 use_ok('CXGN::GEM::Schema');             ## TEST1
@@ -335,3 +333,4 @@ $schema->txn_rollback();
        ##   more as the option 2 
 
 ## This test does not set table sequences anymore (these methods are deprecated)
+done_testing;
