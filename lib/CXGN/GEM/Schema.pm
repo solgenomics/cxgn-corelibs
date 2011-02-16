@@ -57,79 +57,50 @@ The following class methods are implemented:
 
 =cut
 
-
-### The GEM schema use chado, biosource and metadata schemas, so it will load this classes
-
-my (@gem_classes, @biosource_classes, @metadata_classes, @chado_classes);
-
-
-## Get all the gem classes using findallmod
-
-my @gem_modules = findallmod 'CXGN::GEM::Schema';
-foreach my $gem_module (@gem_modules) {
-    $gem_module =~ s/CXGN::GEM::Schema:://;
-    push @gem_classes, $gem_module;
-}
-
-## Get all the biosource classes using findallmod
-
-my @biosource_modules = findallmod 'CXGN::Biosource::Schema';
-foreach my $biosource_module (@biosource_modules) {
-    $biosource_module =~ s/CXGN::Biosource::Schema:://;
-    push @biosource_classes, $biosource_module;
-}
-
-## Get all the metadata classes using findallmod
-
-my @metadata_modules = findallmod 'CXGN::Metadata::Schema';
-foreach my $metadata_module (@metadata_modules) {
-    $metadata_module =~ s/CXGN::Metadata::Schema:://;
-    push @metadata_classes, $metadata_module;
-}
-
-## Get all the chado classes using findallmod
-my @chado_modules = findallmod 'Bio::Chado::Schema';
-foreach my $chado_module (@chado_modules) {
-    $chado_module =~ s/Bio::Chado::Schema:://;
-    push @chado_classes, $chado_module;
-}
-
-
-
 ## Load in the package all the classes
+__PACKAGE__->load_classes; #< load our GEM classes;
 
-__PACKAGE__->load_classes( @gem_classes,
-			   {
-			      'Bio::Chado::Schema'     => [@chado_classes],
-			      'CXGN::Metadata::Schema' => [@metadata_classes],
-			      'CXGN::Biosource::Schema'=> [@biosource_classes],
-			   }
-                         );
+## Load our own classes
+__PACKAGE__->load_classes;
 
+## Load Metadata and Biosource
+__PACKAGE__->load_classes({
+    'CXGN::Metadata::Schema' =>  [ _find_classes( 'CXGN::Metadata::Schema'  ) ],
+    'CXGN::Biosource::Schema' => [ _find_classes( 'CXGN::Biosource::Schema' ) ],
+});
+
+## Load Bio::Chado::Schema a little differently, depending on its version
+if( $Bio::Chado::Schema::VERSION >= 0.08 ) {
+    __PACKAGE__->load_namespaces(
+        result_namespace    => '+Bio::Chado::Schema::Result',
+        resultset_namespace => '+Bio::Chado::Schema::ResultSet',
+      );
+} else {
+    __PACKAGE__->load_classes({
+        'Bio::Chado::Schema' => [ _find_classes( 'Bio::Chado::Schema' ) ],
+      });
+}
+# check that we successfully loaded BCS
+__PACKAGE__->source('Organism::Organism') or die 'Failed to load Bio::Chado::Schema classes';
 
 ## Finally add the relationships (all the gem tables will be metadata_id relation)
-
-my @metadata_relation_parameters = ('metadata_id',
-                                     "CXGN::Metadata::Schema::MdMetadata",
-                                     { 'foreign.metadata_id' => 'self.metadata_id' } );
-
-my @dbxref_relation_parameters = ('dbxref_id',
-                                     "Bio::Chado::Schema::General::Dbxref",
-                                     { 'foreign.dbxref_id' => 'self.dbxref_id' } );
-
-
-foreach my $gem_class (@gem_classes) {
+for my $gem_class ( _find_classes( __PACKAGE__ ) ) {
 
   __PACKAGE__->source($gem_class)
- 	     ->add_relationship( @metadata_relation_parameters );
+             ->add_relationship(
+                 'metadata_id',
+                 "CXGN::Metadata::Schema::MdMetadata",
+                 { 'foreign.metadata_id' => 'self.metadata_id' },
+               );
 
   if ($gem_class =~ m/Dbxref^/i) {
-      __PACKAGE__->source($gem_class)
- 	     ->add_relationship( @dbxref_relation_parameters );
+      __PACKAGE__->source($gem_class)->add_relationship(
+          'dbxref_id',
+          "Bio::Chado::Schema::General::Dbxref",
+          { 'foreign.dbxref_id' => 'self.dbxref_id' },
+        );
   }
-
 }
-
 
 __PACKAGE__->source('GePlatformPub')
            ->add_relationship('pub_id', "Bio::Chado::Schema::Pub::Pub", { 'foreign.pub_id' => 'self.pub_id' } );
@@ -184,6 +155,13 @@ __PACKAGE__->source('GeClusterAnalysis')
 
 __PACKAGE__->source('GeClusterProfile')
            ->add_relationship('file_id', "CXGN::Metadata::Schema::MdFiles", { 'foreign.file_id' => 'self.file_id' } );
+
+sub _find_classes {
+    my $ns = shift;
+    my @classes = findallmod $ns;
+    s/^${ns}::// for @classes;
+    return @classes;
+}
 
 
 ## The following functions are used by the test scripts
