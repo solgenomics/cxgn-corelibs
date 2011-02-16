@@ -70,12 +70,15 @@ __PACKAGE__->load_classes({
 });
 
 ## Load Bio::Chado::Schema a little differently, depending on its version
+my $bcs_result_ns;
 if( $Bio::Chado::Schema::VERSION >= 0.08 ) {
+    $bcs_result_ns = 'Bio::Chado::Schema::Result';
     __PACKAGE__->load_namespaces(
         result_namespace    => '+Bio::Chado::Schema::Result',
         resultset_namespace => '+Bio::Chado::Schema::ResultSet',
       );
 } else {
+    $bcs_result_ns = 'Bio::Chado::Schema';
     __PACKAGE__->load_classes({
         'Bio::Chado::Schema' => [ _find_classes( 'Bio::Chado::Schema' ) ],
       });
@@ -96,14 +99,14 @@ for my $gem_class ( _find_classes( __PACKAGE__ ) ) {
   if ($gem_class =~ m/Dbxref^/i) {
       __PACKAGE__->source($gem_class)->add_relationship(
           'dbxref_id',
-          "Bio::Chado::Schema::General::Dbxref",
+          "${bcs_result_ns}::General::Dbxref",
           { 'foreign.dbxref_id' => 'self.dbxref_id' },
         );
   }
 }
 
 __PACKAGE__->source('GePlatformPub')
-           ->add_relationship('pub_id', "Bio::Chado::Schema::Pub::Pub", { 'foreign.pub_id' => 'self.pub_id' } );
+           ->add_relationship('pub_id', "${bcs_result_ns}::Pub::Pub", { 'foreign.pub_id' => 'self.pub_id' } );
 
 __PACKAGE__->source('GePlatformDesign')
            ->add_relationship('sample_id', "CXGN::Biosource::Schema::BsSample", { 'foreign.sample_id' => 'self.sample_id' } );
@@ -115,7 +118,7 @@ __PACKAGE__->source('GeProbe')
            ->add_relationship('sequence_file_id', "CXGN::Metadata::Schema::MdFiles", { 'foreign.file_id' => 'self.sequence_file_id' } );
 
 __PACKAGE__->source('GeExperimentalDesignPub')
-           ->add_relationship('pub_id', "Bio::Chado::Schema::Pub::Pub", { 'foreign.pub_id' => 'self.pub_id' } );
+           ->add_relationship('pub_id', "${bcs_result_ns}::Pub::Pub", { 'foreign.pub_id' => 'self.pub_id' } );
 
 __PACKAGE__->source('GeTargetElement')
            ->add_relationship('sample_id', "CXGN::Biosource::Schema::BsSample", { 'foreign.sample_id' => 'self.sample_id' } );
@@ -130,7 +133,7 @@ __PACKAGE__->source('GeFluorescanning')
            ->add_relationship('protocol_id', "CXGN::Biosource::Schema::BsProtocol", { 'foreign.protocol_id' => 'self.protocol_id' } );
 
 __PACKAGE__->source('GeFluorescanning')
-           ->add_relationship('dbxref_id', "Bio::Chado::Schema::General::Dbxref", { 'foreign.dbxref_id' => 'self.dbxref_id' } );
+           ->add_relationship('dbxref_id', "${bcs_result_ns}::General::Dbxref", { 'foreign.dbxref_id' => 'self.dbxref_id' } );
 
 __PACKAGE__->source('GeFluorescanning')
            ->add_relationship('file_id', "CXGN::Metadata::Schema::MdFiles", { 'foreign.file_id' => 'self.file_id' } );
