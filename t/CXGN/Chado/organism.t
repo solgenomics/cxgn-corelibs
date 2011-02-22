@@ -34,7 +34,6 @@ use Data::Dumper;
 
 BEGIN {
     use_ok('Bio::Chado::Schema');
-    use_ok('Bio::Chado::Schema::Organism::Organism');
 }
 
 #if we cannot load the CXGN::SEDM::Schema module, no point in continuing

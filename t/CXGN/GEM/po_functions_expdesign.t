@@ -12,7 +12,7 @@ use Test::Exception;
 
 use CXGN::GEM::Test;
 
-plan tests => 10;
+my $gem_test = CXGN::GEM::Test->new;
 
 use_ok('CXGN::GEM::Schema');    ## TEST1
 use_ok('CXGN::GEM::ExperimentalDesign'); ## TEST2
@@ -20,8 +20,6 @@ use_ok('CXGN::GEM::Experiment'); ## TEST3
 use_ok('CXGN::GEM::Target');    ## TEST4
 use_ok('CXGN::Metadata::Metadbdata'); ## TEST5
 use_ok('CXGN::Biosource::Sample'); ## TEST6
-
-my $gem_test = CXGN::GEM::Test->new;
 
 my $creation_user_name = $gem_test->metaloader_user;
 
@@ -365,7 +363,4 @@ if ($@) {
 $schema->txn_rollback();
 
 
-
-####
-1; #
-####
+done_testing;
