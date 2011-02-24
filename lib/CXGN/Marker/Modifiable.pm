@@ -295,7 +295,7 @@ sub add_experiment
     {
         croak"add_experiment must be called with a hash ref with key 'location' pointing to a location object, and/or key 'pcr_experiment' pointing to a pcr experiment object, and/or key 'rflp_experiment' pointing to an rflp experiment object";
     }
-    unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'dCAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol =~/DArT/i or $protocol =~ /OPA/i or $protocol =~ /Indel/i or $protocol =~ /ASPE/i or $protocol eq 'unknown')
+    unless($protocol eq 'AFLP' or $protocol eq 'CAPS' or $protocol eq 'dCAPS' or $protocol eq 'RAPD' or $protocol eq 'SNP' or $protocol eq 'SSR' or $protocol eq 'RFLP' or $protocol eq 'PCR' or $protocol =~/DArT/i or $protocol =~ /OPA/i or $protocol =~ /Indel/i or $protocol =~ /ASPE/i or $protocol eq 'unknown' or $protocol eq 'QTL')
     {
         croak"Protocol '$protocol' is invalid.";
     }
@@ -462,6 +462,7 @@ sub store_new_data
     {
         for my $experiment(@{$experiments})    
         {
+
             my($location_id,$pcr_id,$rflp_id);
             my $location=$experiment->{location};
             my $pcr=$experiment->{pcr_experiment};    
@@ -471,14 +472,17 @@ sub store_new_data
                 $location->marker_id($marker_id);
                 if(my $location_id=$location->store_unless_exists())
                 {
-                    #print"INSERTED: Location\n";
+                    print STDERR "INSERTED: Location $marker_id, $location_id\n";
                     push(@inserts,{marker_location=>$location_id});  
                 }
                 $location_id=$location->location_id() or croak"Could not get location_id from location object";
             }
             if($pcr)
             {
+		if (!$pcr->{protocol}) { $pcr->{protocol}='unknown'; }
+
                 $pcr->marker_id($marker_id);
+		print STDERR "INSERTING protocol ".$pcr->{protocol}." id: ".$pcr->{pcr_experiment_id}."\n";
                 if(my $pcr_id=$pcr->store_unless_exists())
                 {
                     #print"INSERTED: PCR\n";
@@ -499,6 +503,7 @@ sub store_new_data
 
             #store this marker_experiment entry unless it's already in the database
             my $protocol=$experiment->{protocol};
+		
             my $info=$sql->insert_unless_exists('marker_experiment',{marker_id=>$marker_id,location_id=>$location_id,pcr_experiment_id=>$pcr_id,rflp_experiment_id=>$rflp_id,protocol=>$protocol});
             if($info->{inserted})
             {

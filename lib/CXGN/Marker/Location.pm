@@ -168,11 +168,20 @@ sub position
 {
     my $self=shift;
     my($position)=@_;
+
+    if ($self->{position} =~ /\-/) { # if position describes a range, such as a QTL
+	print STDERR "RANGE DETECTED ($self->{position})\n";
+	($self->{position_north}, $self->{position_south}) = split "-", $self->{position};
+	$self->{position} = ($self->{position_south} - $self->{position_north})/2;
+    }
+
+    
+
     if(defined($position))
     {
         unless(CXGN::Tools::Text::is_number($position))
         {
-            croak"Position must be a floating-point number, not '$position'";
+            print STDERR "Position must be a floating-point number, not '$position'";
         }
         $self->{position}=$position;       
     }
@@ -420,8 +429,9 @@ sub store_unless_exists
         croak"No confidence set";
     }
     my $dbh=$self->{dbh};
-    my $statement='insert into sgn.marker_location (lg_id,map_version_id,position,confidence_id,subscript) values (?,?,?,?,?)';
-    my @values=($self->{lg_id},$self->{map_version_id},$self->{position},$self->{confidence_id},$self->{subscript});
+
+    my $statement='insert into sgn.marker_location (lg_id,map_version_id,position,confidence_id,subscript, position_north, position_south) values (?,?,?,?,?,?,?)';
+    my @values=($self->{lg_id},$self->{map_version_id},$self->{position},$self->{confidence_id},$self->{subscript}, $self->{position_north}, $self->{position_south});
     my $q=$dbh->prepare($statement);
     #print STDERR "$statement; (@values)\n";
     $q->execute(@values);
