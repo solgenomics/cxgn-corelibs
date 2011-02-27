@@ -100,14 +100,11 @@ sub marker_id
 {
     my $self=shift;
     my($value)=@_;
-    if($value)
-    {
-        unless($value=~/^\d+$/)
-        {
+    if($value) {
+        unless($value=~/^\d+$/) {
             croak"Marker ID must be a number, not '$value'";
         }
-        unless(CXGN::Marker::Tools::is_valid_marker_id($self->{dbh},$value))
-        {
+        unless(CXGN::Marker::Tools::is_valid_marker_id($self->{dbh},$value)) {
             croak"Marker ID '$value' does not exist in the database";
         }    
         $self->{marker_id}=$value;
@@ -115,14 +112,11 @@ sub marker_id
     return $self->{marker_id};
 }
 
-sub lg_name
-{
+sub lg_name {
     my $self=shift;
     my($lg_name)=@_;
-    if($lg_name)
-    {
-        unless($self->{map_version_id})
-        {
+    if($lg_name) {
+        unless($self->{map_version_id}) {
             croak"You must set this object's map_version_id before throwing around lg_names like that, else how can it know what map_version those lg_names are on?";
         }
         my $lg_id=CXGN::Marker::Tools::get_lg_id($self->{dbh},$lg_name,$self->{map_version_id});
@@ -164,23 +158,20 @@ sub map_version_id
     return $self->{map_version_id};
 }
 
-sub position
-{
+sub position {
     my $self=shift;
     my($position)=@_;
 
     if ($self->{position} =~ /\-/) { # if position describes a range, such as a QTL
 	print STDERR "RANGE DETECTED ($self->{position})\n";
 	($self->{position_north}, $self->{position_south}) = split "-", $self->{position};
-	$self->{position} = ($self->{position_south} - $self->{position_north})/2;
+	$self->{position} = ($self->{position_south} + $self->{position_north})/2;
     }
 
     
 
-    if(defined($position))
-    {
-        unless(CXGN::Tools::Text::is_number($position))
-        {
+    if(defined($position)) {
+        unless(CXGN::Tools::Text::is_number($position)) {
             print STDERR "Position must be a floating-point number, not '$position'";
         }
         $self->{position}=$position;       
@@ -188,8 +179,7 @@ sub position
     return $self->{position};
 }
 
-sub confidence
-{
+sub confidence {
     my $self=shift;
     my($confidence)=@_;
     if($confidence)
