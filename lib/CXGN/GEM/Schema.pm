@@ -57,9 +57,6 @@ The following class methods are implemented:
 
 =cut
 
-## Load in the package all the classes
-__PACKAGE__->load_classes; #< load our GEM classes;
-
 ## Load our own classes
 __PACKAGE__->load_classes;
 
