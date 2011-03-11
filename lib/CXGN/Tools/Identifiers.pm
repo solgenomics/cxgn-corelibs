@@ -509,7 +509,7 @@ sub is_sgn_m {
 sub url_sgn_m {
     my $id = shift;
     $id =~ s/sgn.*m(\d+)$/$1/i;
-    return "/search/markers/markerinfo.pl?marker_id=$urlencode{$id}";
+    return "/marker/SGN-M$id/details";
 }
 sub clean_sgn_m {
   clean_letter_identifier('sgn','m',shift);
