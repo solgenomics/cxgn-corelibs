@@ -695,7 +695,7 @@ sub AUTOLOAD {
 "Unknown parameter $paramname, or maybe the $paramname() function is not defined and should be";
 
     if ($value) {
-        if ( $this_po->{type} eq 'simple' ) {
+        if ( defined $this_po->{type} && $this_po->{type} eq 'simple' ) {
 
             #check whether this param is being used by a complex parameter
             #that is already set
@@ -843,9 +843,12 @@ sub to_sql {
     $this = dclone($this);    #< dclone() is from Storable.pm
 
     #run the setters on all our complex params
-    foreach my $complex_pn ( grep { $this->param_def($_)->{type} eq 'complex' }
-        $this->param_names )
-    {
+    my @complex_pns = grep {
+        my $t = $this->param_def($_)->{type};
+        defined $t && $t eq 'complex'
+    } $this->param_names;
+
+    for my $complex_pn ( @complex_pns ) {
         local $this->{_calling_setter} = $complex_pn;
         $this->param_def($complex_pn)->{setter}
           ->( $this, @{ $this->param_val($complex_pn) } );
@@ -957,9 +960,9 @@ sub _sql_tables_and_conditions {
 
         #also don't render it if it's a complex param.  its setter should
         #have already been run in to_sql() above
-        next
-          if $this->param_def($termname)
-              && $this->param_def($termname)->{type} eq 'complex';
+        next if $this->param_def($termname)
+             && $this->param_def($termname)->{type}
+             && $this->param_def($termname)->{type} eq 'complex';
 
         my ( $sql, $is_grouped, $is_agg, @bind ) =
           $this->_term2sql( $termname, \%terms_already_rendered,
