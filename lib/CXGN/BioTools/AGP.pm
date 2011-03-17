@@ -45,10 +45,14 @@ use base qw/ Exporter /;
 our @EXPORT_OK;
 BEGIN {
   @EXPORT_OK = qw(
+                  agp_parse
+
                   agp_to_seq
                   agp_to_seqs
-                  agp_parse
+
                   agp_write
+                  agp_format_part
+
                   agp_contigs
 
                   agp_contig_seq
@@ -307,11 +311,23 @@ sub agp_write {
     };
 
   foreach my $line (@$lines) {
-    #deal with commments
-    if( $line->{comment} ) {
-      print $out_fh "#$line->{comment}\n";
-      next;
-    }
+      print $out_fh agp_format_part( $line );
+  }
+
+  return;
+}
+
+=head2 agp_format_part( $record )
+
+Format a single AGP part line (string terminated with a newline) from
+the given record hashref.
+
+=cut
+
+sub agp_format_part {
+    my ( $line ) = @_;
+
+    return "#$line->{comment}\n" if $line->{comment};
 
     #and all other lines
     my @fields = @{$line}{qw(objname ostart oend partnum type)};
@@ -321,10 +337,7 @@ sub agp_write {
       push @fields, @{$line}{qw(ident cstart cend orient)};
     }
 
-    print $out_fh join("\t", @fields)."\n";
-  }
-
-  return;
+    return join("\t", @fields)."\n";
 }
 
 
