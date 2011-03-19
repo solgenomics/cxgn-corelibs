@@ -7,8 +7,6 @@ use File::Basename;
 use File::Spec;
 use File::Temp qw/tempfile/;
 
-use Bio::FeatureIO;
-
 my $testfiles_path = File::Spec->catdir($FindBin::RealBin,'data');
 my @agptests = (
                 { file => 'chr04.v3.agp',
@@ -136,10 +134,10 @@ my @agptests = (
 		  );
 $_->{file} = File::Spec->catfile($testfiles_path,$_->{file}) foreach @agptests;
 
-use Test::More tests => 15;
+use Test::More;
 use File::Temp qw/tempfile/;
 
-use_ok(  'CXGN::BioTools::AGP' , qw/agp_to_seq agp_parse agp_write agp_contigs agp_to_features agp_contig_seq / )
+use_ok(  'CXGN::BioTools::AGP' , qw/ agp_to_features agp_parse agp_write agp_contigs agp_contig_seq / )
     or BAIL_OUT('could not include the module being tested');
 
 
@@ -184,6 +182,10 @@ foreach my $test (@agptests) {
   }
 }
 
+done_testing;
+exit;
+
+######### subroutines ##########
 
 sub test_seq_assembly_get_seq {
 
