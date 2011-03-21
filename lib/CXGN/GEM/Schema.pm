@@ -68,7 +68,9 @@ __PACKAGE__->load_classes({
 
 ## Load Bio::Chado::Schema a little differently, depending on its version
 my $bcs_result_ns;
-if( $Bio::Chado::Schema::VERSION >= 0.08 ) {
+if(    !defined $Bio::Chado::Schema::VERSION
+    || $Bio::Chado::Schema::VERSION >= 0.08
+  ) {
     $bcs_result_ns = 'Bio::Chado::Schema::Result';
     __PACKAGE__->load_namespaces(
         result_namespace    => '+Bio::Chado::Schema::Result',
