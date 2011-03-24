@@ -691,11 +691,8 @@ sub get_pub_by_accession {
     my $sth = $dbh->prepare($query);
     $sth->execute($accession );
     my ($pub_id) = $sth->fetchrow_array();
-    if ($pub_id) { 
-	my $publication= CXGN::Chado::Publication->new($dbh, $pub_id);
-	return $publication;
-    }
-    else { return undef; }
+    my $publication= CXGN::Chado::Publication->new($dbh, $pub_id);
+    return $publication;
 }
 
 
