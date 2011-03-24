@@ -96,7 +96,7 @@ sub new {
 
 sub fetch { 
     my $self = shift;
-    my $sgn = $self->get_dbh()->qualify_schema("sgn");
+    my $sgn = 'sgn';
     my $query = "SELECT est_id, read_id, flags, status, seq as untrimmed_seq, substring(seq from hqi_start::int for hqi_length::int) as trimmed_seq, hqi_start, hqi_length, clone.clone_name, seqread.read_id, seqread.trace_name,seqread.direction, seqread.trace_location FROM $sgn.est LEFT JOIN $sgn.qc_report using(est_id) LEFT JOIN $sgn.seqread USING(read_id) LEFT JOIN $sgn.clone USING(clone_id) where est_id=?";
     my $sth = $self->get_dbh()->prepare($query);
     $sth->execute($self->get_est_id());

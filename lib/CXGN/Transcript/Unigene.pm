@@ -749,7 +749,7 @@ sub get_annotations {
 sub get_microarray_info {
     my $self = shift;
 
-    my $sgn = $self->get_dbh()->qualify_schema("sgn");
+    my $sgn = 'sgn';
 
     my $query = "SELECT clone.clone_id as clone_id, est.est_id as est_id, seqread.direction as direction,
                  chip_name, release, microarray.version as version, spot_id, 
@@ -1014,7 +1014,7 @@ sub get_families {
     my ($group_id) = $family_group_h->fetchrow_array();
 
     
-    my $sgn = $self->get_dbh()->qualify_schema("sgn");
+    my $sgn = 'sgn';
     my $family_q = $self->get_dbh()->prepare("	SELECT  sgn.family.family_id, i_value, family_annotation
 							FROM $sgn.family_build 
 							JOIN $sgn.family USING (family_build_id) 
@@ -1202,7 +1202,7 @@ sub get_unigene_member_count_in_library {
 
 sub get_member_library_ids {
     my $self = shift;
-    my $sgn = $self->get_dbh()->qualify_schema("sgn");
+    my $sgn = 'sgn';
     my $query = "SELECT library_id, count(*) as c FROM sgn.unigene_member 
                   JOIN sgn.est USING(est_id) 
                   JOIN sgn.seqread USING(read_id) 
