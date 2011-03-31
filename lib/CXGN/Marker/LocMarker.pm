@@ -86,7 +86,7 @@ sub _get_parents {
   my ($self) = @_;
 
   my $map = $self->map_id();
-  my $q = $self->{dbh}->prepare("SELECT accession_name, organism_name, common_name FROM plants INNER JOIN map ON(map.parent_1=accession_id OR map.parent_2=accession_id) WHERE map_id = ?");
+  my $q = $self->{dbh}->prepare("SELECT uniquename FROM stock INNER JOIN map ON(map.parent1_stock_id=stock_id OR map.parent2_stock_id=stock_id) WHERE map_id = ?");
 
   $q->execute();
   $self->{parents} = $q->fetchall_arrayref([0]);

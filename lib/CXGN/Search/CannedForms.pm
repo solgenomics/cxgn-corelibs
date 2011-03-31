@@ -940,8 +940,9 @@ sub species_select {
 
     my $names =
       $self->{dbh}->selectcol_arrayref(
-'select distinct common_name.common_name from common_name inner join organism using(common_name_id) inner join accession using(organism_id) inner join map on(accession.accession_id=map.parent_1 OR accession.accession_id=map.parent_2) ORDER BY common_name.common_name'
-      );
+	  "select distinct organismprop.value from sgn.map inner join public.stock on (map.parent1_stock_id=stock.stock_id or map.parent2_stock_id=stock.stock_id) join public.organismprop using(organism_id) join public.cvterm on (organismprop.type_id=cvterm_id)  WHERE cvterm.name='common_name'");
+
+
     return $self->selectbox( 'species', $names, 'multiple' );
 
 }
