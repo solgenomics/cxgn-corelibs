@@ -139,20 +139,20 @@ sub store {
                                         long_name  = ?,
                                         abstract   = ?,
                                         map_type   = ?,
-                                        parent_1   = ?,
-                                        parent_2   = ?,
+                                        parent1_stock_id   = ?,
+                                        parent2_stock_id   = ?,
                                         units       = ?,
-                                        population_id = ?
+                                        population_stock_id = ?
 				  WHERE map_id = ?"
 	    );
 	$sth->execute($self->{short_name},
 		      $self->{long_name},
 		      $self->{abstract},
 		      $self->{map_type},
-		      $self->{parent_1},
-		      $self->{parent_2},
+		      $self->{parent1_stock_id},
+		      $self->{parent2_stock_id},
 		      $self->get_units(),
-                      $self->{population_id},
+                      $self->{population_stock_id},
 		      $map_id
 	    );
 
@@ -280,6 +280,7 @@ sub set_abstract {
 
 =head2 accessors get_parent_1, set_parent_1
 
+ DEPRECATED
  Usage:
  Desc:
  Property
@@ -297,8 +298,71 @@ sub set_parent_1 {
   my $self = shift;
   $self->{parent_1} = shift;
 }
+
+=head2 accessors get_parent1_stock_id, set_parent1_stock_id
+
+ Usage:        
+ Desc:         sets the stock id of parent 1 of this map.
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_parent1_stock_id {
+  my $self = shift;
+  return $self->{parent1_stock_id}; 
+}
+
+sub set_parent1_stock_id {
+  my $self = shift;
+  $self->{parent1_stock_id} = shift;
+}
+
+=head2 accessors get_parent2_stock_id, set_parent2_stock_id
+
+ Usage:
+ Desc:         sets the stock id of the parent 2 of this map.
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_parent2_stock_id {
+  my $self = shift;
+  return $self->{parent2_stock_id}; 
+}
+
+sub set_parent2_stock_id {
+  my $self = shift;
+  $self->{parent2_stock_id} = shift;
+}
+
+=head2 accessors get_population_stock_id, set_population_stock_id
+
+ Usage:
+ Desc:         sets the population id of the map, referencing
+               stock table.
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_population_stock_id {
+  my $self = shift;
+  return $self->{population_stock_id}; 
+}
+
+sub set_population_stock_id {
+  my $self = shift;
+  $self->{population_stock_id} = shift;
+}
+
 =head2 accessors get_population_id, set_population_id
 
+ DEPRECATED.
  Usage:
  Desc:
  Property
@@ -338,8 +402,6 @@ sub get_map_id {
     return $self->{map_id};
 
 }
-
-
 
 =head2 accessors set_linkage_groups, get_linkage_groups
 
@@ -421,6 +483,9 @@ sub get_units {
     }
     elsif ($self->get_map_type() =~ /sequenc/) { 
 	return "MB";
+    }
+    elsif ($self->get_map_type() =~ /qtl/i) { 
+	return "cM";
     }
     else { 
 	return "unknown";
