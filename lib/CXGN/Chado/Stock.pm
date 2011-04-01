@@ -147,7 +147,10 @@ sub exists_in_database {
 
 sub get_organism {
     my $self = shift;
-    return $self->get_object_row()->organism;
+    if (my $bcs_stock = $self->get_object_row) {
+        return $bcs_stock->organism;
+    }
+    return undef;
 }
 
 =head2 get_type
@@ -164,8 +167,8 @@ sub get_organism {
 sub get_type {
     my $self = shift;
 
-    if ($self->get_type_id) {
-	return  $self->get_object_row()->type;
+    if (my $bcs_stock = $self->get_object_row ) {
+	return  $bcs_stock->type;
     }
     return undef;
 
@@ -275,7 +278,10 @@ sub set_uniquename {
 
 sub get_organism_id {
     my $self = shift;
-    return $self->get_object_row()->get_column("organism_id"); 
+    if (my $bcs_stock =  $self->get_object_row ) {
+        return $bcs_stock->get_column("organism_id");
+    }
+    return undef;
 }
 
 sub set_organism_id {
@@ -295,7 +301,9 @@ sub set_organism_id {
 
 sub get_type_id {
     my $self = shift;
-    return $self->get_object_row()->get_column("type_id"); 
+    if (my $bcs_stock = $self->get_object_row ) {
+        return $bcs_stock->get_column("type_id");
+    }
 }
 
 sub set_type_id {
@@ -335,7 +343,10 @@ sub set_description {
 
 sub get_stock_id {
     my $self = shift;
-    return $self->get_object_row()->get_column("stock_id"); 
+    if ( my $bcs_stock = $self->get_object_row ) {
+        return $bcs_stock->get_column("stock_id");
+    }
+    return undef;
 }
 
 sub set_stock_id {
