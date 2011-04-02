@@ -375,7 +375,25 @@ sub set_is_obsolete {
     $self->get_object_row()->set_column(is_obsolete => shift);
 }
 
+=head2 function get_image_ids
 
+  Synopsis:     my @images = $self->get_image_ids()
+  Arguments:    none
+  Returns:      a list of image ids
+  Side effects:	none
+  Description:	a method for fetching all images associated with a stock
+
+=cut
+
+sub get_image_ids {
+    my $self = shift;
+    my $ids = $self->get_schema->storage->dbh->selectcol_arrayref
+	( "SELECT value FROM stockprop JOIN cvterm on cvterm.cvterm_id = stockprop.type_id WHERE stock_id=? AND cvterm.name = 'sgn image_id' ",
+	  undef,
+	  $self->get_stock_id
+        );
+    return @$ids;
+}
 
 ##########
 1;########
