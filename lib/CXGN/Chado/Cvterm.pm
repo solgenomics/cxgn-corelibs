@@ -1478,7 +1478,7 @@ sub get_recursive_loci {
 
 =head2 get_recursive_individuals
 
- Usage: my @ind= $self->get_recursive_individuals()
+ Usage: DEPRECATED. Use get_recursive_stocks. my @ind= $self->get_recursive_individuals()
  Desc:  find all the individuals annotated with the cvterm or any of its recursive children
  Ret:   a list of Individual ojects
  Args:  none
@@ -1489,9 +1489,8 @@ sub get_recursive_loci {
 
 sub get_recursive_individuals {
     my $self=shift;
-
+    warn "DEPRECATED. Use get_recursive_stocks";
     my $query = "select distinct individual_id  from cvtermpath  join cvterm on (cvtermpath.object_id = cvterm.cvterm_id or cvtermpath.subject_id = cvterm.cvterm_id) join phenome.individual_dbxref using (dbxref_id ) join phenome.individual using (individual_id) where ( cvtermpath.object_id =?) and individual_dbxref.obsolete = 'f' and individual.obsolete = 'f' and pathdistance > 0 ";
-
 
     my $sth=$self->get_dbh()->prepare($query);;
     my @ind;
@@ -1502,6 +1501,43 @@ sub get_recursive_individuals {
     }
     return @ind;
 }
+
+=head2 get_recursive_stocks
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_recursive_stocks {
+    my $self = shift;
+    my $q = "SELECT distinct stock_id, stock.name, stock.description FROM cvtermpath
+            JOIN cvterm on (cvtermpath.object_id = cvterm.cvterm_id OR cvtermpath.subject_id = cvterm.cvterm_id )
+            JOIN stock_cvterm on (stock_cvterm.cvterm_id = cvterm.cvterm_id)
+            LEFT JOIN stock_cvtermprop USING (stock_cvterm_id)
+            LEFT JOIN cvterm as type_name ON (stock_cvtermprop.type_id = cvterm.cvterm_id)
+            JOIN stock USING (stock_id)
+            WHERE  stock_cvterm.cvterm_id = ?
+            AND stock.is_obsolete = ?
+            AND pathdistance > 0
+            AND ( (type_name.name != ? OR type_name.name IS NULL) AND (value != ? OR value IS NULL) ) ORDER BY stock.name";
+
+     my $ids = $self->get_dbh->selectall_hashref
+        ( $q,
+          'stock_id',
+          undef,
+          $self->get_cvterm_id,
+          'false',
+          'obsolete' , 1
+        );
+    return $ids;
+
+}
+
 
 
 
