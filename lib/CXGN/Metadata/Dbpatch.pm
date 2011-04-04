@@ -146,13 +146,13 @@ has "name" => (
     is       => 'rw',
     isa      => 'Str',
     traits   => ['NoGetopt'],
-    required => 0,
+    default  => sub { ref shift },
 );
 
 has "description" => (
     is       => 'rw',
     isa      => 'Str',
-    required => 0,
+    default  => '(no description)',
     traits   => ['NoGetopt'],
 );
 
@@ -254,9 +254,6 @@ sub run {
 
 
 sub init_patch {
-    my $self=shift;
-    warn "You have to override init_patch in your sub-class!";
-
 }
 
 sub patch {
