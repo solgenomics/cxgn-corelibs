@@ -99,18 +99,24 @@ sub new {
         $q->execute( $self->{primer_id_pd} );
         ( $self->{dcaps_primer} ) = $q->fetchrow_array();
 
+
+
+
         #get pcr products
         my $sizes;
+
         $q = $dbh->prepare(
-"SELECT stock.stock_id,band_size,multiple_flag FROM pcr_exp_accession inner join pcr_product using(pcr_exp_accession_id) inner join stock on(pcr_exp_accession.stock_id=stock.stock_id) WHERE enzyme_id is null and pcr_experiment_id=?"
+"SELECT stock.stock_id,band_size,multiple_flag FROM sgn.pcr_exp_accession inner join sgn.pcr_product using(pcr_exp_accession_id) inner join public.stock on(pcr_exp_accession.stock_id=stock.stock_id) WHERE enzyme_id is null and pcr_experiment_id=?"
         );
+
         $q->execute( $self->{pcr_experiment_id} );
+
         $sizes = $q->fetchall_arrayref();
         if ( $sizes->[0] ) {
             $self->{pcr_bands} = $self->query_results_to_bands_hash($sizes);
         }
         $q = $dbh->prepare(
-"SELECT stock.stock_id,band_size,multiple_flag FROM pcr_exp_accession inner join pcr_product using(pcr_exp_accession_id) inner join stock on(pcr_exp_accession.stock_id=stock.stock_id) WHERE enzyme_id is not null and pcr_experiment_id=?"
+"SELECT stock.stock_id,band_size,multiple_flag FROM sgn.pcr_exp_accession inner join sgn.pcr_product using(pcr_exp_accession_id) inner join public.stock on(pcr_exp_accession.stock_id=stock.stock_id) WHERE enzyme_id is not null and pcr_experiment_id=?"
         );
         $q->execute( $self->{pcr_experiment_id} );
         $sizes = $q->fetchall_arrayref();
@@ -355,7 +361,10 @@ Stores this experiment in the database, as long as it does not exist. If it does
 sub store_unless_exists {
     my $self = shift;
 
-    if ( $self->exists() ) { return }
+    if ( $self->exists() ) { 
+	print STDERR "This pcr experiment has already been stored.\n";
+	return;
+    }
 
     unless ( $self->{marker_id} ) {
         croak "Cannot store experiment without marker ID";
@@ -454,6 +463,8 @@ sub store_unless_exists {
 'insert into sgn.pcr_product (pcr_exp_accession_id,enzyme_id,multiple_flag,band_size,predicted) values (?,?,?,?,?)'
       );
 
+
+
     for my $stock_id ( keys(%stocks) ) {
         $exp_acc_insert->execute( $self->{pcr_experiment_id}, $stock_id );
         $stocks{$stock_id} = $self->{dbh}->last_insert_id('pcr_exp_accession')
@@ -477,6 +488,7 @@ sub store_unless_exists {
                         undef, $self->{predicted} );
                 }
                 else {
+
                     $pcr_band_insert->execute( $stocks{$stock_id}, undef, undef,
                         $band, $self->{predicted} );
                 }
@@ -891,6 +903,9 @@ sub predicted {
 
     $experiment->add_pcr_bands_for_stock('250+400','LA716');
 
+    In a change from the previous version, this actually hard stores
+    the band info in the database. It only inserts a band size once.
+
     Note: add_pcr_bands_for_accession is deprecated.
 
 =cut
@@ -912,6 +927,10 @@ sub add_pcr_bands_for_stock {
     #        croak"Accession '$stock_name' not found\n";
     #    }
 
+    if (!$self->{pcr_experiment_id}) { 
+	die "Need a pcr_experiment_id!!!\n";
+    }
+
     my $stock_id = $self->get_stock_id_with_stock_name($stock_name);
 
     #my $accession_id=$accession_object->accession_id();
@@ -919,18 +938,48 @@ sub add_pcr_bands_for_stock {
     my @bands = split( /\+/, $bands_string );
     $self->{pcr_bands}->{$stock_id} = \@bands;
     $self->{pcr_bands} = $self->test_and_clean_bands( $self->{pcr_bands} );
+    
+#    print STDERR "ADDING BANDS ".(@bands)."\n";
+    foreach my $band (@bands) { 
+	my $sth = $self->{dbh}->prepare("SELECT marker_id, pcr_exp_accession.pcr_exp_accession_id, pcr_product_id FROM pcr_experiment JOIN pcr_exp_accession USING(pcr_experiment_id) LEFT JOIN pcr_product USING (pcr_exp_accession_id) WHERE band_size=? AND pcr_exp_accession.stock_id=? AND marker_id=?");
+	$sth->execute($band, $stock_id, $self->marker_id());
+	my ($marker_id, $pcr_exp_accession_id, $pcr_product_id) = $sth->fetchrow_array();
+
+	if ( $pcr_exp_accession_id) { 
+	    print STDERR "pcr_exp_accession for $stock_id is already in the database -- not storing\n"; 
+	}
+	else { 
+	    my $p1 = $self->{dbh}->prepare("INSERT INTO sgn.pcr_exp_accession (pcr_experiment_id, stock_id) VALUES (?, ?) RETURNING pcr_exp_accession_id");
+	    $p1->execute($self->{pcr_experiment_id}, $stock_id);
+	    ($pcr_exp_accession_id) = $p1->fetchrow_array();
+	    
+	}
+	
+
+	if ($pcr_product_id ) { 
+	    print STDERR "pcr_product of size $band for stock $stock_id already in database -- not storing.\n";
+	}
+	else { 
+	    my $new_pcr_product_id = $self->{dbh}->do("INSERT INTO sgn.pcr_product (pcr_exp_accession_id, band_size) VALUES (?, ?) RETURNING pcr_product_id", {}, $pcr_exp_accession_id, $band);
+
+	}
+    }
+    
+
 }
 
 =head2 add_pcr_digest_bands_for_stock
 
     $experiment->add_pcr_digest_bands_for_stock('250+400','LA716');
 
+   (needs fixing, see add_digest_bands_for_stock)
+
     Side effect: Dies if the stock is not valid.
     Note:        add_pcr_digest_bands_for_accession is deprecated.
 
 =cut
 
-sub add_pcr_digest_bands_for_accession { 
+sub add_pcr_bands_for_accession { 
     warn "add_pcr_digest_bands_for_accession is deprecated.\n";
     shift->add_pcr_digest_bands_for_stock(@_);
 }
@@ -961,7 +1010,7 @@ sub get_stock_id_with_stock_name {
     my $stock_name = shift;
 
     my $sth =
-      $self->{dbh}->prepare("SELECT stock_id FROM stock where stock_name=?");
+      $self->{dbh}->prepare("SELECT stock_id FROM stock where name=?");
     $sth->execute($stock_name);
 
     my ($stock_id) = $sth->fetchrow_array();
@@ -1034,7 +1083,7 @@ sub test_and_clean_bands {
 
 #       unless(CXGN::Accession->new($self->{dbh},$accession_id)->accession_id()){croak"Accession '$accession_id' not found";}
 
-        unless ( $self->valid_stock_id($stock_id) ) {
+        unless ( $self->_valid_stock_id($stock_id) ) {
             croak "stock_id $stock_id is not valid!";
         }
 
