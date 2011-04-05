@@ -65,7 +65,7 @@ sub new {
 
   my ($class, $dbh) = @_;
 
-  $physical = $dbh->qualify_schema('physical');
+##  $physical = $dbh->qualify_schema('physical');
 
   die "must provide a dbh as first argument: CXGN::Marker->new($dbh)\n" unless $dbh && ref($dbh) eq 'CXGN::DB::Connection';
 
