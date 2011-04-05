@@ -1759,17 +1759,13 @@ sub get_po_sorted_experiment_list {
 	       my ($dbxref_row) = $self->get_schema()
 	                                      ->resultset('General::Dbxref')
 		 		              ->search({'dbxref_id' => $parent_cvterm_row->get_column('dbxref_id')});
-
-	       my ($db_row) = $self->get_schema()
-	                           ->resultset('General::Db')
-		  	           ->search({'db_id' => $dbxref_row->get_column('db_id')});
 	       
 	       ## Now it will add the po_terms from closest to farest... in the array the first element will be the root
 	       ## (the farest parent po term)
 
-	       if (defined $dbxref_row && defined $db_row) {
+	       if (defined $dbxref_row) {
 
-		   my $po_term = $db_row->get_column('name') . ':' . $dbxref_row->get_column('accession');
+		   my $po_term = 'PO:' . $dbxref_row->get_column('accession');
 		   unless (exists $parent_po_terms{$po_term}) {
 		       
                        ## The last po_term added should be the roots 'PO:0009011' or 'PO:0009012'
