@@ -16,9 +16,9 @@ for (0..200){ # test a few times
   $msearch->random();
   #$msearch->marker_id(518);
   $msearch->perform_search();
-  diag("search finished, creating locations\n");
+##  diag("search finished, creating locations\n");
   my ($loc) = $msearch->fetch_location_markers();
-  diag("finished creating locations\n");
+##  diag("finished creating locations\n");
 
 
   isa_ok($loc, 'CXGN::Marker::LocMarker');
@@ -39,7 +39,7 @@ ok($pos >= 0 , "position = $pos");
   ok($sub =~ /^[ABC]$/i, "subscript = $sub");
   
   my $conf = $loc->confidence();
-  ok($conf =~ /I|LOD/, "confidence = $conf");
+  ok($conf =~ /I|LOD|uncalc/, "confidence = $conf");
   
   my $mv = $loc->map_version();
   ok($mv > 0, "map version = $mv");
