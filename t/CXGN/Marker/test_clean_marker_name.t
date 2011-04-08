@@ -10,8 +10,7 @@ use Test::More 'no_plan';
 
 my $dbh = CXGN::DB::Connection->new();
 
-my $marker_names = $dbh->selectcol_arrayref('select marker_name from markers');
-#my $marker_names = $dbh->selectcol_arrayref('select alias from marker_alias');
+my $marker_names = $dbh->selectcol_arrayref('select alias from sgn.marker_alias');
 
 foreach my $name (@$marker_names){
 
