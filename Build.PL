@@ -78,6 +78,7 @@ my $build = Module::Build->new(
         'ExtUtils::Depends'       => 0,
         'B::Hooks::OP::Check'     => 0,
 
+        'Bio::BLAST::Database' => 0,
         'Catalyst::Utils' => 0,
         'CGI::Session' => 0,
         'CGI::Session::ID::md5' => 0,

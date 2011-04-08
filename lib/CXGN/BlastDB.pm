@@ -90,7 +90,7 @@ use CXGN::BlastDB::Config;
 use CXGN::Tools::List qw/any min all max/;
 use CXGN::Tools::Run;
 
-use CXGN::BlastDB::FileSet;
+use Bio::BLAST::Database;
 
 use base qw/CXGN::CDBI::Class::DBI Class::Data::Inheritable/;
 __PACKAGE__->table('blast_db');
@@ -421,7 +421,7 @@ sub needs_update {
 
 sub check_format_permissions {
   my ($self,$ffbn) = @_;
-  croak "ffbn arg is no longer supported, maybe you should just use a new CXGN::BlastDB::FileSet object" if $ffbn;
+  croak "ffbn arg is no longer supported, maybe you should just use a new Bio::BLAST::Database object" if $ffbn;
   return unless $self->_fileset('write');
   return $self->_fileset('write')->check_format_permissions;
 }
@@ -441,7 +441,7 @@ sub check_format_permissions {
 
 sub format_from_file {
   my ($self,$seqfile,$ffbn) = @_;
-  $ffbn and croak "ffbn arg no longer supported.  maybe you should make a new CXGN::BlastDB::FileSet object";
+  $ffbn and croak "ffbn arg no longer supported.  maybe you should make a new Bio::BLAST::Database object";
 
   $self->_fileset('write')
       ->format_from_file( seqfile => $seqfile, indexed_seqs => $self->index_seqs, title => $self->title );
@@ -520,7 +520,7 @@ sub identifier_url {
       : do { require CXGN::Tools::Identifiers; CXGN::Tools::Identifiers::identifier_url($ident) };
 }
 
-# accessor that holds our encapsulated CXGN::BlastDB::FileSet
+# accessor that holds our encapsulated Bio::BLAST::Database
 memoize '_fileset',
   NORMALIZER => sub { #< need to take the full_file_basename (really the dbpath) into account for the memoization
     my $s = shift; join ',',$s,@_,$s->full_file_basename
@@ -528,7 +528,7 @@ memoize '_fileset',
 sub _fileset {
   my ($self,$write) = @_;
   my $ffbn = $self->full_file_basename;
-  return CXGN::BlastDB::FileSet->open( full_file_basename => $ffbn,
+  return Bio::BLAST::Database->open( full_file_basename => $ffbn,
 				       type => $self->type,
                                        ($write ? ( write => 1,
 						   create_dirs => 1,
