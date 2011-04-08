@@ -163,7 +163,7 @@ sub position {
     my($position)=@_;
 
     if ($self->{position} =~ /\-/) { # if position describes a range, such as a QTL
-	print STDERR "RANGE DETECTED ($self->{position})\n";
+	
 	($self->{position_north}, $self->{position_south}) = split "-", $self->{position};
 	$self->{position} = ($self->{position_south} + $self->{position_north})/2;
     }
