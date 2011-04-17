@@ -422,10 +422,18 @@ sub associate_allele {
     my $metadata = CXGN::Metadata::Metadbdata->new($metadata_schema);
     $metadata->set_create_person_id($sp_person_id);
     my $metadata_id = $metadata->store()->get_metadata_id();
-    #store the image_id - stock_id link
-    my $q = "INSERT INTO phenome.stock_image (stock_id, image_id, metadata_id) VALUES (?,?,?) RETURNING stock_image_id";
+    #check if the allele is already linked
+    my $ids =  $self->get_schema->storage->dbh->selectcol_arrayref
+        ( "SELECT stock_allele_id FROM phenome.stock_allele WHERE stock_id = ? AND allele_id = ?",
+          undef,
+          $self->get_stock_id,
+          $allele_id
+        );
+    if ($ids) { warn "Allele $allele_id is already linked with stock " . $self->get_stock_id ; }
+#store the allele_id - stock_id link
+    my $q = "INSERT INTO phenome.stock_allele (stock_id, allele_id, metadata_id) VALUES (?,?,?) RETURNING stock_allele_id";
     my $sth  = $self->get_schema->storage->dbh->prepare($q);
-    $sth->execute($self->stock_id, $allele_id, $metadata_id);
+    $sth->execute($self->get_stock_id, $allele_id, $metadata_id);
     my ($id) =  $sth->fetchrow_array;
     return $id;
 }

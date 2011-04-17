@@ -1310,9 +1310,10 @@ sub store {
                      ->dbh()
                      ->selectrow_array("SELECT current_user");
 
-    if ($user ne 'postgres') {
-	croak("USER ACCESS ERROR: Only postgres user can store data.\n");
-    }
+    # should be open for any user with db permissions
+    #if  ($user ne 'postgres') {
+    #croak("USER ACCESS ERROR: Only postgres user can store data.\n");
+    #}
 
 
     my $metadata_row = $self->get_mdmetadata_row();
@@ -1376,13 +1377,13 @@ sub new_data_store {
     my $creation_user = $self->get_object_creation_user();
 
     my $statement = "SELECT sp_person_id FROM sgn_people.sp_person WHERE username=?";
-    my $creation_user_id = $self->get_schema()
+    my $creation_user_id = $self->get_create_person_id || $self->get_schema()
         ->storage()
         ->dbh()
         ->selectrow_array($statement, undef, ($creation_user));
 
-    unless (defined $creation_user) {
-	my $error = "STORE ERROR: None creation user was supplied to CXGN::Metadata::Metadbdata object.\n";
+    unless (defined $creation_user || defined $creation_user_id ) {
+	my $error = "STORE ERROR: No creation user nor id was supplied to CXGN::Metadata::Metadbdata object.\n";
 	$error .= " This parameter is a mandatory parameter for store functions\n";
 	croak($error);
     }
