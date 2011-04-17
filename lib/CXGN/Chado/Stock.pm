@@ -21,6 +21,7 @@ use strict;
 use warnings;
 use Carp;
 use Bio::Chado::Schema;
+use CXGN::Metadata::Schema;
 
 use base qw / CXGN::DB::Object / ;
 
@@ -388,12 +389,47 @@ sub set_is_obsolete {
 sub get_image_ids {
     my $self = shift;
     my $ids = $self->get_schema->storage->dbh->selectcol_arrayref
-	( "SELECT value FROM stockprop JOIN cvterm on cvterm.cvterm_id = stockprop.type_id WHERE stock_id=? AND cvterm.name = 'sgn image_id' ",
+	( "SELECT image_id FROM phenome.stock_image WHERE stock_id=? ",
 	  undef,
 	  $self->get_stock_id
         );
     return @$ids;
 }
+
+=head2 associate_allele
+
+ Usage: $self->associate_allele($allele_id, $sp_person_id)
+ Desc:  store a stock-allele link in phenome.stock_allele
+ Ret:   a database id
+ Args:  allele_id, sp_person_id
+ Side Effects:  store a metadata row
+ Example:
+
+=cut
+
+sub associate_allele {
+    my $self = shift;
+    my $allele_id = shift;
+    my $sp_person_id = shift;
+    if (!$allele_id || !$sp_person_id) {
+        warn "Need both allele_id and person_id for linking the stock with an allele!";
+        return
+    }
+    my $metadata_schema = CXGN::Metadata::Schema->connect(
+        sub { $self->get_schema->storage->dbh },
+        { on_connect_do => ['SET search_path TO metadata;'] },
+        );
+    my $metadata = CXGN::Metadata::Metadbdata->new($metadata_schema);
+    $metadata->set_create_person_id($sp_person_id);
+    my $metadata_id = $metadata->store()->get_metadata_id();
+    #store the image_id - stock_id link
+    my $q = "INSERT INTO phenome.stock_image (stock_id, image_id, metadata_id) VALUES (?,?,?) RETURNING stock_image_id";
+    my $sth  = $self->get_schema->storage->dbh->prepare($q);
+    $sth->execute($self->stock_id, $allele_id, $metadata_id);
+    my ($id) =  $sth->fetchrow_array;
+    return $id;
+}
+
 
 ##########
 1;########

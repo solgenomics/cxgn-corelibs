@@ -112,7 +112,7 @@ with 'MooseX::Runnable';
 
 has "md_schema" => (
     is       => 'rw',
-    isa      => 'CXGN::Metadata::Schema',
+    isa      => 'Ref',
     required => 0,
     traits   => ['NoGetopt'],
 );
@@ -218,7 +218,7 @@ sub run {
 	sub { $dbh },
 	{ on_connect_do => ['SET search_path TO metadata;'] },
 	);
-
+    $self->md_schema($metadata_schema);
     ### Now it will check if you have runned this patch or the previous patches
 
     my $dbversion = CXGN::Metadata::Dbversion->new($metadata_schema)

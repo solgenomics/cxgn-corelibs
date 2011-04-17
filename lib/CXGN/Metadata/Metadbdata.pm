@@ -279,11 +279,12 @@ All the SQL searches related with sgn_people should be replaced by the methods
 
 sub new {
     my $class = shift;
-    my $schema = shift 
-	|| croak("INPUT ERROR: None schema object was supplied to the constructor CXGN::Metadata::Metadbdata->new().\n");
+    my $schema = shift
+	|| croak("INPUT ERROR: No schema object was supplied to the constructor CXGN::Metadata::Metadbdata->new().\n");
+    $schema->storage->dbh->do('set search_path to metadata');
     my $username = shift;
     my $id = shift;
-
+    
     ### First, bless the class to create the object and set the schema into de object.
 
     my $self = $class->SUPER::new($schema);
@@ -1317,9 +1318,7 @@ sub store {
     my $metadata_row = $self->get_mdmetadata_row();
     my %all_metadata = $metadata_row->get_columns();
     my $metadata_id = $all_metadata{'metadata_id'};
-
     if (defined $metadata_id) {
-
         ## It can be a modified data
 	$self->modified_data_store($modify_data_href);
 
@@ -1330,18 +1329,15 @@ sub store {
         ## the mdmetadata_row object inside the CXGN::Metadata::Metadbdata object
 
 	if (defined $all_metadata{'create_date'}) {
-
-	    my $metadata_from_db = $self->get_schema()
+            my $metadata_from_db = $self->get_schema()
 		                        ->resultset('MdMetadata')
                                         ->find(\%all_metadata);
 
 	    if (defined $metadata_from_db) {	    
-		
-		$self->set_mdmetadata_row($metadata_from_db);
+                $self->set_mdmetadata_row($metadata_from_db);
 	    }
-	} 
+        }
 	else {
-	    
             ## It will create a new metadata id. It will not check the creation_user because it was checked during the
 	    ## the creation of the object
 	    $self->new_data_store();
@@ -1366,6 +1362,7 @@ sub store {
   Args: none
 
   Side_Effects: Store data in the database if the metadata row do not exists
+                Sets the metadata_id
 
   Example: my $new_metadata_object = $metadata->new_store();
 
@@ -1380,9 +1377,9 @@ sub new_data_store {
 
     my $statement = "SELECT sp_person_id FROM sgn_people.sp_person WHERE username=?";
     my $creation_user_id = $self->get_schema()
-	                        ->storage()
-				->dbh()
-				->selectrow_array($statement, undef, ($creation_user));
+        ->storage()
+        ->dbh()
+        ->selectrow_array($statement, undef, ($creation_user));
 
     unless (defined $creation_user) {
 	my $error = "STORE ERROR: None creation user was supplied to CXGN::Metadata::Metadbdata object.\n";
@@ -1390,7 +1387,7 @@ sub new_data_store {
 	croak($error);
     }
 
-    ## If you are creating a new object into the database you don't need check, if the 
+    ## If you are creating a new object into the database you don't need check, if the
     ## old object have some data inside the row. Simply, it will create a new
     ## row and set the old value.
 
@@ -1399,20 +1396,19 @@ sub new_data_store {
 
     my $new_metadata_row = $self->get_schema()
 	                        ->resultset('MdMetadata')
-				->find_or_new({ create_date      => $creation_date, 
+				->find_or_new({ create_date      => $creation_date,
 				     		create_person_id => $creation_user_id });
-
     my $metadata_id = $new_metadata_row->get_column('metadata_id');
-    if (defined $metadata_id) {                 
-	                                                             ## Means that exists this metadata row
-	$self->set_mdmetadata_row($new_metadata_row);                ## so, it will set the object with the result.
-    } 
+    if (defined $metadata_id) {
+        ## Means that exists this metadata row
+	$self->set_mdmetadata_row($new_metadata_row);
+        ## so, it will set the object with the result.
+    }
     else {
-
-	$new_metadata_row->insert()->discard_changes();              ## Don't exists, so it will insert a new one
+	$new_metadata_row->insert()->discard_changes(); ## Don't exists, so it will insert a new one
 	$self->set_mdmetadata_row($new_metadata_row);
     }
-
+    $self->set_metadata_id($new_metadata_row->metadata_id);
     return $self;
 }
 
