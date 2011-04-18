@@ -1336,7 +1336,7 @@ sub store {
 
 	    if (defined $metadata_from_db) {	    
                 $self->set_mdmetadata_row($metadata_from_db);
-	    }
+	    } else { $self->new_data_store() ; }
         }
 	else {
             ## It will create a new metadata id. It will not check the creation_user because it was checked during the
