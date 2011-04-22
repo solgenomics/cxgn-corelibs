@@ -281,7 +281,6 @@ sub new {
     my $class = shift;
     my $schema = shift
 	|| croak("INPUT ERROR: No schema object was supplied to the constructor CXGN::Metadata::Metadbdata->new().\n");
-    $schema->storage->dbh->do('set search_path to metadata');
     my $username = shift;
     my $id = shift;
     

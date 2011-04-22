@@ -417,7 +417,6 @@ sub associate_allele {
     }
     my $metadata_schema = CXGN::Metadata::Schema->connect(
         sub { $self->get_schema->storage->dbh },
-        { on_connect_do => ['SET search_path TO metadata;'] },
         );
     my $metadata = CXGN::Metadata::Metadbdata->new($metadata_schema);
     $metadata->set_create_person_id($sp_person_id);
