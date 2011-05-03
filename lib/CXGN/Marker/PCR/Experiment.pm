@@ -1,3 +1,4 @@
+package CXGN::Marker::PCR::Experiment;
 
 =head1 NAME
 
@@ -14,8 +15,9 @@ PCR experiment object for both retrieving and inserting marker experiment data.
 =cut
 
 use strict;
+use warnings;
+no warnings 'redefine';
 
-package CXGN::Marker::PCR::Experiment;
 use Carp;
 use CXGN::Marker;
 ###use CXGN::Accession;
@@ -1122,7 +1124,7 @@ sub _valid_stock_id {
     my $sth =
       $self->{dbh}->prepare("SELECT stock_id FROM stock WHERE stock_id=?");
     $sth->execute($stock_id);
-    my ($stock_id) = $sth->fetchrow_array();
+    ($stock_id) = $sth->fetchrow_array();
     return $stock_id;
 }
 
