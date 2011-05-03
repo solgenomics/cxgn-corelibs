@@ -502,9 +502,8 @@ EOSQL
 					  il_project_id
 					  il_chr_num
 					)};
-  #avoid warnings
-  $scalars{$_} ||= '' foreach qw/id full_annotation end_annotation/;
 
+  no warnings 'uninitialized';
   my $advanced_search =
     html_optional_show('advanced_search',
 		       'More criteria',
