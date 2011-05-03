@@ -4,20 +4,23 @@ CXGN::Class::DBI->verbose(0);
 Foo->required_search_paths(qw/sgn_people/);
 Foo->set_sql("test", "SELECT COUNT(*) FROM sp_person");
 Foo->set_sql("test_with_arg", 
-	"SELECT sp_person_id FROM sp_person
-		WHERE sp_person_id > ?
-		ORDER BY \$_[0] \$_[1]
-	");
+    "SELECT sp_person_id FROM sp_person
+        WHERE sp_person_id > ?
+        ORDER BY \$_[0] \$_[1]
+    ");
 1;
 
 
 use Test::More tests => 14;
 use CXGN::DB::Connection { verbose => 0 };
-use strict;
+use Modern::Perl;
 my $foo = new Foo;
 my $sth;
 
-ok(!$Foo::DBH, "DBH should not be made until first call to get_sql()");
+{
+    no warnings 'once';
+    ok(!$Foo::DBH, "DBH should not be made until first call to get_sql()");
+}
 ok($sth = $foo->get_sql("test"), "Can get statement from handle");
 ok($sth = Foo->get_sql("test"), "Can get statement from class");
 ok($sth->execute(), "Can execute statement");
@@ -26,26 +29,29 @@ diag("Result for query '" . Foo->get_definition("test") . "': $count");
 ok(($count) = $sth->fetchrow_array(), "Fetched result");
 
 eval {
-	$sth = $foo->get_sql("test_with_arg", "sp_person_id");
+    $sth = $foo->get_sql("test_with_arg", "sp_person_id");
 };
-my $err = $@;
-my @err = split "\n", $err;
-diag("Expected Error: " . $err[0]);
-ok($@, "SQL with arguments should fail when too few arguments are sent");
-
+{
+    my $err = $@;
+    my @err = split "\n", $err;
+    diag("Expected Error: " . $err[0]);
+    ok($@, "SQL with arguments should fail when too few arguments are sent");
+}
 eval {
-	$sth = $foo->get_sql("test_with_arg", "sp_person_id", "DESC", "SayWHaaaat!?");
+    $sth = $foo->get_sql("test_with_arg", "sp_person_id", "DESC", "SayWHaaaat!?");
 };
-my $err = $@;
-my @err = split "\n", $err;
-diag("Expected Error: " . $err[0]);
-ok($@, "SQL with arguments should fail when too many arguments are sent");
-
-
-my $sth = $foo->get_sql("test_with_arg", "sp_person_id", "ASC");
-$sth->execute(5);
-my ($first) = $sth->fetchrow_array();
-is($first, 6, "First row should be 6 when id's are ascending and minimum is 6");
+{
+    my $err = $@;
+    my @err = split "\n", $err;
+    diag("Expected Error: " . $err[0]);
+    ok($@, "SQL with arguments should fail when too many arguments are sent");
+}
+{
+    my $sth = $foo->get_sql("test_with_arg", "sp_person_id", "ASC");
+    $sth->execute(5);
+    my ($first) = $sth->fetchrow_array();
+    is($first, 6, "First row should be 6 when id's are ascending and minimum is 6");
+}
 
 my $global= $foo->get_sql('test');
 
