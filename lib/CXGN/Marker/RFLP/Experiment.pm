@@ -236,7 +236,8 @@ sub rflp_id {
 sub equals {
     my $self = shift;
     my ($other) = @_;
-    if (    $self->{marker_id} eq $other->{marker_id}
+    no warnings 'uninitialized';
+    return 1 if ( $self->{marker_id} eq $other->{marker_id}
         and $self->{library_name}    eq $other->{library_name}
         and $self->{clone_name}      eq $other->{clone_name}
         and $self->{vector}          eq $other->{vector}
@@ -246,10 +247,7 @@ sub equals {
         and $self->{insert_size}     eq $other->{insert_size}
         and $self->{drug_resistance} eq $other->{drug_resistance}
         and $self->{marker_prefix}   eq $other->{marker_prefix}
-        and $self->{marker_suffix}   eq $other->{marker_suffix} )
-    {
-        return 1;
-    }
+        and $self->{marker_suffix}   eq $other->{marker_suffix} );
     return 0;
 }
 
