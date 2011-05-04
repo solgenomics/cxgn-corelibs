@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 
 use Modern::Perl;
+use Test::Most;
+
+plan tests => 1;
 
 use CXGN::Chado::Cvterm;
 use XML::Twig;
@@ -118,23 +121,24 @@ my $counter = 0;
 foreach my $ref (@paths) {
     $counter++;
     my @path = @$ref;
-    print "Path " . $counter . "\n";
+    #print "Path " . $counter . "\n";
     for ( my $j = 1 ; $j < scalar(@path) ; $j++ ) {
 
         # Skip first term -- always the "done" keyword
-        print $path[$j]->[0]->get_db_name() . ":"
-          . $path[$j]->[0]->get_accession() . " -- "
-          . $path[$j]->[0]->get_cvterm_name() . "\n";
+        #print $path[$j]->[0]->get_db_name() . ":"
+        #  . $path[$j]->[0]->get_accession() . " -- "
+        #  . $path[$j]->[0]->get_cvterm_name() . "\n";
     }
-    print "\n";
+    #print "\n";
 }
 
-print "\nParents of term:\n";
+#print "\nParents of term:\n";
 my @test = $cv_term->get_parents();
 foreach my $a (@test) {
-    print $a->[0]->get_cvterm_name() . "\n";
+    #print $a->[0]->get_cvterm_name() . "\n";
 }
-print "\n\n";
+#print "\n\n";
+ok(1);
 
 #
 ##
@@ -177,11 +181,11 @@ for ( my $i = 0 ; $i < scalar(@paths) ; $i++ ) {
             my $startIndex = index( $text, ":" ) + 1;
             $text = substr( $text, $startIndex - 3, $startIndex + 7 );
 
-            print "Current term: $text: $j\n";
+            #print "Current term: $text: $j\n";
             for my $term ( keys %termIndentHash ) {
-                print "$term: @{$termIndentHash{$term}}\n";
+                #print "$term: @{$termIndentHash{$term}}\n";
             }
-            print "\n\n";
+            #print "\n\n";
 
             if ( scalar( grep( $text, keys(%termIndentHash) ) ) != 0 ) {
                 if ( scalar( grep( $j, @{ $termIndentHash{$text} } ) ) == 0 ) {
@@ -222,7 +226,7 @@ for ( my $i = 0 ; $i < scalar(@paths) ; $i++ ) {
 }
 
 for my $term ( keys %termIndentHash ) {
-    print "$term: @{$termIndentHash{$term}}\n";
+    #print "$term: @{$termIndentHash{$term}}\n";
 }
 
 # Format and print XML tree
@@ -244,4 +248,4 @@ $text =~ s|(<term[A-Za-z0-9 _\,\<\>\+\=\/\'\"\:\t-]*)\n(</term>)|$1$2|g;
 
 # Condense the final term of each path, and its end tag, onto one line for easy identification
 
-print $text;
+#print $text;
