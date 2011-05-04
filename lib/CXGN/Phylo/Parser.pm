@@ -3,8 +3,8 @@
 Essentially implements a tree parsing interface. There should be at least two functions: new() and parse().
 
 =cut
+use Modern::Perl;
 
-use strict;
 use URI::Escape;
 
 use CXGN::Phylo::Tree;
@@ -143,10 +143,10 @@ $string = $1;
         $t =~ s/\Q$extended\E// if $extended;
     #	print STDERR "in Parser::parse. t: [$t] \n";
         my ($name, $distance) = split /\s*\:\s*/, $t;
+        $distance ||= '';
         
         $name =~ s/^\s*(.+)\s*$/$1/;
         $distance =~ s/\s//g; # eliminate all whitespace from $distance.
-#print STDERR "name, distance: ", $name, "    ", $distance, "\n";
 
         # check for our own extended specification. Additional information can be 
         # added after the node name in [] with embedded tags. Currently supported 
