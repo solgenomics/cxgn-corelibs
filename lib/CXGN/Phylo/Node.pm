@@ -134,10 +134,10 @@ sub node_string{
 =cut
 
 sub recursive_subtree_string{
-	my $self = shift;
-	my $nl_string = shift;
-	my $indent_string = shift;	
-	if ($nl_string eq undef) { $nl_string = "\n"; }
+    my ($self, $nl_string, $indent_string) = @_;
+
+    $nl_string ||= "\n";
+
 	my $the_string .= $indent_string . $self->node_string() . $nl_string;
 	foreach my $c ($self->get_children) {
 		$the_string .= $c->recursive_subtree_string($nl_string, $indent_string . "  ");
