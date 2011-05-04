@@ -195,11 +195,11 @@ $string = $1;
         $current_node->set_name($name); 
         };
         if ($@) { 
-            print STDERR  "Illegal Expression Type 3 Error.\n"; 
+            #print STDERR  "Illegal Expression Type 3 Error.\n"; 
             return undef; 
         }
-        if (($distance!=0 && !$distance)) { 
-            print STDERR "No distance information.\n"; 
+        if (($distance ne '0' && !$distance)) { 
+            #print STDERR "No distance information.\n"; 
             return undef;  
         }
 # print("distance: ", $distance, "\n");
@@ -208,7 +208,8 @@ $string = $1;
     }
     }
     if (!defined($current_node) || !$current_node->is_root()) { 
-        print STDERR "Illegal Expression Error Type 2.\n"; return undef;
+        #print STDERR "Illegal Expression Error Type 2.\n";
+        return undef;
     }
 
     #Post-process tree.  
@@ -220,7 +221,7 @@ $string = $1;
         $bl_found = 1 if $_->get_branch_length();
     }
     unless($bl_found){
-        print STDERR "Relational tree (no distance information).  Setting all branches to length 1\n";
+        #print STDERR "Relational tree (no distance information).  Setting all branches to length 1\n";
         $_->set_branch_length(1) foreach @desc;
         $self->{tree}->get_root()->set_branch_length(0);
     }
