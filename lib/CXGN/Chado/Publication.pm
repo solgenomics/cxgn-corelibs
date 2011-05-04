@@ -13,13 +13,11 @@ Functions for accessing and inserting new publications into the database
 
 use strict;
 
-
 package CXGN::Chado::Publication;
 
 use CXGN::Chado::Dbxref;
 use CXGN::Chado::Pubauthor;
 use base qw / CXGN::DB::Object  /;
-
 
 =head2 new
 
@@ -32,44 +30,46 @@ use base qw / CXGN::DB::Object  /;
 
 =cut
 
-
 sub new {
     my $class = shift;
-    my $dbh= shift;
-    my $id= shift; # the pub_id of the publication 
-   
-    my $args = {};  
-    my $self = $class->SUPER::new($dbh); #bless $args, $class;
-    
+    my $dbh   = shift;
+    my $id    = shift;    # the pub_id of the publication
+
+    my $args = {};
+    my $self = $class->SUPER::new($dbh);    #bless $args, $class;
+
     $self->set_dbh($dbh);
     $self->set_pub_id($id);
-   
+
     if ($id) {
-	$self->fetch($id);
+        $self->fetch($id);
     }
-   
+
     #$self->set_debug(1);
     return $self;
 }
 
-
-
 sub fetch {
-    my $self=shift;
+    my $self = shift;
 
-    my $query =  "SELECT  title, volume, series_name, issue, pyear, pages, uniquename, cvterm.name,  abstract, status, curated_by, pub_curator.assigned_to
+    my $query =
+"SELECT  title, volume, series_name, issue, pyear, pages, uniquename, cvterm.name,  abstract, status, curated_by, pub_curator.assigned_to
                           FROM public.pub
                           JOIN public.cvterm ON (public.pub.type_id=public.cvterm.cvterm_id)
                           LEFT JOIN public.pubabstract USING (pub_id)
                           LEFT JOIN phenome.pub_curator USING (pub_id)
                            WHERE pub_id=? ";
-    my $sth=$self->get_dbh()->prepare($query);
-   
-    my $pub_id=$self->get_pub_id();
-    $sth->execute( $pub_id);
-    
-    my ($title, $volume, $series_name, $issue, $pyear, $pages, $uniquename, $cvterm_name,  $abstract, $status, $curated_by, $curator_id)= $sth->fetchrow_array();
-    
+    my $sth = $self->get_dbh()->prepare($query);
+
+    my $pub_id = $self->get_pub_id();
+    $sth->execute($pub_id);
+
+    my (
+        $title,    $volume, $series_name, $issue,
+        $pyear,    $pages,  $uniquename,  $cvterm_name,
+        $abstract, $status, $curated_by,  $curator_id
+    ) = $sth->fetchrow_array();
+
     $self->set_title($title);
     $self->set_volume($volume);
     $self->set_series_name($series_name);
@@ -83,7 +83,6 @@ sub fetch {
     $self->set_curated_by($curated_by);
     $self->set_curator_id($curator_id);
 }
-
 
 =head2 store
 
@@ -104,111 +103,158 @@ sub fetch {
 =cut
 
 sub store {
-    my $self = shift;
-    my $pub_id=$self->get_pub_id();
-    
-    #If accession is not in dbxref- do an insert (for pubmed db.name is PMID)
-    #my $db_name= 'PMID'; Tools::Pubmed should have taken care of setting the db_name  
-    if (!$self->get_uniquename() ) {
-	my $uniquename = $self->get_pyear() . "(". $self->get_pages(). "): " . $self->get_title();   
-	$self->set_uniquename($uniquename);
+    my $self   = shift;
+    my $pub_id = $self->get_pub_id();
+
+#If accession is not in dbxref- do an insert (for pubmed db.name is PMID)
+#my $db_name= 'PMID'; Tools::Pubmed should have taken care of setting the db_name
+    if ( !$self->get_uniquename() ) {
+        my $uniquename =
+            $self->get_pyear() . "("
+          . $self->get_pages() . "): "
+          . $self->get_title();
+        $self->set_uniquename($uniquename);
     }
-    my $existing_pub_id= $self->get_pub_by_uniquename();
-    
-    if ($pub_id) { #update the publication
-	#unless ($self->get_db_name() eq 'PMID') {  #don't update if using Tools::Pubmed.pm
-	my $pub_sth = $self->get_dbh()->prepare (" UPDATE pub SET title=?,
+    my $existing_pub_id = $self->get_pub_by_uniquename();
+
+    if ($pub_id) {    #update the publication
+         #unless ($self->get_db_name() eq 'PMID') {  #don't update if using Tools::Pubmed.pm
+        my $pub_sth = $self->get_dbh()->prepare(
+            " UPDATE pub SET title=?,
                                                                   volume=?,
                                                                   series_name=?,
                                                                   issue=?,
                                                                   pyear=?,
                                                                   pages=?
-						 WHERE pub_id=$pub_id");
-	$pub_sth->execute($self->get_title(), $self->get_volume(), $self->get_series_name(), $self->get_issue(), $self->get_pyear(), $self->get_pages());
-	
-	my $abstract_sth = $self->get_dbh()->prepare("UPDATE pubabstract SET abstract=? WHERE pub_id = $pub_id");
-	$abstract_sth->execute($self->get_abstract());
-	
-	#delete the existing authors before storing the ones from the object (see publication.pl:set_author_string)
-	$self->remove_existing_authors();
-	
-    }elsif (!$existing_pub_id) {
-	#store new publication
-	my $pub_sth= $self->get_dbh()->prepare(
-					       "INSERT INTO pub (title, volume, series_name, issue, pyear, pages, uniquename, type_id)                      VALUES (?,?,?,?,?,?,?, (SELECT cvterm_id FROM cvterm WHERE name = ?))");
-	$pub_sth->execute($self->get_title, $self->get_volume, $self->get_series_name, $self->get_issue, $self->get_pyear, $self->get_pages(), $self->get_uniquename(), $self->get_cvterm_name());
-	####
-	$pub_id= $self->get_currval("public.pub_pub_id_seq");
-	$self->set_pub_id($pub_id);
-	my @dbxrefs=$self->get_stored_dbxrefs();
-	# this is for adding a default dbxref (see chado/publication.pl)
-	
- 	if (!$self->{dbxrefs}) {     
-	    @dbxrefs =  ($self->get_db_name().":" . $self->get_title() . " (" .$self->get_pyear() .")")  ; 
-	    
-	}
-	foreach (@dbxrefs) {
-	    my ($db_name, $accession) = split ':' , $_;
-	    if (!$db_name) { warn "No db_name found for this dbxref (accession = $accession)", next();  } 
-	    #see if the accession is already in dbxref table
-	    my $dbxref_id= CXGN::Chado::Dbxref::get_dbxref_id_by_accession($self->get_dbh(), $accession, $db_name);
-	    my $dbxref=CXGN::Chado::Dbxref->new($self->get_dbh(), $dbxref_id);
-	    if (!$dbxref_id) {  #store a new dbxref
-		$dbxref->set_accession($accession);
-		$dbxref->set_db_name($db_name);
-		$dbxref_id=$dbxref->store();
-		
-		$self->d( "*** Inserting new dbxref $dbxref_id for accession  $accession...\n");
-	    } else { 	$self->d( "^^^ dbxref ID $dbxref_id already exists...\n"); }
-	    
-	    #this statement is for inserting into pub_dbxref table 
-	    my $pub_dbxref_sth= $self->get_dbh()-> prepare("INSERT INTO pub_dbxref (pub_id, dbxref_id) VALUES (?, ?)");
-	    $pub_dbxref_sth->execute($pub_id, $dbxref_id);
-	    $self->d("*** Inserting new publication dbxref ID= $dbxref_id\n");
-	}
-	#insert the abstract of the publication
-	my $abstract_sth= $self->get_dbh()->prepare("INSERT INTO pubabstract (pub_id, abstract) VALUES (?,?)");
-	$abstract_sth->execute($pub_id, $self->get_abstract());
-    }else {
-	$self->d( "Publication " . $self->get_uniquename() . " already exists in db with pub_id $existing_pub_id ! \n"); 
-	$self->set_pub_id($existing_pub_id);
-	return $existing_pub_id;
+						 WHERE pub_id=$pub_id"
+        );
+        $pub_sth->execute(
+            $self->get_title(),       $self->get_volume(),
+            $self->get_series_name(), $self->get_issue(),
+            $self->get_pyear(),       $self->get_pages()
+        );
+
+        my $abstract_sth =
+          $self->get_dbh()
+          ->prepare("UPDATE pubabstract SET abstract=? WHERE pub_id = $pub_id");
+        $abstract_sth->execute( $self->get_abstract() );
+
+#delete the existing authors before storing the ones from the object (see publication.pl:set_author_string)
+        $self->remove_existing_authors();
+
     }
-    
+    elsif ( !$existing_pub_id ) {
+
+        #store new publication
+        my $pub_sth =
+          $self->get_dbh()
+          ->prepare(
+"INSERT INTO pub (title, volume, series_name, issue, pyear, pages, uniquename, type_id)                      VALUES (?,?,?,?,?,?,?, (SELECT cvterm_id FROM cvterm WHERE name = ?))"
+          );
+        $pub_sth->execute(
+            $self->get_title,        $self->get_volume,
+            $self->get_series_name,  $self->get_issue,
+            $self->get_pyear,        $self->get_pages(),
+            $self->get_uniquename(), $self->get_cvterm_name()
+        );
+        ####
+        $pub_id = $self->get_currval("public.pub_pub_id_seq");
+        $self->set_pub_id($pub_id);
+        my @dbxrefs = $self->get_stored_dbxrefs();
+
+        # this is for adding a default dbxref (see chado/publication.pl)
+
+        if ( !$self->{dbxrefs} ) {
+            @dbxrefs =
+              (     $self->get_db_name() . ":"
+                  . $self->get_title() . " ("
+                  . $self->get_pyear()
+                  . ")" );
+
+        }
+        foreach (@dbxrefs) {
+            my ( $db_name, $accession ) = split ':', $_;
+            if ( !$db_name ) {
+                warn
+                  "No db_name found for this dbxref (accession = $accession)",
+                  next();
+            }
+
+            #see if the accession is already in dbxref table
+            my $dbxref_id =
+              CXGN::Chado::Dbxref::get_dbxref_id_by_accession( $self->get_dbh(),
+                $accession, $db_name );
+            my $dbxref =
+              CXGN::Chado::Dbxref->new( $self->get_dbh(), $dbxref_id );
+            if ( !$dbxref_id ) {    #store a new dbxref
+                $dbxref->set_accession($accession);
+                $dbxref->set_db_name($db_name);
+                $dbxref_id = $dbxref->store();
+
+                $self->d(
+"*** Inserting new dbxref $dbxref_id for accession  $accession...\n"
+                );
+            }
+            else { $self->d("^^^ dbxref ID $dbxref_id already exists...\n"); }
+
+            #this statement is for inserting into pub_dbxref table
+            my $pub_dbxref_sth =
+              $self->get_dbh()
+              ->prepare(
+                "INSERT INTO pub_dbxref (pub_id, dbxref_id) VALUES (?, ?)");
+            $pub_dbxref_sth->execute( $pub_id, $dbxref_id );
+            $self->d("*** Inserting new publication dbxref ID= $dbxref_id\n");
+        }
+
+        #insert the abstract of the publication
+        my $abstract_sth =
+          $self->get_dbh()
+          ->prepare("INSERT INTO pubabstract (pub_id, abstract) VALUES (?,?)");
+        $abstract_sth->execute( $pub_id, $self->get_abstract() );
+    }
+    else {
+        $self->d( "Publication "
+              . $self->get_uniquename()
+              . " already exists in db with pub_id $existing_pub_id ! \n" );
+        $self->set_pub_id($existing_pub_id);
+        return $existing_pub_id;
+    }
+
     #$self->get_authors() ;
     #auhors are stored for both new and existing publications:
-    my $rank=1;
-    foreach my $author ( @{$self->{authors}} )   {
-	my $author_obj= CXGN::Chado::Pubauthor->new($self->get_dbh());
-	$author_obj->set_pub_id($pub_id);
-	my ($surname, $givennames)= split  '\|', $author; 
-	$author_obj->set_rank($rank);
-	$author_obj->set_surname($surname);
-	$author_obj->set_givennames($givennames);
-	$author_obj->store();
-	$rank++;
+    my $rank = 1;
+    foreach my $author ( @{ $self->{authors} } ) {
+        my $author_obj = CXGN::Chado::Pubauthor->new( $self->get_dbh() );
+        $author_obj->set_pub_id($pub_id);
+        my ( $surname, $givennames ) = split '\|', $author;
+        $author_obj->set_rank($rank);
+        $author_obj->set_surname($surname);
+        $author_obj->set_givennames($givennames);
+        $author_obj->store();
+        $rank++;
     }
+
     #find matching loci and cvterms
-    
+
     return $pub_id;
 }
 
-
 sub get_pubauthors_ids {
-  my $self=shift;
-  my $pub_id = $self->get_pub_id();
-  my @pubauthors_ids;
-  my $pubauthor_id;
+    my $self   = shift;
+    my $pub_id = $self->get_pub_id();
+    my @pubauthors_ids;
+    my $pubauthor_id;
 
-  my $q = "SELECT pubauthor_id FROM public.pubauthor WHERE pubauthor.pub_id=? ORDER BY rank ";
-  my $sth = $self->get_dbh->prepare($q);
-  $sth->execute($pub_id);
-  
-  while (($pubauthor_id) = $sth->fetchrow_array()) {
-      push @pubauthors_ids, $pubauthor_id;
-  }
+    my $q =
+"SELECT pubauthor_id FROM public.pubauthor WHERE pubauthor.pub_id=? ORDER BY rank ";
+    my $sth = $self->get_dbh->prepare($q);
+    $sth->execute($pub_id);
 
-  return @pubauthors_ids;
+    while ( ($pubauthor_id) = $sth->fetchrow_array() ) {
+        push @pubauthors_ids, $pubauthor_id;
+    }
+
+    return @pubauthors_ids;
 
 }
 
@@ -228,134 +274,123 @@ db_name
 
 =cut
 
-
 sub get_pub_id {
-  my $self=shift;
-  return $self->{pub_id};
+    my $self = shift;
+    return $self->{pub_id};
 
 }
 
 sub set_pub_id {
-  my $self=shift;
-  $self->{pub_id}=shift;
+    my $self = shift;
+    $self->{pub_id} = shift;
 }
 
-
 sub get_title {
-  my $self=shift;
-  return $self->{title};
+    my $self = shift;
+    return $self->{title};
 
 }
 
 sub set_title {
-  my $self=shift;
-  $self->{title}=shift;
+    my $self = shift;
+    $self->{title} = shift;
 }
 
-
 sub get_volume {
-  my $self=shift;
-  return $self->{volume};
+    my $self = shift;
+    return $self->{volume};
 
 }
 
 sub set_volume {
-  my $self=shift;
-  $self->{volume}=shift;
+    my $self = shift;
+    $self->{volume} = shift;
 }
 
-
 sub get_series_name {
-  my $self=shift;
-  return $self->{series_name};
+    my $self = shift;
+    return $self->{series_name};
 
 }
 
 sub set_series_name {
-  my $self=shift;
-  $self->{series_name}=shift;
+    my $self = shift;
+    $self->{series_name} = shift;
 }
 
 sub get_issue {
-  my $self=shift;
-  return $self->{issue};
+    my $self = shift;
+    return $self->{issue};
 
 }
 
 sub set_issue {
-  my $self=shift;
-  $self->{issue}=shift;
+    my $self = shift;
+    $self->{issue} = shift;
 }
-
 
 sub get_pyear {
-  my $self=shift;
-  return $self->{pyear};
+    my $self = shift;
+    return $self->{pyear};
 
 }
 
-
 sub set_pyear {
-  my $self=shift;
-  $self->{pyear}=shift;
+    my $self = shift;
+    $self->{pyear} = shift;
 }
 
 sub get_pages {
-  my $self=shift;
-  return $self->{pages};
+    my $self = shift;
+    return $self->{pages};
 
 }
-
 
 sub set_pages {
-  my $self=shift;
-  $self->{pages}=shift;
+    my $self = shift;
+    $self->{pages} = shift;
 }
-
 
 sub get_uniquename {
-  my $self=shift;
-  return $self->{uniquename};
+    my $self = shift;
+    return $self->{uniquename};
 
 }
-
 
 sub set_uniquename {
-  my $self=shift;
-  $self->{uniquename}=shift;
+    my $self = shift;
+    $self->{uniquename} = shift;
 }
 
-
 sub get_dbxref_id {
-  my $self = shift;
-  return $self->{dbxref_id}; 
+    my $self = shift;
+    return $self->{dbxref_id};
 }
 
 sub set_dbxref_id {
-  my $self = shift;
-  $self->{dbxref_id} = shift;
+    my $self = shift;
+    $self->{dbxref_id} = shift;
 }
 
 sub get_db_id {
-  my $self = shift;
-  return $self->{db_id}; 
+    my $self = shift;
+    return $self->{db_id};
 }
 
 sub set_db_id {
-  my $self = shift;
-  $self->{db_id} = shift;
+    my $self = shift;
+    $self->{db_id} = shift;
 }
 
 sub get_db_name {
-  my $self = shift;
-  return $self->{db_name}; 
+    my $self = shift;
+    return $self->{db_name};
 }
 
 sub set_db_name {
-  my $self = shift;
-  $self->{db_name} = shift;
+    my $self = shift;
+    $self->{db_name} = shift;
 }
-
 
 =head2 get_cvterm_name
 
@@ -369,8 +404,8 @@ sub set_db_name {
 =cut
 
 sub get_cvterm_name {
-  my $self=shift;
-  return $self->{cvterm_name};
+    my $self = shift;
+    return $self->{cvterm_name};
 
 }
 
@@ -386,10 +421,9 @@ sub get_cvterm_name {
 =cut
 
 sub set_cvterm_name {
-  my $self=shift;
-  $self->{cvterm_name}=shift;
+    my $self = shift;
+    $self->{cvterm_name} = shift;
 }
-
 
 =head2 get_abstract
 
@@ -402,10 +436,9 @@ sub set_cvterm_name {
 
 =cut
 
-
 sub get_abstract {
-  my $self=shift;
-  return $self->{abstract};
+    my $self = shift;
+    return $self->{abstract};
 
 }
 
@@ -421,11 +454,9 @@ sub get_abstract {
 =cut
 
 sub set_abstract {
-  my $self=shift;
-  $self->{abstract}=shift;
+    my $self = shift;
+    $self->{abstract} = shift;
 }
-
-
 
 =head2 accessors set_accession, get_accession
 
@@ -440,14 +471,14 @@ sub set_abstract {
 =cut
 
 sub get_accession {
-  my $self=shift;
-  return $self->{accession};
+    my $self = shift;
+    return $self->{accession};
 
 }
 
 sub set_accession {
-  my $self=shift;
-  $self->{accession}=shift;
+    my $self = shift;
+    $self->{accession} = shift;
 }
 
 =head2 get_dbxref_id_by_db
@@ -462,18 +493,17 @@ sub set_accession {
 =cut
 
 sub get_dbxref_id_by_db {
-  my $self=shift;
-  my $db_name= shift;
-  my $query = "SELECT dbxref_id FROM pub_dbxref
+    my $self    = shift;
+    my $db_name = shift;
+    my $query   = "SELECT dbxref_id FROM pub_dbxref
                JOIN dbxref USING (dbxref_id) 
                JOIN db USING (db_id) 
                WHERE pub_id = ? AND db.name = ?";
-  my $sth=$self->get_dbh()->prepare($query);
-  $sth->execute($self->get_pub_id(), $db_name);
-  my ($dbxref_id) = $sth->fetchrow_array();
-  return $dbxref_id;
+    my $sth = $self->get_dbh()->prepare($query);
+    $sth->execute( $self->get_pub_id(), $db_name );
+    my ($dbxref_id) = $sth->fetchrow_array();
+    return $dbxref_id;
 }
-
 
 =head2 add_author
 
@@ -489,8 +519,8 @@ sub get_dbxref_id_by_db {
 =cut
 
 sub add_author {
-    my $self=shift;
-    my $author = shift; 
+    my $self   = shift;
+    my $author = shift;
     push @{ $self->{authors} }, $author;
 
 }
@@ -507,13 +537,12 @@ sub add_author {
 =cut
 
 sub get_authors {
-  my $self=shift;
-  if($self->{authors}){
-      return @{$self->{authors}};
-  }
-  return undef;
+    my $self = shift;
+    if ( $self->{authors} ) {
+        return @{ $self->{authors} };
+    }
+    return undef;
 }
-
 
 =head2 remove_existing_auhors
 
@@ -531,14 +560,17 @@ sub get_authors {
 =cut
 
 sub remove_existing_authors {
-    my $self=shift;
-    my @authors=$self->get_authors(); #the list of authors from the object
-    my $query="DELETE FROM pubauthor WHERE pub_id=?";
-    my $sth=$self->get_dbh()->prepare($query);
-    if (@authors) { $sth->execute($self->get_pub_id()); }
-    else { $self->d( "No authors were added to this object... Nothing was changed in the database!"); }
+    my $self    = shift;
+    my @authors = $self->get_authors();    #the list of authors from the object
+    my $query = "DELETE FROM pubauthor WHERE pub_id=?";
+    my $sth   = $self->get_dbh()->prepare($query);
+    if (@authors) { $sth->execute( $self->get_pub_id() ); }
+    else {
+        $self->d(
+"No authors were added to this object... Nothing was changed in the database!"
+        );
+    }
 }
-
 
 =head2 get_pub_by_uniquename
  Usage:  $self->get_pub_by_uniquename()
@@ -552,12 +584,12 @@ sub remove_existing_authors {
 =cut
 
 sub get_pub_by_uniquename {
-    my $self = shift;
+    my $self  = shift;
     my $query = "SELECT pub_id
                   FROM public.pub
-                  WHERE uniquename=? " ;
+                  WHERE uniquename=? ";
     my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($self->get_uniquename );
+    $sth->execute( $self->get_uniquename );
     my ($pub_id) = $sth->fetchrow_array();
 
     return $pub_id;
@@ -576,22 +608,21 @@ sub get_pub_by_uniquename {
 =cut
 
 sub set_author_string {
-    my $self=shift;
+    my $self = shift;
     my $list = shift;
     print STDERR "found author list $list ! \n";
     my @authors = split '\.', $list;
-    foreach my $a(@authors) {
-	my ($surname, $givennames)= split  ',', $a;
-	print STDERR "surname = $surname, givennames= $givennames \n";
-	$surname =~ s/^\s+|\s+$//g;
-	$givennames =~ s/^\s+|\s+$//g;
-	
-	my $author_string=  $surname ."|" . $givennames ;
-	$self->add_author($author_string);
-	print STDERR "author $author_string\n";
+    foreach my $a (@authors) {
+        my ( $surname, $givennames ) = split ',', $a;
+        print STDERR "surname = $surname, givennames= $givennames \n";
+        $surname    =~ s/^\s+|\s+$//g;
+        $givennames =~ s/^\s+|\s+$//g;
+
+        my $author_string = $surname . "|" . $givennames;
+        $self->add_author($author_string);
+        print STDERR "author $author_string\n";
     }
 }
-
 
 =head2 publication_exists
 
@@ -606,19 +637,18 @@ sub set_author_string {
 =cut
 
 sub publication_exists {
-    my $self = shift;
+    my $self  = shift;
     my $query = "SELECT pub_id
                   FROM public.pub
                   JOIN pub_dbxref USING (pub_id)
                   JOIN public.dbxref USING (dbxref_id)
-                  WHERE dbxref.accession=? " ;
+                  WHERE dbxref.accession=? ";
     my $sth = $self->get_dbh()->prepare($query);
-    $sth->execute($self->get_accession );
+    $sth->execute( $self->get_accession );
     my ($pub_id) = $sth->fetchrow_array();
     $self->set_pub_id($pub_id);
     return $pub_id;
 }
-
 
 =head2 is_associated_publication
 
@@ -632,42 +662,48 @@ sub publication_exists {
 =cut
 
 sub is_associated_publication {
-    my $self = shift;
-    my $type = shift;
+    my $self    = shift;
+    my $type    = shift;
     my $type_id = shift;
 
-    my $dbxref_id= $self->get_dbxref_id_by_db('PMID');
-       
-    my ($locus, $allele, $pop);
-    if ($type eq 'locus') {
-	$locus= CXGN::Phenome::Locus->new($self->get_dbh(), $type_id);
+    my $dbxref_id = $self->get_dbxref_id_by_db('PMID');
+
+    my ( $locus, $allele, $pop );
+    if ( $type eq 'locus' ) {
+        $locus = CXGN::Phenome::Locus->new( $self->get_dbh(), $type_id );
     }
-    elsif ($type eq 'allele'){
-	$allele=CXGN::Phenome::Allele->new($self->get_dbh(), $type_id);
-    } elsif ($type eq 'population'){
-	$pop=CXGN::Phenome::Population->new($self->get_dbh(), $type_id);
+    elsif ( $type eq 'allele' ) {
+        $allele = CXGN::Phenome::Allele->new( $self->get_dbh(), $type_id );
+    }
+    elsif ( $type eq 'population' ) {
+        $pop = CXGN::Phenome::Population->new( $self->get_dbh(), $type_id );
     }
     ##dbxref object...
-    my $dbxref= CXGN::Chado::Dbxref->new($self->get_dbh(), $dbxref_id);
-    my ($associated_publication, $obsolete);
-    if ($type eq 'locus') {
-	$associated_publication= $locus->get_locus_dbxref($dbxref)->get_object_dbxref_id() || "";
-	$obsolete = $locus->get_locus_dbxref($dbxref)->get_obsolete();
-    }elsif ($type eq 'allele' ) {
-	$associated_publication= $allele->get_allele_dbxref($dbxref)->get_allele_dbxref_id();
-	$obsolete = $allele->get_allele_dbxref($dbxref)->get_obsolete();  
-    }elsif ($type eq 'population' ) {
-	$associated_publication= $pop->get_population_dbxref($dbxref)->get_population_dbxref_id();
-	$obsolete = $pop->get_population_dbxref($dbxref)->get_obsolete();  
+    my $dbxref = CXGN::Chado::Dbxref->new( $self->get_dbh(), $dbxref_id );
+    my ( $associated_publication, $obsolete );
+    if ( $type eq 'locus' ) {
+        $associated_publication =
+          $locus->get_locus_dbxref($dbxref)->get_object_dbxref_id() || "";
+        $obsolete = $locus->get_locus_dbxref($dbxref)->get_obsolete();
     }
-    if  ($associated_publication && $obsolete eq 'f') {
-	return 1;		   
-	
-    }else{  ##the publication is not associated with the object
-	return 0; 
-    }    
-}
+    elsif ( $type eq 'allele' ) {
+        $associated_publication =
+          $allele->get_allele_dbxref($dbxref)->get_allele_dbxref_id();
+        $obsolete = $allele->get_allele_dbxref($dbxref)->get_obsolete();
+    }
+    elsif ( $type eq 'population' ) {
+        $associated_publication =
+          $pop->get_population_dbxref($dbxref)->get_population_dbxref_id();
+        $obsolete = $pop->get_population_dbxref($dbxref)->get_obsolete();
+    }
+    if ( $associated_publication && $obsolete eq 'f' ) {
+        return 1;
 
+    }
+    else {    ##the publication is not associated with the object
+        return 0;
+    }
+}
 
 =head2 get_pub_by_accession
 
@@ -680,21 +716,20 @@ sub is_associated_publication {
 =cut
 
 sub get_pub_by_accession {
-    my $self=shift;
-    my $dbh=shift;
-    my $accession=shift;
-    my $query = "SELECT pub_id
+    my $self      = shift;
+    my $dbh       = shift;
+    my $accession = shift;
+    my $query     = "SELECT pub_id
                   FROM public.pub
                   JOIN pub_dbxref USING (pub_id)
                   JOIN public.dbxref USING (dbxref_id)
-                  WHERE dbxref.accession=? " ;
+                  WHERE dbxref.accession=? ";
     my $sth = $dbh->prepare($query);
-    $sth->execute($accession );
+    $sth->execute($accession);
     my ($pub_id) = $sth->fetchrow_array();
-    my $publication= CXGN::Chado::Publication->new($dbh, $pub_id);
+    my $publication = CXGN::Chado::Publication->new( $dbh, $pub_id );
     return $publication;
 }
-
 
 =head2 get_loci
 
@@ -708,17 +743,19 @@ sub get_pub_by_accession {
 =cut
 
 sub get_loci {
-    my $self=shift;
-    my $query = $self->get_dbh()->prepare("SELECT locus_id FROM phenome.locus_dbxref
+    my $self  = shift;
+    my $query = $self->get_dbh()->prepare(
+        "SELECT locus_id FROM phenome.locus_dbxref
                                           
                                            JOIN public.pub_dbxref USING (dbxref_id)
                                            JOIN pub using (pub_id)
-                                           WHERE pub.pub_id= ? AND phenome.locus_dbxref.obsolete='f'");
-    $query->execute($self->get_pub_id());
+                                           WHERE pub.pub_id= ? AND phenome.locus_dbxref.obsolete='f'"
+    );
+    $query->execute( $self->get_pub_id() );
     my @loci;
-    while (my ($locus_id) = $query->fetchrow_array()) {
-	my $locus = CXGN::Phenome::Locus->new($self->get_dbh(), $locus_id);
-	push @loci, $locus;
+    while ( my ($locus_id) = $query->fetchrow_array() ) {
+        my $locus = CXGN::Phenome::Locus->new( $self->get_dbh(), $locus_id );
+        push @loci, $locus;
     }
     return @loci;
 }
@@ -736,10 +773,11 @@ sub get_loci {
 
 sub get_curator_ref {
 
-    my $dbh=shift;
-    my $query = "SELECT dbxref_id FROM public.dbxref JOIN cvterm USING (dbxref_id) JOIN pub on (type_id= cvterm_id)
+    my $dbh = shift;
+    my $query =
+"SELECT dbxref_id FROM public.dbxref JOIN cvterm USING (dbxref_id) JOIN pub on (type_id= cvterm_id)
                  WHERE title = ?";
-    my $sth= $dbh->prepare($query);
+    my $sth = $dbh->prepare($query);
     $sth->execute('curator');
     my ($dbxref_id) = $sth->fetchrow_array();
     return $dbxref_id;
@@ -757,22 +795,24 @@ sub get_curator_ref {
 =cut
 
 sub get_authors_as_string {
-    my $self=shift;
+    my $self   = shift;
     my $pub_id = $self->get_pub_id();
     my $string;
-    my $query = "SELECT pubauthor_id FROM public.pubauthor WHERE pubauthor.pub_id=? ORDER BY rank ";
+    my $query =
+"SELECT pubauthor_id FROM public.pubauthor WHERE pubauthor.pub_id=? ORDER BY rank ";
     my $sth = $self->get_dbh->prepare($query);
     $sth->execute($pub_id);
-    
-    while (my ($id) = $sth->fetchrow_array()) {
-	my  $pubauthor = CXGN::Chado::Pubauthor->new($self->get_dbh, $id);
-	my $last_name  = $pubauthor->get_surname();
-	my $first_names = $pubauthor->get_givennames();
 
-	my ($first_name, $same) = split (/,/, $first_names);
-	if ($same) {
-	    $string .="$last_name, $same. ";
-	} else { $string .= "$last_name, $first_name. "; }
+    while ( my ($id) = $sth->fetchrow_array() ) {
+        my $pubauthor   = CXGN::Chado::Pubauthor->new( $self->get_dbh, $id );
+        my $last_name   = $pubauthor->get_surname();
+        my $first_names = $pubauthor->get_givennames();
+
+        my ( $first_name, $same ) = split( /,/, $first_names );
+        if ($same) {
+            $string .= "$last_name, $same. ";
+        }
+        else { $string .= "$last_name, $first_name. "; }
     }
     chop $string;
     chop $string;
@@ -792,17 +832,25 @@ sub get_authors_as_string {
 
 =cut
 
-
 sub get_pub_info {
-    my ($dbxref, $db)=@_;
+    my ( $dbxref, $db ) = @_;
     my $pub_info;
-    my $accession= $dbxref->get_accession();
-    my $pub=$dbxref->get_publication();
-    my $pub_title=$pub->get_title();
-    my $pub_id= $pub->get_pub_id();
-    my $abstract_info= $pub->get_abstract() ."<b> <i>" . $pub->get_authors_as_string() ."</i>" .  $pub->get_series_name() . $pub->get_pyear. $pub->get_volume() . "(" .  $pub->get_issue() .")" . $pub->get_pages() ." </b>" ;
-    $pub_info = qq|<a href="/chado/publication.pl?pub_id=$pub_id" >$db:$accession</a> $pub_title |;
-    return ($pub_info, $abstract_info);
+    my $accession = $dbxref->get_accession();
+    my $pub       = $dbxref->get_publication();
+    my $pub_title = $pub->get_title();
+    my $pub_id    = $pub->get_pub_id();
+    my $abstract_info =
+        $pub->get_abstract()
+      . "<b> <i>"
+      . $pub->get_authors_as_string() . "</i>"
+      . $pub->get_series_name()
+      . $pub->get_pyear
+      . $pub->get_volume() . "("
+      . $pub->get_issue() . ")"
+      . $pub->get_pages() . " </b>";
+    $pub_info =
+qq|<a href="/chado/publication.pl?pub_id=$pub_id" >$db:$accession</a> $pub_title |;
+    return ( $pub_info, $abstract_info );
 }
 
 =head2 print_pub_ref
@@ -816,23 +864,28 @@ sub get_pub_info {
 
 =cut
 
-
 sub print_pub_ref {
-    my $self=shift;
-   
-    my $accession= $self->get_accession();
-    my $title=$self->get_title();
-    my $series=$self->get_series_name();
-    my $pages=$self->get_pages();
-    my $vol=$self->get_volume();
-    my $issue= $self->get_issue();
-    my $pyear=$self->get_pyear();
-    my @authors=$self->get_authors() ;
-    my $author_string= join (', ' , @authors) || $self->get_authors_as_string(); ;
-    my $ref= $author_string . ". (" . $pyear . ") " . $title . ". " .  $series . ". " . $issue . ":" . $pages . "." ;
+    my $self = shift;
+
+    my $accession     = $self->get_accession();
+    my $title         = $self->get_title();
+    my $series        = $self->get_series_name();
+    my $pages         = $self->get_pages();
+    my $vol           = $self->get_volume();
+    my $issue         = $self->get_issue();
+    my $pyear         = $self->get_pyear();
+    my @authors       = $self->get_authors();
+    my $author_string = join( ', ', @authors )
+      || $self->get_authors_as_string();
+    my $ref =
+        $author_string . ". (" 
+      . $pyear . ") " 
+      . $title . ". " 
+      . $series . ". "
+      . $issue . ":"
+      . $pages . ".";
     return $ref;
 }
-      
 
 =head2 print_mini_ref
 
@@ -845,19 +898,19 @@ sub print_pub_ref {
 
 =cut
 
-
 sub print_mini_ref {
-    my $self=shift;
-    my $accession= $self->get_accession();
-    my $title=$self->get_title();
-    my $series=$self->get_series_name();
- 
-    my $pyear=$self->get_pyear();
-    my @authors=$self->get_authors() || ( split(/\./ , $self->get_authors_as_string() ) )  ;
-    my $author_string= $authors[0];
-    if (scalar(@authors) == 2 ) { $author_string .= " and " . $authors[1] ; }
-    elsif (scalar(@authors) > 2 ) { $author_string .= " et al., " ; } 
-    my $ref= $author_string . ".  " . $title .  " (" . $pyear . ") " .  $series ;
+    my $self      = shift;
+    my $accession = $self->get_accession();
+    my $title     = $self->get_title();
+    my $series    = $self->get_series_name();
+
+    my $pyear   = $self->get_pyear();
+    my @authors = $self->get_authors()
+      || ( split( /\./, $self->get_authors_as_string() ) );
+    my $author_string = $authors[0];
+    if    ( scalar(@authors) == 2 ) { $author_string .= " and " . $authors[1]; }
+    elsif ( scalar(@authors) > 2 )  { $author_string .= " et al., "; }
+    my $ref = $author_string . ".  " . $title . " (" . $pyear . ") " . $series;
     return $ref;
 }
 
@@ -873,14 +926,14 @@ sub print_mini_ref {
 =cut
 
 sub get_dbxrefs {
-    my $self=shift;
+    my $self  = shift;
     my $query = "SELECT dbxref_id FROM pub_dbxref WHERE pub_id=?";
-    my $sth=$self->get_dbh()->prepare($query);
-    $sth->execute($self->get_pub_id());
+    my $sth   = $self->get_dbh()->prepare($query);
+    $sth->execute( $self->get_pub_id() );
     my @dbxrefs;
-    while (my ($id) = $sth->fetchrow_array() ) {
-	my $dbxref = CXGN::Chado::Dbxref->new($self->get_dbh(), $id);
-	push @dbxrefs, $dbxref;
+    while ( my ($id) = $sth->fetchrow_array() ) {
+        my $dbxref = CXGN::Chado::Dbxref->new( $self->get_dbh(), $id );
+        push @dbxrefs, $dbxref;
     }
     return @dbxrefs;
 }
@@ -899,8 +952,8 @@ sub get_dbxrefs {
 =cut
 
 sub add_dbxref {
-    my $self=shift;
-    my $full_accession = shift; 
+    my $self           = shift;
+    my $full_accession = shift;
     push @{ $self->{dbxrefs} }, $full_accession;
 
 }
@@ -917,13 +970,12 @@ sub add_dbxref {
 =cut
 
 sub get_stored_dbxrefs {
-  my $self=shift;
-  if($self->{dbxrefs}){
-      return @{$self->{dbxrefs}};
-  }
-  return undef;
+    my $self = shift;
+    if ( $self->{dbxrefs} ) {
+        return @{ $self->{dbxrefs} };
+    }
+    return undef;
 }
-
 
 =head2 delete
 
@@ -937,20 +989,24 @@ sub get_stored_dbxrefs {
 =cut
 
 sub delete {
-    my $self=shift;
-    my $query="DELETE FROM pub WHERE pub_id=?"; #ON DELETE CASCADE in pub_dbxref, pubabstract and pubauthor tables
-    my $sth=$self->get_dbh()->prepare($query);
-    my @dbxrefs=$self->get_dbxrefs();
-    foreach my $dbxref(@dbxrefs) {
-	my @loci= $self->get_loci();
-	my @alleles;
-	my @populations;
-	if (@loci || @alleles || @populations) { 
-	    return "The publication is associated with other database objects. Cannot delete.!"
-	    }
+    my $self  = shift;
+    my $query = "DELETE FROM pub WHERE pub_id=?"
+      ;    #ON DELETE CASCADE in pub_dbxref, pubabstract and pubauthor tables
+    my $sth     = $self->get_dbh()->prepare($query);
+    my @dbxrefs = $self->get_dbxrefs();
+    foreach my $dbxref (@dbxrefs) {
+        my @loci = $self->get_loci();
+        my @alleles;
+        my @populations;
+        if ( @loci || @alleles || @populations ) {
+            return
+"The publication is associated with other database objects. Cannot delete.!";
+        }
     }
+
     #if (!$associated) {
-    $sth->execute($self->get_pub_id() );
+    $sth->execute( $self->get_pub_id() );
+
     #}
     return undef;
 }
@@ -967,8 +1023,8 @@ sub delete {
 =cut
 
 sub get_message {
-  my $self=shift;
-  return $self->{message};
+    my $self = shift;
+    return $self->{message};
 
 }
 
@@ -984,11 +1040,9 @@ sub get_message {
 =cut
 
 sub set_message {
-  my $self=shift;
-  $self->{message}=shift;
+    my $self = shift;
+    $self->{message} = shift;
 }
-
-
 
 =head2 get_pub_rank
  
@@ -1004,24 +1058,31 @@ sub set_message {
 =cut
 
 sub get_pub_rank {
-    my $dbh=shift;
-    my $string=shift;
-    my $lookup=shift;
-    my $pub_id= shift;
+    my $dbh    = shift;
+    my $string = shift;
+    my $lookup = shift;
+    my $pub_id = shift;
     $dbh->do("set search_path=public,tsearch2");
     my $query;
-    if ($lookup eq "title") {
-	$query= "SELECT public.pub.pub_id,  tsearch2.rank(public.pub.title_tsvector, q),  tsearch2.headline(public.pub.title, q) FROM public.pub, tsearch2.to_tsquery('$string'::Text) as q WHERE public.pub.title_tsvector @@ q";
-    }elsif ($lookup eq "abstract") {
-	$query= "SELECT public.pubabstract.pub_id,  tsearch2.rank(public.pubabstract.abstract_tsvector, q),  tsearch2.headline(public.pubabstract.abstract, q) FROM public.pubabstract, tsearch2.to_tsquery('$string'::Text) as q WHERE public.pubabstract.abstract_tsvector @@ q";
-    }else { warn "must call get_pub_rank with 'title' or 'abstract' as third argument!!"; }
-    if ($pub_id) { $query .= "  AND pub_id = $pub_id" };
-    
-    my $sth=$dbh->prepare($query);
+    if ( $lookup eq "title" ) {
+        $query =
+"SELECT public.pub.pub_id,  tsearch2.rank(public.pub.title_tsvector, q),  tsearch2.headline(public.pub.title, q) FROM public.pub, tsearch2.to_tsquery('$string'::Text) as q WHERE public.pub.title_tsvector @@ q";
+    }
+    elsif ( $lookup eq "abstract" ) {
+        $query =
+"SELECT public.pubabstract.pub_id,  tsearch2.rank(public.pubabstract.abstract_tsvector, q),  tsearch2.headline(public.pubabstract.abstract, q) FROM public.pubabstract, tsearch2.to_tsquery('$string'::Text) as q WHERE public.pubabstract.abstract_tsvector @@ q";
+    }
+    else {
+        warn
+"must call get_pub_rank with 'title' or 'abstract' as third argument!!";
+    }
+    if ($pub_id) { $query .= "  AND pub_id = $pub_id" }
+
+    my $sth = $dbh->prepare($query);
     $sth->execute();
-    my @result; 
-    while (my ($pub_id, $rank, $headline)= $sth->fetchrow_array()) {
-	push @result, [$pub_id, $rank, $headline];
+    my @result;
+    while ( my ( $pub_id, $rank, $headline ) = $sth->fetchrow_array() ) {
+        push @result, [ $pub_id, $rank, $headline ];
     }
     return \@result;
 }
@@ -1038,28 +1099,31 @@ sub get_pub_rank {
 
 =cut
 
-sub get_ranked_loci { 
-    my $self=shift;
+sub get_ranked_loci {
+    my $self   = shift;
     my $pub_id = $self->get_pub_id();
- 
+
     my $query = "SELECT locus_id, rank,match_type, headline, validate
                  FROM locus_pub_ranking 
                  LEFT JOIN locus_pub_ranking_validate USING (locus_id, pub_id) 
                  WHERE pub_id =? ORDER BY rank desc";
-  
-    my $sth=$self->get_dbh()->prepare($query);
+
+    my $sth = $self->get_dbh()->prepare($query);
     $sth->execute($pub_id);
-    my $total_locus_pub_rank={};
-    my $locus_pub_rank={};
-   
-    while (my @pub = $sth->fetchrow_array() ) {
-	my $validate= $pub[4] || "";
-	#if ($validate ne "no") {
-	    $locus_pub_rank->{$pub[0]} += $pub[1]; # total rank for this publication
-	#}
+    my $total_locus_pub_rank = {};
+    my $locus_pub_rank       = {};
+
+    while ( my @pub = $sth->fetchrow_array() ) {
+        my $validate = $pub[4] || "";
+
+        #if ($validate ne "no") {
+        $locus_pub_rank->{ $pub[0] } +=
+          $pub[1];    # total rank for this publication
+                      #}
     }
+
     #sort the hash by the total rank, descending
-    $locus_pub_rank= $locus_pub_rank->{$b} <=> $locus_pub_rank->{$a};
+    $locus_pub_rank = $locus_pub_rank->{$b} <=> $locus_pub_rank->{$a};
     return $locus_pub_rank || undef;
 }
 
@@ -1076,10 +1140,10 @@ sub get_ranked_loci {
 =cut
 
 sub title_tsvector_string {
-    my $self=shift;
+    my $self  = shift;
     my $query = "SELECT strip(to_tsvector(title) ) FROM pub where pub_id = ?";
-    my $sth=$self->get_dbh()->prepare($query);
-    $sth->execute($self->get_pub_id());
+    my $sth   = $self->get_dbh()->prepare($query);
+    $sth->execute( $self->get_pub_id() );
     my ($string) = $sth->fetchrow_array();
     return $string;
 }
@@ -1097,10 +1161,11 @@ sub title_tsvector_string {
 =cut
 
 sub abstract_tsvector_string {
-    my $self=shift;
-    my $query = "SELECT strip(to_tsvector(abstract) ) FROM pubabstract where pub_id = ?";
-    my $sth=$self->get_dbh()->prepare($query);
-    $sth->execute($self->get_pub_id());
+    my $self = shift;
+    my $query =
+      "SELECT strip(to_tsvector(abstract) ) FROM pubabstract where pub_id = ?";
+    my $sth = $self->get_dbh()->prepare($query);
+    $sth->execute( $self->get_pub_id() );
     my ($string) = $sth->fetchrow_array();
     return $string;
 }
@@ -1117,24 +1182,34 @@ sub abstract_tsvector_string {
 =cut
 
 sub store_pub_curator {
-    my $self=shift;
-    my $id= $self->get_pub_curator_id();
-    my ($query, $sth);
+    my $self = shift;
+    my $id   = $self->get_pub_curator_id();
+    my ( $query, $sth );
+
     #if the publication is not stored in pub_curator table
-    if (!$id) {
-	$query = "INSERT INTO phenome.pub_curator (pub_id, sp_person_id, assigned_to, status,  curated_by)
+    if ( !$id ) {
+        $query =
+"INSERT INTO phenome.pub_curator (pub_id, sp_person_id, assigned_to, status,  curated_by)
                  VALUES (?,?,?,?,?)";
-	$sth=$self->get_dbh()->prepare($query);
-	$sth->execute($self->get_pub_id(), $self->get_sp_person_id(), $self->get_curator_id(), $self->get_status(), $self->get_curated_by());
-	$id= $self->get_currval("phenome.pub_curator_pub_curator_id_seq");
-	
-    }else { #the publication is in pub_curator- need to update! 
-	$query = "UPDATE phenome.pub_curator SET status=?,
+        $sth = $self->get_dbh()->prepare($query);
+        $sth->execute(
+            $self->get_pub_id(),     $self->get_sp_person_id(),
+            $self->get_curator_id(), $self->get_status(),
+            $self->get_curated_by()
+        );
+        $id = $self->get_currval("phenome.pub_curator_pub_curator_id_seq");
+
+    }
+    else {    #the publication is in pub_curator- need to update!
+        $query = "UPDATE phenome.pub_curator SET status=?,
                    date_curated=now(), assigned_to=?, 
                     curated_by = ?
                   WHERE pub_id = ?";
-	$sth=$self->get_dbh()->prepare($query);
-	$sth->execute($self->get_status(), $self->get_curator_id(), $self->get_curated_by(), $self->get_pub_id());
+        $sth = $self->get_dbh()->prepare($query);
+        $sth->execute(
+            $self->get_status(),     $self->get_curator_id(),
+            $self->get_curated_by(), $self->get_pub_id()
+        );
     }
     return $id;
 }
@@ -1151,10 +1226,11 @@ sub store_pub_curator {
 =cut
 
 sub get_pub_curator_id {
-    my $self=shift;
-    my $query= "SELECT pub_curator_id FROM phenome.pub_curator WHERE pub_id = ?";
-    my $sth=$self->get_dbh()->prepare($query);
-    $sth->execute($self->get_pub_id());
+    my $self = shift;
+    my $query =
+      "SELECT pub_curator_id FROM phenome.pub_curator WHERE pub_id = ?";
+    my $sth = $self->get_dbh()->prepare($query);
+    $sth->execute( $self->get_pub_id() );
     my ($id) = $sth->fetchrow_array();
     return $id;
 }
@@ -1171,15 +1247,13 @@ sub get_pub_curator_id {
 =cut
 
 sub is_curated {
-    my $self=shift;
-    my $q="SELECT pub_curator_id FROM pub_curator WHERE pub_id=?";
-    my $sth=$self->get_dbh()->prepare($q);
-    $sth->execute($self->get_pub_id);
+    my $self = shift;
+    my $q    = "SELECT pub_curator_id FROM pub_curator WHERE pub_id=?";
+    my $sth  = $self->get_dbh()->prepare($q);
+    $sth->execute( $self->get_pub_id );
     my ($id) = $sth->fetchrow_array();
     return $id || undef;
 }
-
-
 
 =head2 accessors get_curator_id, set_curator_id
 
@@ -1192,15 +1266,14 @@ sub is_curated {
 =cut
 
 sub get_curator_id {
-  my $self = shift;
-  return $self->{curator_id}; 
+    my $self = shift;
+    return $self->{curator_id};
 }
 
 sub set_curator_id {
-  my $self = shift;
-  $self->{curator_id} = shift;
+    my $self = shift;
+    $self->{curator_id} = shift;
 }
-
 
 =head2 accessors get_curated_by, set_curated_by
 
@@ -1213,13 +1286,13 @@ sub set_curator_id {
 =cut
 
 sub get_curated_by {
-  my $self = shift;
-  return $self->{curated_by}; 
+    my $self = shift;
+    return $self->{curated_by};
 }
 
 sub set_curated_by {
-  my $self = shift;
-  $self->{curated_by} = shift;
+    my $self = shift;
+    $self->{curated_by} = shift;
 }
 
 =head2 accessors get_status, set_status
@@ -1233,13 +1306,13 @@ sub set_curated_by {
 =cut
 
 sub get_status {
-  my $self = shift;
-  return $self->{status}; 
+    my $self = shift;
+    return $self->{status};
 }
 
 sub set_status {
-  my $self = shift;
-  $self->{status} = shift;
+    my $self = shift;
+    $self->{status} = shift;
 }
 
 =head2 accessors get_sp_person_id, set_sp_person_id
@@ -1253,13 +1326,13 @@ sub set_status {
 =cut
 
 sub get_sp_person_id {
-  my $self = shift;
-  return $self->{sp_person_id}; 
+    my $self = shift;
+    return $self->{sp_person_id};
 }
 
 sub set_sp_person_id {
-  my $self = shift;
-  $self->{sp_person_id} = shift;
+    my $self = shift;
+    $self->{sp_person_id} = shift;
 }
 
 return 1;
