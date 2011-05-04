@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use strict;
+use Modern::Perl;
 
 use CXGN::Chado::Cvterm;
 use XML::Twig;
@@ -53,8 +53,8 @@ while ( $complete ne "true" ) {
         my @workingPath  = @$pathArrayRef;
 
         my $nextTerm = "done";
-        if ( ref( @workingPath[0] ) eq "ARRAY" ) {
-            $nextTerm = @workingPath[0]->[0];
+        if ( ref( $workingPath[0] ) eq "ARRAY" ) {
+            $nextTerm = $workingPath[0]->[0];
         }
 
         # Read only paths that are not done, this saves time
