@@ -1,12 +1,12 @@
-use strict;
+use Modern::Perl;
 use Test::More tests=>5;
 
 BEGIN {
-    diag("Checking if we can load the module...");
     use_ok ( "CXGN::DB::Map" );
 }
-diag("Testing CXGN::DB::Map");
 
+
+# TODO: depends on live data
 my $map = CXGN::DB::Map->retrieve(13);
 
 is ( $map->get("map_id"), 13, "map_id is 13");
