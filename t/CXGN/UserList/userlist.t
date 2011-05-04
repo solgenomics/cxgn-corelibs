@@ -1,13 +1,14 @@
 #!/usr/bin/perl
 
-use Test::More;
+use Modern::Perl;
+use Test::Most;
 use CXGN::DB::Connection;
 use CXGN::UserList::Handle;
 
 my $dbh;
 BEGIN {
     eval {
-        $dbh = CXGN::DB::Connection->new("sgn_people");
+        $dbh = CXGN::DB::Connection->new;
     };
     if ($@ =~ m/DBI connect/){
         plan skip_all => "Could not connect to database";
