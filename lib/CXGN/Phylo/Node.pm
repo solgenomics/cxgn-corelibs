@@ -19,16 +19,14 @@ This class implements the following functions:
 
 =cut
 
-use strict; 
+use strict;
 
 package CXGN::Phylo::Node;
-
 
 use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Tree;
 use CXGN::Phylo::Label;
 use CXGN::Page::FormattingHelpers qw/tooltipped_text/;
- 
 
 =head2 function new()
 
@@ -40,30 +38,30 @@ use CXGN::Page::FormattingHelpers qw/tooltipped_text/;
 
 =cut
 
-sub new { 
-	my $class = shift;
-	my $args = {};
-	my $self = bless $args, $class;
+sub new {
+    my $class = shift;
+    my $args  = {};
+    my $self  = bless $args, $class;
 
-	$self->init_children();
+    $self->init_children();
 
-	$self->set_label(CXGN::Phylo::Label->new());
-	$self->set_name("");
-	$self->set_species("");
-	$self->set_node_key(0);
-	$self->set_parent(undef);
-	$self->set_branch_length(0);
-	$self->set_hilited(0);
-	$self->set_hidden(0);
-	$self->set_X(0);
-	$self->set_Y(0);
-	$self->set_subtree_node_count(0);
-$self->set_attribute("leaf_count", 0);
-	$self->set_leaf_species_count(0);
+    $self->set_label( CXGN::Phylo::Label->new() );
+    $self->set_name("");
+    $self->set_species("");
+    $self->set_node_key(0);
+    $self->set_parent(undef);
+    $self->set_branch_length(0);
+    $self->set_hilited(0);
+    $self->set_hidden(0);
+    $self->set_X(0);
+    $self->set_Y(0);
+    $self->set_subtree_node_count(0);
+    $self->set_attribute( "leaf_count", 0 );
+    $self->set_leaf_species_count(0);
 
-	$self->{line_color} = [];
+    $self->{line_color} = [];
 
-	return $self;
+    return $self;
 }
 
 =head2 function print_node()
@@ -78,13 +76,13 @@ $self->set_attribute("leaf_count", 0);
 
 =cut
 
-sub print_node{
-	my $self = shift;
-	my $end_string = shift;
-	if (!$end_string) {
-		$end_string = "\n";
-	}
-	print $self->node_string() . $end_string;
+sub print_node {
+    my $self       = shift;
+    my $end_string = shift;
+    if ( !$end_string ) {
+        $end_string = "\n";
+    }
+    print $self->node_string() . $end_string;
 }
 
 =head2 function node_string()
@@ -96,28 +94,37 @@ sub print_node{
 
 =cut
 
-sub node_string{
-	my $self = shift;
-	my $name = $self->get_name();
-	$name =~ s/\t/,/g;						# string together leaf names with - rather than tab
-	my $p = $self->get_parent();
-	my $pn = undef;
-	if (defined $p) {
-		$pn = $p->get_name(); $pn =~ s/\t/-/g;
-	}
-	my $node_string = "[" . $name . "] " . "[key:" . $self->get_node_key() . "]".
-		"[bl:" . $self->get_branch_length() . "] " . 
-			#				"[parent:" . $p . "]" . 
-			#	"[implname=" . (join(",", @{$self->get_implicit_names()})) . "]" .
-			#		"[implspecies=" . (join("-", @{$self->get_implicit_species()})) . "]" .
-			#"[isroot:" . $self->is_root() . "]" .
-			"[species=" . $self->get_species() . "] ";
-	$node_string .= 
-	#	"subtree/complement leaf species counts: [".$self->get_attribute("leaf_species_count")."]".
-	#	"[".$self->get_attribute("comp_leaf_species_count")."]".
-			"subtree species bit pattern: [".$self->get_attribute("species_bit_pattern")."]  ".
-				"speciation: [".$self->get_attribute("speciation")."]  ";
-	return $node_string;
+sub node_string {
+    my $self = shift;
+    my $name = $self->get_name();
+    $name =~ s/\t/,/g;    # string together leaf names with - rather than tab
+    my $p  = $self->get_parent();
+    my $pn = undef;
+    if ( defined $p ) {
+        $pn = $p->get_name();
+        $pn =~ s/\t/-/g;
+    }
+    my $node_string =
+        "[" 
+      . $name . "] " . "[key:"
+      . $self->get_node_key() . "]" . "[bl:"
+      . $self->get_branch_length() . "] "
+      .
+
+      #				"[parent:" . $p . "]" .
+      #	"[implname=" . (join(",", @{$self->get_implicit_names()})) . "]" .
+      #		"[implspecies=" . (join("-", @{$self->get_implicit_species()})) . "]" .
+      #"[isroot:" . $self->is_root() . "]" .
+      "[species=" . $self->get_species() . "] ";
+    $node_string .=
+
+#	"subtree/complement leaf species counts: [".$self->get_attribute("leaf_species_count")."]".
+#	"[".$self->get_attribute("comp_leaf_species_count")."]".
+      "subtree species bit pattern: ["
+      . $self->get_attribute("species_bit_pattern") . "]  "
+      . "speciation: ["
+      . $self->get_attribute("speciation") . "]  ";
+    return $node_string;
 }
 
 =head2 function recursive_subtree_string()
@@ -133,16 +140,17 @@ sub node_string{
 
 =cut
 
-sub recursive_subtree_string{
-    my ($self, $nl_string, $indent_string) = @_;
+sub recursive_subtree_string {
+    my ( $self, $nl_string, $indent_string ) = @_;
 
     $nl_string ||= "\n";
 
-	my $the_string .= $indent_string . $self->node_string() . $nl_string;
-	foreach my $c ($self->get_children) {
-		$the_string .= $c->recursive_subtree_string($nl_string, $indent_string . "  ");
-	}
-	return $the_string;
+    my $the_string .= $indent_string . $self->node_string() . $nl_string;
+    foreach my $c ( $self->get_children ) {
+        $the_string .=
+          $c->recursive_subtree_string( $nl_string, $indent_string . "  " );
+    }
+    return $the_string;
 }
 
 =head2 function print_subtree()
@@ -157,24 +165,23 @@ sub recursive_subtree_string{
 
 =cut
 
-sub print_subtree{
-	print shift->recursive_subtree_string(shift);
+sub print_subtree {
+    print shift->recursive_subtree_string(shift);
 }
 
-
 sub get_alignment_member {
-	my $self = shift;
-	return $self->{alignment_member};
+    my $self = shift;
+    return $self->{alignment_member};
 }
 
 sub set_alignment_member {
-	my $self = shift;
-	$self->{alignment_member} = shift;
+    my $self = shift;
+    $self->{alignment_member} = shift;
 }
 
-sub init_children { 
-	my $self = shift;
-	@{$self->{children}} = ();
+sub init_children {
+    my $self = shift;
+    @{ $self->{children} } = ();
 }
 
 =head2 function get_children()
@@ -187,12 +194,12 @@ sub init_children {
 
 =cut
 
-sub get_children { 
-	my $self = shift;
-	if (exists ($self->{children})) {
-		return @{$self->{children}};
-	}
-	return undef;
+sub get_children {
+    my $self = shift;
+    if ( exists( $self->{children} ) ) {
+        return @{ $self->{children} };
+    }
+    return undef;
 }
 
 =head2 function set_children()
@@ -207,9 +214,9 @@ sub get_children {
 
 =cut
 
-sub set_children { 
-	my $self = shift;
-	@{$self->{children}}=@_;
+sub set_children {
+    my $self = shift;
+    @{ $self->{children} } = @_;
 }
 
 =head2 function add_child()
@@ -225,24 +232,23 @@ sub set_children {
 
 =cut
 
-sub add_child { 
-	my $self = shift;
-	my $child = CXGN::Phylo::Node->new();
-	$self->add_child_node($child);
-	my $tree = $self->get_tree();
-	$child->set_tree($tree);
+sub add_child {
+    my $self  = shift;
+    my $child = CXGN::Phylo::Node->new();
+    $self->add_child_node($child);
+    my $tree = $self->get_tree();
+    $child->set_tree($tree);
 
-	# add the child node to the node_hash,
-	# using the unique_node_key property of the corresponding tree 
-        # object.
-	#
-	my $key = $tree->get_unique_node_key();
-	$child->set_node_key($key);
+    # add the child node to the node_hash,
+    # using the unique_node_key property of the corresponding tree
+    # object.
+    #
+    my $key = $tree->get_unique_node_key();
+    $child->set_node_key($key);
 
-	$tree->add_node_hash($child, $key);
-	return $child;
+    $tree->add_node_hash( $child, $key );
+    return $child;
 }
-
 
 =head2 function add_child_node()
 
@@ -258,26 +264,32 @@ sub add_child {
 
 =cut
 
-sub add_child_node { 
-	my $self = shift;
-	my $child = shift;
-	if (!$child) {
-		warn 'CXGN::Phylo::Node::add_child_node: Would need a child node object to add.\n';  return;
-	}
-	foreach my $c ($self->get_children()) { 
-		if (!$c) {
-			warn 'CXGN::Phylo::Node::add_child_node: Illegal children...(continuing...)\n'; next;
-		}
-		if ($c->get_node_key() == $child->get_node_key()) { 
-	    #print STDERR "CXGN::Phylo::Node::add_child_node: Attempting to add a child that already is a child.\n";
-	    return;
-		}
-	}
-	push @{$self->{children}}, $child;
-	my $i=1;
-	#foreach my $c (@{$self->{children}}) { print STDERR "!!!!!!Child name " . $i++ . ":"  . $c->get_name() . "!!!!!!!!!!!!!!\n"; }
-	#print STDERR "adding child " . $child->get_name() . " to parent " . $self->get_name() . "...........\n" ;
-	$child->set_parent($self);
+sub add_child_node {
+    my $self  = shift;
+    my $child = shift;
+    if ( !$child ) {
+        warn
+'CXGN::Phylo::Node::add_child_node: Would need a child node object to add.\n';
+        return;
+    }
+    foreach my $c ( $self->get_children() ) {
+        if ( !$c ) {
+            warn
+'CXGN::Phylo::Node::add_child_node: Illegal children...(continuing...)\n';
+            next;
+        }
+        if ( $c->get_node_key() == $child->get_node_key() ) {
+
+#print STDERR "CXGN::Phylo::Node::add_child_node: Attempting to add a child that already is a child.\n";
+            return;
+        }
+    }
+    push @{ $self->{children} }, $child;
+    my $i = 1;
+
+#foreach my $c (@{$self->{children}}) { print STDERR "!!!!!!Child name " . $i++ . ":"  . $c->get_name() . "!!!!!!!!!!!!!!\n"; }
+#print STDERR "adding child " . $child->get_name() . " to parent " . $self->get_name() . "...........\n" ;
+    $child->set_parent($self);
 }
 
 =head2 function remove_child()
@@ -291,37 +303,40 @@ sub add_child_node {
 
 =cut
 
-sub remove_child {							
+sub remove_child {
+
 #remove a node from another node's list of children - doesn't change $childs parent, should it?
-	my $self = shift;
-	my $child = shift;						# child node object to remove
+    my $self  = shift;
+    my $child = shift;    # child node object to remove
 
-	my $child_key = $child->get_node_key();
+    my $child_key = $child->get_node_key();
 
-	my @children = $self->get_children();
-	my $element = undef;
-	my $found = 0;
-	for (my $i=0; $i<(@children);$i++) {
-		if ($child_key eq ($children[$i]->get_node_key())) {
-		
-	    $element = $i;
-	    $found =1;
-		}
-	}
+    my @children = $self->get_children();
+    my $element  = undef;
+    my $found    = 0;
+    for ( my $i = 0 ; $i < (@children) ; $i++ ) {
+        if ( $child_key eq ( $children[$i]->get_node_key() ) ) {
 
-	if ($found) {
-#	$children[$element]->set_parent(undef);
-		my @removed = splice @children, $element, 1;
-	
-		if (@removed != 1) {
-			print STDERR "remove_child: WARNING! Nothing was removed!\n";
-		}
-	} else {
-		print STDERR "WARNING! Child cannot be removed because it has not been found!\n"; 
-	}
-	$self->set_children(@children);
+            $element = $i;
+            $found   = 1;
+        }
+    }
+
+    if ($found) {
+
+        #	$children[$element]->set_parent(undef);
+        my @removed = splice @children, $element, 1;
+
+        if ( @removed != 1 ) {
+            print STDERR "remove_child: WARNING! Nothing was removed!\n";
+        }
+    }
+    else {
+        print STDERR
+          "WARNING! Child cannot be removed because it has not been found!\n";
+    }
+    $self->set_children(@children);
 }
-
 
 =head2 function add_parent()
 
@@ -343,20 +358,19 @@ sub remove_child {
 
 =cut
 
-sub add_parent{
-	my $self = shift;							# the node above which new node is to be added
-	my $dist_above = shift;				# distance above $self to put the new node
-	my $parent = $self->get_parent();
-	my $bl = $self->get_branch_length();
+sub add_parent {
+    my $self       = shift;    # the node above which new node is to be added
+    my $dist_above = shift;    # distance above $self to put the new node
+    my $parent = $self->get_parent();
+    my $bl     = $self->get_branch_length();
 
-	my $new = $parent->add_child(); # add $new as child of $parent
-	$parent->remove_child($self); # remove $self as child of parent
-	$new->add_child_node($self);	# add $self as child of $new
-	$self->set_branch_length($dist_above);
-	$new->set_branch_length($bl - $dist_above);
-	return $new;
+    my $new = $parent->add_child();    # add $new as child of $parent
+    $parent->remove_child($self);      # remove $self as child of parent
+    $new->add_child_node($self);       # add $self as child of $new
+    $self->set_branch_length($dist_above);
+    $new->set_branch_length( $bl - $dist_above );
+    return $new;
 }
-
 
 =head2 function binarify_children()
 
@@ -389,27 +403,30 @@ This function creates new nodes (branch_length zero) recursively so this node wi
 =cut
 
 sub binarify_children {
-# print "top of binarify children \n";
-	my $self = shift;
-	my $new_bl = shift;
-	$new_bl ||= 0.0;
-	my @children = $self->get_children();
-	my @new_children = ();
-	return if @children < 3;
-#  print ("number of children: ", scalar @children, "\n");
-	my $c1 = shift @children;
-	my $c2 = shift @children;
-	my $b = CXGN::Phylo::Node->new();
-	$b->set_children($c1, $c2);
-	$c1->set_parent($b);
-	$c2->set_parent($b);
-	$b->set_branch_length($new_bl);
-	$b->set_parent($self); # don't forget to set parent of new node to $self!!!
-	push(@children, $b);
-	$self->set_children(@children);
-	$self->get_tree()->incorporate_nodes($b);
-	$self->binarify_children($new_bl);
-#  print "bottom of binarify children \n";
+
+    # print "top of binarify children \n";
+    my $self   = shift;
+    my $new_bl = shift;
+    $new_bl ||= 0.0;
+    my @children     = $self->get_children();
+    my @new_children = ();
+    return if @children < 3;
+
+    #  print ("number of children: ", scalar @children, "\n");
+    my $c1 = shift @children;
+    my $c2 = shift @children;
+    my $b  = CXGN::Phylo::Node->new();
+    $b->set_children( $c1, $c2 );
+    $c1->set_parent($b);
+    $c2->set_parent($b);
+    $b->set_branch_length($new_bl);
+    $b->set_parent($self);  # don't forget to set parent of new node to $self!!!
+    push( @children, $b );
+    $self->set_children(@children);
+    $self->get_tree()->incorporate_nodes($b);
+    $self->binarify_children($new_bl);
+
+    #  print "bottom of binarify children \n";
 }
 
 =head2 function binarify_with_specified_resolution()
@@ -425,14 +442,17 @@ we call s->binarify_with_specified_resolution((a,b), (c,d))
 
 =cut 
 
-sub binarify_with_specified_resolution{
-	my $self = shift;
-	my $new_child_set1 = shift;		# a subset of self's children; these all go in one of the new subtrees,
-	my $new_child_set2 = shift;		# a subset of self's children; these all go in the other new subtree.
-	my @new_child_species_sets = ($new_child_set1, $new_child_set2);
+sub binarify_with_specified_resolution {
+    my $self           = shift;
+    my $new_child_set1 = shift
+      ;  # a subset of self's children; these all go in one of the new subtrees,
+    my $new_child_set2 = shift
+      ;    # a subset of self's children; these all go in the other new subtree.
+    my @new_child_species_sets = ( $new_child_set1, $new_child_set2 );
 
-	return if  $self->get_children() < 3;
-	my @new_children = ();
+    return if $self->get_children() < 3;
+    my @new_children = ();
+
 #	if(0){
 #	if (@$new_child_set1 > 1) {
 #		my $b = CXGN::Phylo::Node->new();
@@ -441,7 +461,7 @@ sub binarify_with_specified_resolution{
 #		my $new_bp = 0;							# species bit pattern for new node
 #		my @new_implicit_species = ();
 #		my @new_implicit_names = ();
-#		foreach (@$new_child_set1) { 
+#		foreach (@$new_child_set1) {
 #			$new_bp |= $_->get_attribute("species_bit_pattern");
 #			@new_implicit_species = (@new_implicit_species, @{$_->get_implicit_species()});
 #			@new_implicit_names = (@new_implicit_names, @{$_->get_implicit_names()});
@@ -480,33 +500,38 @@ sub binarify_with_specified_resolution{
 #	}
 #}
 #	else {
-		foreach my $css (@new_child_species_sets) {
-# print "XXXXX\n";
-			if (@$css > 1) {
-				my $b = CXGN::Phylo::Node->new();
-				$b->set_parent($self);
-				$b->set_children(@$css);
-				my $new_bp = 0;
-				my @new_implicit_species = ();
-				my @new_implicit_names = ();
-				foreach (@$css) {
-					$new_bp |= $_->get_attribute("species_bit_pattern");
-					@new_implicit_species = (@new_implicit_species, @{$_->get_implicit_species()});
-					@new_implicit_names = (@new_implicit_names, @{$_->get_implicit_names()});
-					$_->set_parent($b);
-				}
-				$b->set_attribute("species_bit_pattern", $new_bp);
-				$b->set_implicit_species(\@new_implicit_species);
-				$b->set_implicit_names(\@new_implicit_names);
-				$b->set_branch_length(0);
-				push @new_children, $b;
-				$self->get_tree()->incorporate_nodes($b);
-			} else {									# new_child_set has just one node; just push onto @new_children
-				push @new_children, $css->[0];
-			}
-		}
-	#}
-	$self->set_children(@new_children);
+    foreach my $css (@new_child_species_sets) {
+
+        # print "XXXXX\n";
+        if ( @$css > 1 ) {
+            my $b = CXGN::Phylo::Node->new();
+            $b->set_parent($self);
+            $b->set_children(@$css);
+            my $new_bp               = 0;
+            my @new_implicit_species = ();
+            my @new_implicit_names   = ();
+            foreach (@$css) {
+                $new_bp |= $_->get_attribute("species_bit_pattern");
+                @new_implicit_species =
+                  ( @new_implicit_species, @{ $_->get_implicit_species() } );
+                @new_implicit_names =
+                  ( @new_implicit_names, @{ $_->get_implicit_names() } );
+                $_->set_parent($b);
+            }
+            $b->set_attribute( "species_bit_pattern", $new_bp );
+            $b->set_implicit_species( \@new_implicit_species );
+            $b->set_implicit_names( \@new_implicit_names );
+            $b->set_branch_length(0);
+            push @new_children, $b;
+            $self->get_tree()->incorporate_nodes($b);
+        }
+        else {   # new_child_set has just one node; just push onto @new_children
+            push @new_children, $css->[0];
+        }
+    }
+
+    #}
+    $self->set_children(@new_children);
 }
 
 =head2 function get_descendents()
@@ -520,21 +545,21 @@ sub binarify_with_specified_resolution{
 =cut
 
 sub get_descendents {
-	my $self = shift;
-	my $order = shift;
-	$order = -1 unless defined $order;
-	my @desc = ();
-	my @children = $self->get_children();
-	return $self unless scalar @children;
-	return $self if $order==0;
-	$order--;
-	foreach (@children) {
-		push(@desc, $_->get_descendents($order));
-	}
-	push(@desc, $self);
-	return @desc;
-}
+    my $self  = shift;
+    my $order = shift;
+    $order = -1 unless defined $order;
+    my @desc     = ();
+    my @children = $self->get_children();
+    return $self unless scalar @children;
+    return $self if $order == 0;
+    $order--;
 
+    foreach (@children) {
+        push( @desc, $_->get_descendents($order) );
+    }
+    push( @desc, $self );
+    return @desc;
+}
 
 =head2 function get_parent()
 
@@ -547,9 +572,9 @@ sub get_descendents {
 
 =cut
 
-sub get_parent { 
-	my $self=shift;
-	return $self->{parent};
+sub get_parent {
+    my $self = shift;
+    return $self->{parent};
 }
 
 =head2 function set_parent()
@@ -562,9 +587,9 @@ sub get_parent {
 
 =cut
 
-sub set_parent { 
-	my $self=shift;
-	$self->{parent}=shift;
+sub set_parent {
+    my $self = shift;
+    $self->{parent} = shift;
 }
 
 =head2 function get_all_parents()
@@ -578,22 +603,22 @@ sub set_parent {
 
 =cut
 
-sub get_all_parents { 
-	my $self = shift;
-	my @parents = ();
-	my $p = $self;
+sub get_all_parents {
+    my $self    = shift;
+    my @parents = ();
+    my $p       = $self;
 
-	# get all parents, including the root node (i.e. parent, parent's 
-        #  parent, etc. up to root)
-	#
-	while (!$p->is_root()) { 
+    # get all parents, including the root node (i.e. parent, parent's
+    #  parent, etc. up to root)
+    #
+    while ( !$p->is_root() ) {
 
-		$p = $p->get_parent();
+        $p = $p->get_parent();
 
-		push @parents, $p;
+        push @parents, $p;
 
-	}
-	return @parents;
+    }
+    return @parents;
 }
 
 =head2 function splice()
@@ -607,43 +632,42 @@ sub get_all_parents {
 =cut
 
 sub splice {
-	my $self = shift;
-	my $sub_tree = shift;
-	my $tree = $self->get_tree();
-	
-	my @sub_nodes = $sub_tree->get_root()->get_descendents();
+    my $self     = shift;
+    my $sub_tree = shift;
+    my $tree     = $self->get_tree();
 
-	#remove sub_tree root node, since we want it to take this node's key
-	#and not be incorporated as a new node to this tree
-	my $sub_root = pop @sub_nodes; 
+    my @sub_nodes = $sub_tree->get_root()->get_descendents();
 
-	$tree->incorporate_nodes(@sub_nodes);
+    #remove sub_tree root node, since we want it to take this node's key
+    #and not be incorporated as a new node to this tree
+    my $sub_root = pop @sub_nodes;
 
-	#And now, the splice!
-	#The subtree root's attributes are copied to this node, with a few 
-	#exceptions (next five lines)
-	$sub_root->set_tree($tree);
-	$sub_root->set_name($self->get_name);
-	$sub_root->set_node_key($self->get_node_key);
-	$sub_root->set_parent($self->get_parent);
-	$sub_root->set_branch_length($self->get_branch_length);
-	$_->set_parent($self) foreach( $sub_root->get_children() );
+    $tree->incorporate_nodes(@sub_nodes);
 
-	while (my ($k, $v) = each %$sub_root) {
-		$self->{$k} = $v;
-	}
+    #And now, the splice!
+    #The subtree root's attributes are copied to this node, with a few
+    #exceptions (next five lines)
+    $sub_root->set_tree($tree);
+    $sub_root->set_name( $self->get_name );
+    $sub_root->set_node_key( $self->get_node_key );
+    $sub_root->set_parent( $self->get_parent );
+    $sub_root->set_branch_length( $self->get_branch_length );
+    $_->set_parent($self) foreach ( $sub_root->get_children() );
+
+    while ( my ( $k, $v ) = each %$sub_root ) {
+        $self->{$k} = $v;
+    }
 }
 
 sub add_subtree {
-	my $self = shift;
-	my $subtree = shift;
-	my $branch_length = shift;
-	$branch_length = 0 unless defined $branch_length;
-	$self->get_tree()->incorporate_tree($subtree);
-	$self->add_child_node($subtree->get_root());	
-	$subtree->get_root()->set_branch_length($branch_length)
+    my $self          = shift;
+    my $subtree       = shift;
+    my $branch_length = shift;
+    $branch_length = 0 unless defined $branch_length;
+    $self->get_tree()->incorporate_tree($subtree);
+    $self->add_child_node( $subtree->get_root() );
+    $subtree->get_root()->set_branch_length($branch_length);
 }
-
 
 =head2 function get_species()
 
@@ -660,8 +684,8 @@ sub add_subtree {
 =cut
 
 sub get_species {
-	my $self=shift;
-	return $self->{species};
+    my $self = shift;
+    return $self->{species};
 }
 
 =head2 function get_standard_species()
@@ -680,18 +704,21 @@ sub get_species {
 =cut
 
 sub get_standard_species {
-	my $self=shift;
-	my $species = $self->{species};
-	my $tree = $self->get_tree();
-	if (defined $tree) {
-		my $species_standardizer = $tree->get_species_standardizer();
-		if (defined $species_standardizer) {
-			$species = $species_standardizer->get_standard_name($species);
-		} else {
-      $species = CXGN::Phylo::Species_name_map::to_standard_format($species); # just e.g.  solanum lycopersicum -> Solanum_lycopersicum
-		}
-	}
-	return $species;
+    my $self    = shift;
+    my $species = $self->{species};
+    my $tree    = $self->get_tree();
+    if ( defined $tree ) {
+        my $species_standardizer = $tree->get_species_standardizer();
+        if ( defined $species_standardizer ) {
+            $species = $species_standardizer->get_standard_name($species);
+        }
+        else {
+            $species =
+              CXGN::Phylo::Species_name_map::to_standard_format($species)
+              ;    # just e.g.  solanum lycopersicum -> Solanum_lycopersicum
+        }
+    }
+    return $species;
 }
 
 =head2 function get_shown_species()
@@ -704,18 +731,21 @@ sub get_standard_species {
 
 =cut
 
-sub get_shown_species{
-	my $self = shift;
-# print "in get_shown_species. show_standard_species: {{{", $self->get_tree()->get_show_standard_species, "}}}\n";
-	if ($self->get_tree()->get_show_standard_species) {
-#	print STDERR "in get_shown_species. auto branch. ",  $self->get_tree()->get_show_standard_species," \n";
-		return $self->get_standard_species();
-	} else {
-#		print STDERR "in get_shown_species. raw branch ", $self->get_tree()->get_show_standard_species, "\n";
-		return $self->get_species();
-	}
-}
+sub get_shown_species {
+    my $self = shift;
 
+# print "in get_shown_species. show_standard_species: {{{", $self->get_tree()->get_show_standard_species, "}}}\n";
+    if ( $self->get_tree()->get_show_standard_species ) {
+
+#	print STDERR "in get_shown_species. auto branch. ",  $self->get_tree()->get_show_standard_species," \n";
+        return $self->get_standard_species();
+    }
+    else {
+
+#		print STDERR "in get_shown_species. raw branch ", $self->get_tree()->get_show_standard_species, "\n";
+        return $self->get_species();
+    }
+}
 
 =head2 function set_species()
 
@@ -731,9 +761,9 @@ sub get_shown_species{
 
 =cut
 
-sub set_species { 
-	my $self=shift;
-	$self->{species}=shift;
+sub set_species {
+    my $self = shift;
+    $self->{species} = shift;
 }
 
 =head2 function get_label()
@@ -743,9 +773,9 @@ sub set_species {
 
 =cut
 
-sub get_label { 
-	my $self=shift;
-	return $self->{label};
+sub get_label {
+    my $self = shift;
+    return $self->{label};
 }
 
 =head2 function set_label()
@@ -755,10 +785,10 @@ sub get_label {
 
 =cut
 
-sub set_label { 
-	my $self=shift;
-	$self->{label}= shift;
-        $self->{label} 
+sub set_label {
+    my $self = shift;
+    $self->{label} = shift;
+    $self->{label};
 }
 
 =head2 function set_tooltip()
@@ -766,8 +796,8 @@ sub set_label {
 =cut
 
 sub set_tooltip {
-	my $self = shift;
-	$self->{tooltip} = shift;
+    my $self = shift;
+    $self->{tooltip} = shift;
 }
 
 =head2 function get_tooltip()
@@ -775,8 +805,8 @@ sub set_tooltip {
 =cut
 
 sub get_tooltip {
-	my $self = shift;
-	return $self->{tooltip};
+    my $self = shift;
+    return $self->{tooltip};
 
 }
 
@@ -787,9 +817,9 @@ sub get_tooltip {
 
 =cut
 
-sub set_onmouseout{
-    my $self=shift;
-    $self->{onmouseout}=shift;
+sub set_onmouseout {
+    my $self = shift;
+    $self->{onmouseout} = shift;
 }
 
 =head2 function get_onmouseout()
@@ -799,8 +829,8 @@ sub set_onmouseout{
 
 =cut
 
-sub get_onmouseout{
-    my $self=shift;
+sub get_onmouseout {
+    my $self = shift;
     return $self->{onmouseout};
 }
 
@@ -811,10 +841,10 @@ sub get_onmouseout{
 
 =cut
 
-sub set_onmouseover{
-    my $self=shift;
-    my $script=shift;
-    $self->{onmouseover}=$script;
+sub set_onmouseover {
+    my $self   = shift;
+    my $script = shift;
+    $self->{onmouseover} = $script;
 }
 
 =head2 function get_onmouseover()
@@ -824,9 +854,9 @@ sub set_onmouseover{
 
 =cut
 
-sub get_onmouseover{
-    my $self= shift;
-  
+sub get_onmouseover {
+    my $self = shift;
+
     return $self->{onmouseover};
 }
 
@@ -837,10 +867,12 @@ sub get_onmouseover{
 
 =cut
 
-sub get_branch_length { 
-	my $self=shift;
-	if (!exists($self->{branch_length})) { $self->{branch_length}= $self->get_tree()->get_min_branch_length();	}
-	return $self->{branch_length};
+sub get_branch_length {
+    my $self = shift;
+    if ( !exists( $self->{branch_length} ) ) {
+        $self->{branch_length} = $self->get_tree()->get_min_branch_length();
+    }
+    return $self->{branch_length};
 }
 
 =head2 function set_branch_length()
@@ -850,9 +882,9 @@ sub get_branch_length {
 
 =cut
 
-sub set_branch_length { 
-	my $self=shift;
-	$self->{branch_length}=shift;
+sub set_branch_length {
+    my $self = shift;
+    $self->{branch_length} = shift;
 }
 
 =head2 function get_transformed_branch_length()
@@ -867,29 +899,34 @@ sub set_branch_length {
 
 =cut
 
-sub get_transformed_branch_length { 
-	my $self=shift;
-	my $bltype = shift;
-	return 0.0 if($self->is_root());
-	$bltype ||= $self->get_tree()->get_shown_branch_length();  #"branch_length";
-	my $addbl = shift; $addbl ||= $self->get_tree()->get_min_shown_branch_length();
-	if (!exists($self->{branch_length})) {
-		$self->{branch_length}= $self->get_tree()->get_min_branch_length();
-	}
+sub get_transformed_branch_length {
+    my $self   = shift;
+    my $bltype = shift;
+    return 0.0 if ( $self->is_root() );
+    $bltype ||= $self->get_tree()->get_shown_branch_length();  #"branch_length";
+    my $addbl = shift;
+    $addbl ||= $self->get_tree()->get_min_shown_branch_length();
+    if ( !exists( $self->{branch_length} ) ) {
+        $self->{branch_length} = $self->get_tree()->get_min_branch_length();
+    }
 
-	if ($bltype eq "branch_length") {
-		return ($addbl + $self->{branch_length});
-	} elsif ($bltype eq "equal") {
-		return 1.0;
-	} elsif ($bltype eq "proportion_different") {
-		return ($addbl + 0.75*(1.0 - exp(-4.0*($self->{branch_length})/3.0)));
-	} elsif ($bltype eq "square_root") {
-		return ($addbl + ($self->{branch_length})**0.5);
-	} else {
-		return $self->{branch_length};
-	}
+    if ( $bltype eq "branch_length" ) {
+        return ( $addbl + $self->{branch_length} );
+    }
+    elsif ( $bltype eq "equal" ) {
+        return 1.0;
+    }
+    elsif ( $bltype eq "proportion_different" ) {
+        return ( $addbl +
+              0.75 * ( 1.0 - exp( -4.0 * ( $self->{branch_length} ) / 3.0 ) ) );
+    }
+    elsif ( $bltype eq "square_root" ) {
+        return ( $addbl + ( $self->{branch_length} )**0.5 );
+    }
+    else {
+        return $self->{branch_length};
+    }
 }
-
 
 =head2 function is_root()
 
@@ -902,11 +939,11 @@ sub get_transformed_branch_length {
 =cut
 
 sub is_root {
-	my $self = shift;
-	if (!$self->get_parent()) {
-		return 1;
-	}
-	return 0;
+    my $self = shift;
+    if ( !$self->get_parent() ) {
+        return 1;
+    }
+    return 0;
 }
 
 =head2 function get_tree()
@@ -918,9 +955,9 @@ sub is_root {
 
 =cut
 
-sub get_tree { 
-	my $self=shift;
-	return $self->{tree};
+sub get_tree {
+    my $self = shift;
+    return $self->{tree};
 }
 
 =head2 function set_tree()
@@ -931,9 +968,9 @@ sub get_tree {
 
 =cut
 
-sub set_tree { 
-	my $self=shift;
-	$self->{tree}=shift;
+sub set_tree {
+    my $self = shift;
+    $self->{tree} = shift;
 }
 
 =head2 function is_leaf()
@@ -943,12 +980,12 @@ sub set_tree {
 
 =cut
 
-sub is_leaf { 
-	my $self = shift;
-	if ($self->get_children()) {
-		return 0;
-	}
-	return 1;
+sub is_leaf {
+    my $self = shift;
+    if ( $self->get_children() ) {
+        return 0;
+    }
+    return 1;
 }
 
 =head2 function get_hidden() and is_hidden()
@@ -964,15 +1001,14 @@ sub is_leaf {
 =cut
 
 sub get_hidden {
-	my $self=shift;	
-	return $self->{hidden};
+    my $self = shift;
+    return $self->{hidden};
 }
 
-sub is_hidden { 	
-	my $self=shift;
-	return $self->get_hidden();
+sub is_hidden {
+    my $self = shift;
+    return $self->get_hidden();
 }
-
 
 =head2 function set_hidden()
 
@@ -989,9 +1025,9 @@ sub is_hidden {
 
 =cut
 
-sub set_hidden { 
-	my $self=shift;
-	$self->{hidden}=shift;
+sub set_hidden {
+    my $self = shift;
+    $self->{hidden} = shift;
 }
 
 =head2 function recursive_propagate_properties()
@@ -1007,34 +1043,34 @@ sub set_hidden {
 
 =cut
 
-sub recursive_propagate_properties { 
-	my $self = shift;
-    
-	my $hidden = $self->get_hidden();
-	my $hilited = $self->get_hilited();
-   
-	my @children = $self->get_children();
-	foreach my $c (@children) {
-		if ($hidden) {
-			$c->set_hidden($hidden);
-		}
-		if ($hilited) {
-			$c->set_hilited($hilited);
-		}
-		$c->recursive_propagate_properties();
-	}
+sub recursive_propagate_properties {
+    my $self = shift;
+
+    my $hidden  = $self->get_hidden();
+    my $hilited = $self->get_hilited();
+
+    my @children = $self->get_children();
+    foreach my $c (@children) {
+        if ($hidden) {
+            $c->set_hidden($hidden);
+        }
+        if ($hilited) {
+            $c->set_hilited($hilited);
+        }
+        $c->recursive_propagate_properties();
+    }
 }
 
-sub recursive_clear_properties { 
-	my $self = shift;
-    
-	$self->set_hidden(0);
-	$self->set_hilited(0);
-    
-	my @children = $self->get_children();
-	foreach my $c (@children) { 
-		$c -> recursive_clear_properties();
-	}
+sub recursive_clear_properties {
+    my $self = shift;
+
+    $self->set_hidden(0);
+    $self->set_hilited(0);
+
+    my @children = $self->get_children();
+    foreach my $c (@children) {
+        $c->recursive_clear_properties();
+    }
 }
 
 =head2 accessors get_hilited(), set_hilited()
@@ -1048,17 +1084,17 @@ sub recursive_clear_properties {
 
 =cut
 
-sub get_hilited { 
-	my $self=shift;
-	if (!defined($self->{hilited})) { 
-	    $self->{hilited}="";
-	}
-	return $self->{hilited};
+sub get_hilited {
+    my $self = shift;
+    if ( !defined( $self->{hilited} ) ) {
+        $self->{hilited} = "";
+    }
+    return $self->{hilited};
 }
 
-sub set_hilited { 
-	my $self=shift;
-	$self->{hilited}=shift;
+sub set_hilited {
+    my $self = shift;
+    $self->{hilited} = shift;
 }
 
 =head2 accessors get_hide_label(), set_hide_label()
@@ -1070,14 +1106,14 @@ sub set_hilited {
 
 =cut
 
-sub get_hide_label { 
-	my $self=shift;
-	return $self->get_label()->is_hidden();
+sub get_hide_label {
+    my $self = shift;
+    return $self->get_label()->is_hidden();
 }
 
-sub set_hide_label { 
-	my $self=shift;
-	$self->get_label()->set_hidden(1);
+sub set_hide_label {
+    my $self = shift;
+    $self->get_label()->set_hidden(1);
 }
 
 =head2 accessors get_line_color(), set_line_color()
@@ -1091,20 +1127,19 @@ sub set_hide_label {
 
 =cut
 
-
 sub get_line_color {
-	my $self = shift;
-	return @{$self->{line_color}};
+    my $self = shift;
+    return @{ $self->{line_color} };
 }
 
 sub set_line_color {
-	my $self = shift;
-	my @color = shift;
-	return unless (@color==3);
-	foreach (@color) {
-		return unless ($_ >= 0 && $_ <= 255);
-	}
-	@{$self->{line_color}} = @color;
+    my $self  = shift;
+    my @color = shift;
+    return unless ( @color == 3 );
+    foreach (@color) {
+        return unless ( $_ >= 0 && $_ <= 255 );
+    }
+    @{ $self->{line_color} } = @color;
 }
 
 =head2 function get_name()
@@ -1114,9 +1149,9 @@ sub set_line_color {
 
 =cut
 
-sub get_name { 
-	my $self=shift;
-	return $self->{name};
+sub get_name {
+    my $self = shift;
+    return $self->{name};
 }
 
 =head2 function set_name()
@@ -1133,11 +1168,13 @@ sub get_name {
 
 =cut
 
-sub set_name { 
-	my $self=shift;
-	$self->{name}=shift;
-#	$self->get_label()->set_name($self->{name});
+sub set_name {
+    my $self = shift;
+    $self->{name} = shift;
+
+    #	$self->get_label()->set_name($self->{name});
 }
+
 =head2 function wrap_tooltip(){
 
   Synopsis:	$n->wrap_tooltip("At1g01010");
@@ -1148,12 +1185,12 @@ sub set_name {
 
 =cut
 
-sub wrap_tooltip { 
-	my $self=shift;
-	my $tooltip = shift;
-	$self->{name}=shift;
-        my $wrappedobj = tooltipped_text($self->{name},$tooltip);
-        return $wrappedobj;
+sub wrap_tooltip {
+    my $self    = shift;
+    my $tooltip = shift;
+    $self->{name} = shift;
+    my $wrappedobj = tooltipped_text( $self->{name}, $tooltip );
+    return $wrappedobj;
 }
 
 =head2 accessors get_link(), set_link()
@@ -1167,14 +1204,14 @@ sub wrap_tooltip {
 
 =cut
 
-sub get_link { 
-	my $self=shift;
-	return $self->{link};
+sub get_link {
+    my $self = shift;
+    return $self->{link};
 }
 
-sub set_link { 
-	my $self=shift;
-	$self->{link}=shift;
+sub set_link {
+    my $self = shift;
+    $self->{link} = shift;
 }
 
 =head2 accessors get_horizontal_coord(), set_horizontal_coord()
@@ -1188,25 +1225,26 @@ sub set_link {
 
 =cut
 
-sub get_horizontal_coord { 
-	my $self=shift;
-	return int($self->{horizontal_coord});
+sub get_horizontal_coord {
+    my $self = shift;
+    return int( $self->{horizontal_coord} );
 }
 
-sub get_X { 
-	my $self=shift;
-	return $self->{horizontal_coord};
+sub get_X {
+    my $self = shift;
+    return $self->{horizontal_coord};
 }
 
-sub set_horizontal_coord { 
-	my $self=shift;
-	$self->{horizontal_coord}=shift;
-	$self->get_label()->set_reference_point($self->{horizontal_coord}, $self->get_Y());
+sub set_horizontal_coord {
+    my $self = shift;
+    $self->{horizontal_coord} = shift;
+    $self->get_label()
+      ->set_reference_point( $self->{horizontal_coord}, $self->get_Y() );
 }
 
-sub set_X { 
-	my $self = shift;
-	$self->set_horizontal_coord(shift);
+sub set_X {
+    my $self = shift;
+    $self->set_horizontal_coord(shift);
 }
 
 =head2 accessors get_vertical_coord(), set_vertical_coord()
@@ -1219,30 +1257,32 @@ sub set_X {
 
 =cut
 
-sub get_vertical_coord { 
-	my $self=shift;
-	if (!$self->{vertical_coord}) {
-		$self->{vertical_coord}=0;
-	}
-	return int($self->{vertical_coord});
+sub get_vertical_coord {
+    my $self = shift;
+    if ( !$self->{vertical_coord} ) {
+        $self->{vertical_coord} = 0;
+    }
+    return int( $self->{vertical_coord} );
 }
 
-sub get_Y { 
-	my $self = shift;
-#my $Y = $self->get_vertical_coord();
-#return sqrt($Y);
-	return $self->get_vertical_coord();
+sub get_Y {
+    my $self = shift;
+
+    #my $Y = $self->get_vertical_coord();
+    #return sqrt($Y);
+    return $self->get_vertical_coord();
 }
 
-sub set_vertical_coord { 
-	my $self=shift;
-	$self->{vertical_coord}=shift;
-	$self->get_label()->set_reference_point($self->get_X(), $self->{vertical_coord});
+sub set_vertical_coord {
+    my $self = shift;
+    $self->{vertical_coord} = shift;
+    $self->get_label()
+      ->set_reference_point( $self->get_X(), $self->{vertical_coord} );
 }
 
-sub set_Y { 
-	my $self=shift;
-	$self->set_vertical_coord(shift);
+sub set_Y {
+    my $self = shift;
+    $self->set_vertical_coord(shift);
 
 }
 
@@ -1257,9 +1297,9 @@ sub set_Y {
 
 =cut
 
-sub get_node_key { 
-	my $self=shift;
-	return $self->{node_key};
+sub get_node_key {
+    my $self = shift;
+    return $self->{node_key};
 }
 
 =head2 function set_node_key()
@@ -1275,11 +1315,10 @@ sub get_node_key {
 
 =cut
 
-sub set_node_key { 
-	my $self=shift;
-	$self->{node_key}=shift;
+sub set_node_key {
+    my $self = shift;
+    $self->{node_key} = shift;
 }
-
 
 =head2 function get_dist_from_root()
 
@@ -1291,9 +1330,9 @@ sub set_node_key {
 
 =cut
 
-sub get_dist_from_root { 
-	my $self=shift;
-	return $self->{dist_from_root};
+sub get_dist_from_root {
+    my $self = shift;
+    return $self->{dist_from_root};
 }
 
 =head2 function set_dist_from_root()
@@ -1306,9 +1345,9 @@ sub get_dist_from_root {
 
 =cut
 
-sub set_dist_from_root { 
-	my $self=shift;
-	$self->{dist_from_root}=shift;
+sub set_dist_from_root {
+    my $self = shift;
+    $self->{dist_from_root} = shift;
 }
 
 =head2 function set_subtree_distance()
@@ -1334,25 +1373,29 @@ sub set_dist_from_root {
 
 =cut
 
-sub calculate_distances_from_root { 
-	my $self=shift;
-	my $dist = shift; $dist ||= 0.0;
-	my $dist_type = shift;
-$dist_type ||= $self->get_tree()->get_shown_branch_length_transformation();  #{shown_branch_length}; 
-	my $node_dist = $self->get_transformed_branch_length($dist_type);
-	$dist += $node_dist;
+sub calculate_distances_from_root {
+    my $self = shift;
+    my $dist = shift;
+    $dist ||= 0.0;
+    my $dist_type = shift;
+    $dist_type ||=
+      $self->get_tree()->get_shown_branch_length_transformation()
+      ;    #{shown_branch_length};
+    my $node_dist = $self->get_transformed_branch_length($dist_type);
+    $dist += $node_dist;
 
-	$self->set_dist_from_root($dist);
-	if ($self->get_hidden()) {
-		return $dist;
-	}
-	# if the node is hidden, don't go through the children.
-	#
-	my @children = $self->get_children();
-	foreach my $c (@children) {
-		my $sub_dist = $c->calculate_distances_from_root($dist, $dist_type);
-	}
-	return $dist;
+    $self->set_dist_from_root($dist);
+    if ( $self->get_hidden() ) {
+        return $dist;
+    }
+
+    # if the node is hidden, don't go through the children.
+    #
+    my @children = $self->get_children();
+    foreach my $c (@children) {
+        my $sub_dist = $c->calculate_distances_from_root( $dist, $dist_type );
+    }
+    return $dist;
 }
 
 =head2 function rotate_node()
@@ -1367,55 +1410,68 @@ $dist_type ||= $self->get_tree()->get_shown_branch_length_transformation();  #{s
 =cut
 
 sub rotate_node {
-	my $self = shift;
-	my @children = $self->get_children();
+    my $self     = shift;
+    my @children = $self->get_children();
 
-	#print STDERR "Rotating node...\n";
-	my @reverse_children = reverse(@children);
+    #print STDERR "Rotating node...\n";
+    my @reverse_children = reverse(@children);
 
-	$self->set_children(@reverse_children);
+    $self->set_children(@reverse_children);
 }
 
-sub recursive_text_render { 
-	my $self = shift;
-	my $offset = shift;
-	if (!$offset) {
-		$offset=0;
-	}
-	for (my $i=0; $i<$offset; $i++) {
-		print STDERR "-";
-	}
-	my $hidden = "";
-	my $hilited = "";
- 
-	$self->print();
+sub recursive_text_render {
+    my $self   = shift;
+    my $offset = shift;
+    if ( !$offset ) {
+        $offset = 0;
+    }
+    for ( my $i = 0 ; $i < $offset ; $i++ ) {
+        print STDERR "-";
+    }
+    my $hidden  = "";
+    my $hilited = "";
 
-	my @children = $self->get_children();
+    $self->print();
 
-	foreach my $c (@children) { 
-		$c->recursive_text_render($offset+1);
-	}
+    my @children = $self->get_children();
+
+    foreach my $c (@children) {
+        $c->recursive_text_render( $offset + 1 );
+    }
 }
 
-sub print { 
-	my $self = shift;
-	my $hidden = "";
-	my $hilited = "";
-	if ($self->get_hidden()) {
-		$hidden = "HIDDEN";
-	}
-	if ($self->get_hilited()) {
-		$hilited = "HILITED";
-	}
-	if ($self->is_root()) {
-		print STDERR "*";
-	}
-	print STDERR $self->get_name()." key=".$self->get_node_key()." (".$self->get_horizontal_coord().", ". $self->get_vertical_coord().") [$hidden] [$hilited] [".$self->get_subtree_node_count()."] species: ".$self->get_species()." link: ".$self->get_link()." [".$self->get_attribute("leaf_species_count")."] blen =".$self->get_branch_length();
-	if ($self->get_parent() ne undef) {
-		print "  parent name: \'", $self->get_parent()->get_name(),  "\'\n";
-	} else {
-		print "\n";
-	}
+sub print {
+    my $self    = shift;
+    my $hidden  = "";
+    my $hilited = "";
+    if ( $self->get_hidden() ) {
+        $hidden = "HIDDEN";
+    }
+    if ( $self->get_hilited() ) {
+        $hilited = "HILITED";
+    }
+    if ( $self->is_root() ) {
+        print STDERR "*";
+    }
+    print STDERR $self->get_name() . " key="
+      . $self->get_node_key() . " ("
+      . $self->get_horizontal_coord() . ", "
+      . $self->get_vertical_coord()
+      . ") [$hidden] [$hilited] ["
+      . $self->get_subtree_node_count()
+      . "] species: "
+      . $self->get_species()
+      . " link: "
+      . $self->get_link() . " ["
+      . $self->get_attribute("leaf_species_count")
+      . "] blen ="
+      . $self->get_branch_length();
+    if ( $self->get_parent() ne undef ) {
+        print "  parent name: \'", $self->get_parent()->get_name(), "\'\n";
+    }
+    else {
+        print "\n";
+    }
 }
 
 =head2 function recursive_leaf_list()
@@ -1428,26 +1484,25 @@ sub print {
 
 =cut
 
-sub recursive_leaf_list { 
-    my $self = shift;
+sub recursive_leaf_list {
+    my $self      = shift;
     my @leaf_list = @_;
 
     # test if the current node is a leaf, or is hidden (in which
     # case it is treated similarly to a leaf) and if true, add it
     # to the leaf list array.
     #
-    if ($self->is_leaf() || $self->get_hidden()) { 
-			push @leaf_list, $self;
-			return @leaf_list;
+    if ( $self->is_leaf() || $self->get_hidden() ) {
+        push @leaf_list, $self;
+        return @leaf_list;
     }
     my @children = $self->get_children();
-    foreach my $c (@children) { 
-			my @children_leaf_list = $c->recursive_leaf_list();
-			@leaf_list = (@leaf_list, @children_leaf_list);
+    foreach my $c (@children) {
+        my @children_leaf_list = $c->recursive_leaf_list();
+        @leaf_list = ( @leaf_list, @children_leaf_list );
     }
     return @leaf_list;
 }
-
 
 =head2 function get_subtree_node_count()
 
@@ -1459,9 +1514,9 @@ sub recursive_leaf_list {
 
 =cut
 
-sub get_subtree_node_count { 
-	my $self=shift;
-	return $self->{subtree_node_count};
+sub get_subtree_node_count {
+    my $self = shift;
+    return $self->{subtree_node_count};
 }
 
 =head2 function set_subtree_node_count()
@@ -1474,11 +1529,10 @@ sub get_subtree_node_count {
 
 =cut
 
-sub set_subtree_node_count { 
-	my $self=shift;
-	$self->{subtree_node_count}=shift;
+sub set_subtree_node_count {
+    my $self = shift;
+    $self->{subtree_node_count} = shift;
 }
-
 
 =head2 function get_leaf_species_count()
 
@@ -1490,9 +1544,9 @@ sub set_subtree_node_count {
 
 =cut
 
-sub get_leaf_species_count { 
-	my $self=shift;
-	return $self->{leaf_species_count};
+sub get_leaf_species_count {
+    my $self = shift;
+    return $self->{leaf_species_count};
 }
 
 =head2 function set_leaf_species_count()
@@ -1505,11 +1559,10 @@ sub get_leaf_species_count {
 
 =cut
 
-sub set_leaf_species_count { 
-	my $self=shift;
-	$self->{leaf_species_count}=shift;
+sub set_leaf_species_count {
+    my $self = shift;
+    $self->{leaf_species_count} = shift;
 }
-
 
 =head2 function get_comp_leaf_species_count()
 
@@ -1522,9 +1575,9 @@ sub set_leaf_species_count {
 
 =cut
 
-sub get_comp_leaf_species_count { 
-	my $self=shift;
-	return $self->{comp_leaf_species_count};
+sub get_comp_leaf_species_count {
+    my $self = shift;
+    return $self->{comp_leaf_species_count};
 }
 
 =head2 function set_comp_leaf_species_count()
@@ -1539,11 +1592,10 @@ sub get_comp_leaf_species_count {
 
 =cut
 
-sub set_comp_leaf_species_count { 
-	my $self=shift;
-	$self->{comp_leaf_species_count}=shift;
+sub set_comp_leaf_species_count {
+    my $self = shift;
+    $self->{comp_leaf_species_count} = shift;
 }
-
 
 =head2 function calculate_subtree_node_count()
 
@@ -1557,16 +1609,16 @@ sub set_comp_leaf_species_count {
 
 =cut
 
-sub calculate_subtree_node_count { 
-	my $self = shift;
-	my $count = 0;
-	foreach my $c ($self->get_children()) {
-		$count += $c->calculate_subtree_node_count()+1;
-	}
-	$self->set_subtree_node_count($count); #each node has a subtree node count which is set here
-	return $count;
+sub calculate_subtree_node_count {
+    my $self  = shift;
+    my $count = 0;
+    foreach my $c ( $self->get_children() ) {
+        $count += $c->calculate_subtree_node_count() + 1;
+    }
+    $self->set_subtree_node_count($count)
+      ;    #each node has a subtree node count which is set here
+    return $count;
 }
-
 
 =head2 function collect_orthologs()
 
@@ -1580,22 +1632,25 @@ sub calculate_subtree_node_count {
  
 =cut
 
-sub collect_orthologs { 
-	my $self = shift;
-	my $ortho_tree_ref = shift;
+sub collect_orthologs {
+    my $self           = shift;
+    my $ortho_tree_ref = shift;
 
-	# test if subtree contains all orthologs; that's the case when leaf count is equal to leaf species count:
-	if ($self->get_attribute("leaf_species_count") == $self->get_attribute("leaf_count")) {			
-		my $new_tree = $self->copy_subtree(); 
-		push @$ortho_tree_ref, $new_tree;
-		return$ortho_tree_ref;
-	} else {											# $self subtree not all orthologs, look in child subtrees
-		foreach my $c ($self->get_children()) {
-			my$children_ortho_trees_ref = $c->collect_orthologs();
-			push @$ortho_tree_ref, @$children_ortho_trees_ref;
-		}
-	}
-	return $ortho_tree_ref;
+# test if subtree contains all orthologs; that's the case when leaf count is equal to leaf species count:
+    if ( $self->get_attribute("leaf_species_count") ==
+        $self->get_attribute("leaf_count") )
+    {
+        my $new_tree = $self->copy_subtree();
+        push @$ortho_tree_ref, $new_tree;
+        return $ortho_tree_ref;
+    }
+    else {    # $self subtree not all orthologs, look in child subtrees
+        foreach my $c ( $self->get_children() ) {
+            my $children_ortho_trees_ref = $c->collect_orthologs();
+            push @$ortho_tree_ref, @$children_ortho_trees_ref;
+        }
+    }
+    return $ortho_tree_ref;
 }
 
 =head2 function copy_subtree
@@ -1611,15 +1666,15 @@ sub collect_orthologs {
 
 =cut
 
-sub copy_subtree{
-	my $self = shift;
-	my $new_tree = CXGN::Phylo::Tree->new();
-	my $orig_tree = $self->get_tree();
-	$orig_tree->copy_tree_fields($new_tree); #
-	my $new_root = $self->recursive_copy(undef, $new_tree);
-	$new_tree->set_root($new_root);
-	$new_tree->recalculate_tree_data();
-	return $new_tree;
+sub copy_subtree {
+    my $self      = shift;
+    my $new_tree  = CXGN::Phylo::Tree->new();
+    my $orig_tree = $self->get_tree();
+    $orig_tree->copy_tree_fields($new_tree);    #
+    my $new_root = $self->recursive_copy( undef, $new_tree );
+    $new_tree->set_root($new_root);
+    $new_tree->recalculate_tree_data();
+    return $new_tree;
 }
 
 =head2 function to_string()
@@ -1632,17 +1687,27 @@ sub copy_subtree{
 
 =cut
 
-sub to_string { 
-	my $self = shift;
-	my $s = "";
-	$s = join (" ", ("name:".$self->get_name(), "key:".$self->get_node_key(), "hidden:".$self->get_hidden, "hilited:".$self->get_hilited()));
-	if ($self->get_parent()) { 
-		$s .= " parent:".$self->get_parent()->get_node_key(); 
-	} else { 
-		$s .= " parent:[undef]"; 
-	}
-	$s .="children:".(join "|", (map $_->get_node_key(), $self->get_children() ));
-	return $s; 
+sub to_string {
+    my $self = shift;
+    my $s    = "";
+    $s = join(
+        " ",
+        (
+            "name:" . $self->get_name(),
+            "key:" . $self->get_node_key(),
+            "hidden:" . $self->get_hidden,
+            "hilited:" . $self->get_hilited()
+        )
+    );
+    if ( $self->get_parent() ) {
+        $s .= " parent:" . $self->get_parent()->get_node_key();
+    }
+    else {
+        $s .= " parent:[undef]";
+    }
+    $s .= "children:"
+      . ( join "|", ( map $_->get_node_key(), $self->get_children() ) );
+    return $s;
 
 }
 
@@ -1662,35 +1727,40 @@ sub to_string {
 
 =cut
 
-sub recursive_implicit_names { 
-	my $self = shift;
-	
-	my @name_list = ();
-	my @sorted_list = ();
-	if ($self->is_leaf()) {
-		my $the_name = $self->get_name();
-		#print STDERR "in recursive_implicit_names. before: $the_name \n";
+sub recursive_implicit_names {
+    my $self = shift;
 
-		# Is there some standard regarding which characters are/aren't allowed in sequence identifiers?
-		if ($the_name =~ /([^{|]+)/) { # Leave just the identifier to go into implicit names; for now trim off everything from the first pipe or { on.
-			$the_name = $1;
-		}
-		push @name_list, $the_name;
-		@sorted_list = @name_list;
-	} else {
+    my @name_list   = ();
+    my @sorted_list = ();
+    if ( $self->is_leaf() ) {
+        my $the_name = $self->get_name();
 
-		my @children = $self->get_children();
-		foreach my $c (@children) {
-			my @child_name_list = $c->recursive_implicit_names();
-			@name_list = (@name_list, @child_name_list);
-		}
-		@sorted_list = sort @name_list;
-		$self->set_name(join "\t", @sorted_list); # Do we need this? What else are the internal nodes' names good for?
-	}
-	$self->set_implicit_names(\@sorted_list);
-	#	print "In rec..impl..names. impl names: ", @sorted_list, "xxxxx", @{$self->get_implicit_names()}, "<br>";
+        #print STDERR "in recursive_implicit_names. before: $the_name \n";
+
+# Is there some standard regarding which characters are/aren't allowed in sequence identifiers?
+        if ( $the_name =~ /([^{|]+)/ )
+        { # Leave just the identifier to go into implicit names; for now trim off everything from the first pipe or { on.
+            $the_name = $1;
+        }
+        push @name_list, $the_name;
+        @sorted_list = @name_list;
+    }
+    else {
+
+        my @children = $self->get_children();
+        foreach my $c (@children) {
+            my @child_name_list = $c->recursive_implicit_names();
+            @name_list = ( @name_list, @child_name_list );
+        }
+        @sorted_list = sort @name_list;
+        $self->set_name( join "\t", @sorted_list )
+          ; # Do we need this? What else are the internal nodes' names good for?
+    }
+    $self->set_implicit_names( \@sorted_list );
+
+#	print "In rec..impl..names. impl names: ", @sorted_list, "xxxxx", @{$self->get_implicit_names()}, "<br>";
 #	print STDERR "ZZZZ in rec..imp...names.  subtree size: [", scalar @sorted_list, "]  name:[", $self->get_name(), "]\n";
-	return @sorted_list;
+    return @sorted_list;
 }
 
 =head2 function recursive_implicit_species()
@@ -1709,49 +1779,54 @@ sub recursive_implicit_names {
 
 =cut
 
-sub recursive_implicit_species { 
-	my $self = shift;
+sub recursive_implicit_species {
+    my $self = shift;
 
-	my @species_list = ();
-	my @children = $self->get_children();
-	foreach my $c (@children) {
-		my @children_species_list = $c->recursive_implicit_species();
-		@species_list = (@species_list, @children_species_list); #species can occur multiple times
-	}
+    my @species_list = ();
+    my @children     = $self->get_children();
+    foreach my $c (@children) {
+        my @children_species_list = $c->recursive_implicit_species();
+        @species_list = ( @species_list, @children_species_list )
+          ;    #species can occur multiple times
+    }
 
-	if ($self->is_leaf()) {
-		# put species in standard form, push it on the species list.
-		push @species_list, $self->get_standard_species();
-	}
+    if ( $self->is_leaf() ) {
 
-	my @sorted_list = sort @species_list;
+        # put species in standard form, push it on the species list.
+        push @species_list, $self->get_standard_species();
+    }
 
-	$self->set_implicit_species(\@sorted_list); # sorted list of species in standard form
-	# should we $self->set_species(join("\t",@sorted_list));  here? No
-	return @sorted_list;
+    my @sorted_list = sort @species_list;
+
+    $self->set_implicit_species( \@sorted_list )
+      ;    # sorted list of species in standard form
+           # should we $self->set_species(join("\t",@sorted_list));  here? No
+    return @sorted_list;
 }
 
 #sets subtree species bit pattern from implicit species recursively for all nodes in subtree.
-sub recursive_set_implicit_species_bits{
-	my $self = shift;
-	my $bithash = shift;					# this gives the bit pattern associated with each species
-	my $species_bits = int 0;
-	my $implicit_species = $self->get_implicit_species();
-	# print "implicit species: ", join(" ", @$implicit_species), "\n";
-	my $a = int 0;
-	my $b = int 0;
-	foreach (@$implicit_species) {
-		if (exists $bithash->{$_}) {
-			$species_bits |= $bithash->{$_};
-		#	print STDERR "impl species: [$_],    [", $bithash->{$_}, "]\n";
-		}
-	}
-	$self->set_attribute("species_bit_pattern", $species_bits);
-	foreach ($self->get_children()) {
-		$_->recursive_set_implicit_species_bits($bithash);
-	}
-}
+sub recursive_set_implicit_species_bits {
+    my $self = shift;
+    my $bithash =
+      shift;    # this gives the bit pattern associated with each species
+    my $species_bits     = int 0;
+    my $implicit_species = $self->get_implicit_species();
 
+    # print "implicit species: ", join(" ", @$implicit_species), "\n";
+    my $a = int 0;
+    my $b = int 0;
+    foreach (@$implicit_species) {
+        if ( exists $bithash->{$_} ) {
+            $species_bits |= $bithash->{$_};
+
+            #	print STDERR "impl species: [$_],    [", $bithash->{$_}, "]\n";
+        }
+    }
+    $self->set_attribute( "species_bit_pattern", $species_bits );
+    foreach ( $self->get_children() ) {
+        $_->recursive_set_implicit_species_bits($bithash);
+    }
+}
 
 =head2 function recursive_compare()
 
@@ -1763,46 +1838,56 @@ sub recursive_set_implicit_species_bits{
 
 =cut
 
-sub recursive_compare { 
-	my $self = shift;
-	my $you  = shift;
-	my $compare_field = shift;		# optional argument to allow choosing to compare species
+sub recursive_compare {
+    my $self = shift;
+    my $you  = shift;
+    my $compare_field =
+      shift;    # optional argument to allow choosing to compare species
 
-	my $self_implicit_name;
-	my $your_implicit_name;
-#	print STDOUT "compare_field: ", $compare_field, "\n";
-	if (lc $compare_field eq "species") {
-		$self_implicit_name = join "\t", sort( @{$self->get_implicit_species()}); #case sensitive
-		$your_implicit_name = join "\t", sort( @{$you->get_implicit_species()});
-	} else {											# default; use names
-		$self_implicit_name = join "\t", sort( @{$self->get_implicit_names()}); #case sensitive
-		$your_implicit_name = join "\t", sort( @{$you->get_implicit_names()});
-	}
+    my $self_implicit_name;
+    my $your_implicit_name;
 
-	#     print STDERR "checking node with implicit name : $self_implicit_name.\n";
-	#     print STDERR "comparing to node: $your_implicit_name\n";
+    #	print STDOUT "compare_field: ", $compare_field, "\n";
+    if ( lc $compare_field eq "species" ) {
+        $self_implicit_name = join "\t",
+          sort( @{ $self->get_implicit_species() } );    #case sensitive
+        $your_implicit_name = join "\t",
+          sort( @{ $you->get_implicit_species() } );
+    }
+    else {                                               # default; use names
+        $self_implicit_name = join "\t",
+          sort( @{ $self->get_implicit_names() } );      #case sensitive
+        $your_implicit_name = join "\t",
+          sort( @{ $you->get_implicit_names() } );
+    }
 
-	#		print("self/you implicit names :[", ($self_implicit_name), "][", ($your_implicit_name), "]  match?_", 
+ #     print STDERR "checking node with implicit name : $self_implicit_name.\n";
+ #     print STDERR "comparing to node: $your_implicit_name\n";
+
+#		print("self/you implicit names :[", ($self_implicit_name), "][", ($your_implicit_name), "]  match?_",
 #						(($self_implicit_name) eq ($your_implicit_name)), "_\n");
-	if ( ($self_implicit_name) eq ($your_implicit_name)) { # not case-sensitive ( uc is uppercase )
+    if ( ($self_implicit_name) eq ($your_implicit_name) )
+    {    # not case-sensitive ( uc is uppercase )
 
-
-		my @children = $self->get_children();
-		my @your_children = $you->get_children();
-		my $identity_count = 0;
-		for (my $i=0; $i<@children; $i++) {
-						for (my $n=0; $n<@your_children; $n++) { 
-								my $identity = $children[$i]->recursive_compare($your_children[$n], $compare_field);
-								$identity_count += $identity;
-						}
-				}
-				if ($identity_count < @children) {
-						return 0;
-				}
-		} else {
-				return 0;
-		}
-		return 1;
+        my @children       = $self->get_children();
+        my @your_children  = $you->get_children();
+        my $identity_count = 0;
+        for ( my $i = 0 ; $i < @children ; $i++ ) {
+            for ( my $n = 0 ; $n < @your_children ; $n++ ) {
+                my $identity =
+                  $children[$i]
+                  ->recursive_compare( $your_children[$n], $compare_field );
+                $identity_count += $identity;
+            }
+        }
+        if ( $identity_count < @children ) {
+            return 0;
+        }
+    }
+    else {
+        return 0;
+    }
+    return 1;
 }
 
 =head2 function get_implicit_names()
@@ -1816,9 +1901,9 @@ sub recursive_compare {
 
 =cut
 
-sub get_implicit_names { 
-	my $self=shift;
-	return $self->{implicit_names};
+sub get_implicit_names {
+    my $self = shift;
+    return $self->{implicit_names};
 }
 
 =head2 function set_implicit_names()
@@ -1832,10 +1917,9 @@ sub get_implicit_names {
 =cut
 
 sub set_implicit_names {
-	my $self=shift;
-	$self->{implicit_names}=shift;
+    my $self = shift;
+    $self->{implicit_names} = shift;
 }
-
 
 =head2 function get_implicit_species()
 
@@ -1848,9 +1932,9 @@ sub set_implicit_names {
 
 =cut
 
-sub get_implicit_species { 
-	my $self=shift;
-	return $self->{implicit_species};
+sub get_implicit_species {
+    my $self = shift;
+    return $self->{implicit_species};
 }
 
 =head2 function set_implicit_species()
@@ -1865,10 +1949,9 @@ sub get_implicit_species {
 =cut
 
 sub set_implicit_species {
-	my $self=shift;
-	$self->{implicit_species}=shift;
+    my $self = shift;
+    $self->{implicit_species} = shift;
 }
-
 
 =head2 function recursive_copy()
 
@@ -1880,18 +1963,17 @@ sub set_implicit_species {
 
 =cut
 
+sub recursive_copy {
+    my $self       = shift;
+    my $new_parent = shift;
+    my $new_tree   = shift;
 
-sub recursive_copy { 
-	my $self = shift;
-	my $new_parent = shift;
-	my $new_tree = shift;
+    my $new = $self->copy( $new_parent, $new_tree );
 
-	my $new = $self->copy($new_parent, $new_tree);
-
-	foreach my $c ($self->get_children()) { 
-		$c->recursive_copy($new, $new_tree);
-	}
-	return $new;
+    foreach my $c ( $self->get_children() ) {
+        $c->recursive_copy( $new, $new_tree );
+    }
+    return $new;
 }
 
 =head2 function copy()
@@ -1905,35 +1987,36 @@ sub recursive_copy {
 
 =cut
 
-sub copy { 
-	my $self = shift;
-	my $new_parent = shift;
-	my $new_tree = shift;
+sub copy {
+    my $self       = shift;
+    my $new_parent = shift;
+    my $new_tree   = shift;
 
-	my $new = CXGN::Phylo::Node->new();
+    my $new = CXGN::Phylo::Node->new();
 
-	if ($new_parent) {
-		$new_parent->add_child_node($new);
-	}
+    if ($new_parent) {
+        $new_parent->add_child_node($new);
+    }
 
-	$new->set_name($self->get_name());
-	$new->set_tree($new_tree);
-	$new->set_species($self->get_species());
-	$new->set_label($self->get_label()->copy());
-	$new->set_node_key($self->get_node_key());
-	$new->set_hidden($self->get_hidden());
-	$new->set_hilited($self->get_hilited());
-	$new->set_horizontal_coord($self->get_horizontal_coord());
-	$new->set_vertical_coord($self->get_vertical_coord());
-	$new->set_subtree_node_count($self->get_subtree_node_count());
-	$new->set_species($self->get_species());
-	$new->set_leaf_species_count($self->get_leaf_species_count);
-	$new->set_branch_length($self->get_branch_length());
+    $new->set_name( $self->get_name() );
+    $new->set_tree($new_tree);
+    $new->set_species( $self->get_species() );
+    $new->set_label( $self->get_label()->copy() );
+    $new->set_node_key( $self->get_node_key() );
+    $new->set_hidden( $self->get_hidden() );
+    $new->set_hilited( $self->get_hilited() );
+    $new->set_horizontal_coord( $self->get_horizontal_coord() );
+    $new->set_vertical_coord( $self->get_vertical_coord() );
+    $new->set_subtree_node_count( $self->get_subtree_node_count() );
+    $new->set_species( $self->get_species() );
+    $new->set_leaf_species_count( $self->get_leaf_species_count );
+    $new->set_branch_length( $self->get_branch_length() );
 
-	$new->set_attribute("leaf_count", $self->get_attribute("leaf_count"));
-$new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_count"));
+    $new->set_attribute( "leaf_count", $self->get_attribute("leaf_count") );
+    $new->set_attribute( "leaf_species_count",
+        $self->get_attribute("leaf_species_count") );
 
-	return $new;
+    return $new;
 }
 
 =head2 function recursive_generate_newick("", $make_attribs, $show_root)
@@ -1951,41 +2034,45 @@ $new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_cou
 
 =cut
 
-sub recursive_generate_newick { 
-	my $self = shift;
-	my $s = shift;
-	my $make_attribs = shift;
-	my $show_root = shift;
+sub recursive_generate_newick {
+    my $self         = shift;
+    my $s            = shift;
+    my $make_attribs = shift;
+    my $show_root    = shift;
 
-	my @children = @{$self->{children}};
-	
-	if (@children) { 
+    my @children = @{ $self->{children} };
+
+    if (@children) {
+        no warnings 'uninitialized';
+        $s .= "(";
+        for ( my $i = 0 ; $i < @children ; $i++ ) {
+            $s = $children[$i]->recursive_generate_newick( $s, '', $show_root );
+            $s .= $children[$i]->get_name()
+              if ( $children[$i]->is_leaf() || $show_root );
+            $s .=
+                $children[$i]->make_newick_attributes() . ":"
+              . $children[$i]->get_branch_length();
+            if ( $i < ( @children - 1 ) ) {
+                $s .= ",";
+            }
+        }
+        $s .= ")";
+    }
+    if ($make_attribs) {
+
+        if ( !$show_root ) { $s .= $self->make_newick_attributes(1); }
+        else {
             no warnings 'uninitialized';
-	    $s.="(";	
-	    for (my $i=0; $i<@children; $i++) {
-		$s =$children[$i]->recursive_generate_newick($s,'',$show_root);	   
-		$s .= $children[$i]->get_name() if($children[$i]->is_leaf() || $show_root ) ;
-		$s .= $children[$i]->make_newick_attributes().":".$children[$i]->get_branch_length();
-		if ($i<(@children-1)) {
-		    $s.=",";
-		}
-	    }
-	    $s.=")";
-	}
-	if ($make_attribs ) {
-	    
-	    if (!$show_root) { $s .= $self->make_newick_attributes(1); }
-	    else {
-                no warnings 'uninitialized';
-		$s = "(" . $s;
-		$s .= $self->get_name();
-		$s .= $self->make_newick_attributes(1).":".$self->get_branch_length() || 0 ;
-	    }
-	    $s .=")";
-	}
-	return $s; 
+            $s = "(" . $s;
+            $s .= $self->get_name();
+            $s .=
+                $self->make_newick_attributes(1) . ":"
+              . $self->get_branch_length() || 0;
+        }
+        $s .= ")";
+    }
+    return $s;
 }
-
 
 =head2 function make_newick_attributes()
 
@@ -1999,29 +2086,33 @@ sub recursive_generate_newick {
 =cut
 
 sub make_newick_attributes {
-    my $self = shift;
+    my $self     = shift;
     my $show_all = shift;
-    my $string = "";
-    foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {	
-	my $value = "";
-	if ($attr eq "species") {
-	    $value = $self->get_shown_species();
-	    if ($self->is_leaf() || $show_all ) {
-		$string .= "$attr=$value;" # don't show attribute if value is 0
-	    }
-	} else {
-	    $value = $self->get_attribute($attr);
-	    #	print("in make_newick_attributes. newick_shown_attributes: ", $attr, "  value: ", $value, "\n");
-	    $string .= "$attr=$value;" unless($self->is_leaf() && ($attr eq "speciation")); # don't show speciation attr for leaves
-	}
-	
+    my $string   = "";
+    foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {
+        my $value = "";
+        if ( $attr eq "species" ) {
+            $value = $self->get_shown_species();
+            if ( $self->is_leaf() || $show_all ) {
+                $string .= "$attr=$value;"  # don't show attribute if value is 0
+            }
+        }
+        else {
+            $value = $self->get_attribute($attr);
+
+#	print("in make_newick_attributes. newick_shown_attributes: ", $attr, "  value: ", $value, "\n");
+            $string .= "$attr=$value;"
+              unless ( $self->is_leaf() && ( $attr eq "speciation" ) )
+              ;    # don't show speciation attr for leaves
+        }
+
     }
     if ($string) {
-	chop($string); return ("[" . $string . "]");
+        chop($string);
+        return ( "[" . $string . "]" );
     }
     return "";
 }
-
 
 =head2 function generate_nex()
 
@@ -2032,35 +2123,35 @@ sub make_newick_attributes {
 =cut
 
 sub generate_nex {
-	my $self = shift;
-	my $treename = shift;	
-	$treename ||= "Node_" . $self->get_node_key();
+    my $self     = shift;
+    my $treename = shift;
+    $treename ||= "Node_" . $self->get_node_key();
 
-	my @desc = $self->get_descendents();
-	my @leaves = $self->recursive_leaf_list();
-	
-	my $newick = $self->recursive_generate_newick();
-	$newick =~ s/;$//;
+    my @desc   = $self->get_descendents();
+    my @leaves = $self->recursive_leaf_list();
 
-	my %translate = ();
+    my $newick = $self->recursive_generate_newick();
+    $newick =~ s/;$//;
 
-	my $output = "#NEXUS\nBegin trees;\n\ttranslate\n";
-	for (my $i = 0; $i < @leaves; $i++) {
-		my $j = $i + 1;
-		my $name = $leaves[$i]->get_name();
-		$translate{$j} = $name;
-		$output .= "\t\t$j $name";
-		$output .= "," if $j < @leaves;
-		$output .= "\n";
-	}
-	$output .= "\t\t;\n";
+    my %translate = ();
 
-	while (my ($num, $id) = each %translate) {
-		$newick =~ s/\Q$id\E/$num/;	
-	}
+    my $output = "#NEXUS\nBegin trees;\n\ttranslate\n";
+    for ( my $i = 0 ; $i < @leaves ; $i++ ) {
+        my $j    = $i + 1;
+        my $name = $leaves[$i]->get_name();
+        $translate{$j} = $name;
+        $output .= "\t\t$j $name";
+        $output .= "," if $j < @leaves;
+        $output .= "\n";
+    }
+    $output .= "\t\t;\n";
 
-	$output .= "tree $treename = $newick;\nEnd;";
-	return $output;
+    while ( my ( $num, $id ) = each %translate ) {
+        $newick =~ s/\Q$id\E/$num/;
+    }
+
+    $output .= "tree $treename = $newick;\nEnd;";
+    return $output;
 }
 
 =head2 function write_nex()
@@ -2074,18 +2165,18 @@ sub generate_nex {
 =cut
 
 sub write_nex {
-	my $self = shift;
-	my $file = shift;
-	my $nex_text = $self->generate_nex(@_);
-	if (ref($file) eq "GLOB") {
-		print $file $nex_text or die $!;
-	} else {
-		open(WF, ">$file") or die $!;
-		print WF $nex_text;
-		close WF;
-	}
+    my $self     = shift;
+    my $file     = shift;
+    my $nex_text = $self->generate_nex(@_);
+    if ( ref($file) eq "GLOB" ) {
+        print $file $nex_text or die $!;
+    }
+    else {
+        open( WF, ">$file" ) or die $!;
+        print WF $nex_text;
+        close WF;
+    }
 }
-
 
 =head2 function recursive_collapse_single_nodes()
 
@@ -2103,27 +2194,30 @@ sub write_nex {
 
 =cut
 
-sub recursive_collapse_single_nodes { 
-	my $self = shift;
-	my @children = $self->get_children();
-	
-	if (@children==1) {						# delete the node with only 1 child 
-		if ($self->is_root()) {			# special delete node for case of node being root with just 1 child
-			my $the_tree = $self->get_tree();
-			$the_tree->set_root($children[0]); # in order to delete $self if it is root, first set its only child to be root
-			$self->set_children(undef);
-			$self->set_parent(undef);
-			$self->set_label(undef);
-			$self = undef;	
-			$the_tree->recalculate_tree_data();
-		} else {
-			$self->get_tree()->del_node($self);
-		}
-	}
+sub recursive_collapse_single_nodes {
+    my $self     = shift;
+    my @children = $self->get_children();
 
-	foreach my $c (@children) { 
-		$c->recursive_collapse_single_nodes();
-	}	
+    if ( @children == 1 ) {    # delete the node with only 1 child
+        if ( $self->is_root() )
+        {    # special delete node for case of node being root with just 1 child
+            my $the_tree = $self->get_tree();
+            $the_tree->set_root( $children[0] )
+              ; # in order to delete $self if it is root, first set its only child to be root
+            $self->set_children(undef);
+            $self->set_parent(undef);
+            $self->set_label(undef);
+            $self = undef;
+            $the_tree->recalculate_tree_data();
+        }
+        else {
+            $self->get_tree()->del_node($self);
+        }
+    }
+
+    foreach my $c (@children) {
+        $c->recursive_collapse_single_nodes();
+    }
 }
 
 =head2 function recursive_collapse_zero_branches()
@@ -2136,52 +2230,52 @@ sub recursive_collapse_single_nodes {
 
 =cut
 
-sub recursive_collapse_zero_branches { 
-	my $self = shift;
+sub recursive_collapse_zero_branches {
+    my $self = shift;
 
-	#    print STDERR "recursive_collapse_zero_branches: checking children of node ".$self->get_name()."\n";
+#    print STDERR "recursive_collapse_zero_branches: checking children of node ".$self->get_name()."\n";
 
-	# collapse the node if its branch length is zero,
-	# but don't do it if the node is the root.
-	#
-	foreach my $c ($self->get_children()) { 
-	
-		if ($c->get_branch_length()==0) {
+    # collapse the node if its branch length is zero,
+    # but don't do it if the node is the root.
+    #
+    foreach my $c ( $self->get_children() ) {
 
-	    # if the branch length of $c is zero, we will delete the
-	    # node, the function delete_node should take care of most of 
-	    # the intricacies of removing our favorite node here...
-	    # (we want the children of $c to become children of the parent,
-	    # that's what delete_node should do).
-	    # $c may be a leaf node. We want to percolate some of it's information
-	    # to the parent before deleting, such as species information.
-	    #
-	    $self->set_species($c->get_species());
-	    $self->set_link($c->get_link());
+        if ( $c->get_branch_length() == 0 ) {
 
-	    # now it's safe to delete the node
-	    #
-			#   $c->get_tree()->delete_node($c->get_node_key());
-	    $c->get_tree()->del_node($c);
+          # if the branch length of $c is zero, we will delete the
+          # node, the function delete_node should take care of most of
+          # the intricacies of removing our favorite node here...
+          # (we want the children of $c to become children of the parent,
+          # that's what delete_node should do).
+          # $c may be a leaf node. We want to percolate some of it's information
+          # to the parent before deleting, such as species information.
+          #
+            $self->set_species( $c->get_species() );
+            $self->set_link( $c->get_link() );
 
+            # now it's safe to delete the node
+            #
+            #   $c->get_tree()->delete_node($c->get_node_key());
+            $c->get_tree()->del_node($c);
 
-	    # we have to call this function again on this same node, 
-	    # because this node may have acquired the children from $c.
-	    #
-	    $self->recursive_collapse_zero_branches();
-		} else { 
-	    
-	    # if the branch length is not zero, descend more...
-	    #
-	    $c->recursive_collapse_zero_branches();
-		}
-	}
-	
-	#     my @children = $self->get_children();
-	#     foreach my $c (@children) { 
-	# 	$c->recursive_collapse_zero_branches();
-	#     }
-    
+            # we have to call this function again on this same node,
+            # because this node may have acquired the children from $c.
+            #
+            $self->recursive_collapse_zero_branches();
+        }
+        else {
+
+            # if the branch length is not zero, descend more...
+            #
+            $c->recursive_collapse_zero_branches();
+        }
+    }
+
+    #     my @children = $self->get_children();
+    #     foreach my $c (@children) {
+    # 	$c->recursive_collapse_zero_branches();
+    #     }
+
 }
 
 =pod
@@ -2190,17 +2284,18 @@ _recursive_longest_branch_node returns a Node object representing the node with 
 
 =cut
 
-sub _recursive_longest_branch_node { 
-	my $self = shift;
-	my $largest_branch_node = shift;
-	foreach my $c ($self->get_children()) { 
-		my $c_branch = $c->get_branch_length();
-		if ( $c_branch > ($largest_branch_node->get_branch_length())) { 
-	    $largest_branch_node = $c;
-		}
-		$largest_branch_node = $c -> _recursive_longest_branch_node($largest_branch_node);
-	}
-	return $largest_branch_node;
+sub _recursive_longest_branch_node {
+    my $self                = shift;
+    my $largest_branch_node = shift;
+    foreach my $c ( $self->get_children() ) {
+        my $c_branch = $c->get_branch_length();
+        if ( $c_branch > ( $largest_branch_node->get_branch_length() ) ) {
+            $largest_branch_node = $c;
+        }
+        $largest_branch_node =
+          $c->_recursive_longest_branch_node($largest_branch_node);
+    }
+    return $largest_branch_node;
 }
 
 =head2 function recursive_collapse_unique_species_subtrees()
@@ -2215,51 +2310,59 @@ sub _recursive_longest_branch_node {
 =cut
 
 sub recursive_collapse_unique_species_subtrees {
-	my $self = shift;
-	if ($self->is_leaf()) {
-		$self->collapse_unique_species_siblings();
-		return;
-	}
-	if (!defined $self->get_attribute("leaf_species_count")) {
-		$self->recursive_set_leaf_species_count();
-	}
+    my $self = shift;
+    if ( $self->is_leaf() ) {
+        $self->collapse_unique_species_siblings();
+        return;
+    }
+    if ( !defined $self->get_attribute("leaf_species_count") ) {
+        $self->recursive_set_leaf_species_count();
+    }
 
-	if ($self->get_attribute("leaf_species_count") == 1) {
-		#	print STDERR "node name, leaf_species_count: ", $self->get_name(), "  ", $self->get_attribute("leaf_species_count"), "\n";
-		my @sub_nodes = $self->recursive_subtree_node_list();	
+    if ( $self->get_attribute("leaf_species_count") == 1 ) {
 
-		if (0) {  # this shouldn't be necessary as name should be the leaf names joined with tabs already (from recursive_implicit_names)
-			$self->set_name("");
-			my $separator = "\t";
-			foreach my $n (@sub_nodes) {			
-				if ($n->is_leaf()) {
-					if ($self->get_name() eq "") {
-						$self->set_name($n->get_name());
-					} else {
-						$self->set_name($self->get_name() . $separator . $n->get_name());
-					}
-					#	print STDERR "Setting species of node with name: ", $self->get_name(), "  to: ", $n->get_species(), "\n";
-					#	$self->set_species($n->get_species()) if($self->get_species() eq ""); # get species name from any leaf (all have same species)
-					#	print STDERR "Species name is now: ", $self->get_species(), "\n";
-					#	print STDOUT "in rec...collapse..unique. set species of collapsed subtree to: ", $n->get_species, "\n";
-				}			
-			}
-		}
+#	print STDERR "node name, leaf_species_count: ", $self->get_name(), "  ", $self->get_attribute("leaf_species_count"), "\n";
+        my @sub_nodes = $self->recursive_subtree_node_list();
 
-		$self->set_species("");
-		foreach my $n (@sub_nodes) {			
-			if ($n->is_leaf()) {
-				$self->set_species($n->get_species()) if($self->get_species() eq ""); # get species name from any leaf (all have same species)
-			}		
-			$self->get_tree()->del_node($n); # unceremoniously delete the subnode
-		}
-		$self->collapse_unique_species_siblings();
-	}
-	foreach my $child ($self->get_children()) {
-		if (defined $child) {
-			$child->recursive_collapse_unique_species_subtrees();
-		}
-	}
+        if (0)
+        { # this shouldn't be necessary as name should be the leaf names joined with tabs already (from recursive_implicit_names)
+            $self->set_name("");
+            my $separator = "\t";
+            foreach my $n (@sub_nodes) {
+                if ( $n->is_leaf() ) {
+                    if ( $self->get_name() eq "" ) {
+                        $self->set_name( $n->get_name() );
+                    }
+                    else {
+                        $self->set_name(
+                            $self->get_name() . $separator . $n->get_name() );
+                    }
+
+#	print STDERR "Setting species of node with name: ", $self->get_name(), "  to: ", $n->get_species(), "\n";
+#	$self->set_species($n->get_species()) if($self->get_species() eq ""); # get species name from any leaf (all have same species)
+#	print STDERR "Species name is now: ", $self->get_species(), "\n";
+#	print STDOUT "in rec...collapse..unique. set species of collapsed subtree to: ", $n->get_species, "\n";
+                }
+            }
+        }
+
+        $self->set_species("");
+        foreach my $n (@sub_nodes) {
+            if ( $n->is_leaf() ) {
+                $self->set_species( $n->get_species() )
+                  if ( $self->get_species() eq "" )
+                  ;    # get species name from any leaf (all have same species)
+            }
+            $self->get_tree()->del_node($n)
+              ;        # unceremoniously delete the subnode
+        }
+        $self->collapse_unique_species_siblings();
+    }
+    foreach my $child ( $self->get_children() ) {
+        if ( defined $child ) {
+            $child->recursive_collapse_unique_species_subtrees();
+        }
+    }
 }
 
 =head2 function collapse_unique_species_siblings()
@@ -2275,31 +2378,39 @@ sub recursive_collapse_unique_species_subtrees {
 =cut
 
 sub collapse_unique_species_siblings {
-	my $self = shift;
-	#$self->node_info();
-	if ($self->is_leaf()) {
-		my $parent = $self->get_parent();
-	
-		if (defined $parent) {
-		#	print("parent name: \'", $parent->get_name(), "\'\n");
-#			print("self name: ", $self->get_name(), " key: ", $self->get_node_key(), "  species: ", $self->get_species(), "\n");
-			my @siblings = $parent->get_children();
-			foreach my $sib (@siblings) {
-				# if species are same, and sib key < $self key
-		#		print("sib name: ", $sib->get_name(), " key: ", $sib->get_node_key(), "  species: ", $sib->get_species(), "\n");
-				if (($sib->get_species() eq $self->get_species()) && ($sib->get_node_key() < $self->get_node_key())  ) {
+    my $self = shift;
 
-#					print("sibkey: ", $sib->get_node_key(), " sib species: ", $sib->get_species(), 
+    #$self->node_info();
+    if ( $self->is_leaf() ) {
+        my $parent = $self->get_parent();
+
+        if ( defined $parent ) {
+
+#	print("parent name: \'", $parent->get_name(), "\'\n");
+#			print("self name: ", $self->get_name(), " key: ", $self->get_node_key(), "  species: ", $self->get_species(), "\n");
+            my @siblings = $parent->get_children();
+            foreach my $sib (@siblings) {
+
+# if species are same, and sib key < $self key
+#		print("sib name: ", $sib->get_name(), " key: ", $sib->get_node_key(), "  species: ", $sib->get_species(), "\n");
+                if (   ( $sib->get_species() eq $self->get_species() )
+                    && ( $sib->get_node_key() < $self->get_node_key() ) )
+                {
+
+#					print("sibkey: ", $sib->get_node_key(), " sib species: ", $sib->get_species(),
 #								" selfkey: ", $self->get_node_key(), " self species: ", $self->get_species(), "\n");
-					$self->set_name($self->get_name()."|".$sib->get_name()); #$self gets sibs name joined to its name 
-					#	$self->get_tree()->delete_node($sib->get_node_key()); #delete sib
-					$self->get_tree()->del_node($sib); 
-					#@siblings = $self->get_parent()->get_children();
-				}
-				return;
-			}
-		}
-	}
+                    $self->set_name(
+                        $self->get_name() . "|" . $sib->get_name() )
+                      ;    #$self gets sibs name joined to its name
+                     #	$self->get_tree()->delete_node($sib->get_node_key()); #delete sib
+                    $self->get_tree()->del_node($sib);
+
+                    #@siblings = $self->get_parent()->get_children();
+                }
+                return;
+            }
+        }
+    }
 }
 
 =head2 function node_info()
@@ -2313,23 +2424,25 @@ sub collapse_unique_species_siblings {
 =cut
 
 sub node_info {
-	my $self = shift;
-	print "__ NODE " . $self->get_node_key() . " __\n";
-	print "Name: " . $self->get_name() . "\n";
-	print "Species: " . $self->get_species() . "\n";
-	if ($self->get_parent() ne undef) {
-		print "Parent Num: " . $self->get_parent()->get_node_key() . "\n";
-	} else {
-		print "NO PARENT\n";
-	}
-	print "Children Nums: ";
-	foreach my $chil ($self->get_children()) {
-		print $chil->get_node_key() . ", ";
-	}
-	print "\n";
-	print "Is Leaf: " . $self->is_leaf() . "\n";
-	print "Leaf species in subtree: " . $self->get_attribute("leaf_species_count") . "\n";
-	print "\n\n";
+    my $self = shift;
+    print "__ NODE " . $self->get_node_key() . " __\n";
+    print "Name: " . $self->get_name() . "\n";
+    print "Species: " . $self->get_species() . "\n";
+    if ( $self->get_parent() ne undef ) {
+        print "Parent Num: " . $self->get_parent()->get_node_key() . "\n";
+    }
+    else {
+        print "NO PARENT\n";
+    }
+    print "Children Nums: ";
+    foreach my $chil ( $self->get_children() ) {
+        print $chil->get_node_key() . ", ";
+    }
+    print "\n";
+    print "Is Leaf: " . $self->is_leaf() . "\n";
+    print "Leaf species in subtree: "
+      . $self->get_attribute("leaf_species_count") . "\n";
+    print "\n\n";
 }
 
 =head2 function recursive_subtree_node_list()
@@ -2342,14 +2455,14 @@ sub node_info {
 
 =cut
 
-sub recursive_subtree_node_list { 
-	my $self = shift;
-	my $list_ref = shift;
-	foreach my $c ($self->get_children()) {
-		push @$list_ref, $c;
-		$c->recursive_subtree_node_list($list_ref);
-	}
-	return @$list_ref;
+sub recursive_subtree_node_list {
+    my $self     = shift;
+    my $list_ref = shift;
+    foreach my $c ( $self->get_children() ) {
+        push @$list_ref, $c;
+        $c->recursive_subtree_node_list($list_ref);
+    }
+    return @$list_ref;
 }
 
 =head2 function get_attribute()
@@ -2363,10 +2476,10 @@ sub recursive_subtree_node_list {
 
 =cut
 
-sub get_attribute { 
-	my $self=shift;
-	my $name = shift;
-	return $self->{attribute}->{$name};
+sub get_attribute {
+    my $self = shift;
+    my $name = shift;
+    return $self->{attribute}->{$name};
 }
 
 =head2 function set_attribute()
@@ -2379,10 +2492,10 @@ sub get_attribute {
 
 =cut
 
-sub set_attribute { 
-	my $self=shift;
-	my $name = shift;
-	$self->{attribute}{$name}=shift;
+sub set_attribute {
+    my $self = shift;
+    my $name = shift;
+    $self->{attribute}{$name} = shift;
 }
 
 =head2 function delete_attribute()
@@ -2395,15 +2508,11 @@ sub set_attribute {
 
 =cut
 
-sub delete_attribute { 
-	my $self = shift;
-	my $name = shift;
-	delete($self->{attribute}->{$name});
+sub delete_attribute {
+    my $self = shift;
+    my $name = shift;
+    delete( $self->{attribute}->{$name} );
 }
-
-
-
-
 
 =head2 function  recursive_set_leaf_count()
 
@@ -2418,22 +2527,23 @@ sub delete_attribute {
 
 =cut
 
-sub recursive_set_leaf_count{
-	my $self = shift;
-	my $leaf_count = 0;
-	my @children = $self->get_children();
-	if (@children) {
-		foreach my $n (@children) {
-			$leaf_count += recursive_set_leaf_count($n);
-		}		
-	} else {	
-		$leaf_count = 1;
-	}
-	$self->set_attribute("leaf_count", $leaf_count);
-	#	print("node name: ", $self->get_name(), "  leaf_count: ", $leaf_count);
-	return $leaf_count;
-}
+sub recursive_set_leaf_count {
+    my $self       = shift;
+    my $leaf_count = 0;
+    my @children   = $self->get_children();
+    if (@children) {
+        foreach my $n (@children) {
+            $leaf_count += recursive_set_leaf_count($n);
+        }
+    }
+    else {
+        $leaf_count = 1;
+    }
+    $self->set_attribute( "leaf_count", $leaf_count );
 
+    #	print("node name: ", $self->get_name(), "  leaf_count: ", $leaf_count);
+    return $leaf_count;
+}
 
 =head2 function  recursive_set_leaf_species_count()
 
@@ -2450,46 +2560,57 @@ sub recursive_set_leaf_count{
 
 =cut
 
-sub recursive_set_leaf_species_count{
-	my $self = shift;
-	my $root_species_hash_ref = shift; # reference to a hash with species/count pairs for (typically) the root, so can calculate species count for complement
-	my $comp_species_hash_ref = {};
-	my $species_hash_ref = {};
-	my @children = $self->get_children();
-	if (@children) {							#non-leaf case
-		foreach my $n (@children) {
-			my $sub_node_species_hash_ref = $n->recursive_set_leaf_species_count($root_species_hash_ref);
-			foreach my $s (keys %$sub_node_species_hash_ref) {
-				$species_hash_ref->{$s}++;
-			}
-		}		
-	} else {											# leaf case
+sub recursive_set_leaf_species_count {
+    my $self                  = shift;
+    my $root_species_hash_ref = shift
+      ; # reference to a hash with species/count pairs for (typically) the root, so can calculate species count for complement
+    my $comp_species_hash_ref = {};
+    my $species_hash_ref      = {};
+    my @children              = $self->get_children();
+    if (@children) {    #non-leaf case
+        foreach my $n (@children) {
+            my $sub_node_species_hash_ref =
+              $n->recursive_set_leaf_species_count($root_species_hash_ref);
+            foreach my $s ( keys %$sub_node_species_hash_ref ) {
+                $species_hash_ref->{$s}++;
+            }
+        }
+    }
+    else {              # leaf case
 
 # print STDERR "in Node::recursive_set_leaf_species_count, std. species: ", $self->get_standard_species(), "\n";
-		$species_hash_ref->{$self->get_standard_species()}++;
-	}
+        $species_hash_ref->{ $self->get_standard_species() }++;
+    }
 
 # print STDERR "node name, subtree species: ", $self->get_name(), "  ", join(";", keys %$species_hash_ref), "\n";
 
-	$self->set_attribute("leaf_species_count",  scalar(keys %$species_hash_ref));
+    $self->set_attribute( "leaf_species_count",
+        scalar( keys %$species_hash_ref ) );
 
+    if ( defined $root_species_hash_ref ) {
+        foreach ( keys %$root_species_hash_ref ) {
+            my $this_species_leaf_count =
+              ( defined $species_hash_ref->{$_} )
+              ? $species_hash_ref->{$_}
+              : 0;    # leaves in subtree w THIS species
+            my $this_species_comp_leaf_count =
+              $root_species_hash_ref->{$_} -
+              $this_species_leaf_count;  # leaves in rest of tree w THIS species
+            if ( $this_species_comp_leaf_count > 0 ) {
+                $comp_species_hash_ref->{$_} = $this_species_comp_leaf_count;
+            }
+            elsif ( $this_species_comp_leaf_count < 0 ) {
+                die
+"In recursive_set_leaf_species_count. Count in complement of subtree is negative. \n";
+            }
 
-	if (defined $root_species_hash_ref) {
-		foreach (keys %$root_species_hash_ref) {
-			my $this_species_leaf_count = (defined $species_hash_ref->{$_})? $species_hash_ref->{$_}: 0; # leaves in subtree w THIS species
-			my $this_species_comp_leaf_count = $root_species_hash_ref->{$_} - $this_species_leaf_count; # leaves in rest of tree w THIS species
-			if ($this_species_comp_leaf_count > 0) { 
-				$comp_species_hash_ref->{$_} = $this_species_comp_leaf_count; 
-			} elsif ($this_species_comp_leaf_count < 0) {
-				die "In recursive_set_leaf_species_count. Count in complement of subtree is negative. \n";
-			}
-			#	print "species:  $_  ", $root_species_hash_ref->{$_}, "   ", $this_species_leaf_count, "   ", $comp_species_hash_ref->{$_}, "\n";
-		}
-		$self->set_attribute("comp_leaf_species_count", scalar(keys %$comp_species_hash_ref));
-	}
+#	print "species:  $_  ", $root_species_hash_ref->{$_}, "   ", $this_species_leaf_count, "   ", $comp_species_hash_ref->{$_}, "\n";
+        }
+        $self->set_attribute( "comp_leaf_species_count",
+            scalar( keys %$comp_species_hash_ref ) );
+    }
 
-
-	return $species_hash_ref;
+    return $species_hash_ref;
 }
 
 =head2 function recursive_set_min_dist_to_leaf()
@@ -2509,31 +2630,39 @@ sub recursive_set_leaf_species_count{
 
 =cut
 
-sub recursive_set_min_dist_to_leaf{
-	my $self = shift;
-	my $min_dist_to_leaf = 1e400; # +infinity, effectively
-	$self->set_attribute("near_leaf_path_direction", "both");
-	my $near_leaf_path_next_node;	# ref to child through which short path to leaf goes
-	my @children = $self->get_children();
+sub recursive_set_min_dist_to_leaf {
+    my $self             = shift;
+    my $min_dist_to_leaf = 1e400;    # +infinity, effectively
+    $self->set_attribute( "near_leaf_path_direction", "both" );
+    my $near_leaf_path_next_node
+      ;    # ref to child through which short path to leaf goes
+    my @children = $self->get_children();
+
 #	print("node species, nchildren:  ", $self->get_species(), "  ", scalar(@children), "\n");
-	if (@children) {							# non-leaf case	
-		my $short_path_child;
-		foreach my $c (@children) {				
-			$c->recursive_set_min_dist_to_leaf(); # set mdtl attribute in child node (and recursively in whole subtree)
-			my $dist_to_leaf_through_child = $c->get_attribute("min_dist_to_leaf") + $c->get_branch_length();			
-		#	print("self, child species, min dtltc: ", $self->get_species(), " " , $c->get_species(), "  ", $dist_to_leaf_through_child, "\n");
-			if ( $dist_to_leaf_through_child < $min_dist_to_leaf) {
-				$min_dist_to_leaf = $dist_to_leaf_through_child;
-				$short_path_child = $c;					
-			}			
-		}
-		$short_path_child->set_attribute("near_leaf_path_direction", "down"); # direction of traversal of parent-child branch, on shortest path from parent to leaf
-		$self->set_attribute("near_leaf_path_next_node", $short_path_child);
-	} else {											# leaf case
-		$min_dist_to_leaf = 0;
-		# ?? $self->set_attribute("near_leaf_path_next_node", undef)
-	}
-	$self->set_attribute("min_dist_to_leaf", $min_dist_to_leaf);
+    if (@children) {    # non-leaf case
+        my $short_path_child;
+        foreach my $c (@children) {
+            $c->recursive_set_min_dist_to_leaf()
+              ; # set mdtl attribute in child node (and recursively in whole subtree)
+            my $dist_to_leaf_through_child =
+              $c->get_attribute("min_dist_to_leaf") + $c->get_branch_length();
+
+#	print("self, child species, min dtltc: ", $self->get_species(), " " , $c->get_species(), "  ", $dist_to_leaf_through_child, "\n");
+            if ( $dist_to_leaf_through_child < $min_dist_to_leaf ) {
+                $min_dist_to_leaf = $dist_to_leaf_through_child;
+                $short_path_child = $c;
+            }
+        }
+        $short_path_child->set_attribute( "near_leaf_path_direction", "down" )
+          ; # direction of traversal of parent-child branch, on shortest path from parent to leaf
+        $self->set_attribute( "near_leaf_path_next_node", $short_path_child );
+    }
+    else {    # leaf case
+        $min_dist_to_leaf = 0;
+
+        # ?? $self->set_attribute("near_leaf_path_next_node", undef)
+    }
+    $self->set_attribute( "min_dist_to_leaf", $min_dist_to_leaf );
 }
 
 =head2 function  recursive_propagate_mdtl()
@@ -2556,31 +2685,32 @@ sub recursive_set_min_dist_to_leaf{
 
 =cut
 
-sub recursive_propagate_mdtl{
-		my $self = shift;
-		my $parent= $self->get_parent();
-	#	print("node species: ", $self->get_species(), "  mdtl: ", $self->get_attribute("min_dist_to_leaf"), "\n");
-		if ($parent) {
-				my $mindtl_thru_parent = $parent->get_attribute("min_dist_to_leaf") + $self->get_branch_length();
-				if ($mindtl_thru_parent < $self->get_attribute("min_dist_to_leaf")) {
-						$self->set_attribute("min_dist_to_leaf", $mindtl_thru_parent);
-						$self->set_attribute("near_leaf_path_direction", "up");
-						$self->get_attribute("near_leaf_path_next_node")->set_attribute("near_leaf_path_direction", "both");
-						$self->set_attribute("near_leaf_path_next_node", $parent);
-				}
-		}
-		my @children = $self->get_children();
-		foreach my $c (@children) {
-				$c->recursive_propagate_mdtl();
-		}
+sub recursive_propagate_mdtl {
+    my $self   = shift;
+    my $parent = $self->get_parent();
+
+#	print("node species: ", $self->get_species(), "  mdtl: ", $self->get_attribute("min_dist_to_leaf"), "\n");
+    if ($parent) {
+        my $mindtl_thru_parent =
+          $parent->get_attribute("min_dist_to_leaf") +
+          $self->get_branch_length();
+        if ( $mindtl_thru_parent < $self->get_attribute("min_dist_to_leaf") ) {
+            $self->set_attribute( "min_dist_to_leaf", $mindtl_thru_parent );
+            $self->set_attribute( "near_leaf_path_direction", "up" );
+            $self->get_attribute("near_leaf_path_next_node")
+              ->set_attribute( "near_leaf_path_direction", "both" );
+            $self->set_attribute( "near_leaf_path_next_node", $parent );
+        }
+    }
+    my @children = $self->get_children();
+    foreach my $c (@children) {
+        $c->recursive_propagate_mdtl();
+    }
 }
-
-
 
 # using min_dist_to_leaf and near_leaf_path_direction
 # return node s.t. root should be placed along branch to parent node
 # should be called for same node as recursive_propagate_mdtl
-
 
 =head2 function  recursive_find_point_furthest_from_leaves()
 
@@ -2606,31 +2736,33 @@ sub recursive_propagate_mdtl{
 
 =cut
 
-sub recursive_find_point_furthest_from_leaves{
-		my $self = shift;
-		my $parent_direction = $self->get_attribute("near_leaf_path_direction");
-		my $p_mdtl = $self->get_attribute("min_dist_to_leaf");
-		my @subtree_best_info = (undef,  0.0); # list of node, and min dist to leaf from any point between node and parent
-		foreach my $c ($self->get_children) {
-				my @both_branch_best_info;
-				if ($c->get_attribute("near_leaf_path_direction") eq "both") { 
-						my $c_mdtl = $c->get_attribute("min_dist_to_leaf");
-						my $cp_dist = $c->get_branch_length();
-						my $cp_mdtl = 0.5*($p_mdtl + $c_mdtl + $cp_dist); # distance above child node is $cp_mdtl - $c_mdtl;
-						@both_branch_best_info = ($c, $cp_mdtl);
-				}
-				my @child_subtree_best_info = $c->recursive_find_point_furthest_from_leaves();
-				
-				if ($both_branch_best_info[1] > $child_subtree_best_info[1]) {
-						@child_subtree_best_info = @both_branch_best_info;
-				}
-				if ($child_subtree_best_info[1] > $subtree_best_info[1]) {
-						@subtree_best_info = @child_subtree_best_info ;
-				}
-		}
-		return @subtree_best_info;
+sub recursive_find_point_furthest_from_leaves {
+    my $self              = shift;
+    my $parent_direction  = $self->get_attribute("near_leaf_path_direction");
+    my $p_mdtl            = $self->get_attribute("min_dist_to_leaf");
+    my @subtree_best_info = ( undef, 0.0 )
+      ; # list of node, and min dist to leaf from any point between node and parent
+    foreach my $c ( $self->get_children ) {
+        my @both_branch_best_info;
+        if ( $c->get_attribute("near_leaf_path_direction") eq "both" ) {
+            my $c_mdtl  = $c->get_attribute("min_dist_to_leaf");
+            my $cp_dist = $c->get_branch_length();
+            my $cp_mdtl = 0.5 * ( $p_mdtl + $c_mdtl + $cp_dist )
+              ;    # distance above child node is $cp_mdtl - $c_mdtl;
+            @both_branch_best_info = ( $c, $cp_mdtl );
+        }
+        my @child_subtree_best_info =
+          $c->recursive_find_point_furthest_from_leaves();
+
+        if ( $both_branch_best_info[1] > $child_subtree_best_info[1] ) {
+            @child_subtree_best_info = @both_branch_best_info;
+        }
+        if ( $child_subtree_best_info[1] > $subtree_best_info[1] ) {
+            @subtree_best_info = @child_subtree_best_info;
+        }
+    }
+    return @subtree_best_info;
 }
-																			
 
 =head2 function  recursive_set_max_dist_to_leaf_in_subtree()
 
@@ -2669,39 +2801,44 @@ sub recursive_find_point_furthest_from_leaves{
 
 =cut
 
-sub recursive_set_max_dist_to_leaf_in_subtree{
-		my $self = shift;
-		# each node will have attributes dist_to_leaf_longest, dist_to_leaf_next_longest, lptl_child
+sub recursive_set_max_dist_to_leaf_in_subtree {
+    my $self = shift;
 
-		my $dist_to_leaf_longest = 0.0;
-		my $dist_to_leaf_next_longest = 0.0;
-		my @children = $self->get_children();
-		if (@children) {
-				foreach my $c (@children) {
-						$c->recursive_set_max_dist_to_leaf_in_subtree();
-						my $dtll_child = $c->get_attribute("dist_to_leaf_longest") + $c->get_branch_length();
-						if ($dtll_child > $dist_to_leaf_longest) {
-								$dist_to_leaf_next_longest = $dist_to_leaf_longest;
-								$dist_to_leaf_longest = $dtll_child;
-								$self->set_attribute("lptl_child", $c);
-						} elsif ($dtll_child > $dist_to_leaf_next_longest) {
-								$dist_to_leaf_next_longest = $dtll_child;
-						}
-				}
-		}
-		$self->set_attribute("dist_to_leaf_longest", $dist_to_leaf_longest); 
-		$self->set_attribute("dist_to_leaf_next_longest", $dist_to_leaf_next_longest);
+# each node will have attributes dist_to_leaf_longest, dist_to_leaf_next_longest, lptl_child
+
+    my $dist_to_leaf_longest      = 0.0;
+    my $dist_to_leaf_next_longest = 0.0;
+    my @children                  = $self->get_children();
+    if (@children) {
+        foreach my $c (@children) {
+            $c->recursive_set_max_dist_to_leaf_in_subtree();
+            my $dtll_child =
+              $c->get_attribute("dist_to_leaf_longest") +
+              $c->get_branch_length();
+            if ( $dtll_child > $dist_to_leaf_longest ) {
+                $dist_to_leaf_next_longest = $dist_to_leaf_longest;
+                $dist_to_leaf_longest      = $dtll_child;
+                $self->set_attribute( "lptl_child", $c );
+            }
+            elsif ( $dtll_child > $dist_to_leaf_next_longest ) {
+                $dist_to_leaf_next_longest = $dtll_child;
+            }
+        }
+    }
+    $self->set_attribute( "dist_to_leaf_longest", $dist_to_leaf_longest );
+    $self->set_attribute( "dist_to_leaf_next_longest",
+        $dist_to_leaf_next_longest );
+
 #		print("species: ", $self->get_species(), "  dtllongest: ", 	$self->get_attribute("dist_to_leaf_longest"), "\n");
-		return $self->get_max_leaf_leaf_pathlength_in_subtree_thru_node();
+    return $self->get_max_leaf_leaf_pathlength_in_subtree_thru_node();
 }
 
 # Returns: The length of longest leaf to leaf path which goes through this node, but no higher in tree
-sub get_max_leaf_leaf_pathlength_in_subtree_thru_node{
-		my $self = shift;	return $self->get_attribute("dist_to_leaf_longest") + $self->get_attribute("dist_to_leaf_next_longest");
+sub get_max_leaf_leaf_pathlength_in_subtree_thru_node {
+    my $self = shift;
+    return $self->get_attribute("dist_to_leaf_longest") +
+      $self->get_attribute("dist_to_leaf_next_longest");
 }
-
-
-
 
 =head2 function  recursive_set_dl_dlsqr_sums_down()
 
@@ -2732,41 +2869,45 @@ sub get_max_leaf_leaf_pathlength_in_subtree_thru_node{
 =cut
 
 #set the sum of distances to leaves (in subtree), and sum of their squares
-sub recursive_set_dl_dlsqr_sums_down{
-		my $self = shift;
-		my @children = $self->get_children();
-		if (@children) {						#non-leaf case
-				my $sum_dl = 0.0;
-				my $sum_dlsqr = 0.0;
-				my $n_leaves = 0;
-				foreach my $c (@children) {
-					$c->recursive_set_dl_dlsqr_sums_down();
-					my $c_n_leaves = $c->get_attribute("n_leaf_down");
-					$sum_dl += $c->get_attribute("sum_d_leaf_top_down");
-					$sum_dlsqr += $c->get_attribute("sum_d_leaf_sqr_top_down");
-					$n_leaves += $c_n_leaves;
-				}
-				$self->set_attribute("sum_d_leaf_bottom_down", $sum_dl);
-				$self->set_attribute("sum_d_leaf_sqr_bottom_down", $sum_dlsqr);
-				$self->set_attribute("n_leaf_down", $n_leaves);
-			#	print("in rec...down. node: \n");
-#				$self->print_node(); 
-#				print("parent defined?: [", defined $self->get_parent(), "]\n");
-				if (defined $self->get_parent()) { # adding on branch up to parent
-					my $dp = $self->get_branch_length();
-					my $psum = $sum_dl + $n_leaves*$dp;
-					my $psumsqr = $sum_dlsqr + 2*$dp*$sum_dl + $n_leaves*$dp*$dp;
-					$self->set_attribute("sum_d_leaf_top_down", $psum);
-					$self->set_attribute("sum_d_leaf_sqr_top_down", $psumsqr);
-				}		
-			} else {									# leaf case
-				$self->set_attribute("sum_d_leaf_bottom_down", 0);
-				$self->set_attribute("sum_d_leaf_sqr_bottom_down", 0);
-				$self->set_attribute("sum_d_leaf_top_down", $self->get_branch_length);
-				$self->set_attribute("sum_d_leaf_sqr_top_down", $self->get_branch_length**2);
-				$self->set_attribute("n_leaf_down", 1);
-			}
-	}
+sub recursive_set_dl_dlsqr_sums_down {
+    my $self     = shift;
+    my @children = $self->get_children();
+    if (@children) {    #non-leaf case
+        my $sum_dl    = 0.0;
+        my $sum_dlsqr = 0.0;
+        my $n_leaves  = 0;
+        foreach my $c (@children) {
+            $c->recursive_set_dl_dlsqr_sums_down();
+            my $c_n_leaves = $c->get_attribute("n_leaf_down");
+            $sum_dl    += $c->get_attribute("sum_d_leaf_top_down");
+            $sum_dlsqr += $c->get_attribute("sum_d_leaf_sqr_top_down");
+            $n_leaves  += $c_n_leaves;
+        }
+        $self->set_attribute( "sum_d_leaf_bottom_down",     $sum_dl );
+        $self->set_attribute( "sum_d_leaf_sqr_bottom_down", $sum_dlsqr );
+        $self->set_attribute( "n_leaf_down",                $n_leaves );
+
+        #	print("in rec...down. node: \n");
+        #				$self->print_node();
+        #				print("parent defined?: [", defined $self->get_parent(), "]\n");
+        if ( defined $self->get_parent() ) {    # adding on branch up to parent
+            my $dp   = $self->get_branch_length();
+            my $psum = $sum_dl + $n_leaves * $dp;
+            my $psumsqr =
+              $sum_dlsqr + 2 * $dp * $sum_dl + $n_leaves * $dp * $dp;
+            $self->set_attribute( "sum_d_leaf_top_down",     $psum );
+            $self->set_attribute( "sum_d_leaf_sqr_top_down", $psumsqr );
+        }
+    }
+    else {                                      # leaf case
+        $self->set_attribute( "sum_d_leaf_bottom_down",     0 );
+        $self->set_attribute( "sum_d_leaf_sqr_bottom_down", 0 );
+        $self->set_attribute( "sum_d_leaf_top_down", $self->get_branch_length );
+        $self->set_attribute( "sum_d_leaf_sqr_top_down",
+            $self->get_branch_length**2 );
+        $self->set_attribute( "n_leaf_down", 1 );
+    }
+}
 
 #put in the upward sum of distances to leaves, etc. for children of node
 
@@ -2799,54 +2940,59 @@ sub recursive_set_dl_dlsqr_sums_down{
 
 =cut
 
-sub recursive_set_dl_dlsqr_sums_up{
-		my $self = shift;
-		my @children = $self->get_children();
-		if (@children) {						#non-leaf case
-				for (my $i=0; $i < @children; $i++) {
-						my $child = shift @children; # shift one child out of @children array
-						my $sum_dl = 0.0;
-						my $sum_dlsqr = 0.0;
-						my $n_leaves = 0;
-						if (defined $self->get_parent()) { # branch up to parent
-								$sum_dl = $self->get_attribute("sum_d_leaf_bottom_up");
-								$sum_dlsqr = $self->get_attribute("sum_d_leaf_sqr_bottom_up");
-								$n_leaves = $self->get_attribute("n_leaf_up");
-						}
-						foreach my $c (@children) { # loop over the other children
-								my $c_n_leaves = $c->get_attribute("n_leaf_down");
-								$sum_dl += $c->get_attribute("sum_d_leaf_top_down");
-								$sum_dlsqr += $c->get_attribute("sum_d_leaf_sqr_top_down");
-								$n_leaves += $c_n_leaves;
-						}
-						$child->set_attribute("sum_d_leaf_top_up", $sum_dl);
-						$child->set_attribute("sum_d_leaf_sqr_top_up", $sum_dlsqr);
-						$child->set_attribute("n_leaf_up", $n_leaves);
-						my $dc = $child->get_branch_length();
-						my $csum = $sum_dl + $n_leaves*$dc; # adding on branch from child to self
-						my $csumsqr = $sum_dlsqr + 2*$dc*$sum_dl + $n_leaves*$dc*$dc;
-						$child->set_attribute("sum_d_leaf_bottom_up", $csum);
-						$child->set_attribute("sum_d_leaf_sqr_bottom_up", $csumsqr);
-						$child->recursive_set_dl_dlsqr_sums_up();
-						push @children, $child; #put the child back into @children array at other end
-				}
-		}
+sub recursive_set_dl_dlsqr_sums_up {
+    my $self     = shift;
+    my @children = $self->get_children();
+    if (@children) {    #non-leaf case
+        for ( my $i = 0 ; $i < @children ; $i++ ) {
+            my $child =
+              shift @children;    # shift one child out of @children array
+            my $sum_dl    = 0.0;
+            my $sum_dlsqr = 0.0;
+            my $n_leaves  = 0;
+            if ( defined $self->get_parent() ) {    # branch up to parent
+                $sum_dl    = $self->get_attribute("sum_d_leaf_bottom_up");
+                $sum_dlsqr = $self->get_attribute("sum_d_leaf_sqr_bottom_up");
+                $n_leaves  = $self->get_attribute("n_leaf_up");
+            }
+            foreach my $c (@children) {    # loop over the other children
+                my $c_n_leaves = $c->get_attribute("n_leaf_down");
+                $sum_dl    += $c->get_attribute("sum_d_leaf_top_down");
+                $sum_dlsqr += $c->get_attribute("sum_d_leaf_sqr_top_down");
+                $n_leaves  += $c_n_leaves;
+            }
+            $child->set_attribute( "sum_d_leaf_top_up",     $sum_dl );
+            $child->set_attribute( "sum_d_leaf_sqr_top_up", $sum_dlsqr );
+            $child->set_attribute( "n_leaf_up",             $n_leaves );
+            my $dc = $child->get_branch_length();
+            my $csum =
+              $sum_dl + $n_leaves * $dc;   # adding on branch from child to self
+            my $csumsqr =
+              $sum_dlsqr + 2 * $dc * $sum_dl + $n_leaves * $dc * $dc;
+            $child->set_attribute( "sum_d_leaf_bottom_up",     $csum );
+            $child->set_attribute( "sum_d_leaf_sqr_bottom_up", $csumsqr );
+            $child->recursive_set_dl_dlsqr_sums_up();
+            push @children,
+              $child;    #put the child back into @children array at other end
+        }
+    }
 }
 
 # just delete the attributes used in finding the min leaf dist variance point
-sub recursive_delete_dl_dlsqr_attributes{
-	my $self = shift;
-	$self->delete_attribute("sum_d_leaf_bottom_up");
-	$self->delete_attribute("sum_d_leaf_bottom_down");
-	$self->delete_attribute("sum_d_leaf_top_up");
-	$self->delete_attribute("sum_d_leaf_top_down");
-	$self->delete_attribute("sum_d_leaf_sqr_bottom_up");
-	$self->delete_attribute("sum_d_leaf_sqr_bottom_down");
-	$self->delete_attribute("sum_d_leaf_sqr_top_up");
-	$self->delete_attribute("sum_d_leaf_sqr_top_down");
-	foreach my $c ($self->get_children()) {
-		$c->recursive_delete_dl_dlsqr_attributes();
-	}
+sub recursive_delete_dl_dlsqr_attributes {
+    my $self = shift;
+    $self->delete_attribute("sum_d_leaf_bottom_up");
+    $self->delete_attribute("sum_d_leaf_bottom_down");
+    $self->delete_attribute("sum_d_leaf_top_up");
+    $self->delete_attribute("sum_d_leaf_top_down");
+    $self->delete_attribute("sum_d_leaf_sqr_bottom_up");
+    $self->delete_attribute("sum_d_leaf_sqr_bottom_down");
+    $self->delete_attribute("sum_d_leaf_sqr_top_up");
+    $self->delete_attribute("sum_d_leaf_sqr_top_down");
+
+    foreach my $c ( $self->get_children() ) {
+        $c->recursive_delete_dl_dlsqr_attributes();
+    }
 }
 
 # returns distance above the node of the point which minimizes variance of distances to leaves
@@ -2872,42 +3018,47 @@ sub recursive_delete_dl_dlsqr_attributes{
 
 =cut
 
-sub min_leaf_dist_variance_point{
-		my $self = shift;
-		my $dist_above = 0.0;
-		my $dist_var; 
-		my $bl = $self->get_branch_length();
-		my $nlu = $self->get_attribute("n_leaf_up");
-		my $nld = $self->get_attribute("n_leaf_down");
-		my $nl = $nlu + $nld;
-		my $sum_d_tu = $self->get_attribute("sum_d_leaf_top_up");
-		my $sum_d_td = $self->get_attribute("sum_d_leaf_top_down");
-		my $sum_d_bu = $self->get_attribute("sum_d_leaf_bottom_up");
-		my $sum_d_bd = $self->get_attribute("sum_d_leaf_bottom_down");
+sub min_leaf_dist_variance_point {
+    my $self       = shift;
+    my $dist_above = 0.0;
+    my $dist_var;
+    my $bl       = $self->get_branch_length();
+    my $nlu      = $self->get_attribute("n_leaf_up");
+    my $nld      = $self->get_attribute("n_leaf_down");
+    my $nl       = $nlu + $nld;
+    my $sum_d_tu = $self->get_attribute("sum_d_leaf_top_up");
+    my $sum_d_td = $self->get_attribute("sum_d_leaf_top_down");
+    my $sum_d_bu = $self->get_attribute("sum_d_leaf_bottom_up");
+    my $sum_d_bd = $self->get_attribute("sum_d_leaf_bottom_down");
 
-		my $sum_dsqr_tu = $self->get_attribute("sum_d_leaf_sqr_top_up");
-		my $sum_dsqr_td = $self->get_attribute("sum_d_leaf_sqr_top_down");
-		my $sum_dsqr_bu = $self->get_attribute("sum_d_leaf_sqr_bottom_up");
-		my $sum_dsqr_bd = $self->get_attribute("sum_d_leaf_sqr_bottom_down");
+    my $sum_dsqr_tu = $self->get_attribute("sum_d_leaf_sqr_top_up");
+    my $sum_dsqr_td = $self->get_attribute("sum_d_leaf_sqr_top_down");
+    my $sum_dsqr_bu = $self->get_attribute("sum_d_leaf_sqr_bottom_up");
+    my $sum_dsqr_bd = $self->get_attribute("sum_d_leaf_sqr_bottom_down");
 
-		my $avg_dist_tu = $sum_d_tu/$nlu;
-		my $avg_dist_bd = $sum_d_bd/$nld;
-		
-		if ($avg_dist_tu  >  $avg_dist_bd + $bl) { # opt at top of branch
-				$dist_above = $bl;
-				$dist_var = ($sum_dsqr_tu + $sum_dsqr_td - ($sum_d_tu + $sum_d_td)**2/$nl)/$nl;
-		} elsif ($avg_dist_bd  >  $avg_dist_tu + $bl) { # opt at bottom of branch
-				$dist_above = 0.0;
-				$dist_var = ($sum_dsqr_bu + $sum_dsqr_bd - ($sum_d_bu + $sum_d_bd)**2/$nl)/$nl;
-		} else {										# optimum is somewhere along the branch (not at its ends)
-				$dist_above = 0.5*($avg_dist_tu + $bl - $avg_dist_bd);
-				my $var_down = $sum_dsqr_bd/$nld - ($sum_d_bd/$nld)**2;
-				my $var_up = $sum_dsqr_tu/$nlu - ($sum_d_tu/$nlu)**2;
-				$dist_var = ($var_down*$nld + $var_up*$nlu)/($nld + $nlu);
-		}
-		return ($dist_above, $dist_var);
+    my $avg_dist_tu = $sum_d_tu / $nlu;
+    my $avg_dist_bd = $sum_d_bd / $nld;
+
+    if ( $avg_dist_tu > $avg_dist_bd + $bl ) {    # opt at top of branch
+        $dist_above = $bl;
+        $dist_var =
+          ( $sum_dsqr_tu + $sum_dsqr_td - ( $sum_d_tu + $sum_d_td )**2 / $nl ) /
+          $nl;
+    }
+    elsif ( $avg_dist_bd > $avg_dist_tu + $bl ) {    # opt at bottom of branch
+        $dist_above = 0.0;
+        $dist_var =
+          ( $sum_dsqr_bu + $sum_dsqr_bd - ( $sum_d_bu + $sum_d_bd )**2 / $nl ) /
+          $nl;
+    }
+    else {    # optimum is somewhere along the branch (not at its ends)
+        $dist_above = 0.5 * ( $avg_dist_tu + $bl - $avg_dist_bd );
+        my $var_down = $sum_dsqr_bd / $nld - ( $sum_d_bd / $nld )**2;
+        my $var_up   = $sum_dsqr_tu / $nlu - ( $sum_d_tu / $nlu )**2;
+        $dist_var = ( $var_down * $nld + $var_up * $nlu ) / ( $nld + $nlu );
+    }
+    return ( $dist_above, $dist_var );
 }
-
 
 #sub get_dl_variance{ # variance of distances from a node to leaves in its subtree
 #		my $self = shift;
@@ -2918,16 +3069,15 @@ sub min_leaf_dist_variance_point{
 #}
 
 # just grab the first leaf you find. i.e look at first child of first child of ... until you get to a leaf, which is returned
-sub recursive_get_a_leaf{
-		my $self = shift;
-		my @children = $self->get_children();
-		if (@children) {
-				my $achild = shift @children;
-				return $achild->recursive_get_a_leaf;
-		}
-		return $self;
+sub recursive_get_a_leaf {
+    my $self     = shift;
+    my @children = $self->get_children();
+    if (@children) {
+        my $achild = shift @children;
+        return $achild->recursive_get_a_leaf;
+    }
+    return $self;
 }
-
 
 =head2 function compare_subtrees
 
@@ -2944,37 +3094,38 @@ sub recursive_get_a_leaf{
 
 =cut
 
-sub compare_subtrees{
-	my $self = shift;
-	my $other_node = shift;
-	my $compare_field = shift; # optional argument to allow comparing by species
+sub compare_subtrees {
+    my $self          = shift;
+    my $other_node    = shift;
+    my $compare_field = shift; # optional argument to allow comparing by species
 
-# print STDOUT "in compare_subtrees. compare_field: $compare_field \n";
-	# copy the subtrees into temporary trees, which can 
-	# be manipulated (in this case collapsed) without changing the original trees.
-	#
-	my $tree1 = $self->copy_subtree();
-	my $tree2 = $other_node->copy_subtree();
+  # print STDOUT "in compare_subtrees. compare_field: $compare_field \n";
+  # copy the subtrees into temporary trees, which can
+  # be manipulated (in this case collapsed) without changing the original trees.
+  #
+    my $tree1 = $self->copy_subtree();
+    my $tree2 = $other_node->copy_subtree();
 
-	$tree1->collapse_tree();
-	$tree2->collapse_tree();
+    $tree1->collapse_tree();
+    $tree2->collapse_tree();
 
-	my $root1 = $tree1->get_root();
-	my $root2 = $tree2->get_root();
+    my $root1 = $tree1->get_root();
+    my $root2 = $tree2->get_root();
 
-	# get the implicit names for each node in both trees
-	#
-	if (lc $compare_field eq "species") {
-		$root1->recursive_implicit_species();
-		$root2->recursive_implicit_species();
-	} else {
-		$root1->recursive_implicit_names();
-		$root2->recursive_implicit_names();
-	}
+    # get the implicit names for each node in both trees
+    #
+    if ( lc $compare_field eq "species" ) {
+        $root1->recursive_implicit_species();
+        $root2->recursive_implicit_species();
+    }
+    else {
+        $root1->recursive_implicit_names();
+        $root2->recursive_implicit_names();
+    }
 
-	# recursively compare the trees
-	#
-	return $root1->recursive_compare($root2, $compare_field);
+    # recursively compare the trees
+    #
+    return $root1->recursive_compare( $root2, $compare_field );
 
 }
 
@@ -3006,35 +3157,39 @@ sub compare_subtrees{
 
 =cut
 
-sub quasiRF_distance{
-# Q: what about the case where the sets of leaves are not the same? What should happen then?
-	my $tree1 = shift->copy_subtree();
-	my $tree2 = shift->copy_subtree();
-	my $compare_field = shift;  
-	$tree1->collapse_tree();
-	$tree2->collapse_tree();
+sub quasiRF_distance {
 
-	$tree1->quasiRF_distance($tree2, $compare_field); 
-	#		print STDOUT "distance: ", $tree1->get_root()->get_attribute("qRF_distance"), "<br>\n";
-	return ($tree1->get_root()->get_attribute("qRF_distance"), $tree1);
+# Q: what about the case where the sets of leaves are not the same? What should happen then?
+    my $tree1         = shift->copy_subtree();
+    my $tree2         = shift->copy_subtree();
+    my $compare_field = shift;
+    $tree1->collapse_tree();
+    $tree2->collapse_tree();
+
+    $tree1->quasiRF_distance( $tree2, $compare_field );
+
+#		print STDOUT "distance: ", $tree1->get_root()->get_attribute("qRF_distance"), "<br>\n";
+    return ( $tree1->get_root()->get_attribute("qRF_distance"), $tree1 );
 }
 
 # This just looks at the subtree_leaves_match attribute, which needs to have already been
 # set by quasiRD_distance. recursive_quasiRF_distance sets the qRF_distance attribute for every
 # node in the subtree
-sub recursive_quasiRF_distance{
-	my $self = shift; 	
-	my $qRFdist = 0.0;						# if $self is leaf then $qRFdist will remain 0
+sub recursive_quasiRF_distance {
+    my $self    = shift;
+    my $qRFdist = 0.0;     # if $self is leaf then $qRFdist will remain 0
 
-	foreach my $c ($self->get_children()) {
-		$qRFdist += $c->recursive_quasiRF_distance() + 
-			($c->get_attribute("subtree_leaves_match") eq "true")? 0.0: $c->get_branch_length();
-		
-	}
-	$self->set_attribute("qRF_distance", $qRFdist);
-	return $qRFdist;
+    foreach my $c ( $self->get_children() ) {
+        $qRFdist +=
+          $c->recursive_quasiRF_distance() +
+          ( $c->get_attribute("subtree_leaves_match") eq "true" )
+          ? 0.0
+          : $c->get_branch_length();
+
+    }
+    $self->set_attribute( "qRF_distance", $qRFdist );
+    return $qRFdist;
 }
-
 
 =head2 function robinson_foulds_distance
 
@@ -3054,61 +3209,75 @@ sub recursive_quasiRF_distance{
 
 =cut
 
-sub robinson_foulds_distance{
-## should also check that 
-	my $self = shift;
-	my $other_node = shift;
-	my $tree1 = $self->copy_subtree();
-	my $tree2 = $other_node->copy_subtree();
+sub robinson_foulds_distance {
+## should also check that
+    my $self       = shift;
+    my $other_node = shift;
+    my $tree1      = $self->copy_subtree();
+    my $tree2      = $other_node->copy_subtree();
 
-	$tree1->collapse_tree();
-	$tree2->collapse_tree();
+    $tree1->collapse_tree();
+    $tree2->collapse_tree();
 
-	my $root1 = $tree1->get_root();
-	my $root2 = $tree2->get_root();
+    my $root1 = $tree1->get_root();
+    my $root2 = $tree2->get_root();
 
-print("in robinson-foulds, root bls: ", $root1->get_branch_length(), "   ", $root2->get_branch_length(), "\n");
+    print(
+        "in robinson-foulds, root bls: ",
+        $root1->get_branch_length(),
+        "   ", $root2->get_branch_length(), "\n"
+    );
 
-	# get the implicit names for each node in both trees
-	#
-	$root1->recursive_implicit_names();
-	$root2->recursive_implicit_names();
+    # get the implicit names for each node in both trees
+    #
+    $root1->recursive_implicit_names();
+    $root2->recursive_implicit_names();
 
-	if ($root1->get_name() ne $root2->get_name()) {
-		print("In robinson_foulds_distance. root implicit names are different: ", $root1->get_name(), "  ", $root2->get_name(), " \n");
-		die("robinson_foulds_distance requires trees have same set of leaf names. \n");
-	}
+    if ( $root1->get_name() ne $root2->get_name() ) {
+        print(
+            "In robinson_foulds_distance. root implicit names are different: ",
+            $root1->get_name(), "  ", $root2->get_name(), " \n" );
+        die(
+"robinson_foulds_distance requires trees have same set of leaf names. \n"
+        );
+    }
 
-	my $distance = 0.0;
+    my $distance = 0.0;
 
-	# set up the hash for tree1 nodes, with name as key
-		my %n_bl_1= ();	
-	my $nhr1 = $tree1->{node_hash};
-	foreach my $n1 (values ( %$nhr1)) {
-		$n_bl_1{ $n1->get_name()} = $n1->get_branch_length(); 
-	}
+    # set up the hash for tree1 nodes, with name as key
+    my %n_bl_1 = ();
+    my $nhr1   = $tree1->{node_hash};
+    foreach my $n1 ( values(%$nhr1) ) {
+        $n_bl_1{ $n1->get_name() } = $n1->get_branch_length();
+    }
 
-	# set up the hash for tree2 nodes, with name as key
-	my %n_bl_2 = ();
-	my $nhr2 = $tree2->{node_hash};	
-	foreach my $n2 (values ( %$nhr2)) {
-		$n_bl_2{ $n2->get_name()} = $n2->get_branch_length(); 
-	}
+    # set up the hash for tree2 nodes, with name as key
+    my %n_bl_2 = ();
+    my $nhr2   = $tree2->{node_hash};
+    foreach my $n2 ( values(%$nhr2) ) {
+        $n_bl_2{ $n2->get_name() } = $n2->get_branch_length();
+    }
 
-	my $bl2; my $bl1;
-	foreach my $n1 (values (%$nhr1)) {			
-		if (exists $n_bl_2{$n1->get_name()}) { # no node with this implicit name in tree2; add branch length to total
-			$distance += 0.5*abs($n1->get_branch_length() -  $n_bl_2{$n1->get_name()});
-		} else {
-			$distance += $n1->get_branch_length();
-		}
-	}
-	foreach my $n2 (values (%$nhr2)) {			
-		if (! exists $n_bl_1{$n2->get_name()}) { # no node with this implicit name in tree2; add branch length to total
-			$distance += 0.5*abs($n2->get_branch_length() - $n_bl_1{$n2->get_name()});
-		}
-	}
-	return $distance;
+    my $bl2;
+    my $bl1;
+    foreach my $n1 ( values(%$nhr1) ) {
+        if ( exists $n_bl_2{ $n1->get_name() } )
+        { # no node with this implicit name in tree2; add branch length to total
+            $distance += 0.5 *
+              abs( $n1->get_branch_length() - $n_bl_2{ $n1->get_name() } );
+        }
+        else {
+            $distance += $n1->get_branch_length();
+        }
+    }
+    foreach my $n2 ( values(%$nhr2) ) {
+        if ( !exists $n_bl_1{ $n2->get_name() } )
+        { # no node with this implicit name in tree2; add branch length to total
+            $distance += 0.5 *
+              abs( $n2->get_branch_length() - $n_bl_1{ $n2->get_name() } );
+        }
+    }
+    return $distance;
 }
 
 =head2 function determine_species_from_name
@@ -3131,63 +3300,70 @@ print("in robinson-foulds, root bls: ", $root1->get_branch_length(), "   ", $roo
 
 =cut
 
-sub determine_species_from_name{ 
-	my $self = shift;
-	my $str = shift;
-	my $species = undef;
-	if (!$str) {	$str = $self->get_name(); }
+sub determine_species_from_name {
+    my $self    = shift;
+    my $str     = shift;
+    my $species = undef;
+    if ( !$str ) { $str = $self->get_name(); }
 
-	#	print STDERR "string to get species from: ", $str, "\n";
-	if ($str =~ /^At/i) {					# At.... is Arabidopsis
-		$species = "Arabidopsis";
-	}
+    #	print STDERR "string to get species from: ", $str, "\n";
+    if ( $str =~ /^At/i ) {    # At.... is Arabidopsis
+        $species = "Arabidopsis";
+    }
 
-	# for $str of form SGN-U followed by digits,eliminate the SGN-U:
-	elsif ($str =~ /^SGN-{0,1}U(\d+)/i) { # should we require SGN to be initial?
+    # for $str of form SGN-U followed by digits,eliminate the SGN-U:
+    elsif ( $str =~ /^SGN-{0,1}U(\d+)/i )
+    {                          # should we require SGN to be initial?
 
-		#	print STDERR "SGN branch or ..species_name. \n";
-		$str =~ s/SGN-{0,1}U(\d+)/$1/i; 
+        #	print STDERR "SGN branch or ..species_name. \n";
+        $str =~ s/SGN-{0,1}U(\d+)/$1/i;
 
-		# and get species based on number
-		if (($str <= 205568) && ($str >= 196015)) {
-			$species = "pepper";
-		}
-		if ( ($str <= 207409) && ($str >= 205569)) {
-			$species = "eggplant";
-		}
-		if ( ($str <= 212544)  && ($str >= 207410)) {
-			$species = "petunia";
-		}
-		if (($str <= 299123) && ($str >= 268052)) {
-			$species = "potato";
-		}
-		if (($str <= 347124) && ($str >=312296)) {
-			$species = "tomato";
-		}
-		if (($str <= 414796) && ($str >=406937)) {
-			$species = "sweet_potato";
-		}
-		if (($str <= 362845) && ($str >=347125)) {
-			$species = "coffee";
-		}
-		if (($str <= 388243) && ($str >= 362846)) {
-			$species = "tobacco";
-		}
-		if (($str <= 400909) && ($str >= 388244)) {
-			$species = "snapdragon";
-		}
-	} elsif ($str =~ /^Bradi/i) {
-		$species = "brachypodium";   #  "Brachypodium_distachyon";
-	} elsif ($str =~ /^LOC_Os/i) {
-		$species = "rice";
-	} elsif ($str =~ /(\d+)\_(.*)/) { # is >=1 digits, t
-		$species = $2;
-	} else {
-		#	print STDERR ("in determine species, no leading digits.  name: $name,  id: $id,  species $species  \n");
-		$species = $str;						# just use whole string
-	}
-	#	print STDERR ("Species: ", $str, "   ", $species, "\n");
-	return $species;
+        # and get species based on number
+        if ( ( $str <= 205568 ) && ( $str >= 196015 ) ) {
+            $species = "pepper";
+        }
+        if ( ( $str <= 207409 ) && ( $str >= 205569 ) ) {
+            $species = "eggplant";
+        }
+        if ( ( $str <= 212544 ) && ( $str >= 207410 ) ) {
+            $species = "petunia";
+        }
+        if ( ( $str <= 299123 ) && ( $str >= 268052 ) ) {
+            $species = "potato";
+        }
+        if ( ( $str <= 347124 ) && ( $str >= 312296 ) ) {
+            $species = "tomato";
+        }
+        if ( ( $str <= 414796 ) && ( $str >= 406937 ) ) {
+            $species = "sweet_potato";
+        }
+        if ( ( $str <= 362845 ) && ( $str >= 347125 ) ) {
+            $species = "coffee";
+        }
+        if ( ( $str <= 388243 ) && ( $str >= 362846 ) ) {
+            $species = "tobacco";
+        }
+        if ( ( $str <= 400909 ) && ( $str >= 388244 ) ) {
+            $species = "snapdragon";
+        }
+    }
+    elsif ( $str =~ /^Bradi/i ) {
+        $species = "brachypodium";    #  "Brachypodium_distachyon";
+    }
+    elsif ( $str =~ /^LOC_Os/i ) {
+        $species = "rice";
+    }
+    elsif ( $str =~ /(\d+)\_(.*)/ ) {    # is >=1 digits, t
+        $species = $2;
+    }
+    else {
+
+#	print STDERR ("in determine species, no leading digits.  name: $name,  id: $id,  species $species  \n");
+        $species = $str;                 # just use whole string
+    }
+
+    #	print STDERR ("Species: ", $str, "   ", $species, "\n");
+    return $species;
 }
 
 =head2 recursive_subtree_newick
@@ -3200,29 +3376,33 @@ sub determine_species_from_name{
 
 =cut
 
-sub recursive_subtree_newick{		#recursive_generate_newick does the same thing & is more general (using make_newick_attributes() )
-	my $self = shift;
-	my $s = shift;
-	if($self->is_leaf()){	$s .= $self->get_name . "[species=" . $self->get_species . "]"; }
-#	$s .= $self->get_name . "[" . $self->get_species . "]";
-	my @children = $self->get_children();
-	my $first = 1;
-	my $has_children = (@children > 0);
-	if (@children) {
-		$s .= "(";
-		foreach my $c (@children) {
-			if ($first) {
-				$first = 0;
-			} else {
-				$s .= ", ";
-			}
-			$s = $c->recursive_subtree_newick($s);
-		}
-		$s .= ")";
-	}
-	$s .= ":" . $self->get_branch_length();
-}
+sub recursive_subtree_newick
+{ #recursive_generate_newick does the same thing & is more general (using make_newick_attributes() )
+    my $self = shift;
+    my $s    = shift;
+    if ( $self->is_leaf() ) {
+        $s .= $self->get_name . "[species=" . $self->get_species . "]";
+    }
 
+    #	$s .= $self->get_name . "[" . $self->get_species . "]";
+    my @children     = $self->get_children();
+    my $first        = 1;
+    my $has_children = ( @children > 0 );
+    if (@children) {
+        $s .= "(";
+        foreach my $c (@children) {
+            if ($first) {
+                $first = 0;
+            }
+            else {
+                $s .= ", ";
+            }
+            $s = $c->recursive_subtree_newick($s);
+        }
+        $s .= ")";
+    }
+    $s .= ":" . $self->get_branch_length();
+}
 
 =head2 function delete_self
 
@@ -3241,98 +3421,110 @@ sub recursive_subtree_newick{		#recursive_generate_newick does the same thing & 
 
 =cut
 
-sub delete_self{
-	my $self = shift; 
+sub delete_self {
+    my $self = shift;
 
-	# if the node is the root node, disallow delete
-	#
+# if the node is the root node, disallow delete
+#
 #print "in delete self. key, is_root, parent: ", $self->get_node_key(), "  ", $self->is_root(), "  ", $self->get_parent(), '   ', $self->get_name(), "\n";
-	if ($self->is_root()) { 
-		warn "CXGN::Phylo::Node::delete_self: You are attempting to delete the root node of the tree. key: ", $self->get_node_key(), "\n";
-		return 1;
-	}
+    if ( $self->is_root() ) {
+        warn
+"CXGN::Phylo::Node::delete_self: You are attempting to delete the root node of the tree. key: ",
+          $self->get_node_key(), "\n";
+        return 1;
+    }
 
-	# Recalculate the branch lengths for the children of the deleted node.
-	# the new branch length is the children's branch length plus this node''s 
-	# branch length.
-	# For each child of the node to be deleted, set the parent to the 
-	# parent of the deleted node.
-	# Make each child node a child of the node's parent.
-	#
-	my @children = $self->get_children();
-	my $branch_length = $self->get_branch_length();
-	foreach my $c (@children) {
-		$c->set_branch_length($c->get_branch_length()+$branch_length);
-		$c->set_parent($self->get_parent());
-		$self->get_parent()->add_child_node($c);
-	}
+    # Recalculate the branch lengths for the children of the deleted node.
+    # the new branch length is the children's branch length plus this node''s
+    # branch length.
+    # For each child of the node to be deleted, set the parent to the
+    # parent of the deleted node.
+    # Make each child node a child of the node's parent.
+    #
+    my @children      = $self->get_children();
+    my $branch_length = $self->get_branch_length();
+    foreach my $c (@children) {
+        $c->set_branch_length( $c->get_branch_length() + $branch_length );
+        $c->set_parent( $self->get_parent() );
+        $self->get_parent()->add_child_node($c);
+    }
 
-	# remove the node from it's parent's children list
-	#
-	$self->get_parent()->remove_child($self);
+    # remove the node from it's parent's children list
+    #
+    $self->get_parent()->remove_child($self);
 
-	# delete the node
-	#
-	$self->set_children(undef);
-	$self->set_parent(undef);
-	$self->set_label(undef);
-	$self = undef;								# really, really delete the node
+    # delete the node
+    #
+    $self->set_children(undef);
+    $self->set_parent(undef);
+    $self->set_label(undef);
+    $self = undef;    # really, really delete the node
 }
-
-
-
-
 
 #returns a list of the subtrees with subtree_leaves_match eq true, and which have quasiRF_distance <= the argument
-sub recursive_get_ortho_subtrees{
-	my $self = shift;
-	my $qRFd_max = shift; 
-	my @conforming_nodes = ();
-	if (!defined $qRFd_max) {
-		$qRFd_max = 0;
-	}
-	my $implspec = $self->get_implicit_species();
+sub recursive_get_ortho_subtrees {
+    my $self             = shift;
+    my $qRFd_max         = shift;
+    my @conforming_nodes = ();
+    if ( !defined $qRFd_max ) {
+        $qRFd_max = 0;
+    }
+    my $implspec = $self->get_implicit_species();
 
-	if ($self->get_attribute("subtree_leaves_match") eq "true" # require subtree and a subtree of species tree to match species set of leaves
-			and $self->get_attribute("qRF_distance") <= $qRFd_max) { # subtree is sufficiently close to conforming to topology
-		if (!$self->is_leaf()) {
-			push @conforming_nodes, $self;
-		#	$self->set_hilited(1);
-		}
-	} else {
-		foreach my $c ($self->get_children()) {
-			@conforming_nodes = (@conforming_nodes, $c->recursive_get_ortho_subtrees($qRFd_max));
-		}
-	}
-	return @conforming_nodes;
+    if (
+        $self->get_attribute("subtree_leaves_match") eq
+        "true" # require subtree and a subtree of species tree to match species set of leaves
+        and $self->get_attribute("qRF_distance") <= $qRFd_max
+      )
+    {          # subtree is sufficiently close to conforming to topology
+        if ( !$self->is_leaf() ) {
+            push @conforming_nodes, $self;
+
+            #	$self->set_hilited(1);
+        }
+    }
+    else {
+        foreach my $c ( $self->get_children() ) {
+            @conforming_nodes =
+              ( @conforming_nodes,
+                $c->recursive_get_ortho_subtrees($qRFd_max) );
+        }
+    }
+    return @conforming_nodes;
 }
 
-# divide a tree into subtrees with <= $max_leaves leaves, by pushing 
+# divide a tree into subtrees with <= $max_leaves leaves, by pushing
 # a copy of the subtree
 # onto list of small trees if small enough, and if too big, then calling this
 # function of each child. (Doesn't seem to be very useful)
-sub recursive_divide_subtree_into_small_trees{
-	my $self = shift;
-	my $max_leaves = shift;
-#	print "subtree leaves: ", $self->get_attribute("leaf_count"), "\n";
-	my $small_tree;
-	my $small_trees_array = shift || [];
-	if ($self->get_attribute("leaf_count") <= $max_leaves) {
-		push @$small_trees_array, $self->copy_subtree(); #store a tree which is a copy of the subtree with root at this node
-	} else {
-		my @children = $self->get_children();
-		foreach (@children) {
-			#	if ($_->get_attribute("leaf_count") <= $max_leaves) {
-			#			$small_tree = $_->copy_subtree(); 
-			#			push @$small_trees_array, $small_tree;
-			#		} else {
-			$_->recursive_divide_subtree_into_small_trees($max_leaves, $small_trees_array);
-			#	}
-		}
-	}
-	return $small_trees_array;
-}
+sub recursive_divide_subtree_into_small_trees {
+    my $self       = shift;
+    my $max_leaves = shift;
 
+    #	print "subtree leaves: ", $self->get_attribute("leaf_count"), "\n";
+    my $small_tree;
+    my $small_trees_array = shift || [];
+    if ( $self->get_attribute("leaf_count") <= $max_leaves ) {
+        push @$small_trees_array,
+          $self->copy_subtree()
+          ;  #store a tree which is a copy of the subtree with root at this node
+    }
+    else {
+        my @children = $self->get_children();
+        foreach (@children) {
+
+            #	if ($_->get_attribute("leaf_count") <= $max_leaves) {
+            #			$small_tree = $_->copy_subtree();
+            #			push @$small_trees_array, $small_tree;
+            #		} else {
+            $_->recursive_divide_subtree_into_small_trees( $max_leaves,
+                $small_trees_array );
+
+            #	}
+        }
+    }
+    return $small_trees_array;
+}
 
 # Another attempt at breaking up big trees in a good way - not too successful.
 
@@ -3356,31 +3548,47 @@ sub recursive_divide_subtree_into_small_trees{
 
 =cut
 
-sub recursive_set_levels_above_distinct_species_subtree{
-	my $self = shift;
-	my $levels_above_distinct_species_subtree = undef;
-	my $big_levels = 10000000;		# a number bigger than the depth of any reasonable tree
-	#	print($self->get_name(), "   ", $self->get_attribute("leaf_species_count"), "   ", $self->get_attribute("leaf_count"), "\n");
-	if ($self->get_attribute("leaf_species_count") == $self->get_attribute("leaf_count") && ($self->get_attribute("leaf_count") > 1)) {	
-		# distinct species subtree - more than 1 leaf, and all leaves have distinct species
-		$levels_above_distinct_species_subtree = 0; # this IS a distinct species subtree
+sub recursive_set_levels_above_distinct_species_subtree {
+    my $self                                  = shift;
+    my $levels_above_distinct_species_subtree = undef;
+    my $big_levels =
+      10000000;    # a number bigger than the depth of any reasonable tree
+     #	print($self->get_name(), "   ", $self->get_attribute("leaf_species_count"), "   ", $self->get_attribute("leaf_count"), "\n");
+    if ( $self->get_attribute("leaf_species_count") ==
+        $self->get_attribute("leaf_count")
+        && ( $self->get_attribute("leaf_count") > 1 ) )
+    {
 
-	} else {											
-		# leaf, or subtree with more leaves than species - check the children
-		my $min_child_levels_above = $big_levels; 
-		foreach my $c ($self->get_children()) {
-			my $child_levels_above = $c->recursive_set_levels_above_distinct_species_subtree();
-				$min_child_levels_above = $child_levels_above if($child_levels_above < $min_child_levels_above);
-		}
-		# if $min_child_levels_above got set (to something < $big_levels) then there is an orthcand in the subtree. 
-		$levels_above_distinct_species_subtree = ($min_child_levels_above == $big_levels)? $big_levels: $min_child_levels_above + 1; 
-	}
-	print "setting levels above for node: ", $self->get_name(),  "   to: ", $levels_above_distinct_species_subtree, "\n";
-	$self->set_attribute("levels_above_distinct_species_subtree",  $levels_above_distinct_species_subtree);
-	return $levels_above_distinct_species_subtree; 
+# distinct species subtree - more than 1 leaf, and all leaves have distinct species
+        $levels_above_distinct_species_subtree =
+          0;    # this IS a distinct species subtree
+
+    }
+    else {
+
+        # leaf, or subtree with more leaves than species - check the children
+        my $min_child_levels_above = $big_levels;
+        foreach my $c ( $self->get_children() ) {
+            my $child_levels_above =
+              $c->recursive_set_levels_above_distinct_species_subtree();
+            $min_child_levels_above = $child_levels_above
+              if ( $child_levels_above < $min_child_levels_above );
+        }
+
+# if $min_child_levels_above got set (to something < $big_levels) then there is an orthcand in the subtree.
+        $levels_above_distinct_species_subtree =
+          ( $min_child_levels_above == $big_levels )
+          ? $big_levels
+          : $min_child_levels_above + 1;
+    }
+    print "setting levels above for node: ", $self->get_name(), "   to: ",
+      $levels_above_distinct_species_subtree, "\n";
+    $self->set_attribute(
+        "levels_above_distinct_species_subtree",
+        $levels_above_distinct_species_subtree
+    );
+    return $levels_above_distinct_species_subtree;
 }
-
-
 
 =head2 function recursive_ortholog_group_candidate_subtrees
 
@@ -3405,214 +3613,294 @@ sub recursive_set_levels_above_distinct_species_subtree{
 
 =cut
 
+sub recursive_find_ortholog_group_candidate_subtrees {
+    my $self                     = shift;
+    my $ortho_cand_subtree_array = shift || [];
+    my $desired_levels_above     = shift;
+    $desired_levels_above = 0 unless ( $desired_levels_above > 0 );
 
-sub recursive_find_ortholog_group_candidate_subtrees{
-	my $self = shift;
-	my $ortho_cand_subtree_array = shift || [];
-	my $desired_levels_above = shift;
-	$desired_levels_above = 0 unless($desired_levels_above > 0);
-	
-	my $levels_above_distinct_species_subtree = undef;
-	if ($self->get_attribute("levels_above_distinct_species_subtree") <= $desired_levels_above) {	
-		push @$ortho_cand_subtree_array, $self->copy_subtree();
-	} else {											# $self subtree not all orthologs, look in child subtrees
-		foreach my $c ($self->get_children()) {
-			$c->recursive_find_ortholog_group_candidate_subtrees($ortho_cand_subtree_array, $desired_levels_above);
-		}
-	}
+    my $levels_above_distinct_species_subtree = undef;
+    if ( $self->get_attribute("levels_above_distinct_species_subtree") <=
+        $desired_levels_above )
+    {
+        push @$ortho_cand_subtree_array, $self->copy_subtree();
+    }
+    else {    # $self subtree not all orthologs, look in child subtrees
+        foreach my $c ( $self->get_children() ) {
+            $c->recursive_find_ortholog_group_candidate_subtrees(
+                $ortho_cand_subtree_array, $desired_levels_above );
+        }
+    }
 }
-
 
 # set speciation field in node and its subtree
-sub recursive_set_speciation{
-my $self = shift;
-my $spec_tree = shift;
-$self->set_attribute("speciation", $self->speciation_at_this_node($spec_tree));
-foreach ($self->get_children()){
-	$_->recursive_set_speciation($spec_tree);
-}
+sub recursive_set_speciation {
+    my $self      = shift;
+    my $spec_tree = shift;
+    $self->set_attribute( "speciation",
+        $self->speciation_at_this_node($spec_tree) );
+    foreach ( $self->get_children() ) {
+        $_->recursive_set_speciation($spec_tree);
+    }
 }
 
 # $a_node->speciation_at_this_node($spec_tree)
 # $spec_tree is a species tree.
 # returns 1 if speciation at this node would be consistent with the species tree.
-sub speciation_at_this_node{
-	my $self = shift;
-	my $spec_tree = shift;				# this has to have the species bit patterns set
-	my @children = $self->get_children();
-	my $nchild = scalar @children;;
-	my $or = int 0; 
-	#	print "$or \n";
-	return 0 if($nchild < 2);
-	foreach my $c ($self->get_children()) {
-		my $isbp = $c->get_attribute("species_bit_pattern");
-		#	print "or, isbp or&isbp: ", $or, "  ", $isbp, "  ", $or & $isbp, "\n";
-		if (($or & $isbp) != 0) {		# no speciation because there is at least 1 species occurring in > 1 child subtree
-			#	print "in speciation_at_this_node. returning 0\n";
-			return int 0;
-		}					
-		$or |= $isbp;
-	}
-	# speciation not ruled out; check against species tree
-	if ($nchild == 2) {						# bifurcation. 
-		my $bp1 = $children[0]->get_attribute("species_bit_pattern");
-		my $bp2 = $children[1]->get_attribute("species_bit_pattern");
-		return $spec_tree->get_root()->recursive_compare_species_split($bp1, $bp2); # see if the two child species sets are consistent with any of the nodes in species tree
+sub speciation_at_this_node {
+    my $self      = shift;
+    my $spec_tree = shift;    # this has to have the species bit patterns set
+    my @children = $self->get_children();
+    my $nchild   = scalar @children;
+    my $or       = int 0;
 
-	} elsif ($nchild == 3) {			# trifurcation
-	#	print "in speciation_at_this_node. nchild: $nchild \n";
+    #	print "$or \n";
+    return 0 if ( $nchild < 2 );
+    foreach my $c ( $self->get_children() ) {
+        my $isbp = $c->get_attribute("species_bit_pattern");
 
-		my $c1 =  $children[0];  my $bp1 = $c1->get_attribute("species_bit_pattern");
-		my $c2 =  $children[1];  my $bp2 = $c2->get_attribute("species_bit_pattern");
-		my $c3 =  $children[2];  my $bp3 = $c3->get_attribute("species_bit_pattern");
-		#		print "trifurcation; 3 bit patterns:  $bp1  $bp2  $bp3  \n";
-		#root on child0 branch
-		my $res1 = $spec_tree->get_root()->recursive_compare_species_split($bp1, $bp2 | $bp3);
-		my $res2 = $spec_tree->get_root()->recursive_compare_species_split($bp2, $bp3 | $bp1);	
-		my $res3 = $spec_tree->get_root()->recursive_compare_species_split($bp3, $bp1 | $bp2);
-	#	print "c1:   ", $c1->get_name(), "  c2:  ", $c2->get_name(),"  c3:  ", $c3->get_name(), "\n";
+        #	print "or, isbp or&isbp: ", $or, "  ", $isbp, "  ", $or & $isbp, "\n";
+        if ( ( $or & $isbp ) != 0 )
+        { # no speciation because there is at least 1 species occurring in > 1 child subtree
+                #	print "in speciation_at_this_node. returning 0\n";
+            return int 0;
+        }
+        $or |= $isbp;
+    }
+
+    # speciation not ruled out; check against species tree
+    if ( $nchild == 2 ) {    # bifurcation.
+        my $bp1 = $children[0]->get_attribute("species_bit_pattern");
+        my $bp2 = $children[1]->get_attribute("species_bit_pattern");
+        return $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp1, $bp2 )
+          ; # see if the two child species sets are consistent with any of the nodes in species tree
+
+    }
+    elsif ( $nchild == 3 ) {    # trifurcation
+            #	print "in speciation_at_this_node. nchild: $nchild \n";
+
+        my $c1  = $children[0];
+        my $bp1 = $c1->get_attribute("species_bit_pattern");
+        my $c2  = $children[1];
+        my $bp2 = $c2->get_attribute("species_bit_pattern");
+        my $c3  = $children[2];
+        my $bp3 = $c3->get_attribute("species_bit_pattern");
+
+        #		print "trifurcation; 3 bit patterns:  $bp1  $bp2  $bp3  \n";
+        #root on child0 branch
+        my $res1 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp1, $bp2 | $bp3 );
+        my $res2 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp2, $bp3 | $bp1 );
+        my $res3 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp3, $bp1 | $bp2 );
+
+#	print "c1:   ", $c1->get_name(), "  c2:  ", $c2->get_name(),"  c3:  ", $c3->get_name(), "\n";
 #		print "res1/2/3:  $res1  $res2  $res3  \n";
-		die"In speciation_at_this_node. trifurcation case. Problem deciding how to resolve. \n" if($res1 + $res2 + $res3 > 1);
-		if ($res1) {
-			$self->binarify_with_specified_resolution([$c1], [$c2, $c3]);
-		} elsif ($res2) {
-			$self->binarify_with_specified_resolution([$c2], [$c3, $c1]);
-		} else {
-			$self->binarify_with_specified_resolution([$c3], [$c1, $c2]);
-		}
-		# recalculate implicit species - needed?
-		return ($res1 + $res2 + $res3);
-		# recalculate implicit species - needed?
+        die
+"In speciation_at_this_node. trifurcation case. Problem deciding how to resolve. \n"
+          if ( $res1 + $res2 + $res3 > 1 );
+        if ($res1) {
+            $self->binarify_with_specified_resolution( [$c1], [ $c2, $c3 ] );
+        }
+        elsif ($res2) {
+            $self->binarify_with_specified_resolution( [$c2], [ $c3, $c1 ] );
+        }
+        else {
+            $self->binarify_with_specified_resolution( [$c3], [ $c1, $c2 ] );
+        }
 
-	} elsif ($nchild == 4) {			# trifurcation
-		my $c1 =  $children[0];  my $bp1 = $c1->get_attribute("species_bit_pattern");
-		my $c2 =  $children[1];  my $bp2 = $c2->get_attribute("species_bit_pattern");
-		my $c3 =  $children[2];  my $bp3 = $c3->get_attribute("species_bit_pattern");
-		my $c4 =  $children[3];  my $bp4 = $c4->get_attribute("species_bit_pattern");
-		#		print "trifurcation; 3 bit patterns:  $bp1  $bp2  $bp3  \n";
-		#root on child0 branch
-		my $res1 = $spec_tree->get_root()->recursive_compare_species_split($bp1,        $bp2 | $bp3 | $bp4);
-		my $res2 = $spec_tree->get_root()->recursive_compare_species_split($bp2,        $bp1 | $bp3 | $bp4);
-		my $res3 = $spec_tree->get_root()->recursive_compare_species_split($bp3,        $bp2 | $bp1 | $bp4);
-		my $res4 = $spec_tree->get_root()->recursive_compare_species_split($bp4,        $bp2 | $bp3 | $bp1);
+        # recalculate implicit species - needed?
+        return ( $res1 + $res2 + $res3 );
 
-		my $res5 = $spec_tree->get_root()->recursive_compare_species_split($bp1 | $bp2,        $bp3 | $bp4);
-		my $res6 = $spec_tree->get_root()->recursive_compare_species_split($bp1 | $bp3,        $bp2 | $bp4);
-		my $res7 = $spec_tree->get_root()->recursive_compare_species_split($bp1 | $bp4,        $bp3 | $bp2);
+        # recalculate implicit species - needed?
 
-		die"In speciation_at_this_node. trifurcation case. Problem deciding how to resolve. \n" if($res1 + $res2 + $res3 + $res4 + $res5 + $res6 + $res7 > 1);
-		if ($res1) {
-			$self->binarify_with_specified_resolution([$c1], [$c2, $c3, $c4]);
-		} elsif ($res2) {
-			$self->binarify_with_specified_resolution([$c2], [$c3, $c1, $c4]);
-		} elsif ($res3) {
-			$self->binarify_with_specified_resolution([$c3], [$c1, $c2, $c4]);
-		} elsif ($res4) {
-			$self->binarify_with_specified_resolution([$c4], [$c3, $c1, $c2]);
-		} elsif ($res5) {
-			$self->binarify_with_specified_resolution([$c1, $c2], [$c3, $c4]);
-		} elsif ($res6) {
-			$self->binarify_with_specified_resolution([$c1, $c3], [$c2, $c4]);
-		} elsif ($res7) {
-			$self->binarify_with_specified_resolution([$c1, $c4], [$c3, $c2]);
-		}
-		# recalculate implicit species - needed?
-		return ($res1 + $res2 + $res3 + $res4 + $res5 + $res6 + $res7);
-		# recalculate implicit species - needed?
-	} else {											# > 4 multifurcation - can't handle it yet!
-		die "In speciation_at_this_node. Multifurcation (>4 children) not implemented. \n";
-	}
-	die"In speciation_at_node. Shouldn't get here?? \n";
+    }
+    elsif ( $nchild == 4 ) {    # trifurcation
+        my $c1  = $children[0];
+        my $bp1 = $c1->get_attribute("species_bit_pattern");
+        my $c2  = $children[1];
+        my $bp2 = $c2->get_attribute("species_bit_pattern");
+        my $c3  = $children[2];
+        my $bp3 = $c3->get_attribute("species_bit_pattern");
+        my $c4  = $children[3];
+        my $bp4 = $c4->get_attribute("species_bit_pattern");
+
+        #		print "trifurcation; 3 bit patterns:  $bp1  $bp2  $bp3  \n";
+        #root on child0 branch
+        my $res1 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp1, $bp2 | $bp3 | $bp4 );
+        my $res2 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp2, $bp1 | $bp3 | $bp4 );
+        my $res3 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp3, $bp2 | $bp1 | $bp4 );
+        my $res4 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp4, $bp2 | $bp3 | $bp1 );
+
+        my $res5 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp1 | $bp2, $bp3 | $bp4 );
+        my $res6 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp1 | $bp3, $bp2 | $bp4 );
+        my $res7 =
+          $spec_tree->get_root()
+          ->recursive_compare_species_split( $bp1 | $bp4, $bp3 | $bp2 );
+
+        die
+"In speciation_at_this_node. trifurcation case. Problem deciding how to resolve. \n"
+          if ( $res1 + $res2 + $res3 + $res4 + $res5 + $res6 + $res7 > 1 );
+        if ($res1) {
+            $self->binarify_with_specified_resolution( [$c1],
+                [ $c2, $c3, $c4 ] );
+        }
+        elsif ($res2) {
+            $self->binarify_with_specified_resolution( [$c2],
+                [ $c3, $c1, $c4 ] );
+        }
+        elsif ($res3) {
+            $self->binarify_with_specified_resolution( [$c3],
+                [ $c1, $c2, $c4 ] );
+        }
+        elsif ($res4) {
+            $self->binarify_with_specified_resolution( [$c4],
+                [ $c3, $c1, $c2 ] );
+        }
+        elsif ($res5) {
+            $self->binarify_with_specified_resolution( [ $c1, $c2 ],
+                [ $c3, $c4 ] );
+        }
+        elsif ($res6) {
+            $self->binarify_with_specified_resolution( [ $c1, $c3 ],
+                [ $c2, $c4 ] );
+        }
+        elsif ($res7) {
+            $self->binarify_with_specified_resolution( [ $c1, $c4 ],
+                [ $c3, $c2 ] );
+        }
+
+        # recalculate implicit species - needed?
+        return ( $res1 + $res2 + $res3 + $res4 + $res5 + $res6 + $res7 );
+
+        # recalculate implicit species - needed?
+    }
+    else {    # > 4 multifurcation - can't handle it yet!
+        die
+"In speciation_at_this_node. Multifurcation (>4 children) not implemented. \n";
+    }
+    die "In speciation_at_node. Shouldn't get here?? \n";
 }
 
 # $species_tree_node->recursive_compare_species_split($a1, $a2)
-# to check whether a node with child species bit patterns  $a1 and $a2 
+# to check whether a node with child species bit patterns  $a1 and $a2
 # is consistent with any of the nodes in the species tree subtree with root
 # at $species_tree_node. Called by speciation_at_this_node for  ortholog finding
-sub recursive_compare_species_split{
-	my $self = shift;							# a node of species tree, typically
-	my $a1 = shift;
-	my $a2 = shift;
-	my @children = $self->get_children();
-	return int 0 if(scalar @children < 2); # if reach leaf of species tree, no speciation.
-	my $b1 = $children[0]->get_attribute("species_bit_pattern");
-	my $b2 = $children[1]->get_attribute("species_bit_pattern");
-	if (($a1 & ~$b1) == 0) {			# a1 species set is subset of b1 species set		
-		if (($a2 & ~$b2) == 0) {
-			return int 1;
-		} elsif (($a2 & ~$b1) == 0) {
-			return $children[0]->recursive_compare_species_split($a1, $a2);
-		} else {
-			return int 0;
-		}
-	} elsif (($a1 & ~$b2) == 0) {
-		if (($a2 & ~$b1) == 0) {
-			return int 1;
-		} elsif (($a2 & ~$b2) == 0) {
-			return $children[1]->recursive_compare_species_split($a1, $a2);
-		} else {
-			return int 0;
-		}
-	} else {
-		return 0;
-	}
+sub recursive_compare_species_split {
+    my $self     = shift;                   # a node of species tree, typically
+    my $a1       = shift;
+    my $a2       = shift;
+    my @children = $self->get_children();
+    return int 0
+      if ( scalar @children < 2 )
+      ;    # if reach leaf of species tree, no speciation.
+    my $b1 = $children[0]->get_attribute("species_bit_pattern");
+    my $b2 = $children[1]->get_attribute("species_bit_pattern");
+    if ( ( $a1 & ~$b1 ) == 0 ) {    # a1 species set is subset of b1 species set
+
+        if ( ( $a2 & ~$b2 ) == 0 ) {
+            return int 1;
+        }
+        elsif ( ( $a2 & ~$b1 ) == 0 ) {
+            return $children[0]->recursive_compare_species_split( $a1, $a2 );
+        }
+        else {
+            return int 0;
+        }
+    }
+    elsif ( ( $a1 & ~$b2 ) == 0 ) {
+        if ( ( $a2 & ~$b1 ) == 0 ) {
+            return int 1;
+        }
+        elsif ( ( $a2 & ~$b2 ) == 0 ) {
+            return $children[1]->recursive_compare_species_split( $a1, $a2 );
+        }
+        else {
+            return int 0;
+        }
+    }
+    else {
+        return 0;
+    }
 }
 
 # starting at a leaf go to parent node; if it is speciation, add leaves in OTHER child subtrees
 # to list of orthologs, keep going up looking for speciation nodes until reach root.
 # returns a list of names of all the leaves which are orthologs
-sub collect_orthologs_of_leaf{
-	my $self = shift;							# the leaf to start at
-	my @ortholog_array;
-	my $prev_parent = $self;
-	my $parent = $self->get_parent();
-	while (1) {
-		if ($parent->get_attribute("speciation")) {
-			#print  join(";", $parent->get_implicit_names()), "\n";
-			#	foreach ($parent->get_children()) { 
-			#			}
-			foreach ($parent->get_children()) { # all children
-				next if($_ eq $prev_parent); # except one with $self in its subtree	
-				my @imp_names = (@{$_->get_implicit_names()});
-				foreach my $n (@imp_names) {
-					$n =~ s/(.*)?\|/$1/;
-				}
-				#print STDERR "implicit names: ", join(" ", @imp_names), "\n";
-				@ortholog_array = (@ortholog_array, @imp_names);
-			}
-		}
-		last if($parent->is_root());
-		$prev_parent = $parent;
-		$parent = $prev_parent->get_parent();
-	}
-	return @ortholog_array;
+sub collect_orthologs_of_leaf {
+    my $self = shift;    # the leaf to start at
+    my @ortholog_array;
+    my $prev_parent = $self;
+    my $parent      = $self->get_parent();
+    while (1) {
+        if ( $parent->get_attribute("speciation") ) {
+
+            #print  join(";", $parent->get_implicit_names()), "\n";
+            #	foreach ($parent->get_children()) {
+            #			}
+            foreach ( $parent->get_children() ) {    # all children
+                next
+                  if ( $_ eq $prev_parent )
+                  ;    # except one with $self in its subtree
+                my @imp_names = ( @{ $_->get_implicit_names() } );
+                foreach my $n (@imp_names) {
+                    $n =~ s/(.*)?\|/$1/;
+                }
+
+                #print STDERR "implicit names: ", join(" ", @imp_names), "\n";
+                @ortholog_array = ( @ortholog_array, @imp_names );
+            }
+        }
+        last if ( $parent->is_root() );
+        $prev_parent = $parent;
+        $parent      = $prev_parent->get_parent();
+    }
+    return @ortholog_array;
 }
 
-sub recursive_collect_max_speciation_nodes{
-# start from top, work down subtree until find a node with speciation==1
-# add node to array and don't go further down into that subtree
+sub recursive_collect_max_speciation_nodes {
 
-	my $self = shift;
-	my $spec_node_array = shift; 
-	if($self->get_attribute("speciation") == 1){
-		push @$spec_node_array, $self;
-		return;
-	}
-	foreach($self->get_children()){
-		$_->recursive_collect_max_speciation_nodes($spec_node_array);
-	}
+    # start from top, work down subtree until find a node with speciation==1
+    # add node to array and don't go further down into that subtree
+
+    my $self            = shift;
+    my $spec_node_array = shift;
+    if ( $self->get_attribute("speciation") == 1 ) {
+        push @$spec_node_array, $self;
+        return;
+    }
+    foreach ( $self->get_children() ) {
+        $_->recursive_collect_max_speciation_nodes($spec_node_array);
+    }
 }
 
-sub recursive_hilite_speciation_nodes{
-	my $self = shift;
-# return;
-	$self->set_hilited($self->get_attribute("speciation"));
-	foreach ($self->get_children()) {
-		$_->recursive_hilite_speciation_nodes()
-	}
-	return;
-}
+sub recursive_hilite_speciation_nodes {
+    my $self = shift;
 
+    # return;
+    $self->set_hilited( $self->get_attribute("speciation") );
+    foreach ( $self->get_children() ) {
+        $_->recursive_hilite_speciation_nodes();
+    }
+    return;
+}
 
 1;
 
