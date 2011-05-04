@@ -1,3 +1,4 @@
+package CXGN::Chado::Publication;
 
 =head1 NAME
 
@@ -7,14 +8,12 @@ Functions for accessing and inserting new publications into the database
 
 
 =head1 DESCRIPTION
- 
+
+Functions to add/edit/remove publications.
 
 =cut
 
-use strict;
-
-package CXGN::Chado::Publication;
-
+use Modern::Perl;
 use CXGN::Chado::Dbxref;
 use CXGN::Chado::Pubauthor;
 use base qw / CXGN::DB::Object  /;
@@ -1335,4 +1334,4 @@ sub set_sp_person_id {
     $self->{sp_person_id} = shift;
 }
 
-return 1;
+1;
