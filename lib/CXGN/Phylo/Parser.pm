@@ -94,139 +94,138 @@ sub parse {
 
     my $string = $self->get_string();
     if (!$string) { 
-	print STDERR "The string to be parsed has to be set in the constructor.\n";
-	return undef;
+    print STDERR "The string to be parsed has to be set in the constructor.\n";
+    return undef;
     }
-		$string =~ /^[^\(]*(.*)/; #drop everthing before the first left paren.
+        $string =~ /^[^\(]*(.*)/; #drop everthing before the first left paren.
 $string = $1; 
 # print STDERR "Yin Parser::parse. string to parse: [", $string, "]\n";
     #warn "String is $string\n";
     my @tokens = $self->tokenize($string);
     #print join "\n", @tokens;
     for (my $i=0; $i<@tokens; $i++) { 
-	$self->set_error(\@tokens, $i);
-	my $t = $tokens[$i];
-	if ($t eq "(")  {
-	    #print STDERR "Encountered (. Creating a new child node [parent=".$current_node->get_name()."\n";
-	    my $child = $current_node->add_child();
-	    $current_node=$child;
-	}
-	elsif ($t eq ")") { 
-	    #print STDERR  "encountered: ) Moving up to the parent node.\n";
-	    my $parent_node;
-	    eval { $parent_node=$current_node->get_parent();  };
-	    if ($@) { print STDERR  "Illegal Expression Type 1 Error.\n";  return undef; }
-	    $current_node=$parent_node;
-	    #print STDERR "current node is now: ".$current_node->get_name()."\n";
-	}
-	elsif ($t eq ",") { 
-	    #print STDERR "encountered: , generating a sister node.\n";
-	    my $parent_node=$current_node->get_parent();
-	    my $sibling;
-	    eval { $sibling = $parent_node->add_child(); };
-	    if ($@) { print STDERR "Illegal Expression Type 4 Error.\n"; return undef; }
-	    $current_node = $sibling;
-	    #print STDERR "current node is now ".$current_node->get_name()."\n";
-	}
-	elsif ( $t=~/\;/ ) { 
-	    if (!defined($current_node) || !$current_node->is_root()) { 
-		print STDERR "Illegal Expression Error Type 2.\n"; return undef;
-	    }
-	    return $self->{tree}; 
-	}
-	else { 
-	    #print STDERR "encountered token $t\n";
+    $self->set_error(\@tokens, $i);
+    my $t = $tokens[$i];
+    if ($t eq "(")  {
+        #print STDERR "Encountered (. Creating a new child node [parent=".$current_node->get_name()."\n";
+        my $child = $current_node->add_child();
+        $current_node=$child;
+    }
+    elsif ($t eq ")") { 
+        #print STDERR  "encountered: ) Moving up to the parent node.\n";
+        my $parent_node;
+        eval { $parent_node=$current_node->get_parent();  };
+        if ($@) { print STDERR  "Illegal Expression Type 1 Error.\n";  return undef; }
+        $current_node=$parent_node;
+        #print STDERR "current node is now: ".$current_node->get_name()."\n";
+    }
+    elsif ($t eq ",") { 
+        #print STDERR "encountered: , generating a sister node.\n";
+        my $parent_node=$current_node->get_parent();
+        my $sibling;
+        eval { $sibling = $parent_node->add_child(); };
+        if ($@) { print STDERR "Illegal Expression Type 4 Error.\n"; return undef; }
+        $current_node = $sibling;
+        #print STDERR "current node is now ".$current_node->get_name()."\n";
+    }
+    elsif ( $t=~/\;/ ) { 
+        if (!defined($current_node) || !$current_node->is_root()) { 
+        print STDERR "Illegal Expression Error Type 2.\n"; return undef;
+        }
+        return $self->{tree}; 
+    }
+    else { 
+        #print STDERR "encountered token $t\n";
 
-		#Strip out extended specification (see below) first, so that we
-		#can use colons within the extended specs, such as for links.
-		my ($extended) = $t =~ /(\[.*\])/;
-		$t =~ s/\Q$extended\E// if $extended;
-	#	print STDERR "in Parser::parse. t: [$t] \n";
-	    my ($name, $distance) = split /\s*\:\s*/, $t;
-		
-		$name =~ s/^\s*(.+)\s*$/$1/;
-	#	$distance =~ s/^\s*(.+)\s*$/$1/; # eliminate initial and final whitespace - but doesn't work
-		$distance =~ s/\s//g; # eliminate all whitespace from $distance.
+        #Strip out extended specification (see below) first, so that we
+        #can use colons within the extended specs, such as for links.
+        my ($extended) = $t =~ /(\[.*\])/;
+        $t =~ s/\Q$extended\E// if $extended;
+    #	print STDERR "in Parser::parse. t: [$t] \n";
+        my ($name, $distance) = split /\s*\:\s*/, $t;
+        
+        $name =~ s/^\s*(.+)\s*$/$1/;
+        $distance =~ s/\s//g; # eliminate all whitespace from $distance.
 #print STDERR "name, distance: ", $name, "    ", $distance, "\n";
 
-	    # check for our own extended specification. Additional information can be 
-	    # added after the node name in [] with embedded tags. Currently supported 
-	    # are the "species" tag and the "link" tag. Multiple tag/value pairs are separated
-	    # by a pipe (|). String containing the characters : ( ) have to be quoted. Example:
-	    # (Arabidopsis [link="http://www.arabidopsis.org/"|species=Arabidopsis thaliana]:0.45)
-	    #
-	    eval {
-		if ($extended) {
+        # check for our own extended specification. Additional information can be 
+        # added after the node name in [] with embedded tags. Currently supported 
+        # are the "species" tag and the "link" tag. Multiple tag/value pairs are separated
+        # by a pipe (|). String containing the characters : ( ) have to be quoted. Example:
+        # (Arabidopsis [link="http://www.arabidopsis.org/"|species=Arabidopsis thaliana]:0.45)
+        #
+        eval {
+        if ($extended) {
 
-		  	$extended =~ s/^\[(.*)\]$/$1/; #strip bracket caps
-		  	my @attributes = split /\|/, $extended;
-			
-			foreach my $attr_string (@attributes){
-				my ($attr, $value) = $attr_string =~ /\s*(.*?)\s*=\s*(.*)\s*/;
-				unless($attr && $value){
-					print STDERR "Malformed attribute string: $attr_string";
-					next;
-				}
-				if($attr =~ /link/i){
+          	$extended =~ s/^\[(.*)\]$/$1/; #strip bracket caps
+          	my @attributes = split /\|/, $extended;
+            
+            foreach my $attr_string (@attributes){
+                my ($attr, $value) = $attr_string =~ /\s*(.*?)\s*=\s*(.*)\s*/;
+                unless($attr && $value){
+                    print STDERR "Malformed attribute string: $attr_string";
+                    next;
+                }
+                if($attr =~ /link/i){
 #					print STDERR "Setting link to $value\n";		
-					$current_node->get_label()->set_link(URI::Escape::uri_unescape($value));
-				}
-				elsif($attr =~ /species/i){
+                    $current_node->get_label()->set_link(URI::Escape::uri_unescape($value));
+                }
+                elsif($attr =~ /species/i){
 #					print STDERR "Setting species to $value\n";
-					$current_node->set_species(URI::Escape::uri_unescape($value));
-				}
-				else{
+                    $current_node->set_species(URI::Escape::uri_unescape($value));
+                }
+                else{
 #					print STDERR "Setting '$attr' to '$value'\n";
-					$attr = lc($attr);
-					$current_node->set_attribute($attr, $value);
-				}
-			}
-			
+                    $attr = lc($attr);
+                    $current_node->set_attribute($attr, $value);
+                }
+            }
+            
 # 			if ($additional_info=~/link\=(.*?)(\||\])/i) { 
 # 		    }
 # 		    if ($additional_info=~/species\=(.*?)(\||\])/i) { 
 # 		    }
 
 
-		  #  #if ($additional_info=~/hidden\=(.*?)(\||\])/i)  { 
-		##	$current_node->set_hidden($1);
-		 #   }
-		}
-		$name =~ s/\'//g;
-		$current_node->set_name($name); 
-	    };
-	    if ($@) { 
-			print STDERR  "Illegal Expression Type 3 Error.\n"; 
-			return undef; 
-		}
-	    if (($distance!=0 && !$distance)) { 
-			print STDERR "No distance information.\n"; 
-			return undef;  
-		}
+          #  #if ($additional_info=~/hidden\=(.*?)(\||\])/i)  { 
+        ##	$current_node->set_hidden($1);
+         #   }
+        }
+        $name =~ s/\'//g;
+        $current_node->set_name($name); 
+        };
+        if ($@) { 
+            print STDERR  "Illegal Expression Type 3 Error.\n"; 
+            return undef; 
+        }
+        if (($distance!=0 && !$distance)) { 
+            print STDERR "No distance information.\n"; 
+            return undef;  
+        }
 # print("distance: ", $distance, "\n");
-	    $current_node->set_branch_length($distance);
-	    #print STDERR "current node is now: ".$current_node->get_name()."\n";
-	}
+        $current_node->set_branch_length($distance);
+        #print STDERR "current node is now: ".$current_node->get_name()."\n";
+    }
     }
     if (!defined($current_node) || !$current_node->is_root()) { 
-		print STDERR "Illegal Expression Error Type 2.\n"; return undef;
+        print STDERR "Illegal Expression Error Type 2.\n"; return undef;
     }
 
-	#Post-process tree.  
-	#If none of the nodes have a branch_length property, then we are looking 
-	#at a relational tree, so we set all distances to unit length of 1.
-	my $bl_found = 0;
-	my @desc = $self->{tree}->get_root()->get_descendents();
-	foreach(@desc){
-		$bl_found = 1 if $_->get_branch_length();
-	}
-	unless($bl_found){
-		print STDERR "Relational tree (no distance information).  Setting all branches to length 1\n";
-		$_->set_branch_length(1) foreach @desc;
-		$self->{tree}->get_root()->set_branch_length(0);
-	}
+    #Post-process tree.  
+    #If none of the nodes have a branch_length property, then we are looking 
+    #at a relational tree, so we set all distances to unit length of 1.
+    my $bl_found = 0;
+    my @desc = $self->{tree}->get_root()->get_descendents();
+    foreach(@desc){
+        $bl_found = 1 if $_->get_branch_length();
+    }
+    unless($bl_found){
+        print STDERR "Relational tree (no distance information).  Setting all branches to length 1\n";
+        $_->set_branch_length(1) foreach @desc;
+        $self->{tree}->get_root()->set_branch_length(0);
+    }
 
-	$self->{tree}->set_unique_node_key( scalar $self->{tree}->get_all_nodes() );
+    $self->{tree}->set_unique_node_key( scalar $self->{tree}->get_all_nodes() );
     return $self->{tree};
 }
 
@@ -237,10 +236,10 @@ sub set_error {
     my $left = "";
     my $right = "";
     for (my $i=0; $i<($error_token); $i++) {
-	$left .= $$token_ref[$i];
+    $left .= $$token_ref[$i];
     }
     for (my $i=$error_token+1; $i<@$token_ref; $i++) { 
-	$right .= $$token_ref[$i];
+    $right .= $$token_ref[$i];
     }
     $self->{error_string}="$left<b><font color=\"red\">$$token_ref[$error_token]</font></b>$right";
 
@@ -262,7 +261,7 @@ sub tokenize {
     my @tokens = split /([^\(\)\,]+)?(\(|\)|\,)/, $string;
     my @result = ();
     foreach my $t (@tokens) { 
-	if ($t) { push @result, $t; }
+    if ($t) { push @result, $t; }
     }
     return @result;
 }
@@ -327,36 +326,36 @@ sub parse {
 
     open (F, "<$file") || die "Can't open file $file\n";
     while (<F>) {
-	chomp;
-	my ($id, $name, $parent_id) = split /\t/;
-	my $parent_node;
-	my $node;
-	if (exists(${$tree->{node_hash}}{$parent_id})) { 
-	    $parent_node=$tree->get_node($parent_id);
-	}
-	else {
-	    $parent_node=CXGN::Phylo::Node->new();
-	    $parent_node->set_tree($tree);
-	    $parent_node->set_node_key($parent_id);
-	    $tree->add_node_hash($parent_node, $parent_id);
-	}
-	# the child node may also already exist...
-	if (exists(${$tree->{node_hash}}{$id})){ 
-	    $node=$tree->get_node($id);
-	}
-	else { 
-	    $node = CXGN::Phylo::Node->new();
-	 
-	    $node->set_tree($tree);
-	    $node->set_node_key($id);
-	    $tree->add_node_hash($node, $id);
-	}
-	$node->set_branch_length(1);
-	$node->set_name($name);
-	$node->set_hide_label();
-	my @children = $parent_node->get_children();
-	push @children, $node;
-	$parent_node->set_children(@children);
+    chomp;
+    my ($id, $name, $parent_id) = split /\t/;
+    my $parent_node;
+    my $node;
+    if (exists(${$tree->{node_hash}}{$parent_id})) { 
+        $parent_node=$tree->get_node($parent_id);
+    }
+    else {
+        $parent_node=CXGN::Phylo::Node->new();
+        $parent_node->set_tree($tree);
+        $parent_node->set_node_key($parent_id);
+        $tree->add_node_hash($parent_node, $parent_id);
+    }
+    # the child node may also already exist...
+    if (exists(${$tree->{node_hash}}{$id})){ 
+        $node=$tree->get_node($id);
+    }
+    else { 
+        $node = CXGN::Phylo::Node->new();
+     
+        $node->set_tree($tree);
+        $node->set_node_key($id);
+        $tree->add_node_hash($node, $id);
+    }
+    $node->set_branch_length(1);
+    $node->set_name($name);
+    $node->set_hide_label();
+    my @children = $parent_node->get_children();
+    push @children, $node;
+    $parent_node->set_children(@children);
 
     }
     
