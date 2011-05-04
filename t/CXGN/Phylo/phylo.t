@@ -1,6 +1,7 @@
 #!/usr/bin/perl
-use strict;
-use Test::More qw/no_plan/;
+use Test::Most qw/no_plan/;
+use Modern::Perl;
+
 
 use CXGN::Phylo::Tree;
 use CXGN::Phylo::Node;
@@ -102,7 +103,7 @@ is ($tree->get_node(5)->get_attribute("leaf_species_count"), 3, "subtree leaf sp
 # test the remove_child function
 #
 my $rm_tree = $tree->copy();
-my $n = $rm_tree->get_node(5);
+$n = $rm_tree->get_node(5);
 my @children = $n->get_children();
 print STDERR "\tRemove child\nbefore: ".$n->to_string()."\n";
 is ($n->get_children, 2, "get_children test");
@@ -291,7 +292,7 @@ isnt($binary_fail, 1, "Binary tree test: all children count <= 2");
 # recover original tree. Check that rooted and unrooted compares both give 1.
 
 # $tree = CXGN::Phylo::Parse_newick->new("(A:1, (B:1, C:1):1)")->parse();
-my $expression = "(A:0.082376,(B:0.196674,((C:0.038209,F:0.354293):0.026742,E:0.094338):0.064142):0.067562,D:0.295612)";
+$expression = "(A:0.082376,(B:0.196674,((C:0.038209,F:0.354293):0.026742,E:0.094338):0.064142):0.067562,D:0.295612)";
 #my $expression = "(A:1,(B:1,((C:2,F:4):1,E:1):2.02):1,D:2)";
 #my $expression =  "((A:1, D:2):1, (B:1, C:2, E:3):2)";
 #my  $expression = "((A:0.89, D:1.2):1.4, (B:1, C:1.1, E:0.9):1)";
@@ -320,7 +321,7 @@ $tree->get_root()->print_subtree("\n");
 ##exit();
 
 my $total_branch_length = subtree_branch_length($tree->get_root());
-my $new_tree = $tree->copy();
+$new_tree = $tree->copy();
 my ($new_root, $da) = $new_tree->min_leaf_dist_variance_point();
 #exit;
 
