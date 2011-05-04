@@ -1,3 +1,4 @@
+package CXGN::Marker::RFLP::Experiment;
 
 =head1 NAME
 
@@ -13,12 +14,11 @@ Object for displaying and storing RFLP experiment data.
 
 =cut
 
-use strict;
+use Modern::Perl;
 use CXGN::Marker::Tools;
 use CXGN::DB::Connection;
 use CXGN::Tools::Text;
 
-package CXGN::Marker::RFLP::Experiment;
 
 sub new {
     my $class = shift;
