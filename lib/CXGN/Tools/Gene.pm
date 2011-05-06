@@ -1,5 +1,5 @@
 package CXGN::Tools::Gene;
-use strict;
+use Modern::Perl;
 no strict 'refs';
 use base qw | CXGN::DB::Object |;
 use CXGN::DB::Connection;
@@ -40,11 +40,10 @@ use CXGN::Tools::Identifiers qw/identifier_namespace/;
 =cut
 
 #If a calling script/package has DBH defined as a package variable, attach it to this class
-our $EXCHANGE_DBH = 1; 
+our $EXCHANGE_DBH = 1;
+
 #All the database queries are in this INIT block
 
-
- 
 #.................................
 #..... Instance Functions ........
 
@@ -61,86 +60,95 @@ our $EXCHANGE_DBH = 1;
 =cut
 
 sub new {
-	my $class = shift;
-	my $identifier = uc ( shift );
-	my $dbh = shift;
-	
-	my $self = $class->SUPER::new($dbh);
-	$self->set_sql();
-	my $namespace = identifier_namespace($identifier);
-	if ($namespace =~ /sgn_u/i) {
-		$self->{type} = "uni";
-		$identifier =~ s/SGN-U//i;
-		$self->{id} = $identifier;
-	} elsif ($namespace =~ /tair_gene_model/i) {
-		$self->{type} = "ara";
-		$self->{id} = $identifier;
-	} elsif ($namespace =~ /tair_locus/i) {
-		print STDERR "Tair Locus passed ($identifier), using first gene model $identifier.1\n";
-		$self->{type} = "ara";
-		$self->{id} = $identifier . '.1';
-	} elsif ($namespace =~ /genbank_accession/i) {
-		$self->_resolve_ncbi($identifier);
-		die "NCBI identifier [$identifier] does not map to TAIR gene model" unless $self->{id};
-	} else {	
-		die "You must send a SGN-Unigene or TAIR Gene model (AT1G01010.1) identifier as the first argument to this class [$identifier]";
-	}
-	print STDERR "[", $self->_check_exist_no_die(), "]\n";
-	return undef unless $self->_check_exist_no_die();
+    my $class      = shift;
+    my $identifier = uc(shift);
+    my $dbh        = shift;
 
-	#	$self->_check_existence;
-	
-	return $self;
+    my $self = $class->SUPER::new($dbh);
+    $self->set_sql();
+    my $namespace = identifier_namespace($identifier);
+    if ( $namespace =~ /sgn_u/i ) {
+        $self->{type} = "uni";
+        $identifier =~ s/SGN-U//i;
+        $self->{id} = $identifier;
+    }
+    elsif ( $namespace =~ /tair_gene_model/i ) {
+        $self->{type} = "ara";
+        $self->{id}   = $identifier;
+    }
+    elsif ( $namespace =~ /tair_locus/i ) {
+        print STDERR
+"Tair Locus passed ($identifier), using first gene model $identifier.1\n";
+        $self->{type} = "ara";
+        $self->{id}   = $identifier . '.1';
+    }
+    elsif ( $namespace =~ /genbank_accession/i ) {
+        $self->_resolve_ncbi($identifier);
+        die "NCBI identifier [$identifier] does not map to TAIR gene model"
+          unless $self->{id};
+    }
+    else {
+        die
+"You must send a SGN-Unigene or TAIR Gene model (AT1G01010.1) identifier as the first argument to this class [$identifier]";
+    }
+    print STDERR "[", $self->_check_exist_no_die(), "]\n";
+    return undef unless $self->_check_exist_no_die();
+
+    #	$self->_check_existence;
+
+    return $self;
 }
 
 sub _check_exist_no_die {
-	my $self = shift;
-#print STDERR "in _check_exist_no_die. Before get_sql \n";
-	my $sth = $self->get_sql($self->{type} . "_check");
-#print STDERR "in _check_exist_no_die. Before execute \n";
-	$sth->execute($self->{id});
-#print STDERR "in _check_exist_no_die. after execute \n";
-	my (@row) = $sth->fetchrow_array();
-	unless(@row){
-		print STDERR "Gene with type '$self->{type}' and id '$self->{id}' not found in database\n";
-		return 0;
-	}
-	return 1;
+    my $self = shift;
+
+    #print STDERR "in _check_exist_no_die. Before get_sql \n";
+    my $sth = $self->get_sql( $self->{type} . "_check" );
+
+    #print STDERR "in _check_exist_no_die. Before execute \n";
+    $sth->execute( $self->{id} );
+
+    #print STDERR "in _check_exist_no_die. after execute \n";
+    my (@row) = $sth->fetchrow_array();
+    unless (@row) {
+        print STDERR
+"Gene with type '$self->{type}' and id '$self->{id}' not found in database\n";
+        return 0;
+    }
+    return 1;
 }
 
 sub _check_existence {
-	my $self = shift;
-	my $sth = $self->get_sql($self->{type} . "_check");
-	$sth->execute($self->{id});
-	my (@row) = $sth->fetchrow_array();
-	unless(@row){
-		die 
-		"Gene with type '$self->{type}' and id '$self->{id}' not found in database\n";
-	}
+    my $self = shift;
+    my $sth  = $self->get_sql( $self->{type} . "_check" );
+    $sth->execute( $self->{id} );
+    my (@row) = $sth->fetchrow_array();
+    unless (@row) {
+        die
+"Gene with type '$self->{type}' and id '$self->{id}' not found in database\n";
+    }
 }
 
 sub _resolve_ncbi {
-	my $self = shift;
-	my $id = shift;
-	unless($id){
-		$id = $self->{id};
-	}
-	return unless $id;
-	return unless identifier_namespace($id) =~ /genbank_accession/i;
+    my $self = shift;
+    my $id   = shift;
+    unless ($id) {
+        $id = $self->{id};
+    }
+    return unless $id;
+    return unless identifier_namespace($id) =~ /genbank_accession/i;
 
+    my $sth = $self->get_sql("ara_ncbi_check");
+    $sth->execute( $id, $id );
 
-	my $sth = $self->get_sql("ara_ncbi_check");
-	$sth->execute($id, $id);
-
-	my $row = $sth->fetchrow_hashref;
-	if($row->{agi}){
-		$self->{type} = "ara";
-		$self->{id} = $row->{agi};
-		return $self->{id};
-	}
-	return;
+    my $row = $sth->fetchrow_hashref;
+    if ( $row->{agi} ) {
+        $self->{type} = "ara";
+        $self->{id}   = $row->{agi};
+        return $self->{id};
+    }
+    return;
 }
-
 
 =head3 fetch()
 
@@ -150,41 +158,43 @@ sub _resolve_ncbi {
 
 =cut
 
-
 sub fetch {
-	my $self = shift;	
-	my $query_key = lc ( shift );
-	my $option = shift;
-	if(!$query_key) { $query_key = "annot" }
-	my %query_hash;
-	
-	my $sth = $self->get_sql($self->{type}."_".$query_key);
+    my $self      = shift;
+    my $query_key = lc(shift);
+    my $option    = shift;
+    if ( !$query_key ) { $query_key = "annot" }
+    my %query_hash;
 
-	$sth->execute($self->{id});
-	
-	#extra junk for getting unigene cdna sequence
-	if($query_key eq "seq" && $self->{type} eq "uni"){
-		while(my $row = $sth->fetchrow_hashref){
-			unless ($self->property('protein_seq') && $row->{preferred} ne 't'){
-				$self->property("seq_edits", $row->{seq_edits});
-				$self->property("protein_seq", $row->{protein_seq});
-			}
-		}
-		$self->fetch("general");
-		my $qt;
-		($self->getProperty("nr_members")>1)?($qt="consensi"):($qt="singleton");
-		my $sth = $self->get_sql("uni_".$qt);
+    my $sth = $self->get_sql( $self->{type} . "_" . $query_key );
 
-		$sth->execute($self->{id});
-		$self->property("cdna", $sth->fetchrow_array());
-		return; #have all we need now
-	}
+    $sth->execute( $self->{id} );
 
-	my $row = $sth->fetchrow_hashref;
-	while( my ($key, $value) = each %$row ) {
-		$self->property($key, $value);
-	}
-	
+    #extra junk for getting unigene cdna sequence
+    if ( $query_key eq "seq" && $self->{type} eq "uni" ) {
+        while ( my $row = $sth->fetchrow_hashref ) {
+            unless ( $self->property('protein_seq')
+                && $row->{preferred} ne 't' )
+            {
+                $self->property( "seq_edits",   $row->{seq_edits} );
+                $self->property( "protein_seq", $row->{protein_seq} );
+            }
+        }
+        $self->fetch("general");
+        my $qt;
+        ( $self->getProperty("nr_members") > 1 )
+          ? ( $qt = "consensi" )
+          : ( $qt = "singleton" );
+        my $sth = $self->get_sql( "uni_" . $qt );
+
+        $sth->execute( $self->{id} );
+        $self->property( "cdna", $sth->fetchrow_array() );
+        return;    #have all we need now
+    }
+
+    my $row = $sth->fetchrow_hashref;
+    while ( my ( $key, $value ) = each %$row ) {
+        $self->property( $key, $value );
+    }
 
 }
 
@@ -196,91 +206,95 @@ sub fetch {
 =cut
 
 sub fetch_all {
-	my $self = shift;
-	$self->fetch();
-	$self->fetch_sigp();
-	$self->fetch_seq();
-	$self->fetch_dom();
-	if($self->{type} eq "uni"){
-		my @uni_specific = qw/ blast_annot general consensi singleton /;
-		$self->fetch($_) foreach @uni_specific;
-	}
+    my $self = shift;
+    $self->fetch();
+    $self->fetch_sigp();
+    $self->fetch_seq();
+    $self->fetch_dom();
+    if ( $self->{type} eq "uni" ) {
+        my @uni_specific = qw/ blast_annot general consensi singleton /;
+        $self->fetch($_) foreach @uni_specific;
+    }
 }
 
 sub fetch_sigp {
-	my $self = shift;
-	$self->fetch("sigp");
+    my $self = shift;
+    $self->fetch("sigp");
 }
 
 sub fetch_seq {
-	my $self = shift;
-	$self->fetch("seq");
+    my $self = shift;
+    $self->fetch("seq");
 }
 
 sub fetch_dom {
-	#Several rows, non-standard fetch:
-	my $self = shift;
-#	return unless $self->{type} eq "ara"; works for unigene now?
-	my $sth = $self->get_sql($self->{type}."_domain");
-	$sth->execute($self->{id});
-	$self->{domains} = [];
-	if($self->{type} eq "ara"){	
-		while(my $row = $sth->fetchrow_hashref){
-			push(@{$self->{domains}}, $row);
-		}
-	}
-	else {
-		#Only get rows for one of the cds_id's, in case multiple cds_id's
-		#exist for a particular unigene_id:
-		my $row = $sth->fetchrow_hashref;
-		return unless $row;
-		my $cds_id = $row->{dom_cds_id};
-		#fix interpro id's
-		
-		my $ipr = $row->{dom_interpro_id};
-		if($ipr =~ /^\d+$/){
-			$ipr = "IPR" . sprintf("%06s", $ipr);
-			$row->{dom_interpro_id} = $ipr;
-		}
-		push(@{$self->{domains}}, $row);
-		while(my $row = $sth->fetchrow_hashref){
-			push(@{$self->{domains}}, $row) if ($row->{dom_cds_id} eq $cds_id);
-		}
-	}
+
+    #Several rows, non-standard fetch:
+    my $self = shift;
+
+    #	return unless $self->{type} eq "ara"; works for unigene now?
+    my $sth = $self->get_sql( $self->{type} . "_domain" );
+    $sth->execute( $self->{id} );
+    $self->{domains} = [];
+    if ( $self->{type} eq "ara" ) {
+        while ( my $row = $sth->fetchrow_hashref ) {
+            push( @{ $self->{domains} }, $row );
+        }
+    }
+    else {
+
+        #Only get rows for one of the cds_id's, in case multiple cds_id's
+        #exist for a particular unigene_id:
+        my $row = $sth->fetchrow_hashref;
+        return unless $row;
+        my $cds_id = $row->{dom_cds_id};
+
+        #fix interpro id's
+
+        my $ipr = $row->{dom_interpro_id};
+        if ( $ipr =~ /^\d+$/ ) {
+            $ipr = "IPR" . sprintf( "%06s", $ipr );
+            $row->{dom_interpro_id} = $ipr;
+        }
+        push( @{ $self->{domains} }, $row );
+        while ( my $row = $sth->fetchrow_hashref ) {
+            push( @{ $self->{domains} }, $row )
+              if ( $row->{dom_cds_id} eq $cds_id );
+        }
+    }
 }
 
 sub fetch_go {
-	my $self = shift;
-	return unless $self->{type} eq "ara";  #Arabidopsis only, for now
-	my $sth = $self->get_sql("ara_go");
-	$sth->execute($self->{id});
-	
-	my $gref = {};
-	$gref->{$_} = [] foreach(qw/comp func proc/);
+    my $self = shift;
+    return unless $self->{type} eq "ara";    #Arabidopsis only, for now
+    my $sth = $self->get_sql("ara_go");
+    $sth->execute( $self->{id} );
 
-	while(my $row = $sth->fetchrow_hashref) {
-		my $prop = {};		
-		$prop->{$_} = $row->{$_} foreach(qw/go_id evidence content pmid/);
-		push @{$gref->{$row->{type}}}, $prop;
-	}
-	$self->{go} = $gref;
+    my $gref = {};
+    $gref->{$_} = [] foreach (qw/comp func proc/);
+
+    while ( my $row = $sth->fetchrow_hashref ) {
+        my $prop = {};
+        $prop->{$_} = $row->{$_} foreach (qw/go_id evidence content pmid/);
+        push @{ $gref->{ $row->{type} } }, $prop;
+    }
+    $self->{go} = $gref;
 }
-
 
 sub getGO { get_go(@_) }
 
 sub get_go {
-	my $self = shift;
-	$self->fetch_go unless($self->{go});
-	return $self->{go};
+    my $self = shift;
+    $self->fetch_go unless ( $self->{go} );
+    return $self->{go};
 }
 
 sub property {
-	my $self = shift;
-	my ($k,$v) = @_;
-	return undef unless $k;
-	$self->{db_keys}->{$k} = $v if defined $v;
-	return $self->{db_keys}->{$k};
+    my $self = shift;
+    my ( $k, $v ) = @_;
+    return undef unless $k;
+    $self->{db_keys}->{$k} = $v if defined $v;
+    return $self->{db_keys}->{$k};
 }
 
 =head3 get_property($key)
@@ -296,11 +310,10 @@ sub property {
 =cut
 
 sub getProperty {
-	my $self = shift;
-	my $key = shift;
-	return $self->{db_keys}->{$key};
+    my $self = shift;
+    my $key  = shift;
+    return $self->{db_keys}->{$key};
 }
-
 
 =head3 getProperties
 
@@ -309,18 +322,20 @@ sub getProperty {
 =cut
 
 sub getProperties {
-	my $self = shift;
-	return map { $self->property($_) } @_;
+    my $self = shift;
+    return map { $self->property($_) } @_;
 }
 
 sub getSpecies {
-	my $self = shift;
-	unless($self->_check_key("species")){
-		$self->property("species", "Arabidopsis T.") if $self->{type} eq "ara";
-		$self->fetch("general") if $self->{type} eq "uni";
-	}
-print STDERR "in Gene::getSpecies, species: ", $self->property("species"), "\n";
-	return $self->property("species");
+    my $self = shift;
+    unless ( $self->_check_key("species") ) {
+        $self->property( "species", "Arabidopsis T." )
+          if $self->{type} eq "ara";
+        $self->fetch("general") if $self->{type} eq "uni";
+    }
+    print STDERR "in Gene::getSpecies, species: ", $self->property("species"),
+      "\n";
+    return $self->property("species");
 }
 
 =head3 getSequence
@@ -332,61 +347,65 @@ print STDERR "in Gene::getSpecies, species: ", $self->property("species"), "\n";
 =cut
 
 sub getSequence {
-	my $self = shift;
-	my $seq_type = shift;
-	die "Only supported seq_types for sequences: protein, cds, cdna, genomic"
-		unless $seq_type =~ /(protein)|(cds)|(cdna)|(genomic)/;
+    my $self     = shift;
+    my $seq_type = shift;
+    die "Only supported seq_types for sequences: protein, cds, cdna, genomic"
+      unless $seq_type =~ /(protein)|(cds)|(cdna)|(genomic)/;
 
-	$self->fetch("seq") unless $self->_check_key($seq_type);
-	if($self->{type} eq "uni"){
-		return $self->property("seq_edits") if $seq_type eq "cds";
-		return $self->property("protein_seq") if $seq_type eq "protein";
-		return $self->property("cdna") if $seq_type eq "cdna";
-		
-		#Ok, so you can't get a REAL genomic sequence
-		warn "No 'genomic' sequence supported for Unigenes yet" if $seq_type eq "genomic";
-		return undef;
-	}
-	if($self->{type} eq "ara"){
-		return $self->property($seq_type);
-	}
+    $self->fetch("seq") unless $self->_check_key($seq_type);
+    if ( $self->{type} eq "uni" ) {
+        return $self->property("seq_edits")   if $seq_type eq "cds";
+        return $self->property("protein_seq") if $seq_type eq "protein";
+        return $self->property("cdna")        if $seq_type eq "cdna";
+
+        #Ok, so you can't get a REAL genomic sequence
+        warn "No 'genomic' sequence supported for Unigenes yet"
+          if $seq_type eq "genomic";
+        return undef;
+    }
+    if ( $self->{type} eq "ara" ) {
+        return $self->property($seq_type);
+    }
 }
 
 sub getAnnotation {
-	my $self = shift;
-	if ($self->{type} eq "ara") {
-		$self->fetch("annot") unless $self->_check_key("tair_annotation");
-		return $self->property("tair_annotation");
-	}
-	if ($self->{type} eq "uni") {
-		$self->fetch("blast_annot") unless $self->_check_key("blast_annot_content");
-		$self->fetch("annot") unless $self->_check_key("annot_content");
-		my $manual = $self->property("annot_content");
-		my $blast = $self->property("blast_annot_content");
-		return $manual if $manual;
-		if($blast){
-			#Trim off the fluff.  If you need it, use fetch("blast_annot")
-			# and getProperty("blast_annot_content");
-			my ($agi, $ncbi_id);
-			if($blast =~ /^\s*AT[1-5MC]G/i){
-				($agi) = $blast =~ /(AT[1-5MC]G\d{5}\.\d+)/i;
-			
-				$blast =~ s/.*?\|.*?\|\s*//;
-				$blast =~ s/\s*\|.*//;
-				$blast = "[BLAST: $agi] $blast" if $agi;
-			}
-			elsif($blast =~ /^\s*gi\s*\|/i){
-				($ncbi_id) = $blast =~ /\s*gi\s*\|\s*\d+\s*\|\s*\w+\s*\|\s*(\S+)\s*\|/i;
-				$blast =~ s/.*?\|.*?\|.*?\|.*?\|//;
-				$blast = "[BLAST: $ncbi_id] $blast" if $ncbi_id;
-			}
-			$blast = "[BLAST] $blast" unless($ncbi_id || $agi);
-		}
-		return $blast if $blast;
+    my $self = shift;
+    if ( $self->{type} eq "ara" ) {
+        $self->fetch("annot") unless $self->_check_key("tair_annotation");
+        return $self->property("tair_annotation");
+    }
+    if ( $self->{type} eq "uni" ) {
+        $self->fetch("blast_annot")
+          unless $self->_check_key("blast_annot_content");
+        $self->fetch("annot") unless $self->_check_key("annot_content");
+        my $manual = $self->property("annot_content");
+        my $blast  = $self->property("blast_annot_content");
+        return $manual if $manual;
+        if ($blast) {
 
-		print STDERR "No annotation available for " . $self->{id};
-		return;
-	}	
+            #Trim off the fluff.  If you need it, use fetch("blast_annot")
+            # and getProperty("blast_annot_content");
+            my ( $agi, $ncbi_id );
+            if ( $blast =~ /^\s*AT[1-5MC]G/i ) {
+                ($agi) = $blast =~ /(AT[1-5MC]G\d{5}\.\d+)/i;
+
+                $blast =~ s/.*?\|.*?\|\s*//;
+                $blast =~ s/\s*\|.*//;
+                $blast = "[BLAST: $agi] $blast" if $agi;
+            }
+            elsif ( $blast =~ /^\s*gi\s*\|/i ) {
+                ($ncbi_id) =
+                  $blast =~ /\s*gi\s*\|\s*\d+\s*\|\s*\w+\s*\|\s*(\S+)\s*\|/i;
+                $blast =~ s/.*?\|.*?\|.*?\|.*?\|//;
+                $blast = "[BLAST: $ncbi_id] $blast" if $ncbi_id;
+            }
+            $blast = "[BLAST] $blast" unless ( $ncbi_id || $agi );
+        }
+        return $blast if $blast;
+
+        print STDERR "No annotation available for " . $self->{id};
+        return;
+    }
 }
 
 =head3 getDomains
@@ -401,9 +420,9 @@ sub getAnnotation {
 =cut
 
 sub getDomains {
-	my $self = shift;
-	$self->fetch_dom unless (ref $self->{domains} && @{$self->{domains}});
-	return @{$self->{domains}};
+    my $self = shift;
+    $self->fetch_dom unless ( ref $self->{domains} && @{ $self->{domains} } );
+    return @{ $self->{domains} };
 }
 
 =head3 SignalP Getters
@@ -418,116 +437,119 @@ sub getDomains {
 =cut
 
 sub getSignalScore {
-	my $self = shift;
-	$self->fetch_sigp unless $self->_check_key("nn_score");	
-	return $self->property("nn_score");
+    my $self = shift;
+    $self->fetch_sigp unless $self->_check_key("nn_score");
+    return $self->property("nn_score");
 }
 
 sub getSignalPeptide {
-	my $self = shift;
-	$self->fetch_sigp unless $self->_check_key("nn_ypos");
-	my $protseq = $self->get_sequence("protein");
-	if($self->is_signal_positive){
-		my $cp = $self->get_cleavage_position();
-		return substr($protseq, 0, $cp-1);
-	}
-	else {
-		return '';
-	}
+    my $self = shift;
+    $self->fetch_sigp unless $self->_check_key("nn_ypos");
+    my $protseq = $self->get_sequence("protein");
+    if ( $self->is_signal_positive ) {
+        my $cp = $self->get_cleavage_position();
+        return substr( $protseq, 0, $cp - 1 );
+    }
+    else {
+        return '';
+    }
 }
 
 sub getCleavedSequence {
-	my $self = shift;
-	$self->fetch_sigp unless $self->_check_key("nn_ypos");
-	my $protseq = $self->get_sequence("protein");
-	if($self->is_signal_positive){
-		my $cp = $self->get_cleavage_position();
-		return substr($protseq, $cp-1);
-	}
-	else {
-		return '';
-	}
+    my $self = shift;
+    $self->fetch_sigp unless $self->_check_key("nn_ypos");
+    my $protseq = $self->get_sequence("protein");
+    if ( $self->is_signal_positive ) {
+        my $cp = $self->get_cleavage_position();
+        return substr( $protseq, $cp - 1 );
+    }
+    else {
+        return '';
+    }
 }
 
 sub getCleavagePosition {
-	my $self = shift;
-	$self->fetch_sigp unless $self->_check_key("nn_ypos");
-	return $self->property("nn_ypos");
+    my $self = shift;
+    $self->fetch_sigp unless $self->_check_key("nn_ypos");
+    return $self->property("nn_ypos");
 }
 
 sub isSignalPositive {
-	my $self = shift;
-	$self->fetch_sigp unless $self->_check_key("nn_d");
-	my $dec = $self->property("nn_d");
-	if($dec eq 'Y'){
-		return 1;
-	}
-	elsif($dec eq 'N'){
-		return 0;
-	}
-	else {
-		#There is a serious problem with signalp formats that needs to be fixed immediately:
-		warn "\nSignalProblem: NN decision score ($dec) not recognized for " . $self->{id} . ", returning false\n";
-		return 0;
-	}
+    my $self = shift;
+    $self->fetch_sigp unless $self->_check_key("nn_d");
+    my $dec = $self->property("nn_d");
+    if ( $dec eq 'Y' ) {
+        return 1;
+    }
+    elsif ( $dec eq 'N' ) {
+        return 0;
+    }
+    else {
+
+#There is a serious problem with signalp formats that needs to be fixed immediately:
+        warn "\nSignalProblem: NN decision score ($dec) not recognized for "
+          . $self->{id}
+          . ", returning false\n";
+        return 0;
+    }
 }
 
 #Temporary sub aliases, get rid of that camel case!  What was I thinking?
-*get_property = \&getProperty;
-*get_properties = \&getProperties;
-*get_species = \&getSpecies;
-*get_sequence = \&getSequence;
-*get_annotation = \&getAnnotation;
-*get_domains = \&getDomains;
-*get_signal_score = \&getSignalScore;
-*get_signal_peptide = \&getSignalPeptide;
-*get_cleaved_sequence = \&getCleavedSequence;
+*get_property          = \&getProperty;
+*get_properties        = \&getProperties;
+*get_species           = \&getSpecies;
+*get_sequence          = \&getSequence;
+*get_annotation        = \&getAnnotation;
+*get_domains           = \&getDomains;
+*get_signal_score      = \&getSignalScore;
+*get_signal_peptide    = \&getSignalPeptide;
+*get_cleaved_sequence  = \&getCleavedSequence;
 *get_cleavage_position = \&getCleavagePosition;
-*is_signal_positive = \&isSignalPositive;
+*is_signal_positive    = \&isSignalPositive;
 
 sub _check_key {
-	my $self = shift;
-	my $key = shift;
-	unless(exists $self->{db_keys}->{$key}){
-		return 0;
-	}
-	return 1;
+    my $self = shift;
+    my $key  = shift;
+    unless ( exists $self->{db_keys}->{$key} ) {
+        return 0;
+    }
+    return 1;
 }
 
-sub set_sql { 
+sub set_sql {
     my $self = shift;
-    
-    $self->{queries} = { 
 
-	#Arabidopsis Queries
-	
-	ara_check => 
+    $self->{queries} = {
 
-		"SELECT agi FROM public.ara_properties WHERE agi=?",
+        #Arabidopsis Queries
 
-	ara_annot => 
-		
-		"SELECT * FROM ara_properties JOIN ara_annotation USING(agi) WHERE agi=?",
+        ara_check =>
 
-	ara_sigp =>
-		
-		"SELECT * FROM ara_signalp WHERE agi=?",
-	
-	ara_seq =>
-		
-		"SELECT * FROM ara_sequence WHERE agi=?",
+          "SELECT agi FROM public.ara_properties WHERE agi=?",
 
-	ara_domain =>
-		
-		"SELECT dom_desc, dom_start, dom_end, 
+        ara_annot =>
+
+"SELECT * FROM ara_properties JOIN ara_annotation USING(agi) WHERE agi=?",
+
+        ara_sigp =>
+
+          "SELECT * FROM ara_signalp WHERE agi=?",
+
+        ara_seq =>
+
+          "SELECT * FROM ara_sequence WHERE agi=?",
+
+        ara_domain =>
+
+          "SELECT dom_desc, dom_start, dom_end, 
 				interpro_id AS dom_interpro_id, 
 				interpro_dom AS dom_full_desc 
 		FROM ara_domain 
 		WHERE agi=?",
-	
-	ara_ncbi_check => 
-		
-		"	
+
+        ara_ncbi_check =>
+
+          "	
 		SELECT agi 
 		FROM ara_annotation 
 		WHERE 	
@@ -535,25 +557,24 @@ sub set_sql {
 			OR gb_mrna_id=? 
 			",
 
-	ara_protein_length => 
+        ara_protein_length =>
 
-		"SELECT LENGTH(protein) AS protein_length FROM ara_sequence WHERE agi=?",
+"SELECT LENGTH(protein) AS protein_length FROM ara_sequence WHERE agi=?",
 
-	ara_go =>
+        ara_go =>
 
-		"	
+          "	
 		SELECT type, go_id, evidence, content, pmid 
 		FROM ara_go
 		WHERE 
 			gene=?
 		",
-	
-	#Unigene Queries
 
-	
-	uni_domain =>
+        #Unigene Queries
 
-		"SELECT cds_id AS dom_cds_id,
+        uni_domain =>
+
+          "SELECT cds_id AS dom_cds_id,
 				domain_accession, 
 				match_begin AS dom_start, 
 				match_end AS dom_end, 
@@ -565,21 +586,21 @@ sub set_sql {
 			unigene_id=?
 		",
 
-	uni_check =>
+        uni_check =>
 
-		"SELECT unigene_id FROM unigene WHERE unigene_id=?",	
+          "SELECT unigene_id FROM unigene WHERE unigene_id=?",
 
-	uni_seq =>
-	
-		"	
+        uni_seq =>
+
+          "	
 		SELECT seq_edits, protein_seq 
 		FROM cds 
 		WHERE unigene_id=?
 		",
 
-	uni_sigp =>
-	
-		"	
+        uni_sigp =>
+
+          "	
 		SELECT * FROM signalp 
 		WHERE 
 			cds_id=
@@ -591,10 +612,10 @@ sub set_sql {
 						AND method='estscan'
 				)
 		",
-	
-	uniq_manual_annot =>
 
-		"	
+        uniq_manual_annot =>
+
+          "	
 		SELECT 
 			sgn_people.sp_person.first_name || ' ' || sgn_people.sp_person.last_name AS annot_contributor,
 			manual_annotations.date_entered AS annot_date_entered,
@@ -613,10 +634,10 @@ sub set_sql {
 			unigene.unigene_id=? 
 			AND annotation_target_type.type_name='clone'
 		",
-	
-	uni_blast_annot =>
-	
-		"
+
+        uni_blast_annot =>
+
+          "
 		SELECT evalue AS blast_annot_evalue, score AS blast_annot_score, 
 			identity_percentage AS blast_annot_identity_percentage, 
 			defline AS blast_annot_content
@@ -632,9 +653,9 @@ sub set_sql {
 		ORDER BY score DESC
 		",
 
-	uni_general =>
-		
-		"SELECT 
+        uni_general =>
+
+          "SELECT 
 			unigene.cluster_no,
 			unigene.contig_no,
 			unigene.nr_members,
@@ -652,18 +673,17 @@ sub set_sql {
 			unigene_id=?
 		",
 
-	uni_consensi =>
-		
-		"	SELECT seq
+        uni_consensi =>
+
+          "	SELECT seq
 			FROM unigene
 			LEFT JOIN unigene_consensi USING (consensi_id)
 			WHERE unigene_id=?
 		",
 
+        uni_singleton =>
 
-	uni_singleton =>
-		
-		"	SELECT COALESCE(substring(seq FROM (hqi_start)::int+1 FOR (hqi_length)::int ),seq)
+"	SELECT COALESCE(substring(seq FROM (hqi_start)::int+1 FOR (hqi_length)::int ),seq)
 			FROM unigene
 			LEFT JOIN unigene_member USING (unigene_id)
 			LEFT JOIN est USING (est_id)
@@ -672,9 +692,9 @@ sub set_sql {
 				unigene.unigene_id=?
 		",
 
-	uni_protein_length =>
+        uni_protein_length =>
 
-		"	
+          "	
 		SELECT LENGTH(protein_seq) AS protein_length 
 		FROM cds 
 		WHERE 	
@@ -682,23 +702,20 @@ sub set_sql {
 			AND preferred='t'
 		",
 
+    };
 
-	};
-
-	
     my $dbh = $self->get_dbh();
     die "Could not connect to database: $!" unless $dbh;
 
-	while(my ($name, $query) = each %{$self->{queries}}){
-		$self->{query_handles}->{$name}=$dbh->prepare($query);
-	}
-}	
+    while ( my ( $name, $query ) = each %{ $self->{queries} } ) {
+        $self->{query_handles}->{$name} = $dbh->prepare($query);
+    }
+}
 
-sub get_sql { 
+sub get_sql {
     my $self = shift;
     my $name = shift;
     return $self->{query_handles}->{$name};
 }
-
 
 1;
