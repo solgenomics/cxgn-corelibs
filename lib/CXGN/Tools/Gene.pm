@@ -497,8 +497,6 @@ sub _check_key {
 sub set_sql { 
     my $self = shift;
     
-#	__PACKAGE__->required_search_paths(qw/public sgn/);
-
     $self->{queries} = { 
 
 	#Arabidopsis Queries
@@ -688,8 +686,11 @@ sub set_sql {
 	};
 
 	
+    my $dbh = $self->get_dbh();
+    die "Could not connect to database: $!" unless $dbh;
+
 	while(my ($name, $query) = each %{$self->{queries}}){
-		$self->{query_handles}->{$name}=$self->get_dbh()->prepare($query);
+		$self->{query_handles}->{$name}=$dbh->prepare($query);
 	}
 }	
 
