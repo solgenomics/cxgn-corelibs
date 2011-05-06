@@ -1,3 +1,4 @@
+package CXGN::Map;
 
 =head1 NAME
 
@@ -31,10 +32,9 @@ This class defines the following functions to be implemented by the subclasses, 
 
 =cut
 
-use strict;
+use Modern::Perl;
 use CXGN::DB::Connection;
 use CXGN::Map::Version;
-package CXGN::Map;
 
 =head2 new
 
@@ -731,8 +731,8 @@ sub get_centromere {
 #    foreach my $k (keys %$lg_hash) { 
 #	print "   $k, $lg_hash->{$k}\n";
 #    }
-    my $north = $lg_hash->{north_centromere};
-    my $south = $lg_hash->{south_centromere};
+    my $north = $lg_hash->{north_centromere} || 0;
+    my $south = $lg_hash->{south_centromere} || 0;
     return ($north, $south, int(($north+$south)/2));
 }
 
@@ -747,5 +747,4 @@ sub get_linkage_group_hash {
     
 }
 
-return 1;
-
+1;
