@@ -85,7 +85,7 @@ sub new {
             croak "PCR experiment not found with ID of '$pcr_experiment_id'";
         }
         while ( my ( $key, $value ) = each %$pcr_hashref ) {
-            $self->{$key} = $value;
+	    $self->{$key} = $value;
         }
         $self->{predicted} ? $self->{predicted} = 't' : $self->{predicted} =
           'f';
@@ -108,7 +108,7 @@ sub new {
         my $sizes;
 
         $q = $dbh->prepare(
-"SELECT stock.stock_id,band_size,multiple_flag FROM sgn.pcr_exp_accession inner join sgn.pcr_product using(pcr_exp_accession_id) inner join public.stock on(pcr_exp_accession.stock_id=stock.stock_id) WHERE enzyme_id is null and pcr_experiment_id=?"
+"SELECT stock.stock_id,band_size,multiple_flag FROM sgn.pcr_exp_accession join sgn.pcr_product using(pcr_exp_accession_id) join public.stock on(pcr_exp_accession.stock_id=stock.stock_id) WHERE enzyme_id is null and pcr_experiment_id=?"
         );
 
         $q->execute( $self->{pcr_experiment_id} );
@@ -437,6 +437,7 @@ sub store_unless_exists {
         values (?,?,?,?,?,?,?)
     ' );
     $pcr_exp_insert->execute(
+        $self->{marker_id},
         $self->{mg_concentration}, $self->{annealing_temp},
         $self->{fwd_primer_id},    $self->{rev_primer_id},
         $self->{primer_type},      $self->{additional_enzymes},
@@ -981,13 +982,13 @@ sub add_pcr_bands_for_stock {
 
 =cut
 
-sub add_pcr_bands_for_accession { 
+sub add_pcr_digest_bands_for_accession { 
     warn "add_pcr_digest_bands_for_accession is deprecated.\n";
     shift->add_pcr_digest_bands_for_stock(@_);
 }
 
 #example use: $created_experiment->add_pcr_digest_bands_string_for_accession('multiple','LA716');
-sub add_pcr_digest_bands_for_accession {
+sub add_pcr_digest_bands_for_stock {
     my $self = shift;
     my ( $bands_string, $stock_name ) = @_;
 
