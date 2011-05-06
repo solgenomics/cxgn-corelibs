@@ -1,18 +1,16 @@
 #!/usr/bin/perl
-use strict;
+use Modern::Perl;
 use CXGN::Genomic::Search::GSS;
 
 use CXGN::DB::Connection;
 use Data::Dumper;
 
-CXGN::DB::Connection->verbose(0);
-
-use Test::More tests => 2;
+use Test::Most tests => 2;
 
 #right now, it only tests the very basics
 
 my $search = CXGN::Genomic::Search::GSS->new;
-ok($search);
+isa_ok($search, 'CXGN::Genomic::Search::GSS');
 
 my $query = $search->new_query;
 $query->seq('length(&t) > 300');
