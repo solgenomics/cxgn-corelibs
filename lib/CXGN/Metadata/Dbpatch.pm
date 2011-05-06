@@ -215,7 +215,7 @@ sub run {
     $self->dbh($dbh);
 
     my $metadata_schema = CXGN::Metadata::Schema->connect(
-	sub { $dbh },
+	sub { $dbh->clone() },
 	{ on_connect_do => ['SET search_path TO metadata;'] },
 	);
     $self->md_schema($metadata_schema);
