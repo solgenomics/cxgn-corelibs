@@ -318,9 +318,6 @@ $defaults =
      #path to the pucebaboon temperature sensor file:
      pucebaboon_file	      => '/data/prod/public/digitemp.out',
 
-     #gbrowse stuff
-     bacs_bio_db_gff_dbname   => 'bio_db_gff',
-
     };
 
 ###
