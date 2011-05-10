@@ -5,7 +5,7 @@ use warnings;
 
 use base 'DBIx::Class';
 
-__PACKAGE__->load_components("Core");
+__PACKAGE__->load_components("InflateColumn::DateTime", "Core");
 __PACKAGE__->table("md_image");
 __PACKAGE__->add_columns(
   "image_id",
@@ -48,6 +48,7 @@ __PACKAGE__->add_columns(
   "modified_date",
   {
     data_type => "timestamp with time zone",
+    inflate_datetime => 1,
     default_value => undef,
     is_nullable => 1,
     size => 8,
@@ -55,6 +56,7 @@ __PACKAGE__->add_columns(
   "create_date",
   {
     data_type => "timestamp with time zone",
+    inflate_datetime => 1,
     default_value => undef,
     is_nullable => 1,
     size => 8,
