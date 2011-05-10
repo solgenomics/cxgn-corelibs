@@ -3,14 +3,23 @@ use strict;
 use warnings;
 use CXGN::DB::Connection;
 use CXGN::DB::SQLWrappers;
-use Test::More tests => 7;
+use Test::Most;
+use Try::Tiny;
 
 my $existing_enzyme = 'EcoRI';
 
 my $dbh = CXGN::DB::Connection->new;
 my $sql = CXGN::DB::SQLWrappers->new($dbh);
 
-my @ids = $sql->select('enzymes',{enzyme_name => $existing_enzyme});
+my @ids;
+try {
+    @ids = $sql->select('enzymes',{enzyme_name => $existing_enzyme});
+    plan tests => 7;
+} catch {
+    plan skip_all => 'We do not have database access for enzymes';
+
+};
+
 
 ok($ids[0],"Existing enzyme $existing_enzyme should have been found, ID $ids[0].");
 
