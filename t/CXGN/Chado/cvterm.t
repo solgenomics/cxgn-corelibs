@@ -55,7 +55,7 @@ is( $parent_names[1], "0044444", "get_parents check 2" );
 
 # now look at the recursive children and parents
 my @recursive_children = $cvterm->get_recursive_children;
-is( @recursive_children , 121 , "get_recursive_children");
+cmp_ok( @recursive_children ,'>=', 121 , "get_recursive_children");
 
 my @recursive_parents = $cvterm->get_recursive_parents;
 is( @recursive_parents , 11 , "get_recursive_parents");
