@@ -6,7 +6,7 @@ use FindBin;
 use File::Temp qw/tempfile/;
 use Data::Dumper;
 
-use Test::More tests => 19;
+use Test::More;
 
 use Bio::Index::Fasta;
 
@@ -15,12 +15,14 @@ use IPC::Cmd qw/can_run/;
 
 BEGIN {
   use_ok( 'CXGN::Cluster' )
-    or BAIL_OUT('could not include the module being tested');
+    or plan skip_all => 'could not include the module being tested';
 
   unless( can_run('phrap.longreads') ){
-    BAIL_OUT('phrap.longreads not available');
+    plan skip_all => 'phrap.longreads not available';
   }
 }
+
+plan tests => 19;
 
 #now start testing with them
 my $set = CXGN::Cluster::ClusterSet->new;
