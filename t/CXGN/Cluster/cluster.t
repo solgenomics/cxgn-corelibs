@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use English;
 
 use FindBin;
 use File::Temp qw/tempfile/;
@@ -12,10 +11,15 @@ use Test::More tests => 19;
 use Bio::Index::Fasta;
 
 use CXGN::Tools::List qw/str_in/;
+use IPC::Cmd qw/can_run/;
 
 BEGIN {
   use_ok( 'CXGN::Cluster' )
     or BAIL_OUT('could not include the module being tested');
+
+  unless( can_run('phrap.longreads') ){
+    BAIL_OUT('phrap.longreads not available');
+  }
 }
 
 #now start testing with them
