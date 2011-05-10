@@ -1,3 +1,4 @@
+package CXGN::Chado::Cvterm;
 
 =head1 NAME
 
@@ -13,7 +14,6 @@ CXGN::Chado::Cvterm - a class to handle controlled vocabulary terms.
 
 =cut
 
-package CXGN::Chado::Cvterm;
 
 use Data::Dumper;
 use CXGN::DB::Connection;
@@ -25,8 +25,11 @@ use CXGN::Phenome::Individual;
 use CXGN::Phenome::Qtl::Tools;
 use List::MoreUtils qw /uniq/;
 use strict;
+use warnings;
 
-use base qw / CXGN::DB::Object CXGN::Chado::Cvterm::CvtermRanking / ;
+# This line does not like Modern::Perl, and incurs:
+# Inconsistent hierarchy during C3 merge of class 'CXGN::Chado::Cvterm': merging failed on parent 'CXGN::DB::Object' at lib/CXGN/Chado/Dbxref.pm line 40.
+use base qw/ CXGN::DB::Object CXGN::Chado::Cvterm::CvtermRanking /;
 
 
 =head1 IMPLEMENTATION OF THE Bio::Ontology::TermI INTERFACE
