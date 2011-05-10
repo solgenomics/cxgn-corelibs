@@ -25,8 +25,8 @@ ok($sth = $foo->get_sql("test"), "Can get statement from handle");
 ok($sth = Foo->get_sql("test"), "Can get statement from class");
 ok($sth->execute(), "Can execute statement");
 my $count;
-diag("Result for query '" . Foo->get_definition("test") . "': $count");
 ok(($count) = $sth->fetchrow_array(), "Fetched result");
+diag("Result for query '" . Foo->get_definition("test") . "': $count");
 
 eval {
     $sth = $foo->get_sql("test_with_arg", "sp_person_id");
