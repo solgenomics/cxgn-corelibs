@@ -85,9 +85,12 @@ __PACKAGE__->belongs_to(
 
 # Created by DBIx::Class::Schema::Loader v0.04005 @ 2009-11-18 10:50:26
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QkbvrAAM/DIr1nKevY4D+g
-# These lines were loaded from '/data/local/cxgn/core/perllib/CXGN/Metadata/Schema/MdFiles.pm' found in @INC.# They are now part of the custom portion of this file# for you to hand-edit.  If you do not either delete# this section or remove that file from @INC, this section# will be repeated redundantly when you re-create this# file again via Loader!
 
-# End of lines loaded from '/data/local/cxgn/core/perllib/CXGN/Metadata/Schema/MdFiles.pm' 
+use File::Spec;
+sub path {
+    my ( $self ) = @_;
+    return File::Spec->catfile( $self->dirname, $self->basename );
+}
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
