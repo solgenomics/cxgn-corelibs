@@ -49,7 +49,7 @@ sub new {
         #find experiment data
         my $pcr_query = $self->{dbh}->prepare( "
             SELECT
-                marker_experiment.marker_id,
+                marker_experiment.marker_id as marker_id,
                 marker_experiment.location_id,
                 pcr_experiment.pcr_experiment_id,
                 primer_id_fwd,
@@ -81,9 +81,9 @@ sub new {
             croak
 "Orphan PCR experiment object created with ID of '$pcr_experiment_id'--there is no marker_experiment entry for this experiment";
         }
-        unless ( $pcr_hashref->{pcr_experiment_id} ) {
-            croak "PCR experiment not found with ID of '$pcr_experiment_id'";
-        }
+#         unless ( $pcr_hashref->{pcr_experiment_id} ) {
+#             croak "PCR experiment not found with ID of '$pcr_experiment_id'";
+#         }
         while ( my ( $key, $value ) = each %$pcr_hashref ) {
 	    $self->{$key} = $value;
         }
@@ -426,6 +426,7 @@ sub store_unless_exists {
 
     my $pcr_exp_insert = $self->{dbh}->prepare( '
         insert into sgn.pcr_experiment (
+            marker_id,
             mg_concentration,
             annealing_temp,
             primer_id_fwd,
@@ -434,7 +435,7 @@ sub store_unless_exists {
             additional_enzymes,
             predicted
         )
-        values (?,?,?,?,?,?,?)
+        values (?,?,?,?,?,?,?,?)
     ' );
     $pcr_exp_insert->execute(
         $self->{marker_id},
