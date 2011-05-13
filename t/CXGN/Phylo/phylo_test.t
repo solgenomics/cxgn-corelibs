@@ -1,6 +1,5 @@
 #!/usr/bin/perl
-use Modern::Perl;
-
+use strict;
 use Test::More qw/no_plan/;
 
 use CXGN::Phylo::Tree;
@@ -8,7 +7,7 @@ use CXGN::Phylo::Node;
 use CXGN::Phylo::Parser;
 use Data::Dumper;
 
-use Carp::Always;
+use Carp;
 
 # expression to test the Phylo packages with
 #
@@ -19,7 +18,7 @@ my $parser = CXGN::Phylo::Parse_newick -> new($newick_expression);
 # test tokenizer
 #
 my @tokens =  $parser -> tokenize($newick_expression);
-#print STDERR "\tTOKENS: ".join("|", @tokens)."\n";
+print STDERR "\tTOKENS: ".join("|", @tokens)."\n";
 is (@tokens, 22, "Token count test");
 
 my $tree = $parser-> parse();
@@ -94,7 +93,7 @@ my $i = 0;
 foreach my $n (@node_list) {
 	next if(scalar $n->get_children() > 0); # skip non-leaves
 	$n->set_species($species_list[$i % 6]);
-	#print "i, species:  $i  ", $n->get_species(), "\n";
+	print "i, species:  $i  ", $n->get_species(), "\n";
 	$i++;
 }
 
@@ -107,28 +106,29 @@ $tree->get_root()->recursive_set_leaf_species_count();
 
 # pick out a node and test the count
 #
-ok(keys %{$tree->{node_hash}},'got node keys');
-
+print "node keys: ", join(" ", keys %{$tree->{node_hash}}), "\n";
 is($tree->get_root()->get_attribute("leaf_species_count"), 6, "subtree leaf species count test");
 #is ($tree->get_node(5)->get_attribute("leaf_species_count"), 3, "subtree leaf species count test");
 
 # test the remove_child function
 #
+print STDERR 'before $tree->copy() ', "\n";
 my $rm_tree = $tree->copy();
+print STDERR 'after $tree->copy() \n';
 my @root_children = $rm_tree->get_root()->get_children();
-$n = $root_children[1];
+my $n = $root_children[1];
 my @children =$n->get_children();
-#print STDERR "\tRemove child\nbefore: ".$n->to_string()."\n";
+print STDERR "\tRemove child\nbefore: ".$n->to_string()."\n";
 is ($n->get_children, 2, "get_children test");
-#print STDERR "\t(Removing child ".$children[0]->get_node_key().")\n";
+print STDERR "\t(Removing child ".$children[0]->get_node_key().")\n";
 $n->remove_child($children[0]);
 is ($n->get_children(), 1, "remove child test");
-#print STDERR "\tafter : ".$n->to_string()."\n";
+print STDERR "\tafter : ".$n->to_string()."\n";
 
 my @root_kids = $rm_tree->get_root()->get_children();
 is (@root_kids, 3, "root children count test");
 $rm_tree->get_root()->remove_child($root_kids[1]);
-#print STDERR "\tRemoving child key=".($root_kids[1]->get_name())."\n"; 
+print STDERR "\tRemoving child key=".($root_kids[1]->get_name())."\n"; 
 #foreach my $c ($rm_tree->get_root()->get_children()) { print "current children = ".$c->get_name()."\n"; }
 is ($rm_tree->get_root()->get_children(), 2, "removed one root child test");
 
@@ -310,7 +310,7 @@ isnt($binary_fail, 1, "Binary tree test: all children count <= 2");
 # recover original tree. Check that rooted and unrooted compares both give 1.
 
 # $tree = CXGN::Phylo::Parse_newick->new("(A:1, (B:1, C:1):1)")->parse();
-$newick_expression = "(A:0.082376,(B:0.196674,((C:0.038209,F:0.354293):0.026742,E:0.094338):0.064142):0.067562,D:0.295612)";
+my $newick_expression = "(A:0.082376,(B:0.196674,((C:0.038209,F:0.354293):0.026742,E:0.094338):0.064142):0.067562,D:0.295612)";
 #my $newick_expression = "(A:1,(B:1,((C:2,F:4):1,E:1):2.02):1,D:2)";
 #my $newick_expression =  "((A:1, D:2):1, (B:1, C:2, E:3):2)";
 #my  $newick_expression = "((A:0.89, D:1.2):1.4, (B:1, C:1.1, E:0.9):1)";
@@ -339,7 +339,7 @@ $tree->get_root()->recursive_implicit_names();
 ##exit();
 
 my $total_branch_length = subtree_branch_length($tree->get_root());
-$new_tree = $tree->copy();
+my $new_tree = $tree->copy();
 my ($new_root, $da) = $new_tree->min_leaf_dist_variance_point();
 #exit;
 
@@ -349,7 +349,7 @@ my $count_compare_rooted2 = 0;
 my $count_compare_unrooted2 = 0;
 my $count_treetesta_ok = 0;
 my $count_treetestb_ok = 0;
-@node_list = $tree->get_root()->recursive_subtree_node_list();
+my @node_list = $tree->get_root()->recursive_subtree_node_list();
 
 my $max_branch_length_change = -1.0;
 my $blc;

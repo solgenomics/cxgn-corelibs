@@ -1882,8 +1882,7 @@ sub update_label_names{
 	my $self = shift;
 	my $show_spec = $self->get_show_species_in_label();
 	foreach my $n ($self->get_all_nodes()) {
-        my $names = $n->get_implicit_names();
-		my $n_leaves = defined $names ? scalar @{$names} : 0;
+		my $n_leaves = scalar @{$n->get_implicit_names()};	
 		my $label_text = $n->get_name();	
 		#	print STDERR "in update_label_names. $n_leaves, [", $n->get_name(), "][", $label_text, "] \n";
 		if ($show_spec) {
