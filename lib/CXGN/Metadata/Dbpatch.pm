@@ -251,14 +251,18 @@ sub run {
     }
 }
 
-
-
 sub init_patch {
+    my $self = shift;
+    print  "Patch name:\n  " .   $self->name . ".\n\nDescription:\n  ".  $self->description . "\nExecuted by:\n  " .  $self->username . "\n\n";
+
 }
 
+has 'sql' => ( is => 'ro', isa => 'Str' );
 sub patch {
-    my $self=shift;
-    warn "You have to override patch in your sub-class!";
+    my $self = shift;
+    local $self->dbh->{AutoCommit} = 0;
+    $self->dbh->do( $self->sql );
+    print "Done.\n";
 }
 
 ###
