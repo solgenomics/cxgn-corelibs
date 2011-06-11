@@ -415,12 +415,7 @@ sub associate_allele {
         warn "Need both allele_id and person_id for linking the stock with an allele!";
         return
     }
-    my $metadata_schema = CXGN::Metadata::Schema->connect(
-        sub { $self->get_schema->storage->dbh },
-        );
-    my $metadata = CXGN::Metadata::Metadbdata->new($metadata_schema);
-    $metadata->set_create_person_id($sp_person_id);
-    my $metadata_id = $metadata->store()->get_metadata_id();
+    my $metadata_id = $self->_new_metadata_id($sp_person_id);
     #check if the allele is already linked
     my $ids =  $self->get_schema->storage->dbh->selectcol_arrayref
         ( "SELECT stock_allele_id FROM phenome.stock_allele WHERE stock_id = ? AND allele_id = ?",
@@ -437,7 +432,62 @@ sub associate_allele {
     return $id;
 }
 
+=head2 associate_owner
 
+ Usage: $self->associate_owner($owner_sp_person_id, $sp_person_id)
+ Desc:  store a stock-owner link in phenome.stock_owner
+ Ret:   a database id
+ Args:  owner_id, sp_person_id
+ Side Effects:  store a metadata row
+ Example:
+
+=cut
+
+sub associate_owner {
+    my $self = shift;
+    my $owner_id = shift;
+    my $sp_person_id = shift;
+    if (!$owner_id || !$sp_person_id) {
+        warn "Need both owner_id and person_id for linking the stock with an owner!";
+        return
+    }
+    my $metadata_id = $self->_new_metadata_id($sp_person_id);
+    #check if the owner is already linked
+    my $ids =  $self->get_schema->storage->dbh->selectcol_arrayref
+        ( "SELECT stock_owner_id FROM phenome.stock_owner WHERE stock_id = ? AND owner_id = ?",
+          undef,
+          $self->get_stock_id,
+          $owner_id
+        );
+    if ($ids) { warn "Owner $owner_id is already linked with stock " . $self->get_stock_id ; }
+#store the owner_id - stock_id link
+    my $q = "INSERT INTO phenome.stock_owner (stock_id, owner_id, metadata_id) VALUES (?,?,?) RETURNING stock_owner_id";
+    my $sth  = $self->get_schema->storage->dbh->prepare($q);
+    $sth->execute($self->get_stock_id, $owner_id, $metadata_id);
+    my ($id) =  $sth->fetchrow_array;
+    return $id;
+}
+
+=head2 _new_metadata_id
+
+Usage: my $md_id = $self->_new_metatada_id($sp_person_id)
+Desc:  Store a new md_metadata row with a $sp_person_id
+Ret:   a database id
+Args:  sp_person_id
+
+=cut
+
+sub _new_metadata_id {
+    my $self = shift;
+    my $sp_person_id = shift;
+    my $metadata_schema = CXGN::Metadata::Schema->connect(
+        sub { $self->get_schema->storage->dbh },
+        );
+    my $metadata = CXGN::Metadata::Metadbdata->new($metadata_schema);
+    $metadata->set_create_person_id($sp_person_id);
+    my $metadata_id = $metadata->store()->get_metadata_id();
+    return $metadata_id;
+}
 ##########
 1;########
 ##########
