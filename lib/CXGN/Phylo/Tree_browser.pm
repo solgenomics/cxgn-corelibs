@@ -154,7 +154,7 @@ sub get_temp_file {
 
     my $tf = $self->{temp_file};
 
-    print STDERR "in Tree_browser::get_temp_file(), temp_file: [", $tf, "]\n";
+    #print STDERR "in Tree_browser::get_temp_file(), temp_file: [", $tf, "]\n";
 
     return $self->{temp_file};
 }
