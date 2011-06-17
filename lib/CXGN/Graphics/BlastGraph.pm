@@ -70,22 +70,22 @@ sub parse_results {
     while (<$results>) {
         if (m/BLASTN/) {
             $makegraph = 1;
-	    #we should create a graph (the input isn't messed up)
+        #we should create a graph (the input isn't messed up)
         }
         if (m/Sbjct:/) {
             $hits = 1;    #there was at least one hit
             last;
-		} elsif ($_ !~ m/Number of sequences better than .*:\s*0$/) {
-			$hits = 1;
-			last;
-		}
+        } elsif ($_ !~ m/Number of sequences better than .*:\s*0$/) {
+            $hits = 1;
+            last;
+        }
     }
     seek $results, 0, 0; #< go back to the beginning
 
     #read through the input thoroughly; parse and graph results if present
     if ( $hits && $makegraph ) {
         my $report = Bio::SearchIO->new( -fh => $results, -format => 'blast' );
-	my $result = $report->next_result;
+    my $result = $report->next_result;
 
         $self->{query_length} = $result->query_length;
         for ( my $i = 0 ; $i < $self->{query_length} ; $i++ ) {
@@ -93,14 +93,14 @@ sub parse_results {
             $self->{num_inclusions_by_base}->[$i] = 0;
         }
 
-	#homology, query and subject characters
+    #homology, query and subject characters
         while ( my $hit = $result->next_hit ) {
             while ( my $hsp = $hit->next_hsp ) {
                 my $i = $hsp->query->start - 1;    #index into query sequence
                 for ( my $j = 0 ; $j < length( $hsp->homology_string ) ; $j++ ) {
-		    my $hch = substr( $hsp->homology_string, $j, 1 );
-		    my $qch = substr( $hsp->query_string,    $j, 1 );
-		    my $sch = substr( $hsp->hit_string,      $j, 1 );
+            my $hch = substr( $hsp->homology_string, $j, 1 );
+            my $qch = substr( $hsp->query_string,    $j, 1 );
+            my $sch = substr( $hsp->hit_string,      $j, 1 );
 
                     if ( $qch eq "-" ) { #gap in query sequence: don't count it
                         $i--;
@@ -109,7 +109,7 @@ sub parse_results {
                         $self->{num_hits_by_base}->[$i]++;
                     }
                     elsif ( $hch eq " " ) {
-			#nonmatch within matched region: counts as three-fifths of a person
+            #nonmatch within matched region: counts as three-fifths of a person
                         $self->{num_inclusions_by_base}->[$i]++;
                     }
                     $i++;
