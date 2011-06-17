@@ -1,15 +1,32 @@
-#!/usr/bin/perl
-
-# BlastGraph: use gd to create a histogram of matches on a unigene BLASTed against a database, by individual base.
-# This is different from the graph created in view_result.pl: that one is made by means of the Bio::GMOD::Blast::Graph package.
-# This package is auxiliary to view_result.pl only.
-#
-# Use this package by calling new() and then get_map_html(). The image created is available a la carte as well,
-# since its name is taken in as a ctor parameter.
-#
-# author: Evan
 package CXGN::Graphics::BlastGraph;
-use strict;
+
+=head1 NAME
+
+CXGN::Graphics::BlastGraph - Create histogram graphics for BLAST reports
+
+BlastGraph: use gd to create a histogram of matches on a unigene BLASTed against
+a database, by individual base.  This is different from the graph created in
+view_result.pl: that one is made by means of the Bio::GMOD::Blast::Graph
+package.  This package is auxiliary to view_result.pl only.
+
+Use this package by calling new() and then get_map_html(). The image created is
+apvailable a la carte as well, since its name is taken in as a ctor parameter.
+
+=head1 SEE ALSO
+
+=head1 AUTHOR
+
+The SGN team
+
+=head1 LICENSE
+
+This library is free software. You can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
+
+use Modern::Perl;
 use GD;
 use Bio::SearchIO;    #BLAST output parser
 
