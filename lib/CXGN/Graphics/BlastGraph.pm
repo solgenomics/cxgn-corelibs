@@ -75,7 +75,10 @@ sub parse_results {
         if (m/Sbjct:/) {
             $hits = 1;    #there was at least one hit
             last;
-        }
+		} elsif ($_ !~ m/Number of sequences better than .*:\s*0$/) {
+			$hits = 1;
+			last;
+		}
     }
     seek $results, 0, 0; #< go back to the beginning
 
