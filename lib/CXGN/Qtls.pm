@@ -107,7 +107,7 @@ sub to_html {
     foreach my $pop_obj (@qtl_pops) {
 	my $pop_id = $pop_obj->get_population_id();
 	my $pop_name = $pop_obj->get_name();
-	$pop_links .= qq |<a href="../phenome/population.pl?population_id=$pop_id">$pop_name</a> <br /> |;     
+	$pop_links .= qq |<a href="/qtl/view/$pop_id">$pop_name</a> <br /> |;     
     }
 
     my $search = 'cvterms_search';
