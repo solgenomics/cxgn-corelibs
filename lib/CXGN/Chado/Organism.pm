@@ -35,6 +35,7 @@ sub new {
     my $class = shift;
     my $schema = shift;
     my $id = shift;
+    $schema = $class->_ensure_dbic( $schema );
 
     ### First, bless the class to create the object and set the schema into the object.
     my $self = $class->SUPER::new($schema);
