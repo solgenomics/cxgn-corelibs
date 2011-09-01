@@ -1005,7 +1005,7 @@ sub get_organism_by_species {
 
 sub get_image_ids {
     my $self = shift;
-    my $q = "SELECT image_id from metadata.md_image_organsim where organism_id=?";
+    my $q = "SELECT image_id from metadata.md_image_organism where organism_id=?";
     my $h = $self->get_dbh()->prepare($q);
     $h->execute($self->get_organism_id);
     my @image_ids = ();
