@@ -71,8 +71,6 @@ sub new {
     return $self;
 }
 
-
-
 =head2 store
 
  Usage: $self->store
@@ -984,7 +982,6 @@ sub get_phenotype_count {
 
 =cut
 
-
 sub get_organism_by_species {
     my $species=shift;
     my $schema= shift;
@@ -995,6 +992,28 @@ sub get_organism_by_species {
     return $organism || undef ;
 }
 
+=head2 get_image_ids
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_image_ids {
+    my $self = shift;
+    my $q = "SELECT image_id from metadata.md_image_organsim where organism_id=?";
+    my $h = $self->get_dbh()->prepare($q);
+    $h->execute($self->get_organism_id);
+    my @image_ids = ();
+    while (my ($image_id) = $h->fetchrow_array()) { 
+	push @image_ids, $image_id;
+    }
+    return @image_ids;
+}
 
 =head2 get_organism_by_tax
 
@@ -1006,7 +1025,6 @@ sub get_organism_by_species {
  Example:
 
 =cut
-
 
 sub get_organism_by_tax {
     my $self=shift;
@@ -1071,6 +1089,7 @@ sub new_with_species {
     }
     return undef;
 }
+
 =head2 has_avail_genome
 
  Usage: my $o=CXGN::Chado::Organism->new()
@@ -1082,6 +1101,7 @@ sub new_with_species {
  Example:
 
 =cut
+
 sub has_avail_genome{
     my $self= shift;
     my $avail_genome;
@@ -1093,6 +1113,7 @@ sub has_avail_genome{
           }
     return $avail_genome;
 }
+
 =head2 has_avail_map
 
  Usage: my $o=CXGN::Chado::Organism->new()
