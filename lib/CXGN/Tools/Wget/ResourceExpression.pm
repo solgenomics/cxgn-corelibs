@@ -109,7 +109,6 @@ sub _evaluate {
   }
   return $destfile;
 }
-use Carp::Always;
 
 our @symbols;
 # parse the expression and return a tree representation of it
