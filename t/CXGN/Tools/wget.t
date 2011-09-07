@@ -4,7 +4,7 @@ use warnings;
 
 use File::Temp qw/tempfile/;
 
-use Test::More tests => 17;
+use Test::More tests => 19;
 use Test::Exception;
 use IO::Pipe;
 
@@ -44,9 +44,17 @@ SKIP: {
     throws_ok( sub { wget_filter( 'cxgn-resource://no-existe!'); }, qr/no cxgn-resource found/,  'wget of nonexistent resource dies');
 
     #try to get one that exists
-    my $file = wget_filter( 'cxgn-resource://test' );
-    ok( -f $file, 'wget of existing resource succeeds' );
-    unlink $file;
+    { my $file = wget_filter( 'cxgn-resource://test' );
+      ok( -f $file, 'wget of existing resource succeeds' );
+      unlink $file;
+    }
+
+    # try a cxgn-wget URL
+    { my $file = wget_filter( 'cxgn-wget://cat(http://google.com)' );
+      ok( -f $file, 'cxgn-wget URL succeeds' );
+      cmp_ok( -s $file, '>=', 1000, 'google homepage is at least 1K' );
+      unlink $file;
+    }
 
     #test test-fetching
     # this should die if unsuccessful, we just need to see that it took a
@@ -56,6 +64,11 @@ SKIP: {
     wget_filter( 'cxgn-resource://tom_pot_combined_ests', {test_only => 1});
     my $fetch_time = time - $begin;
     ok( $fetch_time < 10, 'test fetching seems to be working' );
+
+    wget_filter( 'cxgn-wget://cat( http://google.com, http://solgenomics.net )', { test_only => 1 });
+    $fetch_time = time - $begin;
+    ok( $fetch_time < 10, 'test fetching seems to be working with a cxgn-wget url' );
+
 }
 
 #test caching and aging
@@ -75,14 +88,6 @@ TODO: {
 
 # test wget_filter's concurrency support
 TEST_WGET_FILTER_CONCURRENCY();
-
-{ # test the cxgn-resource unzip() operation
-    CXGN::Tools::Wget::ResourceFile::op_unzip( $tempfile, 0, 't/data/test_zipfile.txt.zip' );
-
-    is slurp( $tempfile ), <<'', 'got the right unzipped contents';
-This is a test zipfile!
-
-}
 
 ######## subs and helpers ##########
 

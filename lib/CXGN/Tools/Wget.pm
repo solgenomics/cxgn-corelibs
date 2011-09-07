@@ -44,7 +44,7 @@ or ftp in ways that aren't directly supported by L<LWP>.
   OR
   my $temp_repeats_file = wget_filter( 'cxgn-resource://all_tomato_repeats' );
 
-=head1 ABOUT CXGN-RESOURCE URLS
+=head1 CXGN-RESOURCE URLS
 
 Sometimes we have a need for making datasets out of several other
 datasets.  For example, say you wanted a combined set of sequences
@@ -68,6 +68,13 @@ But you didn't have to know that.  All you have to know is, define a
 resource in the resource_file table, and wget_filter will build it for
 you when you ask for it by wgetting a URL with the cxgn-resource
 protocol.
+
+=head1 CXGN-WGET URLS
+
+Just like cxgn-resource URLs, except the resource expression is right
+in the URL.  Example:
+
+  cxgn-wget://cat( http://google.com, 
 
 =head1 FUNCTIONS
 
@@ -279,13 +286,18 @@ sub _wget_filter {
     }
     ### cxgn-resource urls
     elsif ( $parsed_url->scheme eq 'cxgn-resource' ) {
+        require CXGN::Tools::Wget::ResourceFile;
 
         confess 'filters do not work with cxgn-resource urls' if @filters;
 
         #look for a resource with that name
         my $resource_name = $parsed_url->authority;
 
-        my ($resource_file,$multiple_resources) = CXGN::Tools::Wget::ResourceFile->search( name => $resource_name );
+        my ( $resource_file, $multiple_resources ) =
+            CXGN::Tools::Wget::ResourceFile->search(
+                name => $resource_name,
+             );
+
         $resource_file or croak "no cxgn-resource found with name '$resource_name'";
         $multiple_resources and croak "multiple cxgn-resource entries found with name '$resource_name'";
 
@@ -295,6 +307,15 @@ sub _wget_filter {
         } else {
             $resource_file->fetch($destfile);
         }
+    }
+    elsif ( $parsed_url->scheme eq 'cxgn-wget' ) {
+        require CXGN::Tools::Wget::ResourceExpression;
+
+        confess 'filters do not work with cxgn-wget urls' if @filters;
+        ( my $expression = "$url" ) =~ s!cxgn-wget://!!;
+
+        CXGN::Tools::Wget::ResourceExpression::fetch_expression( $expression, $destfile );
+
     } else {
         croak "unable to handle URIs with scheme '".($parsed_url->scheme || '')."', URI is '$url'";
     }
@@ -384,219 +405,5 @@ sub vacuum_cache {
     or croak "could not vacuum files in the cache root directory (".cache_root_dir().") : $!";
 }
 
-
-package CXGN::Tools::Wget::ResourceFile;
-use Carp qw/ cluck confess croak / ;
-use File::Temp qw/ tempfile /;
-use CXGN::Tools::Run;
-use base 'CXGN::CDBI::Class::DBI';
-__PACKAGE__->table('resource_file');
-__PACKAGE__->columns(All => qw/ resource_file_id name expression /);
-
-# the SQL table definition is here just for reference
-my $creation_statement = <<EOSQL;
-
-create table resource_file (
-   resource_file_id serial primary key,
-   name varchar(40) not null unique,
-   expression text not null
-);
-
-comment on table resource_file is
-'each row defines a composite dataset, downloadable at the url cxgn-resource://name, that is composed of other downloadable datasets, according to the expression column.  See CXGN::Tools::Wget for the accompanying code'
-;
-
-EOSQL
-
-=head2 fetch
-
-  Usage: $resourcefile->fetch('resource_name');
-  Desc : assemble this composite resource file from its components
-  Args : filename in which to store the complete
-         assembled file
-  Ret  : full path to the complete assembled file
-
-=cut
-
-sub fetch {
-  my ($self,$destfile) = @_;
-
-  my $parse_tree = $self->_parsed_expression; #< dies on parse error
-
-  #now go depth-first down the tree and evaluate it
-  # note that if no dest file is provided, _evaluate()
-  # will make a temp file
-  return _evaluate( $parse_tree, 0, $destfile);
-}
-
-=head2 test_fetch()
-
-  Usage: $resourcefile->test_fetch()
-  Desc : just test this resource and its components, see
-         if they are all fetchable
-  Args : none
-  Ret  : true if successful, false if not
-  Side Effects: dies with an error if fetch was unsuccessful
-
-=cut
-
-sub test_fetch {
-  my ( $self ) = @_;
-
-  my $parse_tree = $self->_parsed_expression; #< dies on parse error
-
-  #now go depth-first down the tree and evaluate it
-  # note that if no dest file is provided, _evaluate()
-  # will make a temp file
-  my $file = _evaluate( $parse_tree, 1);
-  unlink $file;
-  return 1;
-}
-
-#recursively evaluate one of these little parse trees,
-#converting the URLs and function calls into filenames
-sub _evaluate {
-  my ($tree,$testing,$destfile) = @_;
-
-  #if we haven't been given a destination file, make a temporary one
-  $destfile ||= do {
-    my (undef,$f) = tempfile( File::Spec->catfile( CXGN::Tools::Wget->temp_root_dir(), 'cxgn-tools-wget-resourcefile-XXXXXX' ), UNLINK => 0);
-    #cluck "made tempfile $f\n";
-    $f
-  };
-
-  if( $tree->isa('call') ) {
-    # evaluate each argument, then call the function on it
-    # these evaluations are each going to make a temp file
-    my ($func,@args) = @$tree;
-    @args = map _evaluate($_,$testing), @args;
-
-    #now apply the function to each of these files and make a composite file
-    no strict 'refs';
-    "op_$func"->($destfile,$testing,@args);
-
-    #delete each of the argument temp files
-    unlink @args;
-  }
-  else {
-    #fetch the URL pointed to
-    ref $tree and die "assertion failed, parse tree should only have one element here";
-    #warn "fetching $tree\n";
-    CXGN::Tools::Wget::wget_filter($tree,$destfile, {cache => 0, test_only => $testing});
-  }
-  return $destfile;
-}
-
-our @symbols;
-# parse the expression and return a tree representation of it
-sub _parsed_expression {
-  my ($self) = @_;
-  my $exp = $self->expression;
-
-#  $exp = 'foo';
-  #ignore all whitespace
-  $exp =~ s/\s//g;
-
-  #split the expression into symbols
-  @symbols = ($exp =~ /[^\(\),]+|./g);
-
-  my $parse_tree =  _parse_expression();
-
-  return $parse_tree;
-}
-
-
-#recursively parse the expression
-# _parse_expression and _parse_func make a simple recursive-descent parser
-sub _parse_expression {
-  #beginning of a tuple
-  if( $symbols[0] =~ /^\S{2,}$/ ) {
-    if( $symbols[1] && $symbols[1] eq '(' ) {
-      return _parse_func();
-    } else {
-      return shift @symbols;
-    }
-  }
-  else {
-    die "unexpected symbol '$symbols[0]'";
-  }
-}
-sub _parse_func {
-  my $funcname = shift @symbols;
-  my $leftparen = shift @symbols;
-  $leftparen eq '('
-    or die "unexpected symbol '$leftparen'";
-
-  my @args = _parse_expression;
-
-  while( $symbols[0] ne ')' ) {
-    if( $symbols[0] eq ',' ) {
-      shift @symbols;
-      push @args, _parse_expression;
-    }
-    else {
-      die "unexpected symbol '$symbols[0]'";
-    }
-  }
-  shift @symbols; #< shift off the )
-
-  #check that this is a valid function name
-  __PACKAGE__->can("op_$funcname") or die "unknown resource file op '$funcname'";
-
-  return bless [ $funcname, @args ], 'call';
-}
-
-#### FILE OPERATION FUNCTIONS, ADD YOUR OWN BELOW HERE ########
-#
-# 1. each function takes a destination file name, then a list of
-#    filenames as arguments.  It does its operation on the argument files,
-#    and writes to the destination file
-#
-# 2. functions are NOT allowed to modify any files except their
-#    destination file
-#
-# 3. functions should die on error
-
-sub op_gunzip {
-  my ($destfile,$testing,@files) = @_;
-
-#  warn "gunzip ".join(',',@files)."> $destfile\n";
-  unless( $testing ) {
-    my $gunzip = CXGN::Tools::Run->run('gunzip', -c => @files,
-				       { out_file => $destfile }
-				      );
-  } else {
-      open my $f, '>>', $destfile;
-  }
-}
-
-sub op_unzip {
-    my ( $destfile, $testing, @files ) = @_;
-    unless( $testing ) {
-        # trunc the destfile
-        { open my $f, '>', $destfile }
-        # then unzip into it with append
-        `unzip -qc $_ >> $destfile` for @files;
-    } else {
-        open my $f, '>>', $destfile;
-    }
-}
-
-sub op_cat {
-  my ($destfile,$testing,@files) = @_;
-#  warn "cat ".join(',',@files)." > $destfile\n";
-  my $cat = CXGN::Tools::Run->run('cat', @files,
-				  { out_file => $destfile }
-				 );
-}
-
-=head1 AUTHOR
-
-Robert Buels
-
-=cut
-
-###
-1;#do not remove
-###
+1;
 
