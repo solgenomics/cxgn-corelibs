@@ -566,8 +566,20 @@ sub op_gunzip {
 				       { out_file => $destfile }
 				      );
   } else {
-    `touch $destfile`;
+      open my $f, '>>', $destfile;
   }
+}
+
+sub op_unzip {
+    my ( $destfile, $testing, @files ) = @_;
+    unless( $testing ) {
+        # trunc the destfile
+        { open my $f, '>', $destfile }
+        # then unzip into it with append
+        `unzip -qc $_ >> $destfile` for @files;
+    } else {
+        open my $f, '>>', $destfile;
+    }
 }
 
 sub op_cat {

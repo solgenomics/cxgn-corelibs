@@ -4,7 +4,7 @@ use warnings;
 
 use File::Temp qw/tempfile/;
 
-use Test::More tests => 16;
+use Test::More tests => 17;
 use Test::Exception;
 use IO::Pipe;
 
@@ -76,7 +76,13 @@ TODO: {
 # test wget_filter's concurrency support
 TEST_WGET_FILTER_CONCURRENCY();
 
+{ # test the cxgn-resource unzip() operation
+    CXGN::Tools::Wget::ResourceFile::op_unzip( $tempfile, 0, 't/data/test_zipfile.txt.zip' );
 
+    is slurp( $tempfile ), <<'', 'got the right unzipped contents';
+This is a test zipfile!
+
+}
 
 ######## subs and helpers ##########
 
