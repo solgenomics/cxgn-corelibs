@@ -73,32 +73,13 @@ TODO: {
     ok( 0 );
 }
 
-package TestWebServer;
-use HTTP::Server::Simple::CGI;
-use base qw(HTTP::Server::Simple::CGI);
-use strict;
-use warnings;
-my $hits = 0;
-$|++;
-
-sub handle_request {
-    my $self = shift;
-    my $cgi  = shift;
-
-    print "HTTP/1.0 200 OK\r\n";
-    respond($cgi);
-}
-
-sub respond {
-    my $cgi = shift;
-    return if !ref $cgi;
-
-    $hits++;
-    print $cgi->header(), "$hits\n";
-}
-package main;
-
+# test wget_filter's concurrency support
 TEST_WGET_FILTER_CONCURRENCY();
+
+
+
+######## subs and helpers ##########
+
 
 sub TEST_WGET_FILTER_CONCURRENCY {
     # We don't want to use any previously-generated cache
@@ -133,3 +114,33 @@ sub TEST_WGET_FILTER_CONCURRENCY {
         POSIX::exit(0);
     }
 }
+
+
+BEGIN {
+
+ package TestWebServer;
+ use HTTP::Server::Simple::CGI;
+ use base qw(HTTP::Server::Simple::CGI);
+ use strict;
+ use warnings;
+ my $hits = 0;
+ $|++;
+
+ sub handle_request {
+     my $self = shift;
+     my $cgi  = shift;
+
+     print "HTTP/1.0 200 OK\r\n";
+     respond($cgi);
+ }
+
+ sub respond {
+     my $cgi = shift;
+     return if !ref $cgi;
+
+     $hits++;
+     print $cgi->header(), "$hits\n";
+ }
+
+}
+
