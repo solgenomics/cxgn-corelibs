@@ -924,22 +924,19 @@ sub hard_delete {
     my $self = shift;
 
     if ( $self->get_original_filename && $self->pointer_count() < 2) {
-	foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') {
-	    my $filename = $self->get_filename($size);
-	    unlink $filename;
-	}
+        foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') {
+            my $filename = $self->get_filename($size);
+            unlink $filename;
+        }
     }
 
     eval {
-
-        $self->get_dbh->do( <<'', undef, $self->get_image_id );
-DELETE from md_image WHERE image_id = ?
-
+        $self->get_dbh->do( 'delete from md_image where image_id = ?', undef, $self->get_image_id );
     };
-    if ($@) {
-	warn "Probably insufficient privileges to remove images from db table.";
-    }
 
+    if ($@) {
+        warn "Error in hard_delete: $@";
+    }
 
 }
 
