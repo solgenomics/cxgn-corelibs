@@ -38,9 +38,9 @@ EOSQL
 =cut
 
 sub fetch {
-  my ($self,$destfile) = @_;
+  my ( $self, $destfile ) = @_;
 
-  return CXGN::Tools::Wget::ResourceExpression::fetch_expression( $self->expression );
+  return CXGN::Tools::Wget::ResourceExpression::fetch_expression( $self->expression, $destfile );
 }
 
 =head2 test_fetch()
