@@ -87,9 +87,15 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QkbvrAAM/DIr1nKevY4D+g
 
 use File::Spec;
+use File::stat ();
 sub path {
     my ( $self ) = @_;
     return File::Spec->catfile( $self->dirname, $self->basename );
+}
+
+sub stat {
+    my ( $self ) = @_;
+    return File::stat::stat( $self->path );
 }
 
 

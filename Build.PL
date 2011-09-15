@@ -104,6 +104,7 @@ my $build = Module::Build->new(
         'File::Flock' => 0,
         'File::NFSLock' => 0,
 	'File::Path' => '2.08',
+        'File::stat' => 0,
         'File::Temp' => 0,
         'GD' => 0,
         'Graph' => 0,
