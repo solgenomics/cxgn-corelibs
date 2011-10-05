@@ -37,6 +37,7 @@ use CXGN::DB::Connection;
 sub new {
     my $class = shift;
     my ( $dbh, $pcr_experiment_id ) = @_;
+
     my $self = bless( {}, $class );
     if ( CXGN::DB::Connection::is_valid_dbh($dbh) ) {
         $self->{dbh} = $dbh;
@@ -52,10 +53,10 @@ sub new {
                 marker_experiment.marker_id as marker_id,
                 marker_experiment.location_id,
                 pcr_experiment.pcr_experiment_id,
-                primer_id_fwd,
-                primer_id_rev,
-                primer_id_pd,
-                primer_type,
+                -- primer_id_fwd,
+                -- primer_id_rev,
+                -- primer_id_pd,
+                -- primer_type,
                 mg_concentration,
                 annealing_temp,
                 additional_enzymes,
@@ -84,22 +85,40 @@ sub new {
 #         unless ( $pcr_hashref->{pcr_experiment_id} ) {
 #             croak "PCR experiment not found with ID of '$pcr_experiment_id'";
 #         }
+
         while ( my ( $key, $value ) = each %$pcr_hashref ) {
 	    $self->{$key} = $value;
         }
         $self->{predicted} ? $self->{predicted} = 't' : $self->{predicted} =
           'f';
 
-        #get primers, if they are present
-        my $q =
-          $dbh->prepare('select sequence from sequence where sequence_id=?');
-        $q->execute( $self->{primer_id_fwd} );
-        ( $self->{fwd_primer} ) = $q->fetchrow_array();
-        $q->execute( $self->{primer_id_rev} );
-        ( $self->{rev_primer} ) = $q->fetchrow_array();
+	# retrieve the sequence through the new pcr_experiment_sequence table
+	my $seqq = "SELECT sequence_id, sequence, name FROM sgn.pcr_experiment_sequence join sgn.sequence using(sequence_id) join public.cvterm on (type_id=cvterm_id) where pcr_experiment_id=?";
 
-        $q->execute( $self->{primer_id_pd} );
-        ( $self->{dcaps_primer} ) = $q->fetchrow_array();
+	my $seqh = $self->{dbh}->prepare($seqq);
+	$seqh->execute($pcr_experiment_id);
+
+	while (my ($sequence_id, $sequence, $name) = $seqh->fetchrow_array) { 
+	    $self->{sequences}->{$name} = $sequence;
+
+	    #backwards compatibility
+	    if ($name eq 'forward_primer') { $self->{fwd_primer} = $sequence; }
+	    if ($name eq 'reverse_primer') { $self->{rev_primer} = $sequence; }
+	    if ($name eq 'dCAPs_primer')   { $self->{dcaps_primer} = $sequence; }
+	}
+	    
+	
+	
+        #get primers, if they are present
+ #        my $q =
+#           $dbh->prepare('select sequence from sequence where sequence_id=?');
+#         $q->execute( $self->{primer_id_fwd} );
+#         ( $self->{fwd_primer} ) = $q->fetchrow_array();
+#         $q->execute( $self->{primer_id_rev} );
+#         ( $self->{rev_primer} ) = $q->fetchrow_array();
+
+#         $q->execute( $self->{primer_id_pd} );
+#         ( $self->{dcaps_primer} ) = $q->fetchrow_array();
 
 
 
@@ -107,7 +126,7 @@ sub new {
         #get pcr products
         my $sizes;
 
-        $q = $dbh->prepare(
+        my $q = $dbh->prepare(
 "SELECT stock.stock_id,band_size,multiple_flag FROM sgn.pcr_exp_accession join sgn.pcr_product using(pcr_exp_accession_id) join public.stock on(pcr_exp_accession.stock_id=stock.stock_id) WHERE enzyme_id is null and pcr_experiment_id=?"
         );
 
@@ -1211,7 +1230,7 @@ sub store_sequence {
 
  Usage: $self->get_sequences
  Desc:  find the sequences associated with the marker, and their types
- Ret:   hashref {$sequence_type => [$seq1, $seq2] }
+  Ret:   hashref {$sequence_type => [$seq1, $seq2] }
  Args:  none
  Side Effects: none
 
