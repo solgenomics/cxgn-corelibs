@@ -540,6 +540,7 @@ sub _do_search {
       $results->push( $this->row_to_object(@$row) );
     }
     $sth->finish;
+    $dbconn->rollback unless $dbconn->dbh_param('AutoCommit');
   }
 
   ## get the count of total search results ##
@@ -600,6 +601,7 @@ sub _searchresult_cache_add {
       }
       $count ||= 0;
       $countcache{$cachekey} = $count if ( time() - $btime > $slow_query_threshold );
+      $dbconn->rollback unless $dbconn->dbh_param('AutoCommit');
     }
     $count;
   }
