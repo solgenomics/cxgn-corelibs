@@ -59,8 +59,8 @@ sub new {
     my $id = shift;
     my $self = $class->SUPER::new($dbh);
 
-    if ($id=~/SGN-*U(\d+)/i) { 
-	$id = $1; 
+    if ( $id && $id=~/SGN-*U(\d+)/i) {
+	$id = $1;
     }
 
     if ($id) { 

@@ -742,9 +742,8 @@ sub get_est_count {
 sub get_clone_count {
     my $self = shift;
     
-    my $sgn = $self->get_dbh()->qualify_schema("sgn");
     my $query = "SELECT count(*) FROM 
-                    $sgn.clone 
+                    sgn.clone 
                  WHERE library_id=?";
     my $sth = $self->get_dbh()->prepare($query);
     $sth->execute($self->get_library_id());
