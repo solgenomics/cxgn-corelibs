@@ -409,6 +409,7 @@ sub process_image {
         die "process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
     }
 
+    make_path( $self->get_image_dir );
     my ($processing_dir) =
       File::Temp::tempdir( "process_XXXXXX",
         DIR => $self->get_image_dir() );
