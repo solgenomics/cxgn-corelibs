@@ -227,6 +227,7 @@ sub to_html {
 
   my $marker_checked = $scalars{has_marker} ? ' checked="checked"' : '';
 
+  no warnings 'uninitialized';
   my $table1 = info_table_html( 'Unigene Identifier'      =>
 				qq|<table><tr><td><input type="text" value="$webvalue{sequence_name}" name="$pnames{sequence_name}" size="18" /></td><td style="color: gray">SGN-U1234<br />or CGN-U124510</td></tr></table>|,
 				'Includes member'  =>
