@@ -264,6 +264,8 @@ sub to_html
 	my %scalars = $self->_to_scalars();
 	my ($order_by_param) = $self->order_by(); #take the first key of the returned hash -- make sure we're in list context
 	#autofill stuff for the sort-by options
+
+        no warnings 'uninitialized';
 	my %selected;
 	foreach my $sort_option (qw/member_count family_build_id/)
 	{
