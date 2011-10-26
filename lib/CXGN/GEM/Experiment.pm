@@ -217,7 +217,7 @@ sub new_by_name {
 
 	unless (defined $exper_row) {                
 
-	    cluck("\nDATABASE OUTPUT WARNING: experiment_name ($name) for $class->new_by_name() DON'T EXISTS INTO THE DB.\n" );
+	    warn("\nWARNING: experiment_name ($name) for $class->new_by_name() does not exist in the database.\n" );
 	    
 	    ## If do not exists any experimental design with this name, it will return a warning and it will create an empty
             ## object with the exprimental design name set in it.
