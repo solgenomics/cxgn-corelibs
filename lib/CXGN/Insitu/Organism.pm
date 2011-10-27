@@ -118,7 +118,6 @@ sub get_all_organisms {
     my @names = ();
     my @ids = ();
     while (my($name, $organism_id) = $sth->fetchrow_array()) { 
-	print STDERR "get_all_organisms: $name, $organism_id\n";
 	push @names, $name;
 	push @ids, $organism_id;
     }
