@@ -1,15 +1,14 @@
-#!usr/bin/perl
-use CXGN::DB::Connection;
 package CXGN::Glossary;
+use CXGN::DB::Connection;
 
 =head1 NAME
 
 CXGN::Glossary  -- Helper functions for querying the glossary database.
 
 =head1 SYNOPSIS
-    
-    Allows a list of definitions for a term to be searched and for the first
-    of those definitions to be put into a toolip.
+
+Allows a list of definitions for a term to be searched and for the first of
+those definitions to be put into a toolip.
 
 =head1 FUNTIONS
 
@@ -29,7 +28,7 @@ our @ISA;
 our @EXPORT_OK;
 
 sub get_definitions{
-    my $dbh=CXGN::DB::Connection->new({dbschema=>"public"});
+    my $dbh=CXGN::DB::Connection->new();
     my $term = $_[0];
     $term = lc($term);
     $term =~ s/\s+/ /g;
