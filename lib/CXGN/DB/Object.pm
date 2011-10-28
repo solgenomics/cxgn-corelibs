@@ -39,7 +39,7 @@ This class implements the following functions:
 
 use strict;
 
-use Carp qw/cluck/;
+use Carp qw/cluck carp/;
 use CXGN::Debug;
 
 use base qw /CXGN::Debug /;
@@ -77,7 +77,7 @@ sub new {
         }
     }
     else {
-        cluck "A parameter is required in CXGN::DB::Object constructor";
+        carp "A parameter is required in CXGN::DB::Object constructor";
 
     }
     return $self;
