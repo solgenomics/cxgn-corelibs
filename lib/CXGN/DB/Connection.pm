@@ -219,7 +219,7 @@ sub new_no_connect {
   }
 
   my $autocommit_default = 0;
-  if( any { defined $ENV{$_} } qw| MOD_PERL GATEWAY_INTERFACE CATALYST_ENGINE | ) {
+  if( any { defined $ENV{$_} } qw| MOD_PERL GATEWAY_INTERFACE CATALYST_ENGINE SERVER_SOFTWARE PATH_INFO HTTP_USER_AGENT CONTENT_LENGTH WEB_PROJECT_NAME | ) {
       $autocommit_default = 1; #if we are running in the website, run with autocommit on. otherwise, don't
   }
 
