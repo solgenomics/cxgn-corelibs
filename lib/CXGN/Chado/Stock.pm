@@ -141,7 +141,7 @@ sub exists_in_database {
  Desc:  find the organism object of this stock
  Ret:   L<Bio::Chado::Schema::Organism::Organism> object
  Args:  none
- Side Effects: none 
+ Side Effects: none
  Example:
 
 =cut
@@ -152,6 +152,50 @@ sub get_organism {
         return $bcs_stock->organism;
     }
     return undef;
+}
+
+
+=head2 get_species
+
+ Usage: $self->get_species
+ Desc:  find the species name of this stock , if one exists
+ Ret:   string
+ Args:  none
+ Side Effects: none
+ Example:
+
+=cut
+
+sub get_species {
+    my $self = shift;
+    my $organism = $self->get_organism;
+    if ($organism) {
+        return $organism->species;
+    }else { return undef; }
+}
+
+=head2 set_species
+
+Usage: $self->set_species
+ Desc:  set organism_id for the stock using organism.species name
+ Ret:   nothing
+ Args:  species name (case insensitive)
+ Side Effects: sets the organism_id for the stock
+ Example:
+
+=cut
+
+sub set_species {
+    my $self = shift;
+    my $species_name = shift; # this has to be EXACTLY as stored in the organism table
+    my $organism = $self->get_schema->resultset('Organism::Organism')->search(
+        { 'lower(species)' => { like =>  lc($species_name) } } )->single ; #should be 1 result
+    if ($organism) {
+        $self->get_object_row->set_column(organism_id => $organism->organism_id );
+    }
+    else {
+        warn "NO organism found for species name $species_name!!\n";
+    }
 }
 
 =head2 get_type
