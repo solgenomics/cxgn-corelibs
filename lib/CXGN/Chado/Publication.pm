@@ -48,6 +48,29 @@ sub new {
     return $self;
 }
 
+
+=head2 bcs_pub
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub bcs_pub {
+    my $self = shift;
+    require Bio::Chado::Schema;
+    my $schema =  Bio::Chado::Schema->connect( sub { $self->get_dbh->get_actual_dbh->clone },
+					{ on_connect_do => ['SET search_path TO public'] },
+        );
+    my $pub = $schema->resultset("Pub::Pub")->find( { pub_id => $self->get_pub_id } );
+    return $pub;
+}
+
+
 sub fetch {
     my $self = shift;
 
