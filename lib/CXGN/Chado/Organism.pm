@@ -1107,12 +1107,19 @@ sub has_avail_genome{
     my $self= shift;
     my $avail_genome;
 
-    if (defined($self->get_ploidy()) ||defined( $self->get_genome_size()) || defined($self->get_chromosome_number())){
-        $avail_genome= 'yes';
-          } else {
-           $avail_genome= 'no';
-          }
-    return $avail_genome;
+#    if (defined($self->get_ploidy()) ||defined( $self->get_genome_size()) || defined($self->get_chromosome_number())){
+    
+    my $type_id=$self->get_schema->get_cvterm_or_die('local:organism_sequencing_metadata')->cvterm_id();
+    my $seq_metadata = $self->get_schema()->resultset('Organism::Organismprop')->search( organism_id=>$self->get_organism_id(), type_id=>$type_id)->first;
+    my $seq_metadata_id;
+    if ($seq_metadata) { 
+	$seq_metadata_id=$seq_metadata->organism_id();
+    }
+    if ($seq_metadata_id) { 
+        return 1;
+    } else {
+	return 0;
+    }
 }
 
 =head2 has_avail_map
