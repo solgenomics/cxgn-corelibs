@@ -202,15 +202,15 @@ sub fetch {
             #
             my $trimmed = substr($raw, $hqi_start, $hqi_length);
             $self->set_sequence($trimmed);
+
+            if( defined $scores ) {
+                my @scores = split /\s+/, $scores;
+                my $score_string = join " ", (@scores[$hqi_start..($hqi_length+$hqi_start)]);
+
+                #print STDERR "length raw: ".length($raw)." START: $hqi_start LENGTH: $hqi_length\n";
+                $self->set_scores($score_string);
+            }
         }
-
-        no warnings 'uninitialized';
-	my @scores = split /\s+/, $scores;
-	my $score_string = join " ", (@scores[$hqi_start..($hqi_length+$hqi_start)]);
-
-	#print STDERR "length raw: ".length($raw)." START: $hqi_start LENGTH: $hqi_length\n";
-	$self->set_scores($score_string);
-
     }
 
     # get the estscan predicted peptide and cds sequences
@@ -221,7 +221,7 @@ sub fetch {
     $estscan_h->execute($self->get_unigene_id());
     my ($cds_id, $seq_text, $protein_seq, $forward_reverse, $run_id, $score) = 
 	$estscan_h->fetchrow_array();
-    
+
     $self->set_estscan_protein($protein_seq);
     $self->set_estscan_cds($seq_text);
     $self->set_estscan_direction($forward_reverse);
