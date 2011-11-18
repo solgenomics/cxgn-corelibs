@@ -190,17 +190,21 @@ sub fetch {
 	my $est_q = "SELECT est.seq as raw, est.qscore, qc_report.hqi_start, hqi_length
                    
                      FROM sgn.unigene_member JOIN sgn.est USING (est_id)
-                     JOIN sgn.qc_report ON (est.est_id=qc_report.est_id) 
+                LEFT JOIN sgn.qc_report ON (est.est_id=qc_report.est_id)
                     WHERE sgn.unigene_member.unigene_id=?";
 	my $est_h = $self->get_dbh()->prepare($est_q);
 	$est_h->execute($self->get_unigene_id());
 	my ($raw, $scores, $hqi_start, $hqi_length) = $est_h->fetchrow_array();
+        $self->set_sequence( $raw );
 
-	# tri both sequence and scores...
-	#
-	my $trimmed = substr($raw, $hqi_start, $hqi_length);
-	$self->set_sequence($trimmed);
+        if( defined $hqi_start && defined $hqi_length ) {
+            # trim both sequence and scores...
+            #
+            my $trimmed = substr($raw, $hqi_start, $hqi_length);
+            $self->set_sequence($trimmed);
+        }
 
+        no warnings 'uninitialized';
 	my @scores = split /\s+/, $scores;
 	my $score_string = join " ", (@scores[$hqi_start..($hqi_length+$hqi_start)]);
 
