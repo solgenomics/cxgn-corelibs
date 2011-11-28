@@ -695,13 +695,25 @@ sub _assemble_clone_ident_agi_bac {
 }
 sub _assemble_clone_ident_intl_clone {
   my ($parsed) = @_;
+
   _validate_parsed($parsed);
-  return
-    $parsed->{lib}
-    .'-'
-    .($parsed->{plate}+0)
-    .$parsed->{row}
-    .($parsed->{col}+0)
+
+  my $lib = {
+      'SL_MboI'  => 'slm',
+      'LE_HBa'   => 'hba',
+      'SL_EcoRI' => 'sle',
+      'SL_FOS'   => 'slf',
+  }->{ $parsed->{lib} } || $parsed->{lib};
+
+  $lib =~ s/^[a-z]{2}_//i;
+
+  return lc join '', (
+      $lib,
+      '-',
+      $parsed->{plate}+0,
+      $parsed->{row},
+      $parsed->{col}+0,
+   );
 }
 sub _assemble_clone_ident_sanger_bac {
   my ($parsed) = @_;

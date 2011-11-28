@@ -125,7 +125,7 @@ BEGIN {
 			  clonetype => 'bac',
 			  match     => 'LE_HBa-36C23',
 			},
-			'LE_HBa-36C23',
+			'hba-36c23',
 		      ],
 		      [ 'SL_fos-36C23' =>
 			intl_clone =>
@@ -136,7 +136,7 @@ BEGIN {
 			  clonetype => 'fosmid',
 			  match     => 'SL_fos-36C23',
 			},
-			'SL_FOS-36C23',
+			'slf-36c23',
 		      ],
 		      [ 'C02HBa0155c04',
 			agi_bac_with_chrom =>
