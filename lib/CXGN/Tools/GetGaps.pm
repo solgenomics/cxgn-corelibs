@@ -38,6 +38,11 @@ has 'fasta_file' => (is => 'rw',
 		     traits=>['Getopt'],
     );
 
+has 'format'     => (is => 'rw', 
+		     isa => 'Str',
+		     traits => [ 'Getopt' ],
+		     default => 'txt',
+    );
 
 
 sub run { 
@@ -73,8 +78,14 @@ sub run {
 		my $gap_size = $n_region_end - $n_region_start;
 		if ($gap_size >= $self->min_gap_size()) { 
 
-		    print "$id\_"; printf "%06d", "$gap_no"; print "\t$id\t$n_region_start\t$n_region_end\t$gap_size\n";
-		    $gap_no++;
+		    if ($self->format=~ /gff/i) { 
+			print join "\t", ($id, "getgaps", "gap", $n_region_start, $n_region_end, 1, ".", ".", "ID=$id\_$gap_no;Parent=$id"); print "\n";
+		    }
+		    else { 
+			
+			print "$id\_"; printf "%06d", "$gap_no"; print "\t$id\t$n_region_start\t$n_region_end\t$gap_size\n";
+		    }
+			$gap_no++;
 
 		}
 
