@@ -341,29 +341,36 @@ sub primer_unigene_matches {
 
 sub ssr_data {
     my $self = shift;
+
+    # get legacy information
+
     my $ssr_sth = $self->{dbh}->prepare("SELECT s.ssr_id, s.ssr_name, et.trace_name, s.start_primer, s.end_primer, s.pcr_product_ln, s.ann_high, s.ann_low FROM ssr AS s LEFT JOIN seqread AS et ON s.est_read_id=et.read_id where marker_id=?");
     
     $ssr_sth->execute($self->marker_id());
     if(my ($ssr_id, $ssr_name, $est_trace, $start_primer, $end_primer, $pcr_length, $ann_high, $ann_low) = $ssr_sth->fetchrow_array)  {
 	
 	my $mapped = '';
-# 	  unless (defined($ssr_page)) {$ssr_page='';}
-# 	  unless (defined($marker_id)) {$marker_id='';}
-# 	  unless (defined($ssr_name)) {$ssr_name='';}
-# 	  unless (defined($est_trace)) {$est_trace='';}
-# 	  unless (defined($est_page)) {$est_page='';}
-# 	  unless (defined($ssr_id)) {$ssr_id='';}
-# 	  unless (defined($start_primer)) {$start_primer='';}
-# 	  unless (defined($end_primer)) {$end_primer='';}
-# 	  unless (defined($pcr_length)) {$pcr_length='';}
-# 	  unless (defined($ann_low)) {$ann_low='';}
-# 	  unless (defined($ann_high)) {$ann_high='';}
-# 	  unless (defined($mapped)) {$mapped='';}    
-	
-	return $ssr_id, $ssr_name, $est_trace, $start_primer, $end_primer, $pcr_length, $ann_high, $ann_low;
-	
-	
+	return ($ssr_id, $ssr_name, $est_trace, $start_primer, $end_primer, $pcr_length, $ann_high, $ann_low);	
     }
+
+    # get information from the new way to store things (sequence table)
+    my $ssr_sth = $self->{dbh}->prepare("SELECT sequence, cvterm.name as seq_type, marker_experiment.protocol FROM sgn.marker_alias join sgn.marker_experiment using(marker_id) JOIN sgn.pcr_experiment using(pcr_experiment_id) JOIN sgn.pcr_experiment_sequence using(pcr_experiment_id) join sgn.sequence using(sequence_id) JOIN cvterm on (type_id=cvterm_id) where marker_alias.marker_id=?");
+					
+    $ssr_sth->execute($self->marker_id());
+
+    my %seqs;
+    my $protocol_name;
+    while (my ($seq, $seq_type, $protocol) = $ssr_sth->fetchrow_array()) { 
+	$seqs{$seq_type} = $seq;
+	$protocol_name = $protocol;
+    }
+
+    if ($protocol_name=~/ssr/i) { 
+	print STDERR "\n\n\n:-)\n\n\n";
+
+	return (0, $self->get_name(), 0, $seqs{forward_primer}, $seqs{reverse_primer}, 0, undef, undef, undef);
+    }
+    
 }
 
 =head2 ssr_motif_info
@@ -382,6 +389,8 @@ sub ssr_data {
 sub ssr_motif_info { 
     my $self = shift;
     my $ssr_id = shift;
+
+    #legacy data
     my $repeats_sth = $self->{dbh}->prepare("SELECT repeat_motif, reapeat_nr FROM ssr_repeats WHERE ssr_id=?");
     $repeats_sth->execute($ssr_id);
     my @motif_info = ();
@@ -389,7 +398,16 @@ sub ssr_motif_info {
 	push @motif_info, [ $motif, $r_nr ];
     }
 
+
+    #data from sequence table
+    my $repeats_sth = $self->{dbh}->prepare("SELECT sequence FROM sgn.sequence JOIN sgn.pcr_experiment_sequence using(sequence_id) JOIN cvterm on (type_id=cvterm_id) JOIN sgn.pcr_experiment on (pcr_experiment_sequence.pcr_experiment_id=pcr_experiment.pcr_experiment_id) WHERE marker_id=? and name='repeat_unit'");
+    $repeats_sth->execute($self->marker_id());
+    push @motif_info, [ $repeats_sth->fetchrow_array() ];
+
+   
     return @motif_info;
+
+    
     
 }
 
