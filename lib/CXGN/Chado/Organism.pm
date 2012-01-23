@@ -374,9 +374,16 @@ sub get_organismprop {
     my $self=shift;
     my $name = shift;
 
+    my $type_rs = $self->get_resultset("Cv::Cvterm")->search( { name => $name } )->first();
+    if (!$type_rs) { 
+	print STDERR "TYPE $name NOT found as a cvterm\n";
+	return undef;
+    }
+    my $type_id = $type_rs->get_column('cvterm_id');
+    
     my ($prop)= $self->get_resultset("Organism::Organismprop")->search(
 	{ organism_id => $self->get_organism_id(),
-	  type_id  => $self->get_resultset("Cv::Cvterm")->search( { name => $name } )->first()->get_column('cvterm_id')
+	  type_id  => $type_id,
 	});
     if ($prop) {
 	my $value= $prop->get_column('value');
