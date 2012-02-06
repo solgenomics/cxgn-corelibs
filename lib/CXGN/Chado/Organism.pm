@@ -957,13 +957,9 @@ sub get_phenotype_count {
 
    my $self = shift;
 
-   my $query=" SELECT COUNT (phenome.individual.individual_id)
-                 FROM phenome.individual
-                 JOIN sgn.common_name using (common_name_id)
-                 JOIN sgn.organismgroup  on (common_name.common_name = organismgroup.name )
-                 JOIN sgn.organismgroup_member USING (organismgroup_id)
-                 JOIN public.organism USING (organism_id)
-                 WHERE individual.obsolete = 'f' AND public.organism.organism_id=?";
+   my $query=" SELECT COUNT (stock_id)
+                 FROM public.stock
+                 WHERE stock.organism_id=?";
 
    my $sth=$self->get_dbh()->prepare($query);
    $sth->execute($self->get_organism_id() );
