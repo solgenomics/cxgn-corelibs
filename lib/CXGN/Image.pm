@@ -1,7 +1,7 @@
 
 =head1 NAME
 
-Image.pm - a class for accessing the md_metadata.image table.
+CXGN::Image - a class for accessing the md_metadata.image table.
 
 
 =head1 DESCRIPTION
