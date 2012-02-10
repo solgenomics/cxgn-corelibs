@@ -555,7 +555,7 @@ sub process_image {
 
     $self->set_image_id($image_id);
 
-    $self->store();
+    $image_id = $self->store();
 
     return $image_id;
 
