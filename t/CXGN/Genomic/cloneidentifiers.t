@@ -7,6 +7,20 @@ use Text::Glob qw/ match_glob /;
 
 BEGIN {
   our @parse_tests = (
+		      [ 'C00SLf0082H20.2' =>
+		        versioned_bac_seq =>
+		        { lib       => 'SL_FOS',
+		          plate     => 82,
+		          chr       => 'unmapped',
+		          row       => 'H',
+		          col       => 20,
+		          clonetype => 'fosmid',
+                          version   => 2,
+		          match     => 'C00SLf0082H20.2',
+                          clone_name => 'C00SLf0082H20',
+		        },
+		        'C00SLf0082H20.2',
+		      ],
 		      [ C11HBa119D16 =>
 			agi_bac_with_chrom =>
 			{ lib       => 'LE_HBa',
