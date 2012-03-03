@@ -1,41 +1,79 @@
 package SGN::Schema::BlastDbGroup;
 
+# Created by DBIx::Class::Schema::Loader
+# DO NOT MODIFY THE FIRST PART OF THIS FILE
+
 use strict;
 use warnings;
 
-use base 'DBIx::Class';
+use base 'DBIx::Class::Core';
 
-__PACKAGE__->load_components("Core");
+
+=head1 NAME
+
+SGN::Schema::BlastDbGroup
+
+=cut
+
 __PACKAGE__->table("blast_db_group");
+
+=head1 ACCESSORS
+
+=head2 blast_db_group_id
+
+  data_type: 'integer'
+  is_auto_increment: 1
+  is_nullable: 0
+  sequence: 'blast_db_group_blast_db_group_id_seq'
+
+=head2 name
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 50
+
+=head2 ordinal
+
+  data_type: 'integer'
+  is_nullable: 1
+
+=cut
+
 __PACKAGE__->add_columns(
   "blast_db_group_id",
   {
-    data_type => "integer",
-    default_value => "nextval('blast_db_group_blast_db_group_id_seq'::regclass)",
+    data_type         => "integer",
     is_auto_increment => 1,
-    is_nullable => 0,
-    size => 4,
+    is_nullable       => 0,
+    sequence          => "blast_db_group_blast_db_group_id_seq",
   },
   "name",
-  {
-    data_type => "character varying",
-    default_value => undef,
-    is_nullable => 1,
-    size => 50,
-  },
+  { data_type => "varchar", is_nullable => 1, size => 50 },
   "ordinal",
-  { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
+  { data_type => "integer", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("blast_db_group_id");
+
+=head1 RELATIONS
+
+=head2 blast_dbs
+
+Type: has_many
+
+Related object: L<SGN::Schema::BlastDb>
+
+=cut
+
 __PACKAGE__->has_many(
   "blast_dbs",
   "SGN::Schema::BlastDb",
   { "foreign.blast_db_group_id" => "self.blast_db_group_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.04999_07 @ 2009-09-04 13:21:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6C3I38meStK8O5wEoU2A9A
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-03-03 12:32:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aH2DxlwsJstedBgQOG01rQ
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

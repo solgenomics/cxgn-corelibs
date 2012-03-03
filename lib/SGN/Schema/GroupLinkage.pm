@@ -1,40 +1,75 @@
 package SGN::Schema::GroupLinkage;
 
+# Created by DBIx::Class::Schema::Loader
+# DO NOT MODIFY THE FIRST PART OF THIS FILE
+
 use strict;
 use warnings;
 
-use base 'DBIx::Class';
+use base 'DBIx::Class::Core';
 
-__PACKAGE__->load_components("Core");
+
+=head1 NAME
+
+SGN::Schema::GroupLinkage
+
+=cut
+
 __PACKAGE__->table("group_linkage");
+
+=head1 ACCESSORS
+
+=head2 group_linkage_id
+
+  data_type: 'integer'
+  is_auto_increment: 1
+  is_nullable: 0
+  sequence: 'group_linkage_group_linkage_id_seq'
+
+=head2 group_id
+
+  data_type: 'integer'
+  is_nullable: 1
+
+=head2 member_id
+
+  data_type: 'integer'
+  is_nullable: 1
+
+=head2 member_type
+
+  data_type: 'bigint'
+  is_nullable: 1
+
+=head2 member_value
+
+  data_type: 'bytea'
+  is_nullable: 1
+
+=cut
+
 __PACKAGE__->add_columns(
   "group_linkage_id",
   {
-    data_type => "integer",
-    default_value => "nextval('group_linkage_group_linkage_id_seq'::regclass)",
+    data_type         => "integer",
     is_auto_increment => 1,
-    is_nullable => 0,
-    size => 4,
+    is_nullable       => 0,
+    sequence          => "group_linkage_group_linkage_id_seq",
   },
   "group_id",
-  { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
+  { data_type => "integer", is_nullable => 1 },
   "member_id",
-  { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
+  { data_type => "integer", is_nullable => 1 },
   "member_type",
-  { data_type => "bigint", default_value => undef, is_nullable => 1, size => 8 },
+  { data_type => "bigint", is_nullable => 1 },
   "member_value",
-  {
-    data_type => "bytea",
-    default_value => undef,
-    is_nullable => 1,
-    size => undef,
-  },
+  { data_type => "bytea", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("group_linkage_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.04999_07 @ 2009-09-04 13:21:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:x7MyQMDgy4P+S5MdYUYXqg
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-03-03 12:35:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wRthsfk+3dZbyhxvnSULVw
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

@@ -1,57 +1,83 @@
 package SGN::Schema::BlastDefline;
 
+# Created by DBIx::Class::Schema::Loader
+# DO NOT MODIFY THE FIRST PART OF THIS FILE
+
 use strict;
 use warnings;
 
-use base 'DBIx::Class';
+use base 'DBIx::Class::Core';
 
-__PACKAGE__->load_components("Core");
+
+=head1 NAME
+
+SGN::Schema::BlastDefline
+
+=cut
+
 __PACKAGE__->table("blast_defline");
+
+=head1 ACCESSORS
+
+=head2 defline_id
+
+  data_type: 'integer'
+  is_auto_increment: 1
+  is_nullable: 0
+  sequence: 'blast_defline_defline_id_seq'
+
+=head2 blast_target_id
+
+  data_type: 'integer'
+  is_nullable: 1
+
+=head2 target_db_id
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 255
+
+=head2 defline
+
+  data_type: 'text'
+  is_nullable: 1
+
+=head2 defline_fulltext
+
+  data_type: 'tsvector'
+  is_nullable: 1
+
+=head2 identifier_defline_fulltext
+
+  data_type: 'tsvector'
+  is_nullable: 1
+
+=cut
+
 __PACKAGE__->add_columns(
   "defline_id",
   {
-    data_type => "integer",
-    default_value => "nextval('blast_defline_defline_id_seq'::regclass)",
+    data_type         => "integer",
     is_auto_increment => 1,
-    is_nullable => 0,
-    size => 4,
+    is_nullable       => 0,
+    sequence          => "blast_defline_defline_id_seq",
   },
   "blast_target_id",
-  { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
+  { data_type => "integer", is_nullable => 1 },
   "target_db_id",
-  {
-    data_type => "character varying",
-    default_value => undef,
-    is_nullable => 1,
-    size => 255,
-  },
+  { data_type => "varchar", is_nullable => 1, size => 255 },
   "defline",
-  {
-    data_type => "text",
-    default_value => undef,
-    is_nullable => 1,
-    size => undef,
-  },
+  { data_type => "text", is_nullable => 1 },
   "defline_fulltext",
-  {
-    data_type => "tsvector",
-    default_value => undef,
-    is_nullable => 1,
-    size => undef,
-  },
+  { data_type => "tsvector", is_nullable => 1 },
   "identifier_defline_fulltext",
-  {
-    data_type => "tsvector",
-    default_value => undef,
-    is_nullable => 1,
-    size => undef,
-  },
+  { data_type => "tsvector", is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key("defline_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.04999_07 @ 2009-09-04 13:21:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8yU0F15zAHGCgzzTxjqR3A
+# Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-03-03 12:32:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:c3T+el9V3/ziJEFzPnmUUg
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
