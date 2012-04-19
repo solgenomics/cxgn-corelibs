@@ -1,5 +1,6 @@
 
 =head1 NAME
+ 
 
 CXGN::Phylo::Node - a package that handles nodes in a CXGN::Phylo::Tree object.
 
@@ -40,7 +41,7 @@ use CXGN::Page::FormattingHelpers qw/tooltipped_text/;
 
 =cut
 
-sub new { 
+sub new {
 	my $class = shift;
 	my $args = {};
 	my $self = bless $args, $class;
@@ -172,7 +173,7 @@ sub set_alignment_member {
 	$self->{alignment_member} = shift;
 }
 
-sub init_children { 
+sub init_children {
 	my $self = shift;
 	@{$self->{children}} = ();
 }
@@ -197,7 +198,7 @@ sub get_children {
 
 =head2 function set_children()
 
-  Synopsis:	
+  Synopsis:
   Arguments:	an array of children.
   Returns:	
   Side effects:	sets the children to the specified array.
@@ -396,7 +397,7 @@ sub binarify_children {
 	my @children = $self->get_children();
 	my @new_children = ();
 	return if @children < 3;
-#  print ("number of children: ", scalar @children, "\n");
+ # print ("In binarify_children. number of children is > 2: ", scalar @children, " newbl: $new_bl\n");
 	my $c1 = shift @children;
 	my $c2 = shift @children;
 	my $b = CXGN::Phylo::Node->new();
@@ -687,8 +688,10 @@ sub get_standard_species {
 		my $species_standardizer = $tree->get_species_standardizer();
 		if (defined $species_standardizer) {
 			$species = $species_standardizer->get_standard_name($species);
+		#	print "species standardizer branch. species: $species \n";
 		} else {
       $species = CXGN::Phylo::Species_name_map::to_standard_format($species); # just e.g.  solanum lycopersicum -> Solanum_lycopersicum
+ #     print "to_standard_format branch: $species \n";
 		}
 	}
 	return $species;
@@ -706,9 +709,9 @@ sub get_standard_species {
 
 sub get_shown_species{
 	my $self = shift;
-# print "in get_shown_species. show_standard_species: {{{", $self->get_tree()->get_show_standard_species, "}}}\n";
+# print "in get_shown_species. show_standard_species: {{{", $self->get_tree()->get_show_standard_species, " standard species:[", $self->get_standard_species(), "]  raw species:[", $self->get_species(), "] isleaf:[", $self->is_leaf(), "]}}}\n";
 	if ($self->get_tree()->get_show_standard_species) {
-#	print STDERR "in get_shown_species. auto branch. ",  $self->get_tree()->get_show_standard_species," \n";
+#	print STDERR "in get_shown_species. standardized branch. ",  $self->get_tree()->get_show_standard_species," \n";
 		return $self->get_standard_species();
 	} else {
 #		print STDERR "in get_shown_species. raw branch ", $self->get_tree()->get_show_standard_species, "\n";
@@ -943,7 +946,7 @@ sub set_tree {
 
 =cut
 
-sub is_leaf { 
+sub is_leaf {
 	my $self = shift;
 	if ($self->get_children()) {
 		return 0;
@@ -1334,7 +1337,7 @@ sub set_dist_from_root {
 
 =cut
 
-sub calculate_distances_from_root { 
+sub calculate_distances_from_root {
 	my $self=shift;
 	my $dist = shift; $dist ||= 0.0;
 	my $dist_type = shift;
@@ -1397,7 +1400,7 @@ sub recursive_text_render {
 	}
 }
 
-sub print { 
+sub print {
 	my $self = shift;
 	my $hidden = "";
 	my $hilited = "";
@@ -1664,7 +1667,7 @@ sub to_string {
 
 sub recursive_implicit_names { 
 	my $self = shift;
-	
+#	print "top of recursive_implicit_names() \n";
 	my @name_list = ();
 	my @sorted_list = ();
 	if ($self->is_leaf()) {
@@ -1688,7 +1691,7 @@ sub recursive_implicit_names {
 		$self->set_name(join "\t", @sorted_list); # Do we need this? What else are the internal nodes' names good for?
 	}
 	$self->set_implicit_names(\@sorted_list);
-	#	print "In rec..impl..names. impl names: ", @sorted_list, "xxxxx", @{$self->get_implicit_names()}, "<br>";
+	#	print "In rec..impl..names. impl names: ", join("\t", @sorted_list), "\n", join("\t",@{$self->get_implicit_names()}), "\n";
 #	print STDERR "ZZZZ in rec..imp...names.  subtree size: [", scalar @sorted_list, "]  name:[", $self->get_name(), "]\n";
 	return @sorted_list;
 }
@@ -1938,193 +1941,195 @@ $new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_cou
 
 =head2 function recursive_generate_newick("", $make_attribs, $show_root)
 
-  Synopsis:	my $newick_string = $tree->get_root()
-                    ->recursive_generate_newick();
-  Arguments:	first should be undef (this is a Node object that is passed to the function from the inner loop for each recursive child node.
-                optional= $make_attribs - boolean. Will call  $self->make_newick_attributes() on the root node.
-                 (defaults to '1' in Tree->generate_newick() ) 
-                optional= $show_root - boolean for printing the root node in the newick string.
+Synopsis:	my $newick_string = $tree->get_root()
+	->recursive_generate_newick();
+Arguments:	first should be undef (this is a Node object that is passed to the function from the inner loop for each recursive child node.
+				optional= $make_attribs - boolean. Will call  $self->make_newick_attributes() on the root node.
+				(defaults to '1' in Tree->generate_newick() ) 
+				optional= $show_root - boolean for printing the root node in the newick string.
 
-  Returns:	a string with a newick representation of the tree
-  Side effects:	none
-  Description:	
+				Returns:	a string with a newick representation of the tree
+				Side effects:	none
+				Description:	
 
 =cut
 
-sub recursive_generate_newick { 
-	my $self = shift;
-	my $s = shift;
-	my $make_attribs = shift;
-	my $show_root = shift;
+sub recursive_generate_newick {
+my $self = shift;
+my $s = shift;
+my @children = @{$self->{children}};
+if (@children) {
+  no warnings 'uninitialized';
+  $s.="(";
+    foreach my $child (@children) {
+$s .= $child->recursive_generate_newick('');
+   #   $s = $child->recursive_generate_newick($s); # , 1 ,$show_root);
+      $s .= $child->get_name() if($child->is_leaf()); # || $show_root ) ;
+      $s .= $child->make_newick_attributes() . ":" . $child->get_branch_length();
+      $s .= ",";
+    } chop $s;
+	$s.=")";
+}
 
-	my @children = @{$self->{children}};
-	
-	if (@children) { 
-            no warnings 'uninitialized';
-	    $s.="(";	
-	    for (my $i=0; $i<@children; $i++) {
-		$s =$children[$i]->recursive_generate_newick($s,'',$show_root);	   
-		$s .= $children[$i]->get_name() if($children[$i]->is_leaf() || $show_root ) ;
-		$s .= $children[$i]->make_newick_attributes().":".$children[$i]->get_branch_length();
-		if ($i<(@children-1)) {
-		    $s.=",";
-		}
-	    }
-	    $s.=")";
-	}
-	if ($make_attribs ) {
-	    
-	    if (!$show_root) { $s .= $self->make_newick_attributes(1); }
-	    else {
-                no warnings 'uninitialized';
-		$s = "(" . $s;
-		$s .= $self->get_name();
-		$s .= $self->make_newick_attributes(1).":".$self->get_branch_length() || 0 ;
-	    }
-	    $s .=")";
-	}
-	return $s; 
+# if (0 and $make_attribs ) {
+
+# 	if (!$show_root) { $s = "(" . $s . $self->make_newick_attributes(1); }
+# 	else {
+# 		no warnings 'uninitialized';
+# 		$s = "(" . $s;
+# 		$s .= $self->get_name();
+# 		$s .= $self->make_newick_attributes(1).":".$self->get_branch_length() || 0 ;
+# 	}
+# 	$s .=")";
+# }
+
+return $s;
 }
 
 
 =head2 function make_newick_attributes()
 
-  Synopsis:	
-  Arguments:	none
-  Returns:	a string, representing the tree's shown attributes, and their 
-                values for this node. e.g. [name=g47788;species=potato]
-  Side effects:	none
-  Description:	
+	Synopsis:	
+Arguments:	none
+Returns:	a string, representing the tree's shown attributes, and their 
+values for this node. e.g. [name=g47788;species=potato]
+Side effects:	none
+Description:	
 
 =cut
 
 sub make_newick_attributes {
-    my $self = shift;
-    my $show_all = shift;
-    my $string = "";
-    foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {	
-	my $value = "";
-	if ($attr eq "species") {
-	    $value = $self->get_shown_species();
-	    if ($self->is_leaf() || $show_all ) {
-		$string .= "$attr=$value;" # don't show attribute if value is 0
-	    }
-	} else {
-	    $value = $self->get_attribute($attr);
-	    #	print("in make_newick_attributes. newick_shown_attributes: ", $attr, "  value: ", $value, "\n");
-	    $string .= "$attr=$value;" unless($self->is_leaf() && ($attr eq "speciation")); # don't show speciation attr for leaves
+	my $self = shift;
+	my $show_all = shift;
+	my $string = "";
+#	print "In Node::make_newick_attributes. ", join("; ", $self->get_tree()->newick_shown_attributes() ), "\n";
+	foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {
+	#  print "in make_newick_attributes. attribute: $attr\n";
+		my $value = "";
+		if ($attr eq "species") { # species shown for leaves, or all nodes if $show_all
+			$value = $self->get_shown_species();
+		#	print "value: $value\n";
+			if ($self->is_leaf() || $show_all ) {
+				$string .= "$attr=$value;" # don't show attribute if value is 0
+			}
+		} else { # other attributes shown for all nodes (except speciation not shown for leaves)
+			$value = $self->get_attribute($attr);
+#	print("in make_newick_attributes. newick_shown_attributes: ", $attr, "  value: ", $value, "\n");
+			$string .= "$attr=$value;" unless($self->is_leaf() && ($attr eq "speciation")); # don't show speciation attr for leaves
+		}
+#	  print "attribute string: $string \n";
+
 	}
-	
-    }
-    if ($string) {
-	chop($string); return ("[" . $string . "]");
-    }
-    return "";
+	if ($string) {
+		chop($string); return ("[" . $string . "]");
+	}
+	return "";
 }
+
 
 
 =head2 function generate_nex()
 
- Recursively generate a newick from the current node, and then
- return the text of a hypothetical nex file describing the 
- tree and numeric translations for the leaves.
+	Recursively generate a newick from the current node, and then
+	return the text of a hypothetical nex file describing the 
+	tree and numeric translations for the leaves.
 
 =cut
 
 sub generate_nex {
-	my $self = shift;
-	my $treename = shift;	
-	$treename ||= "Node_" . $self->get_node_key();
+  my $self = shift;
+  my $treename = shift;	
+  $treename ||= "Node_" . $self->get_node_key();
 
-	my @desc = $self->get_descendents();
-	my @leaves = $self->recursive_leaf_list();
-	
-	my $newick = $self->recursive_generate_newick();
-	$newick =~ s/;$//;
+  my @desc = $self->get_descendents();
+  my @leaves = $self->recursive_leaf_list();
 
-	my %translate = ();
+  my $newick = $self->recursive_generate_newick();
+  $newick =~ s/;$//;
 
-	my $output = "#NEXUS\nBegin trees;\n\ttranslate\n";
-	for (my $i = 0; $i < @leaves; $i++) {
-		my $j = $i + 1;
-		my $name = $leaves[$i]->get_name();
-		$translate{$j} = $name;
-		$output .= "\t\t$j $name";
-		$output .= "," if $j < @leaves;
-		$output .= "\n";
-	}
-	$output .= "\t\t;\n";
+  my %translate = ();
 
-	while (my ($num, $id) = each %translate) {
-		$newick =~ s/\Q$id\E/$num/;	
-	}
+  my $output = "#NEXUS\nBegin trees;\n\ttranslate\n";
+  for (my $i = 0; $i < @leaves; $i++) {
+    my $j = $i + 1;
+    my $name = $leaves[$i]->get_name();
+    $translate{$j} = $name;
+    $output .= "\t\t$j $name";
+    $output .= "," if $j < @leaves;
+    $output .= "\n";
+  }
+  $output .= "\t\t;\n";
 
-	$output .= "tree $treename = $newick;\nEnd;";
-	return $output;
+  while (my ($num, $id) = each %translate) {
+    $newick =~ s/\Q$id\E/$num/;	
+  }
+
+  $output .= "tree $treename = $newick;\nEnd;";
+  return $output;
 }
 
 =head2 function write_nex()
 
- Given a filehandle OR filepath, writes a nex file containing
- a subtree from the current node.
+	Given a filehandle OR filepath, writes a nex file containing
+	a subtree from the current node.
 
- Ex:  $node->write_nex(\*FH);  #appends to file specified by handle
-   or $node->write_nex($path_to_file); #overwrites/creates file in path
+	Ex:  $node->write_nex(\*FH);  #appends to file specified by handle
+	or $node->write_nex($path_to_file); #overwrites/creates file in path
 
-=cut
+	=cut
 
-sub write_nex {
-	my $self = shift;
-	my $file = shift;
-	my $nex_text = $self->generate_nex(@_);
-	if (ref($file) eq "GLOB") {
-		print $file $nex_text or die $!;
-	} else {
-		open(WF, ">$file") or die $!;
-		print WF $nex_text;
-		close WF;
+	sub write_nex {
+		my $self = shift;
+		my $file = shift;
+		my $nex_text = $self->generate_nex(@_);
+		if (ref($file) eq "GLOB") {
+			print $file $nex_text or die $!;
+		} else {
+			open(WF, ">$file") or die $!;
+			print WF $nex_text;
+			close WF;
+		}
 	}
-}
 
 
 =head2 function recursive_collapse_single_nodes()
 
-  Synopsis:	$tree->get_root()->recursive_collapse_single_nodes()
-  Arguments:	none
-  Returns:	nothing
-  Side effects:	collapses nodes that have only one child into one
-                node. The names and other node properties from the 
-                child node are propagated to the parent node, whose
-                information is lost. The collapsed node keeps its 
-                original node_key.
-  Description:	
-  Authors:      Lukas Mueller (lam87@cornell.edu), 
-                Tom York (tly2@cornell.edu)
+Synopsis:	$tree->get_root()->recursive_collapse_single_nodes()
+	Arguments:	none
+	Returns:	nothing
+	Side effects:	collapses nodes that have only one child into one
+	node. The names and other node properties from the 
+	child node are propagated to the parent node, whose
+	information is lost. The collapsed node keeps its 
+	original node_key.
+	Description:	
+Authors:      Lukas Mueller (lam87@cornell.edu), 
+	Tom York (tly2@cornell.edu)
 
 =cut
 
 sub recursive_collapse_single_nodes { 
-	my $self = shift;
-	my @children = $self->get_children();
-	
-	if (@children==1) {						# delete the node with only 1 child 
-		if ($self->is_root()) {			# special delete node for case of node being root with just 1 child
-			my $the_tree = $self->get_tree();
-			$the_tree->set_root($children[0]); # in order to delete $self if it is root, first set its only child to be root
-			$self->set_children(undef);
-			$self->set_parent(undef);
-			$self->set_label(undef);
-			$self = undef;	
-			$the_tree->recalculate_tree_data();
-		} else {
-			$self->get_tree()->del_node($self);
-		}
-	}
+		my $self = shift;
+		my @children = $self->get_children();
 
-	foreach my $c (@children) { 
-		$c->recursive_collapse_single_nodes();
-	}	
-}
+		if (@children==1) {						# delete the node with only 1 child 
+			if ($self->is_root()) {			# special delete node for case of node being root with just 1 child
+				my $the_tree = $self->get_tree();
+				$the_tree->set_root($children[0]); # in order to delete $self if it is root, first set its only child to be root
+					$self->set_children(undef);
+				$self->set_parent(undef);
+				$self->set_label(undef);
+				$self = undef;	
+				$the_tree->recalculate_tree_data();
+			} else {
+				$self->get_tree()->del_node($self);
+			}
+		}
+
+		foreach my $c (@children) { 
+			$c->recursive_collapse_single_nodes();
+		}	
+	}
 
 =head2 function recursive_collapse_zero_branches()
 
@@ -2137,50 +2142,50 @@ sub recursive_collapse_single_nodes {
 =cut
 
 sub recursive_collapse_zero_branches { 
-	my $self = shift;
+  my $self = shift;
 
-	#    print STDERR "recursive_collapse_zero_branches: checking children of node ".$self->get_name()."\n";
+  #    print STDERR "recursive_collapse_zero_branches: checking children of node ".$self->get_name()."\n";
 
-	# collapse the node if its branch length is zero,
-	# but don't do it if the node is the root.
-	#
-	foreach my $c ($self->get_children()) { 
+  # collapse the node if its branch length is zero,
+  # but don't do it if the node is the root.
+  #
+  foreach my $c ($self->get_children()) { 
 	
-		if ($c->get_branch_length()==0) {
+    if ($c->get_branch_length()==0) {
 
-	    # if the branch length of $c is zero, we will delete the
-	    # node, the function delete_node should take care of most of 
-	    # the intricacies of removing our favorite node here...
-	    # (we want the children of $c to become children of the parent,
-	    # that's what delete_node should do).
-	    # $c may be a leaf node. We want to percolate some of it's information
-	    # to the parent before deleting, such as species information.
-	    #
-	    $self->set_species($c->get_species());
-	    $self->set_link($c->get_link());
+      # if the branch length of $c is zero, we will delete the
+      # node, the function delete_node should take care of most of 
+      # the intricacies of removing our favorite node here...
+      # (we want the children of $c to become children of the parent,
+      # that's what delete_node should do).
+      # $c may be a leaf node. We want to percolate some of it's information
+      # to the parent before deleting, such as species information.
+      #
+      $self->set_species($c->get_species());
+      $self->set_link($c->get_link());
 
-	    # now it's safe to delete the node
-	    #
-			#   $c->get_tree()->delete_node($c->get_node_key());
-	    $c->get_tree()->del_node($c);
+      # now it's safe to delete the node
+      #
+      #   $c->get_tree()->delete_node($c->get_node_key());
+      $c->get_tree()->del_node($c);
 
 
-	    # we have to call this function again on this same node, 
-	    # because this node may have acquired the children from $c.
-	    #
-	    $self->recursive_collapse_zero_branches();
-		} else { 
+      # we have to call this function again on this same node, 
+      # because this node may have acquired the children from $c.
+      #
+      $self->recursive_collapse_zero_branches();
+    } else { 
 	    
-	    # if the branch length is not zero, descend more...
-	    #
-	    $c->recursive_collapse_zero_branches();
-		}
-	}
+      # if the branch length is not zero, descend more...
+      #
+      $c->recursive_collapse_zero_branches();
+    }
+  }
 	
-	#     my @children = $self->get_children();
-	#     foreach my $c (@children) { 
-	# 	$c->recursive_collapse_zero_branches();
-	#     }
+  #     my @children = $self->get_children();
+  #     foreach my $c (@children) { 
+  # 	$c->recursive_collapse_zero_branches();
+  #     }
     
 }
 
@@ -2191,16 +2196,16 @@ _recursive_longest_branch_node returns a Node object representing the node with 
 =cut
 
 sub _recursive_longest_branch_node { 
-	my $self = shift;
-	my $largest_branch_node = shift;
-	foreach my $c ($self->get_children()) { 
-		my $c_branch = $c->get_branch_length();
-		if ( $c_branch > ($largest_branch_node->get_branch_length())) { 
-	    $largest_branch_node = $c;
-		}
-		$largest_branch_node = $c -> _recursive_longest_branch_node($largest_branch_node);
-	}
-	return $largest_branch_node;
+  my $self = shift;
+  my $largest_branch_node = shift;
+  foreach my $c ($self->get_children()) { 
+    my $c_branch = $c->get_branch_length();
+    if ( $c_branch > ($largest_branch_node->get_branch_length())) { 
+      $largest_branch_node = $c;
+    }
+    $largest_branch_node = $c -> _recursive_longest_branch_node($largest_branch_node);
+  }
+  return $largest_branch_node;
 }
 
 =head2 function recursive_collapse_unique_species_subtrees()
@@ -2215,51 +2220,51 @@ sub _recursive_longest_branch_node {
 =cut
 
 sub recursive_collapse_unique_species_subtrees {
-	my $self = shift;
-	if ($self->is_leaf()) {
-		$self->collapse_unique_species_siblings();
-		return;
-	}
-	if (!defined $self->get_attribute("leaf_species_count")) {
-		$self->recursive_set_leaf_species_count();
-	}
+  my $self = shift;
+  if ($self->is_leaf()) {
+    $self->collapse_unique_species_siblings();
+    return;
+  }
+  if (!defined $self->get_attribute("leaf_species_count")) {
+    $self->recursive_set_leaf_species_count();
+  }
 
-	if ($self->get_attribute("leaf_species_count") == 1) {
-		#	print STDERR "node name, leaf_species_count: ", $self->get_name(), "  ", $self->get_attribute("leaf_species_count"), "\n";
-		my @sub_nodes = $self->recursive_subtree_node_list();	
+  if ($self->get_attribute("leaf_species_count") == 1) {
+    #	print STDERR "node name, leaf_species_count: ", $self->get_name(), "  ", $self->get_attribute("leaf_species_count"), "\n";
+    my @sub_nodes = $self->recursive_subtree_node_list();	
 
-		if (0) {  # this shouldn't be necessary as name should be the leaf names joined with tabs already (from recursive_implicit_names)
-			$self->set_name("");
-			my $separator = "\t";
-			foreach my $n (@sub_nodes) {			
-				if ($n->is_leaf()) {
-					if ($self->get_name() eq "") {
-						$self->set_name($n->get_name());
-					} else {
-						$self->set_name($self->get_name() . $separator . $n->get_name());
-					}
-					#	print STDERR "Setting species of node with name: ", $self->get_name(), "  to: ", $n->get_species(), "\n";
-					#	$self->set_species($n->get_species()) if($self->get_species() eq ""); # get species name from any leaf (all have same species)
-					#	print STDERR "Species name is now: ", $self->get_species(), "\n";
-					#	print STDOUT "in rec...collapse..unique. set species of collapsed subtree to: ", $n->get_species, "\n";
-				}			
-			}
-		}
+    if (0) { # this shouldn't be necessary as name should be the leaf names joined with tabs already (from recursive_implicit_names)
+      $self->set_name("");
+      my $separator = "\t";
+      foreach my $n (@sub_nodes) {			
+	if ($n->is_leaf()) {
+	  if ($self->get_name() eq "") {
+	    $self->set_name($n->get_name());
+	  } else {
+	    $self->set_name($self->get_name() . $separator . $n->get_name());
+	  }
+	  #	print STDERR "Setting species of node with name: ", $self->get_name(), "  to: ", $n->get_species(), "\n";
+	  #	$self->set_species($n->get_species()) if($self->get_species() eq ""); # get species name from any leaf (all have same species)
+	  #	print STDERR "Species name is now: ", $self->get_species(), "\n";
+	  #	print STDOUT "in rec...collapse..unique. set species of collapsed subtree to: ", $n->get_species, "\n";
+	}			
+      }
+    }
 
-		$self->set_species("");
-		foreach my $n (@sub_nodes) {			
-			if ($n->is_leaf()) {
-				$self->set_species($n->get_species()) if($self->get_species() eq ""); # get species name from any leaf (all have same species)
-			}		
-			$self->get_tree()->del_node($n); # unceremoniously delete the subnode
-		}
-		$self->collapse_unique_species_siblings();
-	}
-	foreach my $child ($self->get_children()) {
-		if (defined $child) {
-			$child->recursive_collapse_unique_species_subtrees();
-		}
-	}
+    $self->set_species("");
+    foreach my $n (@sub_nodes) {			
+      if ($n->is_leaf()) {
+	$self->set_species($n->get_species()) if($self->get_species() eq ""); # get species name from any leaf (all have same species)
+      }		
+      $self->get_tree()->del_node($n); # unceremoniously delete the subnode
+    }
+    $self->collapse_unique_species_siblings();
+  }
+  foreach my $child ($self->get_children()) {
+    if (defined $child) {
+      $child->recursive_collapse_unique_species_subtrees();
+    }
+  }
 }
 
 =head2 function collapse_unique_species_siblings()
@@ -3131,7 +3136,7 @@ print("in robinson-foulds, root bls: ", $root1->get_branch_length(), "   ", $roo
 
 =cut
 
-sub determine_species_from_name{ 
+sub determine_species_from_name{
 	my $self = shift;
 	my $str = shift;
 	my $species = undef;
@@ -3203,24 +3208,23 @@ sub determine_species_from_name{
 sub recursive_subtree_newick{		#recursive_generate_newick does the same thing & is more general (using make_newick_attributes() )
 	my $self = shift;
 	my $s = shift;
-	if($self->is_leaf()){	$s .= $self->get_name . "[species=" . $self->get_species . "]"; }
-#	$s .= $self->get_name . "[" . $self->get_species . "]";
+	if($self->is_leaf()){ $s .= $self->get_name . "[species=" . $self->get_species . "]"; }
 	my @children = $self->get_children();
 	my $first = 1;
-	my $has_children = (@children > 0);
 	if (@children) {
 		$s .= "(";
 		foreach my $c (@children) {
-			if ($first) {
-				$first = 0;
-			} else {
-				$s .= ", ";
-			}
+			 if ($first) {
+			 	$first = 0;
+			 } else {
+			 	$s .= ",";
+			 }
 			$s = $c->recursive_subtree_newick($s);
 		}
 		$s .= ")";
 	}
-	$s .= ":" . $self->get_branch_length();
+	$s .= ":" . $self->get_branch_length() unless($self->is_root());
+return $s;
 }
 
 
@@ -3276,6 +3280,8 @@ sub delete_self{
 	$self->set_children(undef);
 	$self->set_parent(undef);
 	$self->set_label(undef);
+	$self->set_tree(undef);
+
 	$self = undef;								# really, really delete the node
 }
 
@@ -3457,6 +3463,7 @@ sub speciation_at_this_node{
 	if ($nchild == 2) {						# bifurcation. 
 		my $bp1 = $children[0]->get_attribute("species_bit_pattern");
 		my $bp2 = $children[1]->get_attribute("species_bit_pattern");
+#		print "In Node::speciation_at_this_node; child bit patterns: $bp1, $bp2\n";
 		return $spec_tree->get_root()->recursive_compare_species_split($bp1, $bp2); # see if the two child species sets are consistent with any of the nodes in species tree
 
 	} elsif ($nchild == 3) {			# trifurcation
@@ -3613,6 +3620,28 @@ sub recursive_hilite_speciation_nodes{
 	return;
 }
 
+
+sub recursive_set_branch_length{
+my $self = shift;
+my $bl = shift || 1.0;
+$self->set_branch_length($bl);
+my @children = $self->get_children();
+foreach (@children){
+$_->recursive_set_branch_length($bl);
+}
+
+}
+
+# The idea here is to recursively remove circular references 
+# which prevent trees from being garbage collected.
+sub recursive_decircularize{
+  my $self = shift;
+  $self->set_parent(undef);
+  $self->set_tree(undef);
+  foreach ($self->get_children()) {
+    $_->recursive_decircularize()
+  }
+}
 
 1;
 
