@@ -39,10 +39,8 @@ use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Layout;
 use CXGN::Phylo::Renderer;
 use CXGN::Phylo::Parser;
-use CXGN::Phylo::Alignment;
-use CXGN::Phylo::Ortholog_group;
 
-use base qw / CXGN::DB::Object / ;
+my $do_parse_set_error = 0;
 
 =head2 function new()
 
@@ -56,7 +54,7 @@ use base qw / CXGN::DB::Object / ;
 
 sub new {
 	my $class = shift;
-	my $self = bless {}, $class;   		
+	my $self = bless {}, $class;
 	#You can feed constructor with a newick string, which will create
 	#a parser object that creates a tree object *without* passing a
 	#string, which would lead to an infinite loop.  Watch out!
@@ -92,7 +90,8 @@ sub new {
 		$newick_string =~ s/\n|\r//sg;	
 		if ($newick_string =~ /^\(.*\)|;$/) { # start with (, end with ) or ;
 		#	print STDERR "in Tree::new, about to parse the newick_string \n";
-			my $parser = CXGN::Phylo::Parse_newick->new($newick_string);
+			my $parser = CXGN::Phylo::Parse_newick->new($newick_string, $do_parse_set_error);
+			print "calling parse in Tree constructor\n";
 			my $self = $parser->parse();
 			return $self;
 		} elsif ($newick_string) {
@@ -131,7 +130,7 @@ sub new {
 	$self->{newick_shown_attributes} = {};
 	$self->{shown_branch_length_transformation} = "branch_length"; # other possibilities: "proportion_different", equal
 	$self->{min_shown_branch_length} = 0.001; # when showing branches graphically, this is added to the displayed length
-	$self->{min_branch_length} = 0.0001;
+	$self->set_min_branch_length(0.0001);
 	# initialize a default layout and renderer
 	#
 	$self->set_layout( CXGN::Phylo::Layout->new($self) );
@@ -193,10 +192,11 @@ sub _tree_from_file {
 
 sub _tree_from_newick {
 	my $newick_string = shift;	
-	$newick_string =~ s/\s//g;
-	$newick_string =~ s/\n|\r//g;	
+	$newick_string =~ s/\s//g; # remove whitespace from newick string
+	$newick_string =~ s/\n|\r//g;
 	if($newick_string =~ /^\(.*\)|;$/){
-		my $parser = CXGN::Phylo::Parse_newick->new($newick_string);
+		my $parser = CXGN::Phylo::Parse_newick->new($newick_string, $do_parse_set_error);
+ print "parsing tree in Tree::_tree_from_newick\n";
 		my $tree = $parser->parse();
 		return $tree;
 	}
@@ -590,13 +590,13 @@ sub add_node_hash {
 
 =cut
 
-sub get_all_nodes { 
+sub get_all_nodes {
     my $self = shift;
     return (values %{$self->{node_hash}});
 
 }
 
-sub get_all_node_keys { 
+sub get_all_node_keys {
     my $self = shift;
     return (keys %{$self->{node_hash}});
 
@@ -690,6 +690,7 @@ sub make_binary {
 	$node ||= $self->get_root();
 	my $new_bl = shift;
 	$new_bl ||= $self->get_min_branch_length();
+#	warn "new bl in make_binary: $new_bl \n";
 	$node->binarify_children($new_bl);
 	foreach($node->get_children()){
 		$self->make_binary($_, $new_bl);
@@ -786,6 +787,14 @@ sub shown_branch_length_transformation_reset{
 	$self->get_root()->calculate_distances_from_root();
 }
 
+sub subtree_newick{
+my $self = shift;
+my $subtree_root = shift || $self->get_root();
+#print "number of children: ", scalar $subtree_root->get_children(), "\n";
+my $newick_string =  $subtree_root->recursive_subtree_newick();
+return $newick_string;
+}
+
 =head2 function generate_newick()
 
  Args: (optional) node, defaults to root node
@@ -799,11 +808,11 @@ sub generate_newick {
     my $self = shift;
     my $node = shift;
     my $show_root = shift;
-    
+
     $node ||= $self->get_root();
-    return $node->recursive_generate_newick("", 1, $show_root);
-    
+    return $node->recursive_generate_newick('');
 }
+
 
 =head2 function get_orthologs()
 
@@ -1060,8 +1069,8 @@ sub get_show_labels {
   Arguments:	a boolean value representing the visibility
                 of the labels.
   Returns:	nothing
-  Side effects:	
-  Description:	
+  Side effects:
+  Description:
 
 =cut
 
@@ -1881,9 +1890,10 @@ sub get_species_standardizer{
 sub update_label_names{
 	my $self = shift;
 	my $show_spec = $self->get_show_species_in_label();
-	foreach my $n ($self->get_all_nodes()) {
-		my $n_leaves = scalar @{$n->get_implicit_names()};	
-		my $label_text = $n->get_name();	
+foreach my $n ($self->get_all_nodes()) {
+#  print "node: ", $n->get_name(), " impl names: ", join("\t", @{$n->get_implicit_names()}), "\n";
+		my $n_leaves = scalar @{$n->get_implicit_names()};
+		my $label_text = $n->get_name();
 		#	print STDERR "in update_label_names. $n_leaves, [", $n->get_name(), "][", $label_text, "] \n";
 		if ($show_spec) {
 			my $species_text = $n->get_shown_species();
@@ -1934,12 +1944,14 @@ sub node_from_implicit_name_string{
 	foreach my $k ($self->get_all_node_keys()) {
 		my $n = $self->get_node($k);
 		my $node_impl_name = join("\t", @{$n->get_implicit_names()});
+	#	print STDERR "node impl name: $node_impl_name \n";
 		if ($node_impl_name eq $in_string) {
 			return ($k, $n);
 		}
 	}
-#	print STDOUT "In Tree::node_from_implicit_name_string. Node not found which matches specified string: $in_string \n";
-# $self->get_root()->print_subtree("<br>");
+
+#	print STDERR "In Tree::node_from_implicit_name_string. Node not found which matches specified string: $in_string \n";
+# print STDERR $self->generate_newick(), "\n";
 	return (undef, undef);
 }
 
@@ -1948,8 +1960,10 @@ sub leaf_species_string{
 	my $self = shift; 
 my $str = "species,     standard species \n";
 	foreach my $l ($self->get_leaf_list()) {
-		$str .=  $l->get_species() . "  " . $l->get_standard_species() . "\n";
+	my $std_species = ($l->get_standard_species())? $l->get_standard_species(): 'std_species_undefined';
+		$str .=  $l->get_species() . "  " . $std_species . "\n";
 	}
+	return $str;
 }
 
 =head2 function quasiRF_distance
@@ -2317,12 +2331,26 @@ sub get_ortholog_group_candidate_subtrees{
 	return $ortholog_group_candidate_subtrees_array;
 }
 
+
+sub make_names_urec_ok{
+  my $self = shift;
+  my @nodes = $self->get_all_nodes();
+  foreach my $a_node (@nodes){
+    my $name = $a_node->get_name();
+    if($name =~ /^[a-zA-Z]/){ # ok - leave as is.
+    }else{ # add X_ in front to make urec happy
+      $a_node->set_name("X_$name");
+    }
+  }
+}
+
 	# using urec, find the node s.t. rooting on its branch gives minimal duplications and losses
 	# w.r.t. a species tree
-sub find_mindl_node{					
+sub find_mindl_node{
 	my $gene_tree = shift;				# a rooted gene tree
 	my $species_t = shift;				# a species tree
-
+#print "in find_mindl_node. species_tree newick: \n", $species_t->subtree_newick(), " \n";
+	
 # print STDERR "##################### Top of find_mindl_node. #############\n";
 	# urec requires binary tree - make sure the tree is binary
 	# if polytomy at root, reroot a bit down one branch, to get binary root (if was tritomy)
@@ -2342,16 +2370,28 @@ sub find_mindl_node{
 	# put the trees into form of newick strings with no whitespace, so urec will be happy
 	$gene_tree->show_newick_attribute("species");
 	$gene_tree->set_show_standard_species(1);
+ # make sure node names start with alphabetic char to make urec happy.
+	$gene_tree->make_names_urec_ok();
+	# need to redo node implicit names here.
 	my $gene_newick_string = $gene_tree->generate_newick();
-	print "binarified gene tree (urec input): ", $gene_newick_string, "\n";
+#	print "binarified gene tree (urec input): ", $gene_newick_string, "\n";
 	$gene_newick_string =~ s/\s//g; 
 
 	$species_t->show_newick_attribute("species");
 	$species_t->set_show_standard_species(1);
+my @thenodes = $species_t->get_leaves();
+	foreach my $a_node (@thenodes){
+#	  print "species,stdspecies: ", $a_node->get_species(), "  ", $a_node->get_standard_species(), "\n";
+	}
+#print "species tree (from subtree_newick): ", $species_t->subtree_newick(), "\n";
 	my $species_newick_string = $species_t->generate_newick();
-	$species_newick_string =~ s/\s//g; 
-
-	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+	$species_newick_string =~ s/\s//g; # remove whitespace
+#print "species tree newick string: $species_newick_string\n";
+#print "gene newick string: $gene_newick_string \n\n";
+#print "about to call urec. \n";
+# print STDERR "about to call urec, with gene tree newick:\n$gene_newick_string \n$species_newick_string \n";
+	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+#	print STDERR "after urec.\n";
 #	my $rerooted_newick = `/data/local/cxgn/core/perllib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 #	my $rerooted_newick = `urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 
@@ -2359,32 +2399,39 @@ sub find_mindl_node{
 #		print STDERR "Rerooted newick string: [$rerooted_newick].\n";
 
 #exit;
-
-	my $minDL_rerooted_gene_tree = (CXGN::Phylo::Parse_newick->new($rerooted_newick))->parse(); # this is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
+#print "rerooted newick: $rerooted_newick \n";
+# print "parsing mindl rerooted gene tree in Tree\n";
+	my $minDL_rerooted_gene_tree = (CXGN::Phylo::Parse_newick->new($rerooted_newick, $do_parse_set_error))->parse(); # this is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
 	# but  branch lengthswill be wrong for nodes whose parent has changed in the rerooting (they are just the branch lengths to the old parents). 
 	$minDL_rerooted_gene_tree->get_root()->recursive_implicit_names();
 
 	# $minDL_rerooted_gene_tree should have 2 children and (at least) one should have it's subtree also present in the pre-rerooting tree.
-	# identify the node at the root of this subtree (using implicit names) and reroot there. 
+	# identify the node at the root of this subtree (using implicit names) and reroot there.
 	# Have to do this because some branch length info was lost in urec step. 
+#	warn "minDL_rerooted_gene_tree newick: \n", $minDL_rerooted_gene_tree->generate_newick(), "\n";
 	my @root_children = $minDL_rerooted_gene_tree->get_root()->get_children();
 	my ($node_key, $rr_node);
 	foreach (@root_children) {
 		my $implicit_name_string = join("\t", @{$_->get_implicit_names()});
+	#	warn "implicit name string: $implicit_name_string \n";
 		($node_key, $rr_node) = $gene_tree->node_from_implicit_name_string($implicit_name_string);
-		if (defined $rr_node) { 
+		if (defined $rr_node) {
+		  $minDL_rerooted_gene_tree->decircularize();
 		#	debug ("Reroot above this node: $implicit_name_string \n"); 
-			return @new_root_point = ($rr_node, 0.5*($rr_node->get_branch_length));
+#		  warn "branch length along which to reroot: ", $rr_node->get_branch_length(), "\n";
+			return @new_root_point = ($rr_node, 0.5*($rr_node->get_branch_length()));
 		}
 	}
+$| = 1;
+
+	warn "problem with mindl rerooting. minDL_rerooted_gene_tree newick: \n", 
+	  $minDL_rerooted_gene_tree->generate_newick(), "\n";
 	die "find_mindl_node failed. \n";
 
 #	$gene_tree->set_shown_standard_species($store_show_standard_species);
 #$gene_tree->update_label_names();
 	return (undef, undef);
 }
-
-
 
 sub get_species_bithash{ #get a hash giving a bit pattern for each species in both $gene_tree and $spec_tree
 	my $gene_tree = shift;
@@ -2398,7 +2445,7 @@ sub get_species_bithash{ #get a hash giving a bit pattern for each species in bo
 	my @leaf_list = $gene_tree->get_leaf_list();
 	foreach (@leaf_list) {
 		my $lspecies = $_->get_standard_species();
-	#	print STDERR "gtree species: $lspecies \n";
+		print STDERR "In Tree::get_species_bithash; gtree species: $lspecies \n";
 		$genehash{$lspecies}++; # keys are species in gene tree, values are number of leaves with that species
 	}
 	@leaf_list = $spec_tree->get_leaf_list();
@@ -2464,4 +2511,28 @@ sub ortho_matrix_hash{
 #	}
 	return \%ortho_hash;
 }
+
+sub set_branch_lengths_equal{
+my $self = shift;
+my $bl = shift || 1.0;
+$self->get_root()->recursive_set_branch_length($bl);
+}
+
+sub decircularize{
+my $self = shift;
+$self->get_root()->recursive_decircularize();
+$self->set_renderer(undef);
+$self->set_layout(undef);
+}
+
+sub DESTROY {
+
+ my $self = shift;
+#  $self->decircularize();
+    # check for an overridden destructor...
+    $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+    # now do your own thing before or after
+
+}
+
 1;
