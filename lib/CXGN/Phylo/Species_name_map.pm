@@ -3,8 +3,7 @@ use strict;
 =head1 NAME
 
 CXGN::Phylo::Species_name_map - a package that handles variant species names (e.g. tomato, Lycopersicon_esculentum, Solanum_lycopersicum)
-
-	=head1 DESCRIPTION
+=head1 DESCRIPTION
 
 	This is for handling different species names that may be used. There is a  hash whose keys are variants, and
 	values are the standard versions of the species names.
@@ -13,15 +12,15 @@ CXGN::Phylo::Species_name_map - a package that handles variant species names (e.
 	get_standard_name($sname) will transform this to Potato, and return the value corresponding to this key,
 	which would be Solanum_tuberosum. 
 
-	=head1 AUTHOR
+=head1 AUTHOR
 
 Tom York (tly2@cornell.edu)
 
-	=head1 FUNCTIONS
+=head1 FUNCTIONS
 
 	This class implements the following functions:
 
-		=cut
+=cut
 
 		package  CXGN::Phylo::Species_name_map;
 # this is a class to map variant species names to standard species names
@@ -206,16 +205,16 @@ Synopsis:	 my $snm_copy = $snm->copy()
 	Returns:	a Species_name_map object, a copy of $snm
 	Description:	 Starts with a new default object, and copies the  hash to it
 
-	=cut
+=cut
 
-	sub copy{												# just copy the hash
-		my $self = shift;
-		my $new = CXGN::Phylo::Species_name_map->new();
-		foreach my $k (keys %$self) {
-			$new->set_standard_name($k, $self->get_standard_name($k));
-		}
-		return $new;
+sub copy{												# just copy the hash
+	my $self = shift;
+	my $new = CXGN::Phylo::Species_name_map->new();
+	foreach my $k (keys %$self) {
+		$new->set_standard_name($k, $self->get_standard_name($k));
 	}
+	return $new;
+}
 
 =head2 function to_standard_format
 
@@ -227,21 +226,21 @@ Returns:	A string put into a standard format by removing leading and trailing wh
 	Description:	 The idea is to have all the hash keys of a Species_name_map be in this format, so that some minor variations
 	(e.g. potato, Potato) would share the same key
 
-	=cut
+=cut
 
-	sub to_standard_format{					# remove initial, final whitespace,  replace whitespace and _ with single space separating pieces which are ucfirst lc
-		my $self = shift;
-		my $species = shift;
-		if (defined $species) {
-			$species =~ s/^\s+//;			    # remove initial whitespace
-				$species =~ s/\s+$//;			    # remove final whitespace
-				my @word_list = split(/[\s_]+/, $species);  # split on _, whitespace
-				map($_ = lc $_, @word_list);                # -> all lowercase
-				$species = join("_", @word_list);           # join with _'s
-				$species = ucfirst $species;                # Capitalize first letter (genus name) 
-		}
-		return $species;
+sub to_standard_format{					# remove initial, final whitespace,  replace whitespace and _ with single space separating pieces which are ucfirst lc
+	my $self = shift;
+	my $species = shift;
+	if (defined $species) {
+		$species =~ s/^\s+//;			    # remove initial whitespace
+			$species =~ s/\s+$//;			    # remove final whitespace
+			my @word_list = split(/[\s_]+/, $species);  # split on _, whitespace
+			map($_ = lc $_, @word_list);                # -> all lowercase
+			$species = join("_", @word_list);           # join with _'s
+			$species = ucfirst $species;                # Capitalize first letter (genus name) 
 	}
+	return $species;
+}
 
 sub to_display_format{
 	my $self = shift;
@@ -258,18 +257,18 @@ Synopsis: 	my $str = $snm->get_map_string()
 (potato => Solanum_tuberosum, tomato => Solanum_lycopersicum)
 	Description:	 
 
-	=cut
+=cut
 
-	sub get_map_string{
-		my $self = shift;
-		my $string = "(";
-		foreach my $s (keys %{$self->{name_hash}}) {
-			$string .= $s . " => " . $self->get_standard_name($s) . ",  ";
-		}
-		$string =~ s/,\s*$//g; # eliminate final comma and whitespace
-			$string .= ")";
-		return $string;
+sub get_map_string{
+	my $self = shift;
+	my $string = "(";
+	foreach my $s (keys %{$self->{name_hash}}) {
+		$string .= $s . " => " . $self->get_standard_name($s) . ",  ";
 	}
+	$string =~ s/,\s*$//g; # eliminate final comma and whitespace
+		$string .= ")";
+	return $string;
+}
 
 
 1;
