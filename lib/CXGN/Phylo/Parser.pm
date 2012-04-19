@@ -4,7 +4,7 @@ Essentially implements a tree parsing interface. There should be at least two fu
 
 =cut
 
-use strict;
+use strict; 
 use URI::Escape;
 
 use CXGN::Phylo::Tree;
@@ -22,7 +22,7 @@ package CXGN::Phylo::Abstract_tree_parser;
 
 =cut
 
-sub new { 
+sub new {
     my $class = shift;
     my $args = {};
     my $self = bless $args, $class;
@@ -71,7 +71,12 @@ use base qw/ CXGN::Phylo::Abstract_tree_parser /;
 sub new { 
     my $class = shift;
     my $string = shift;
-    my $self = $class->SUPER::new();
+    
+    my $do_set_error = shift;
+$do_set_error = 1 unless(defined $do_set_error); # can speed up parsing by setting this to 0 to skip.
+# print "XXXX [$do_set_error]\n"; 
+ my $self = $class->SUPER::new();
+    $self->{do_set_error} = $do_set_error; 
     $self->set_string($string);
     $self->{tree} = CXGN::Phylo::Tree->new("");
     return $self;
@@ -87,10 +92,11 @@ sub new {
 
 =cut
 
-sub parse { 
+sub parse {
     my $self = shift;
     my $root = $self->{tree}->get_root();
-    my $current_node = $root; 
+    my $current_node = $root;
+
 
     my $string = $self->get_string();
     if (!$string) { 
@@ -98,13 +104,13 @@ sub parse {
 	return undef;
     }
 		$string =~ /^[^\(]*(.*)/; #drop everthing before the first left paren.
-$string = $1; 
-# print STDERR "Yin Parser::parse. string to parse: [", $string, "]\n";
+$string = $1;
+# print STDERR "In Parser::parse. string to parse: [", $string, "]\n";
     #warn "String is $string\n";
     my @tokens = $self->tokenize($string);
     #print join "\n", @tokens;
     for (my $i=0; $i<@tokens; $i++) { 
-	$self->set_error(\@tokens, $i);
+	$self->set_error(\@tokens, $i) if($self->{do_set_error});
 	my $t = $tokens[$i];
 	if ($t eq "(")  {
 	    #print STDERR "Encountered (. Creating a new child node [parent=".$current_node->get_name()."\n";
@@ -140,15 +146,18 @@ $string = $1;
 		#Strip out extended specification (see below) first, so that we
 		#can use colons within the extended specs, such as for links.
 		my ($extended) = $t =~ /(\[.*\])/;
-		$t =~ s/\Q$extended\E// if $extended;
+# print "in Parse_newick->parse. extended: [", $extended, "]\n";	
+	#	print STDERR "in Parser. token: [$t] \n";
+	$t =~ s/\Q$extended\E// if $extended;
 	#	print STDERR "in Parser::parse. t: [$t] \n";
 	    my ($name, $distance) = split /\s*\:\s*/, $t;
-		
+#		print STDERR "in Parse_newick->parse. name,distance: [$name][$distance] \n";
 		$name =~ s/^\s*(.+)\s*$/$1/;
 	#	$distance =~ s/^\s*(.+)\s*$/$1/; # eliminate initial and final whitespace - but doesn't work
 		$distance =~ s/\s//g; # eliminate all whitespace from $distance.
 #print STDERR "name, distance: ", $name, "    ", $distance, "\n";
 
+		
 	    # check for our own extended specification. Additional information can be 
 	    # added after the node name in [] with embedded tags. Currently supported 
 	    # are the "species" tag and the "link" tag. Multiple tag/value pairs are separated
@@ -162,9 +171,11 @@ $string = $1;
 		  	my @attributes = split /\|/, $extended;
 			
 			foreach my $attr_string (@attributes){
+		 #	  print "attribute string: $attr_string \n";
 				my ($attr, $value) = $attr_string =~ /\s*(.*?)\s*=\s*(.*)\s*/;
-				unless($attr && $value){
-					print STDERR "Malformed attribute string: $attr_string";
+		#	  print "attr, value: [$attr], [$value].\n";
+				unless($attr && defined $value){
+					print STDERR "Malformed attribute string: $attr_string \n";
 					next;
 				}
 				if($attr =~ /link/i){
@@ -172,8 +183,10 @@ $string = $1;
 					$current_node->get_label()->set_link(URI::Escape::uri_unescape($value));
 				}
 				elsif($attr =~ /species/i){
-#					print STDERR "Setting species to $value\n";
+				#	print STDERR "Setting species to $value\n";
+				#	print URI::Escape::uri_unescape($value), "\n";
 					$current_node->set_species(URI::Escape::uri_unescape($value));
+#print "curr node species: ", $current_node->get_species(), "\n";
 				}
 				else{
 #					print STDERR "Setting '$attr' to '$value'\n";
