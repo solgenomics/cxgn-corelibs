@@ -2390,16 +2390,21 @@ my @thenodes = $species_t->get_leaves();
 #print "gene newick string: $gene_newick_string \n\n";
 #print "about to call urec. \n";
 # print STDERR "about to call urec, with gene tree newick:\n$gene_newick_string \n$species_newick_string \n";
-	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
-#	print STDERR "after urec.\n";
+#	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 #	my $rerooted_newick = `/data/local/cxgn/core/perllib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
-#	my $rerooted_newick = `urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+
+	my $rerooted_newick; 
+#	my $urec_dir = `which urec`;
+#	if($urec_dir =~ /\S/){
+	if(`which urec` =~ /\S/){
+ 		$rerooted_newick = `urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+}else{
+	$rerooted_newick = `/data/local/cxgn-old/core/perllib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;	
+}
 
 	#	print STDERR "gene_newick_string: \n $gene_newick_string   \n\nspecies_newick_string: \n $species_newick_string.\n\n";
 #		print STDERR "Rerooted newick string: [$rerooted_newick].\n";
 
-#exit;
-#print "rerooted newick: $rerooted_newick \n";
 # print "parsing mindl rerooted gene tree in Tree\n";
 	my $minDL_rerooted_gene_tree = (CXGN::Phylo::Parse_newick->new($rerooted_newick, $do_parse_set_error))->parse(); # this is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
 	# but  branch lengthswill be wrong for nodes whose parent has changed in the rerooting (they are just the branch lengths to the old parents). 
