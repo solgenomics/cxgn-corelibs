@@ -40,6 +40,8 @@ use CXGN::Phylo::Layout;
 use CXGN::Phylo::Renderer;
 use CXGN::Phylo::Parser;
 
+use base qw | CXGN::DB::Object |;
+
 my $do_parse_set_error = 0;
 
 =head2 function new()
