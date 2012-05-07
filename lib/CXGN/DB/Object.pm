@@ -60,6 +60,7 @@ sub new {
     my $param = shift;
 
     my $self = $class->SUPER::new();
+
     if ( ref($param) ) {
         if ( $param->can('prepare') && $param->can('selectall_arrayref') )
         {    # it's a DBI handle of some sort
@@ -78,7 +79,6 @@ sub new {
     }
     else {
         carp "A parameter is required in CXGN::DB::Object constructor";
-
     }
     return $self;
 }

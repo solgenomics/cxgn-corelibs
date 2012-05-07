@@ -1,16 +1,16 @@
-package CXGN::People::BACStatusLog;
+
 
 use strict;
 use warnings;
+
+package CXGN::People::BACStatusLog;
+
+use base qw | CXGN::DB::Object |;
 
 use Carp 'croak';
 use English;
 use POSIX;
 use List::Util qw/sum min/;
-#use base qw/CXGN::Class::DBI/;
-
-use base qw | CXGN::DB::Object |;
-
 use CXGN::Genomic::CloneIdentifiers qw/parse_clone_ident assemble_clone_ident/;
 
 =head2 new

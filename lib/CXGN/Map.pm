@@ -32,9 +32,15 @@ This class defines the following functions to be implemented by the subclasses, 
 
 =cut
 
-use Modern::Perl;
+
+use strict;
+
+package CXGN::Map;
+
 use CXGN::DB::Connection;
 use CXGN::Map::Version;
+
+use base "CXGN::DB::Object";
 
 =head2 new
 
@@ -53,9 +59,9 @@ use CXGN::Map::Version;
 sub new {
     my $class=shift;
     my($dbh,$map_info)=@_;
-    my $self=bless({},$class);
+    my $self=$class->SUPER::new($dbh); 
     unless(CXGN::DB::Connection::is_valid_dbh($dbh)){die"Invalid DBH";}
-    ref($map_info) eq 'HASH' or die"Must send in a dbh and hash ref with a map_id key or a map_version_id key";
+   ref($map_info) eq 'HASH' or die"Must send in a dbh and hash ref with a map_id key or a map_version_id key";
     $self->{map_version_id}=$map_info->{map_version_id};
     $self->{map_id}=$map_info->{map_id};
 
@@ -75,7 +81,7 @@ sub new {
         $map_version_id_q->execute($self->{map_id});
         ($self->{map_version_id})=$map_version_id_q->fetchrow_array();
     }
-   $self->{map_version_id} or return undef;
+    $self->{map_version_id} or return undef;
     my $general_info_q=$dbh->prepare
     ('
         select 
@@ -130,11 +136,11 @@ sub new {
 
 sub store {
     my $self = shift;
-    my $dbh = CXGN::DB::Connection->new();
+
     my $map_id = $self->get_map_id();
     print STDERR "map id from store: $map_id\n";
     if ($map_id) {
-	my $sth = $dbh->prepare("UPDATE sgn.map SET 
+	my $sth = $self->get_dbh()->prepare("UPDATE sgn.map SET 
                                         short_name = ?,
                                         long_name  = ?,
                                         abstract   = ?,
@@ -191,7 +197,7 @@ sub new_map {
     }  
 
     unless ($map_id) {
-	    $sth = $dbh->prepare("INSERT INTO sgn.map (short_name) VALUES (?)");
+	    $sth = $dbh->prepare("INSERT INTO sgn.map (short_name, map_type) VALUES (?, 'genetic')");
 	    $sth->execute($name);
 	    $map_id = $dbh->last_insert_id("map", "sgn");
 	    print STDERR "stored new Map Id: $map_id\n";
