@@ -401,38 +401,47 @@ my $testres = $new_tree->test_tree();
 	$blc = abs($total_branch_length - $subtree_bl);
 	if ($blc > $max_branch_length_change) {
 		$max_branch_length_change = $blc;
-		print STDERR "tbl, stbl: $total_branch_length,  $subtree_bl \n";
+#		print STDERR "tbl, stbl: $total_branch_length,  $subtree_bl \n";
 	}	
 }
-ok($max_branch_length_change < 5.0e-15*$total_branch_length, "Test that resetting root leaves total branch length unchanged. \n");
-print($count_compare_rooted1, "  ", $count_compare_unrooted1, "  ", $count_compare_rooted2, "  ", $count_compare_unrooted2, "\n");
-is($count_treetesta_ok,  @node_list, "tree_test ok on trees rooted at random points.\n");
-is($count_treetestb_ok,  @node_list, "tree_test ok on trees rooted at min variance point.\n");
-is($count_compare_rooted1, scalar $tree->get_root()->get_children(), "tree reset_root and compare test 1\n");
-is($count_compare_unrooted1, @node_list, "tree reset_root and compare test 2\n");
-is($count_compare_rooted2, @node_list, "tree reset_root and compare test 3\n");
-is($count_compare_unrooted2, @node_list, "tree reset_root and compare test 4\n");
+ok($max_branch_length_change < 5.0e-15*$total_branch_length, "Test that resetting root leaves total branch length unchanged.");
+# print($count_compare_rooted1, "  ", $count_compare_unrooted1, "  ", $count_compare_rooted2, "  ", $count_compare_unrooted2, ".\n");
+is($count_treetesta_ok,  @node_list, "tree_test ok on trees rooted at random points.");
+is($count_treetestb_ok,  @node_list, "tree_test ok on trees rooted at min variance point.");
+is($count_compare_rooted1, scalar $tree->get_root()->get_children(), "tree reset_root and compare test 1.");
+is($count_compare_unrooted1, @node_list, "tree reset_root and compare test 2.");
+is($count_compare_rooted2, @node_list, "tree reset_root and compare test 3.");
+is($count_compare_unrooted2, @node_list, "tree reset_root and compare test 4.");
 
 # Test pre- in- post- order traversals.
 my $t_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1):1, C:1):1, D:1):1, E:1)"))->parse();
+
 my $preorder_names_by_hand = "node: .\n" . "node: \n" . "node: \n" . "node: \n" . "node: A\n" . "node: B\n"
 	. "node: C\n" . "node: D\n" . "node: E\n";
-#our $preorder_names = "";
-my $preorder_names = $t_tree->preorder_traversal( sub{ my $str = "node: " . shift->get_name() . "\n";  return $str;} );
-is($preorder_names, $preorder_names_by_hand, "preorder traversal test.\n");
-#print STDERR "preorder_names: \n", $preorder_names, "\n\n", $preorder_names_by_hand. "\n\n";
+$t_tree->{node_names} = undef;
+$t_tree->preorder_traversal( \&traverse_test_function ); 
+my $preorder_names = $t_tree->{'node_names'};
+is($preorder_names, $preorder_names_by_hand, "preorder traversal test.");
+
 
 my $inorder_names_by_hand = "node: A\n" . "node: \n" . "node: B\n" . "node: \n" . "node: C\n" . "node: \n"
-	. "node: D\n" . "node: .\n" . "node: E\n";
-my $inorder_names = $t_tree->inorder_traversal( sub{ my $str = "node: " . shift->get_name() . "\n";  return $str; } );
-is($inorder_names, $inorder_names_by_hand, "inorder traversal test.\n");
-#print STDERR "inorder_names: \n", $inorder_names, "\n\n", $inorder_names_by_hand. "\n\n";
+        . "node: D\n" . "node: .\n" . "node: E\n";
+$t_tree->{node_names} = undef;
+$t_tree->inorder_traversal( \&traverse_test_function );
+my $inorder_names = $t_tree->{'node_names'};
+is($inorder_names, $inorder_names_by_hand, "inorder traversal test.");
 
+
+$t_tree->{node_names} = undef;
 my $postorder_names_by_hand = "node: A\n" . "node: B\n" . "node: \n" . "node: C\n" . "node: \n" . "node: D\n"
-	. "node: \n" . "node: E\n" . "node: .\n";
-my $postorder_names = $t_tree->postorder_traversal( sub{ my $str = "node: " . shift->get_name() . "\n"; return $str; } );
-is($postorder_names, $postorder_names_by_hand, "postorder traversal test.\n");
-#print STDERR "postorder_names: \n", $postorder_names, "\n\n", $postorder_names_by_hand. "\n\n";
+        . "node: \n" . "node: E\n" . "node: .\n";
+$t_tree->postorder_traversal( \&traverse_test_function );
+#       print STDERR "after. \n";
+        #sub{ my $node = shift; my $str = "node: " . $node->get_name() . "\n";  print STDERR $node->get_name(), "\n"; return $str;} );
+my $postorder_names = $t_tree->{'node_names'};
+is($postorder_names, $postorder_names_by_hand, "postorder traversal test.");
+
+exit;
 
 
 sub subtree_branch_length{
@@ -447,6 +456,13 @@ sub subtree_branch_length{
 
 
 sub traverse_test_function{
-	my $node = shift;
-	my $str = "node: " . $node->get_name() . "\n"; return $str;
+my $node = shift;
+my $tree = $node->get_tree();
+#my $new_node_names = (defined $tree->{'node_names'})? $tree->{'node_names'}: '';
+#$new_node_names .= "node: [" . $node->get_name() . "]\n"; print STDERR "node: [", $node->get_name(), "]\n";
+#$tree->{'node_names'} = $new_node_names;
+$tree->{'node_names'} .= "node: " . $node->get_name() . "\n"; 
 }
+
+
+
