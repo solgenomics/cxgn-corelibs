@@ -62,12 +62,6 @@ is ($tree->get_root()->is_leaf, 0, "root leaf test");
 
 is (@leaflist, 6, "leaf list test");
 
-#$tree->preorder_traversal(sub {my $node = shift; print STDERR "Preorder. node name: ", $node->get_name(), "  ", $node->get_branch_length(), "\n";}); 
-#print STDERR "\n";
-
-#$tree->postorder_traversal(sub {my $node = shift; print STDERR "Postorder. node name: ", $node->get_name(), "  ", $node->get_branch_length(), "\n";}); 
-
-#exit;
 
 # test the root
 #
@@ -418,6 +412,7 @@ my $t_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1):1, C:1):1, D:1):1, E
 
 my $preorder_names_by_hand = "node: .\n" . "node: \n" . "node: \n" . "node: \n" . "node: A\n" . "node: B\n"
 	. "node: C\n" . "node: D\n" . "node: E\n";
+#print STDERR "$preorder_names_by_hand\n";
 $t_tree->{node_names} = undef;
 $t_tree->preorder_traversal( \&traverse_test_function ); 
 my $preorder_names = $t_tree->{'node_names'};
@@ -426,6 +421,7 @@ is($preorder_names, $preorder_names_by_hand, "preorder traversal test.");
 
 my $inorder_names_by_hand = "node: A\n" . "node: \n" . "node: B\n" . "node: \n" . "node: C\n" . "node: \n"
         . "node: D\n" . "node: .\n" . "node: E\n";
+#print STDERR "$inorder_names_by_hand\n";
 $t_tree->{node_names} = undef;
 $t_tree->inorder_traversal( \&traverse_test_function );
 my $inorder_names = $t_tree->{'node_names'};
@@ -435,6 +431,7 @@ is($inorder_names, $inorder_names_by_hand, "inorder traversal test.");
 $t_tree->{node_names} = undef;
 my $postorder_names_by_hand = "node: A\n" . "node: B\n" . "node: \n" . "node: C\n" . "node: \n" . "node: D\n"
         . "node: \n" . "node: E\n" . "node: .\n";
+#print STDERR "$postorder_names_by_hand \n";
 $t_tree->postorder_traversal( \&traverse_test_function );
 #       print STDERR "after. \n";
         #sub{ my $node = shift; my $str = "node: " . $node->get_name() . "\n";  print STDERR $node->get_name(), "\n"; return $str;} );
