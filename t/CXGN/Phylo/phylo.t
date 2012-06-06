@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use Test::Most qw/no_plan/;
+use Test::Most tests => 44;  # qw/no_plan/;
 use Modern::Perl;
 
 
@@ -19,7 +19,7 @@ my $parser = CXGN::Phylo::Parse_newick -> new($expression);
 # test tokenizer
 #
 my @tokens =  $parser -> tokenize($expression);
-print STDERR "\tTOKENS: ".join("|", @tokens)."\n";
+# print STDERR "\tTOKENS: ".join("|", @tokens)."\n";
 is (@tokens, 22, "Token count test");
 
 my $tree = $parser-> parse();
@@ -45,7 +45,7 @@ my $n = $tree->get_node(5);
 #$tree->get_root()->rotate_node();
 #$n4->set_hidden(1);
 
-my $subtree_len = $tree->get_root()->calculate_subtree_distances();
+#my $subtree_len = $tree->get_root()->calculate_subtree_distances();
 #is ($subtree_len, 12, "subtree length test");
 
 # test the leaf functions in two different ways
@@ -102,20 +102,22 @@ is ($tree->get_node(5)->get_attribute("leaf_species_count"), 3, "subtree leaf sp
 
 # test the remove_child function
 #
+#print STDERR "before tree copy\n";
 my $rm_tree = $tree->copy();
+#print STDERR "after tree copy\n";
 $n = $rm_tree->get_node(5);
 my @children = $n->get_children();
-print STDERR "\tRemove child\nbefore: ".$n->to_string()."\n";
+#print STDERR "\tRemove child\nbefore: ".$n->to_string()."\n";
 is ($n->get_children, 2, "get_children test");
-print STDERR "\t(Removing child ".$children[0]->get_node_key().")\n";
+#print STDERR "\t(Removing child ".$children[0]->get_node_key().")\n";
 $n->remove_child($children[0]);
 is ($n->get_children(), 1, "remove child test");
-print STDERR "\tafter : ".$n->to_string()."\n";
+#print STDERR "\tafter : ".$n->to_string()."\n";
 
 my @root_kids = $rm_tree->get_root()->get_children();
 is (@root_kids, 3, "root children count test");
 $rm_tree->get_root()->remove_child($root_kids[1]);
-print STDERR "\tRemoving child key=".($root_kids[1]->get_name())."\n"; 
+#print STDERR "\tRemoving child key=".($root_kids[1]->get_name())."\n"; 
 #foreach my $c ($rm_tree->get_root()->get_children()) { print "current children = ".$c->get_name()."\n"; }
 is ($rm_tree->get_root()->get_children(), 2, "removed one root child test");
 
@@ -159,7 +161,7 @@ is ($tree_a->compare_rooted($tree_b), 1, "tree topology specification test");
 # 
 my $new_tree = $tree->copy();
 if ($tree->compare_rooted($new_tree)) {  # should be the same, shouldn't it?
-    print STDERR "Compared tree to newtree and found them to be identical.\n";
+    # print STDERR "Compared tree to newtree and found them to be identical.\n";
 }
 else  { print STDERR "newtree and tree are not identical. Oops.\n"; }
 is ($new_tree->compare_rooted($tree), 1, "copied tree identity check");
@@ -173,7 +175,7 @@ is($new_tree->compare_rooted($tree), 0, "changed copied tree identity check");
 # test the collapsing function - test a tree with many nodes that
 # have only one child.
 #
-print STDERR "\tTesting CXGN::Phylo::Node::recursive_collapse_nodes\n";
+#print STDERR "\tTesting CXGN::Phylo::Node::recursive_collapse_nodes\n";
 my $c_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1)C:1)D:1)E:1)"))->parse();
 
 $c_tree->set_renderer(CXGN::Phylo::Text_tree_renderer->new($c_tree));
@@ -304,6 +306,7 @@ $tree->get_root()->recursive_collapse_single_nodes();
 ok($tree->test_tree(), "tree test 2");
 
 
+
 #my ($mldv_node, $mldv_dist_above, $min_var) = $tree->min_leaf_dist_variance_point();
 #$tree->reset_root_to_point_on_branch($mldv_node, $mldv_dist_above); 
 
@@ -312,7 +315,7 @@ $tree->reset_root_to_point_on_branch($tree->min_leaf_dist_variance_point());
 
 
 $tree->get_root()->recursive_implicit_names();
-$tree->get_root()->print_subtree("\n");
+# $tree->get_root()->print_subtree("\n");
 # readline stdin;
 #$tree->reset_root_min_max_root_leaf_distance();
 
@@ -343,8 +346,8 @@ for (my $i = 0; $i < @node_list; $i++) {
 
 	my @new_node_list = $new_tree->get_root()->recursive_subtree_node_list();
 	my $n = $new_node_list[$i];
-	my $small = 0.0;
-	my $dab = ($small +(1.0 - $small)*rand())*$n->get_branch_length();  #random point on ith branch
+	my $small = 0.000001;
+	my $dab = ($small +(1.0 - 2*$small)*rand())*$n->get_branch_length();  #random point on ith branch
 
 	$new_tree->reset_root_to_point_on_branch($n, $dab);
 	$count_treetesta_ok += $new_tree->test_tree();
