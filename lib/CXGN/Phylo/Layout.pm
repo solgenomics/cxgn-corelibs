@@ -357,8 +357,7 @@ sub _layout_vertical {
     my $total_leaves = $self->get_tree()->get_leaf_count();
     my $image_height = $self->get_image_height();
     if ($total_leaves < 1) { return; }
-    my $vertical_gap = ($image_height - $self->get_top_margin() - $self->get_bottom_margin()) / ($total_leaves);
-    
+    my $vertical_gap = ($image_height - $self->get_top_margin() - $self->get_bottom_margin()) / ($total_leaves-1);
     # the leaf nodes should be easy.
     # traverse the tree, find all the leaves, and set the vertical
     # coordinate in the leaves to an increasing value with step $vertical_gap.
