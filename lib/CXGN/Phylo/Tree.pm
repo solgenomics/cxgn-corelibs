@@ -706,8 +706,9 @@ sub make_binary {
    Arguments:	 a function to be performed on each node, taking 
                  that node as its only argument
    Returns:	 nothing
-   Side effects: the function will be executed on each node object.
-   Description:	 not yet implemented... UPDATE: C. Carpita attempts
+   Side effects: The function will be executed on each node object
+	BEFORE descending into the node's child subtrees, i.e. preorder traversal.
+   Description: Synonym for preorder_traversal.
 
 =cut
 
@@ -719,11 +720,98 @@ sub traverse {
 	$node ||= $self->get_root();
 
 	&$function($node);
-
 	foreach( $node->get_children() ){
 		$self->traverse($function, $_);
 	}
 }
+
+=head2 function preorder_traversal()
+
+   Synopsis:     $tree->preorder_traversal( sub{ my $node = shift;
+                                      $node->set_hidden() } );
+   Arguments:    a function to be performed on each node, taking
+                 that node as its only argument
+   Returns:      nothing
+   Side effects: The function will be executed on each node object.
+   Description: Preorder traversal. Call function on node, then descend into its child subtrees.
+
+=cut
+
+sub preorder_traversal {
+        my $self = shift;
+        my $function = shift;
+        my $node = shift;
+        die "You did not pass a subroutine reference" unless (ref($function) eq "CODE");
+        $node ||= $self->get_root();
+
+#       print STDERR 'In traverse. before. ' . $node->get_name() . "  ";
+      &$function($node);
+#       print STDERR "after. \n";
+        foreach( $node->get_children() ){
+                $self->preorder_traversal($function, $_);
+        }
+}
+
+=head2 function inorder_traversal()
+
+   Synopsis:     $tree->inorder_traversal( sub{ my $node = shift;
+                                      $node->set_hidden() } );
+   Arguments:    a function to be performed on each node, taking
+                 that node as its only argument
+   Returns:      nothing
+   Side effects: inorder traversal. The function will be executed on each node object.
+   Description: inorder traversal. The function will be called on the node in between
+	descending to child subtrees. E.g. for binary tree, descend into left subtree,
+	call function on node, descend into right subtree.
+
+=cut
+
+sub inorder_traversal {
+        my $self = shift;
+        my $function = shift;
+        die "You did not pass a subroutine reference" unless (ref($function) eq "CODE");        
+	my $node = shift || $self->get_root(); # node is by default the root of tree.
+
+	my @children = $node->get_children();
+	if(scalar @children > 0){	
+my $leftmost_node = shift @children;
+	$self->inorder_traversal($function, $leftmost_node);
+        foreach my $child (@children){
+		&$function($node);
+                $self->inorder_traversal($function, $child);
+        }
+	}else{
+	&$function($node);
+}
+}
+
+
+
+=head2 function postorder_traversal()
+
+   Synopsis:     $tree->postorder_traversal( sub{ my $node = shift;
+                                      $node->set_hidden() } );
+   Arguments:    a function to be performed on each node, taking
+                 that node as its only argument
+   Returns:      nothing
+   Side effects: The function will be executed on each node object.
+   Description:  postorder traversal. Call function on node AFTER descending into subtrees.
+
+=cut
+
+sub postorder_traversal {
+        my $self = shift;
+        my $function = shift;
+        my $node = shift;
+        die "You did not pass a subroutine reference" unless (ref($function) eq "CODE");
+        $node ||= $self->get_root(); # node is by default the root of tree.
+
+        foreach( $node->get_children() ){
+                $self->postorder_traversal($function, $_);
+        }
+        &$function($node);
+}
+
 
 sub newick_shown_attributes { # just return the keys (attributes), so everything should work the same.
 	my $self = shift;
@@ -1894,7 +1982,7 @@ sub update_label_names{
 	my $show_spec = $self->get_show_species_in_label();
 foreach my $n ($self->get_all_nodes()) {
 #  print "node: ", $n->get_name(), " impl names: ", join("\t", @{$n->get_implicit_names()}), "\n";
-		my $n_leaves = scalar @{$n->get_implicit_names()};
+#		my $n_leaves = scalar @{$n->get_implicit_names()};
 		my $label_text = $n->get_name();
 		#	print STDERR "in update_label_names. $n_leaves, [", $n->get_name(), "][", $label_text, "] \n";
 		if ($show_spec) {
