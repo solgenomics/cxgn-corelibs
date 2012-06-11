@@ -94,7 +94,7 @@ sub new {
             for my $lg_name(@{$linkage_groups}) {
 		# one digit, optionally followed by another, optionally followed 
 		# by a lowercase letter--modify this regex if needed
-                unless ($lg_name=~/^\d\d?[a-z]?$/) {
+                unless ($lg_name=~/^\d\d?(\.\d|[a-z]?)$/) {
                     die "'$lg_name' is not a valid linkage group name";
                 }                
             }
