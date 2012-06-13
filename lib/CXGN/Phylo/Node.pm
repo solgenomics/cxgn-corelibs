@@ -999,13 +999,14 @@ sub set_hidden {
 
 =head2 function recursive_propagate_properties()
 
-  Synopsis:	
-  Arguments:	
+  Synopsis:	$root->recursive_propagate_properties('hidden');
+  Arguments:	A list of properties to be propagated. e.g.
+'hidden', but if no list given then hidden and hilited are propagated.
   Returns:	
   Side effects:	
   Description:	recursively propagates certain attributes to the
                 children nodes.
-                currently, the propagated properties are:
+                currently, the default propagated properties are:
                 hidden, hilited
 
 =cut
@@ -1016,15 +1017,24 @@ sub recursive_propagate_properties {
 	my $hidden = $self->get_hidden();
 	my $hilited = $self->get_hilited();
    
+	my @properties = @_; 
+	unless (@properties){ @properties = ('hidden', 'hilited') } 
+ # print STDERR "X [", scalar @properties, "] ", join("; ", @properties), "\n";
 	my @children = $self->get_children();
 	foreach my $c (@children) {
-		if ($hidden) {
+		foreach my $prop (@properties){
+
+			if (($prop eq 'hidden') and $hidden) {
 			$c->set_hidden($hidden);
-		}
-		if ($hilited) {
+			}elsif (($prop eq 'hilited') and $hilited) {
+				print STDERR "In rec.propagate_properties.: ", $c->get_name(), " being set hilited\n";
 			$c->set_hilited($hilited);
+			}elsif(defined $self->get_attribute($prop)){
+				$c->set_attribute($prop, $self->get_attribute($prop));		
 		}
-		$c->recursive_propagate_properties();
+		}
+#	print STDERR "Y [", scalar @properties, "] ", join("; ", @properties), "\n";
+		$c->recursive_propagate_properties(@properties);
 	}
 }
 
@@ -2359,7 +2369,7 @@ sub recursive_subtree_node_list {
 
 =head2 function get_attribute()
 
-  Synopsis:	my $foo = $node->get_attribte("foo");
+  Synopsis:	my $foo = $node->get_attribute("foo");
   Arguments:	the name of the attribute
   Returns:	the value of the attribute named foo.
   Side effects:	none
@@ -3540,11 +3550,15 @@ sub recursive_compare_species_split{
 	my $self = shift;							# a node of species tree, typically
 	my $a1 = shift;
 	my $a2 = shift;
+
+	if($a1 == 0 or $a2 == 0){ return 0; }; # one subtree has no species found in species tree 
 	my @children = $self->get_children();
+#	print "ZZZ [", scalar @children, "][", $self->get_attribute("species_bit_pattern"), "] &nbsp";
+
 	return int 0 if(scalar @children < 2); # if reach leaf of species tree, no speciation.
 	my $b1 = $children[0]->get_attribute("species_bit_pattern");
 	my $b2 = $children[1]->get_attribute("species_bit_pattern");
-	if (($a1 & ~$b1) == 0) {			# a1 species set is subset of b1 species set		
+	if (($a1 & ~$b1) == 0) {	# a1 (gene tree) species set is subset of b1 species set		
 		if (($a2 & ~$b2) == 0) {
 			return int 1;
 		} elsif (($a2 & ~$b1) == 0) {
@@ -3571,8 +3585,11 @@ sub recursive_compare_species_split{
 sub collect_orthologs_of_leaf{
 	my $self = shift;							# the leaf to start at
 	my @ortholog_array;
+	if ($self->get_attribute("species_bit_pattern") == 0){ return @ortholog_array; }
 	my $prev_parent = $self;
 	my $parent = $self->get_parent();
+#	return @ortholog_array;
+#	print  "XXX: [", $parent->get_attribute("speciation"), "]&nbsp";
 	while (1) {
 		if ($parent->get_attribute("speciation")) {
 			#print  join(";", $parent->get_implicit_names()), "\n";
@@ -3585,7 +3602,7 @@ sub collect_orthologs_of_leaf{
 					$n =~ s/(.*)?\|/$1/;
 				}
 				#print STDERR "implicit names: ", join(" ", @imp_names), "\n";
-				@ortholog_array = (@ortholog_array, @imp_names);
+				@ortholog_array = (@ortholog_array, @imp_names) if ($self->get_attribute("species_bit_pattern") > 0);
 			}
 		}
 		last if($parent->is_root());
@@ -3610,6 +3627,7 @@ sub recursive_collect_max_speciation_nodes{
 	}
 }
 
+# just recursively set_hilited for each speciation node.
 sub recursive_hilite_speciation_nodes{
 	my $self = shift;
 # return;
