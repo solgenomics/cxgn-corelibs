@@ -2537,12 +2537,14 @@ sub get_species_bithash{ #get a hash giving a bit pattern for each species in bo
 	$spec_tree->show_newick_attribute("species");
 	my $stree_newick = $spec_tree->generate_newick();
 # print STDERR "SPECIES TREE: $stree_newick \n";
+# count number of gene tree leaves of each species (use standard species)
 	my @leaf_list = $gene_tree->get_leaf_list();
 	foreach (@leaf_list) {
-		my $lspecies = $_->get_standard_species();
-		print STDERR "In Tree::get_species_bithash; gtree species: $lspecies \n";
+		my $lspecies = $_->get_standard_species(); # gene tree leaf standard species 
+	#	print STDERR "In Tree::get_species_bithash; gtree species: $lspecies \n";
 		$genehash{$lspecies}++; # keys are species in gene tree, values are number of leaves with that species
 	}
+# count number of species tree leaves of each species (use standard species) 
 	@leaf_list = $spec_tree->get_leaf_list();
 	foreach (@leaf_list) {
 		my $lspecies = $_->get_standard_species();
@@ -2553,6 +2555,7 @@ sub get_species_bithash{ #get a hash giving a bit pattern for each species in bo
 	}
 	my @species_list = sort (keys %spechash);
 	#	print join(" ", @species_list), "\n";
+	# assign 1,2,4,8, etc. to the various species (only the species in both gene and species trees)
 	my $bits = 1;
 	foreach (@species_list) {
 		$bithash->{$_} = $bits;
@@ -2593,7 +2596,19 @@ sub ortho_matrix_hash{
 		my $name = $_->get_name();
 		my $o_array = $ortho_hash{$name};
 	#	print STDERR join(" ", @$o_array), "\n";
-		my @orthologs = $_->collect_orthologs_of_leaf();
+		my @orthologs = ();
+		my @cand_orthologs = $_->collect_orthologs_of_leaf();
+	
+# keep only leaves whose species appear in species tree
+my $non_species_tree_leaf_node_names = $self->non_speciestree_leafnode_names();
+	if(scalar keys %$non_species_tree_leaf_node_names > 0){
+		foreach(@cand_orthologs){
+		next if(exists $non_species_tree_leaf_node_names->{$_});
+		push @orthologs, $_;
+}
+}else{
+	@orthologs = @cand_orthologs;
+}
 		foreach (@orthologs) {
 			my $o_name = $_;					#->get_name();
 		#	print STDERR $o_name, "  ", $name_hash{$o_name}, "\n";
@@ -2607,6 +2622,21 @@ sub ortho_matrix_hash{
 	return \%ortho_hash;
 }
 
+# return a hash whose keys are the names of the leaf nodes
+# whose species don't appear in the species tree.
+# keys: names, values: node objects
+sub non_speciestree_leafnode_names{
+	my $self = shift;
+	my @leaves = $self->get_leaf_list();
+	my %non_species_tree_leaf_node_names = ();
+	for (@leaves){
+		if ($_->get_attribute("species_bit_pattern") == 0){
+			$non_species_tree_leaf_node_names{$_->get_name()} = $_;
+		}
+	}
+return \%non_species_tree_leaf_node_names;
+}
+	 
 sub set_branch_lengths_equal{
 my $self = shift;
 my $bl = shift || 1.0;
