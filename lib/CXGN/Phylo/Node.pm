@@ -686,12 +686,13 @@ sub get_standard_species {
 	my $tree = $self->get_tree();
 	if (defined $tree) {
 		my $species_standardizer = $tree->get_species_standardizer();
-		if (defined $species_standardizer) {
+		if (defined $species_standardizer and defined ($species_standardizer->get_standard_name($species)) ) {
 			$species = $species_standardizer->get_standard_name($species);
-		#	print "species standardizer branch. species: $species \n";
+		#	print "species standardizer branch. species: [$species] \n";
 		} else {
-      $species = CXGN::Phylo::Species_name_map::to_standard_format($species); # just e.g.  solanum lycopersicum -> Solanum_lycopersicum
- #     print "to_standard_format branch: $species \n";
+#	print "species: [$species]\n";
+      $species = CXGN::Phylo::Species_name_map->to_standard_format($species, 1); # just e.g.  solanum lycopersicum -> Solanum_lycopersicum
+#      print "to_standard_format branch: [$species] \n";
 		}
 	}
 	return $species;
@@ -2013,7 +2014,8 @@ sub make_newick_attributes {
 	my $show_all = shift;
 	my $string = "";
 #	print "In Node::make_newick_attributes. ", join("; ", $self->get_tree()->newick_shown_attributes() ), "\n";
-	foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {
+	
+foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {
 	#  print "in make_newick_attributes. attribute: $attr\n";
 		my $value = "";
 		if ($attr eq "species") { # species shown for leaves, or all nodes if $show_all
