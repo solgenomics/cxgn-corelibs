@@ -2528,7 +2528,7 @@ $| = 1;
 	return (undef, undef);
 }
 
-sub get_species_bithash{ #get a hash giving a bit pattern for each species in both $gene_tree and $spec_tree
+sub get_species_bithash{ #get a hash giving a bit pattern for each species in BOTH $gene_tree and $spec_tree
 	my $gene_tree = shift;
 	my $spec_tree = shift;
 	my $bithash = {};
@@ -2540,6 +2540,7 @@ sub get_species_bithash{ #get a hash giving a bit pattern for each species in bo
 # count number of gene tree leaves of each species (use standard species)
 	my @leaf_list = $gene_tree->get_leaf_list();
 	foreach (@leaf_list) {
+	#	print STDERR $_->get_name(), "  ", $_->get_species(), "  ", $_->get_standard_species(), "\n";
 		my $lspecies = $_->get_standard_species(); # gene tree leaf standard species 
 	#	print STDERR "In Tree::get_species_bithash; gtree species: $lspecies \n";
 		$genehash{$lspecies}++; # keys are species in gene tree, values are number of leaves with that species
