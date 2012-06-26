@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use Test::Most tests => 49;  # qw/no_plan/;
+use Test::Most tests => 52;  # qw/no_plan/;
 use Modern::Perl;
 
 # tests Parser, Tree, and Node modules.
@@ -436,6 +436,106 @@ $t_tree->postorder_traversal( \&traverse_test_function );
         #sub{ my $node = shift; my $str = "node: " . $node->get_name() . "\n";  print STDERR $node->get_name(), "\n"; return $str;} );
 my $postorder_names = $t_tree->{'node_names'};
 is($postorder_names, $postorder_names_by_hand, "postorder traversal test.");
+
+
+# Test the species bit hash using a bigger tree
+my $species_tree_newick_expression = "( chlamydomonas[species=Chlamydomonas_reinhardtii]:1, ( physcomitrella[species=Physcomitrella_patens]:1, ( selaginella[species=Selaginella_moellendorffii]:1, ( loblolly_pine[species=Pinus_taeda]:1, ( amborella[species=Amborella_trichopoda]:1, ( date_palm[species=Phoenix_dactylifera]:1, ( ( foxtail_millet[species=Setaria_italica]:1, ( sorghum[species=Sorghum_bicolor]:1, maize[species=Zea_mays]:1 ):1 ):1, ( rice[species=Oryza_sativa]:1, ( brachypodium[species=Brachypodium_distachyon]:1, ( (wheat[species=Triticum_aestivum]:1, wheat_x[species=Triticum_aestivum_x]:1):1, barley[species=Hordeum_vulgare]:1 ):1 ):1 ):1 ):1):1):1):1):1):1)";
+$species_tree = CXGN::Phylo::Parse_newick -> new($species_tree_newick_expression)->parse();
+
+my $gene_tree_newick_expression = "( chlamydomonas[species=Chlamydomonas_reinhardtii]:1, ( physcomitrella[species=Physcomitrella_patens]:1, ( selaginella[species=Selaginella_moellendorffii]:1, ( loblolly_pine[species=Pinus_taeda]:1, ( amborella[species=Amborella_trichopoda]:1, ( date_palm[species=Phoenix_dactylifera]:1, ( ( foxtail_millet[species=Setaria_italica]:1, ( sorghum[species=Sorghum_bicolor]:1, maize[species=Zea_mays]:1 ):1 ):1, ( rice[species=Oryza_sativa]:1, ( brachypodium[species=Brachypodium_distachyon]:1, ( wheat[species=Triticum_aestivum]:1, barley[species=Hordeum_vulgare]:1 ):1 ):1 ):1 ):1):1):1):1):1):1)";
+my $gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse();
+
+$gene_tree->show_newick_attribute('species');
+my $nwck = $gene_tree->generate_newick(); #print $nwck, "\n";
+ 
+my $spec_bithash = $gene_tree->get_species_bithash($species_tree);
+my $spec_bithash_got = '';
+	foreach (sort keys %$spec_bithash){
+		$spec_bithash_got .= $_ . "   " . $spec_bithash->{$_} . " \n";
+}
+#print $spec_bithash_got, "\n";
+
+my $spec_bithash_expected = 
+"Amborella_trichopoda   1 \n" . 
+"Brachypodium_distachyon   2 \n" .
+"Chlamydomonas_reinhardtii   4 \n" .
+"Hordeum_vulgare   8 \n" .
+"Oryza_sativa   16 \n" .
+"Phoenix_dactylifera   32 \n" .
+"Physcomitrella_patens   64 \n" .
+"Pinus_taeda   128 \n" .
+"Selaginella_moellendorffii   256 \n" .
+"Setaria_italica   512 \n" .
+"Sorghum_bicolor   1024 \n" .
+"Triticum_aestivum   2048 \n" .
+#"Triticum_aestivum_x   4096 \n" .
+"Zea_mays   4096 \n";
+
+is($spec_bithash_got, $spec_bithash_expected, "Species bithash test 1.");
+
+
+$gene_tree_newick_expression = "( chlamydomonas[species=Chlamydomonas_reinhardtii]:1, ( physcomitrella[species=Physcomitrella_patens]:1, ( selaginella_x[species=Selaginella_moellendorffii_x]:1, ( loblolly_pine[species=Pinus_taeda]:1, ( amborella[species=Amborella_trichopoda]:1, ( date_palm[species=Phoenix_dactylifera]:1, ( ( foxtail_millet[species=Setaria_italica]:1, ( sorghum[species=Sorghum_bicolor]:1, maize[species=Zea_mays]:1 ):1 ):1, ( rice[species=Oryza_sativa]:1, ( brachypodium[species=Brachypodium_distachyon]:1, ( wheat[species=Triticum_aestivum]:1, barley[species=Hordeum_vulgare]:1 ):1 ):1 ):1 ):1):1):1):1):1):1)";
+$gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse();
+
+$gene_tree->show_newick_attribute('species');
+$nwck = $gene_tree->generate_newick(); #print $nwck, "\n";
+ 
+$spec_bithash = $gene_tree->get_species_bithash($species_tree);
+$spec_bithash_got = '';
+	foreach (sort keys %$spec_bithash){
+		$spec_bithash_got .= $_ . "   " . $spec_bithash->{$_} . " \n";
+}
+#print $spec_bithash_got, "\n";
+
+$spec_bithash_expected = 
+"Amborella_trichopoda   1 \n" . 
+"Brachypodium_distachyon   2 \n" .
+"Chlamydomonas_reinhardtii   4 \n" .
+"Hordeum_vulgare   8 \n" .
+"Oryza_sativa   16 \n" .
+"Phoenix_dactylifera   32 \n" .
+"Physcomitrella_patens   64 \n" .
+"Pinus_taeda   128 \n" .
+#"Selaginella_moellendorffii   256 \n" .
+"Setaria_italica   256 \n" .
+"Sorghum_bicolor   512 \n" .
+"Triticum_aestivum   1024 \n" .
+#"Triticum_aestivum_x   2048 \n" .
+"Zea_mays   2048 \n";
+
+is($spec_bithash_got, $spec_bithash_expected, "Species bithash test 2.");
+
+
+$gene_tree_newick_expression = "( chlamydomonas[species=Chlamydomonas_reinhardtii]:1, ( physcomitrella[species=Physcomitrella_patens]:1, ( selaginella_x[species=Selaginella_moellendorffii_x]:1, ( loblolly_pine[species=Pinus_taeda]:1, ( amborella[species=Amborella_trichopoda]:1, ( date_palm_x[species=Phoenix_dactylifera_x]:1, ( ( foxtail_millet[species=Setaria_italica]:1, ( sorghum[species=Sorghum_bicolor]:1, maize[species=Zea_mays]:1 ):1 ):1, ( rice[species=Oryza_sativa]:1, ( brachypodium_x[species=Brachypodium_distachyon_x]:1, ( wheat[species=Triticum_aestivum]:1, barley[species=Hordeum_vulgare]:1 ):1 ):1 ):1 ):1):1):1):1):1):1)";
+$gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse();
+
+$gene_tree->show_newick_attribute('species');
+$nwck = $gene_tree->generate_newick(); #print $nwck, "\n";
+ 
+$spec_bithash = $gene_tree->get_species_bithash($species_tree);
+$spec_bithash_got = '';
+	foreach (sort keys %$spec_bithash){
+		$spec_bithash_got .= $_ . "   " . $spec_bithash->{$_} . " \n";
+}
+#print $spec_bithash_got, "\n";
+
+$spec_bithash_expected = 
+"Amborella_trichopoda   1 \n" . 
+#"Brachypodium_distachyon   2 \n" .
+"Chlamydomonas_reinhardtii   2 \n" .
+"Hordeum_vulgare   4 \n" .
+"Oryza_sativa   8 \n" .
+#"Phoenix_dactylifera   32 \n" .
+"Physcomitrella_patens   16 \n" .
+"Pinus_taeda   32 \n" .
+#"Selaginella_moellendorffii   256 \n" .
+"Setaria_italica   64 \n" .
+"Sorghum_bicolor   128 \n" .
+"Triticum_aestivum   256 \n" .
+#"Triticum_aestivum_x   2048 \n" .
+"Zea_mays   512 \n";
+
+is($spec_bithash_got, $spec_bithash_expected, "Species bithash test 3.");
 
 exit;
 
