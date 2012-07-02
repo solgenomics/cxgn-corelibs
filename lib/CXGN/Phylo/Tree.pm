@@ -2483,17 +2483,23 @@ my @thenodes = $species_t->get_leaves();
 #	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 #	my $rerooted_newick = `/data/local/cxgn/core/perllib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 
-	my $rerooted_newick; 
+	my $urec_cmd = '/data/prod/bin/urec';
+	$urec_cmd = 'urec' unless( -x $urec_cmd ); 
+
+my $rerooted_newick; 
 #	my $urec_dir = `which urec`;
 #	if($urec_dir =~ /\S/){
-	if(`which urec` =~ /\S/){
- 		$rerooted_newick = `urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
-}else{
-	$rerooted_newick = `/data/local/cxgn-old/core/perllib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;	
-}
+#	if(`which urec` =~ /\S/){
 
-	#	print STDERR "gene_newick_string: \n $gene_newick_string   \n\nspecies_newick_string: \n $species_newick_string.\n\n";
-#		print STDERR "Rerooted newick string: [$rerooted_newick].\n";
+	print STDERR "In find_mindl_node. urec_cmd: [$urec_cmd]\n";
+ 		$rerooted_newick = `$urec_cmd -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+#}else{
+#	$rerooted_newick = `/data/local/cxgn-old/core/perllib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;	
+#
+
+	print STDERR "In find_mindl_node. gene_newick_string: \n $gene_newick_string   \n\n",
+	"species_newick_string: \n $species_newick_string.\n\n";
+	print STDERR "In find_mindl node. Rerooted newick string: [$rerooted_newick].\n";
 
 # print "parsing mindl rerooted gene tree in Tree\n";
 	my $minDL_rerooted_gene_tree = (CXGN::Phylo::Parse_newick->new($rerooted_newick, $do_parse_set_error))->parse(); # this is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
