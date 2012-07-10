@@ -1751,7 +1751,7 @@ sub recursive_set_implicit_species_bits{
 	my $bithash = shift;					# this gives the bit pattern associated with each species
 	my $species_bits = int 0;
 	my $implicit_species = $self->get_implicit_species();
-	# print "implicit species: ", join(" ", @$implicit_species), "\n";
+#	print STDERR "\nZZZ. implicit species: ", join(" ", @$implicit_species), "\n";
 	my $a = int 0;
 	my $b = int 0;
 	foreach (@$implicit_species) {
@@ -1760,6 +1760,7 @@ sub recursive_set_implicit_species_bits{
 		#	print STDERR "impl species: [$_],    [", $bithash->{$_}, "]\n";
 		}
 	}
+#	print STDERR "species bit pattern: [", $species_bits, "]\n\n\n";
 	$self->set_attribute("species_bit_pattern", $species_bits);
 	foreach ($self->get_children()) {
 		$_->recursive_set_implicit_species_bits($bithash);
@@ -1920,11 +1921,11 @@ sub recursive_copy {
 =cut
 
 sub copy { 
-	my $self = shift;
+	my $self = shift; # this is the node to be copied
 	my $new_parent = shift;
 	my $new_tree = shift;
 
-	my $new = CXGN::Phylo::Node->new();
+	my $new = CXGN::Phylo::Node->new(); # the copy
 
 	if ($new_parent) {
 		$new_parent->add_child_node($new);
@@ -1934,7 +1935,7 @@ sub copy {
 	$new->set_tree($new_tree);
 	$new->set_species($self->get_species());
 	$new->set_label($self->get_label()->copy());
-	$new->set_node_key($self->get_node_key());
+	$new->set_node_key($self->get_node_key()); # the copy gets the same node key as the original
 	$new->set_hidden($self->get_hidden());
 	$new->set_hilited($self->get_hilited());
 	$new->set_horizontal_coord($self->get_horizontal_coord());
@@ -1945,7 +1946,8 @@ sub copy {
 	$new->set_branch_length($self->get_branch_length());
 
 	$new->set_attribute("leaf_count", $self->get_attribute("leaf_count"));
-$new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_count"));
+	$new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_count"));
+		$new->set_attribute("species_bit_pattern", $self->get_attribute("species_bit_pattern"));
 
 	return $new;
 }
