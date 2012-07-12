@@ -1028,7 +1028,7 @@ sub recursive_propagate_properties {
 			if (($prop eq 'hidden') and $hidden) {
 			$c->set_hidden($hidden);
 			}elsif (($prop eq 'hilited') and $hilited) {
-				print STDERR "In rec.propagate_properties.: ", $c->get_name(), " being set hilited\n";
+#				print STDERR "In rec.propagate_properties.: ", $c->get_name(), " being set hilited\n";
 			$c->set_hilited($hilited);
 			}elsif(defined $self->get_attribute($prop)){
 				$c->set_attribute($prop, $self->get_attribute($prop));		
@@ -1760,7 +1760,7 @@ sub recursive_set_implicit_species_bits{
 		#	print STDERR "impl species: [$_],    [", $bithash->{$_}, "]\n";
 		}
 	}
-#	print STDERR "species bit pattern: [", $species_bits, "]\n\n\n";
+#	print STDERR "In rec set impl species bits. nodename: ", $self->get_name(), " species bit pattern: [", $species_bits, "]\n\n";
 	$self->set_attribute("species_bit_pattern", $species_bits);
 	foreach ($self->get_children()) {
 		$_->recursive_set_implicit_species_bits($bithash);
