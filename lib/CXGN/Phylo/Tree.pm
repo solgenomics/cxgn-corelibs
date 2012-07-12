@@ -1651,13 +1651,10 @@ sub find_point_closest_to_furthest_leaf{
 =cut
 sub reset_root_to_point_on_branch{
 		my $self = shift; 
-		my ($child_of_new_node, $dist_above) = @_;
-
-		my $new_node = $child_of_new_node->add_parent($dist_above); # goes
-		my $former_root = $self->get_root();
-
+		my ($node, $dist_above) = @_;
+		return if($node->is_root()); # if desired root node is already the root do nothing.
+		my $new_node = $node->add_parent($dist_above); # goes
 		$self->reset_root($new_node);
-
 		$self->collapse_tree();
 }
 
@@ -2434,16 +2431,30 @@ sub make_names_urec_ok{
   }
 }
 
+sub leaf_species_bit_pattern_string{
+    my $self = shift;
+    my @leaves = $self->get_leaf_list();
+    my $str = '';
+    foreach (@leaves){
+	$str .= $_->get_name() . "  [" . $_->get_attribute("species_bit_pattern") . "]\n";
+    }
+    return $str;
+}
+
 	# using urec, find the node s.t. rooting on its branch gives minimal duplications and losses
 	# w.r.t. a species tree
 sub find_mindl_node{
-	my $gene_tree = shift;				# a rooted gene tree
-	my $species_tree = shift;				# a species tree
+	my $gene_tree = shift;			   # a rooted gene tree
+	my $species_tree = shift;		   # a species tree
+
+
+#	for($gene_tree->get_leaf_list()){ print STDERR $_->get_attribute('species_bit_pattern'), "\n"; }
+#	print STDERR "gtnewick: ", $gene_tree->generate_newick(), "\n";
 
 	my $gene_tree_copy = $gene_tree->copy();
+#	for($gene_tree->get_leaf_list()){ print STDERR $_->get_attribute('species_bit_pattern'), "\n"; }
+#	print STDERR "gtcopynewick: ", $gene_tree_copy->generate_newick(), "\n";	
 
-
-#	my @non_speciestree_leafnode_names = keys %{$gene_tree_copy->non_speciestree_leafnode_names()};
 	my @non_speciestree_leafnodes = values  %{$gene_tree_copy->non_speciestree_leafnode_names()};
 
 	$gene_tree_copy->prune_leaves( @non_speciestree_leafnodes );
@@ -2451,9 +2462,11 @@ sub find_mindl_node{
 	# urec requires binary tree - make sure the tree is binary
 	# if polytomy at root, reroot a bit down one branch, to get binary root (if was tritomy)
 	my @new_root_point;
+#	print STDERR "pruned copy newick: ", $gene_tree_copy->generate_newick(), "\n";
 	{
 		my @root_children = $gene_tree_copy->get_root()->get_children();
 		if (scalar @root_children != 2) {
+		  
 			@new_root_point = ($root_children[0], 0.9*$root_children[0]->get_branch_length());
 			$gene_tree_copy->reset_root_to_point_on_branch(@new_root_point);
 		}
@@ -2481,19 +2494,16 @@ sub find_mindl_node{
 #	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 
 	my $urec_cmd = '/data/prod/bin/urec';
-	$urec_cmd = 'urec' unless( -x $urec_cmd ); 
-
-my $rerooted_newick; 
-
-
- 		$rerooted_newick = `$urec_cmd -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+	$urec_cmd = 'urec' if(! -x $urec_cmd ); 
+#	print STDERR `which $urec_cmd`;
+	my $rerooted_newick = `$urec_cmd -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 	my $minDL_rerooted_gene_tree = (CXGN::Phylo::Parse_newick->new($rerooted_newick, $do_parse_set_error))->parse(); 
 # $minDL_rerooted_gene_tree is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
-	# but  branch lengthswill be wrong for nodes whose parent has changed in the rerooting (they are just the branch lengths to the old parents). 
+	# but  branch lengths will be wrong for nodes whose parent has changed in the rerooting (they are just the branch lengths to the old parents). 
 	$minDL_rerooted_gene_tree->get_root()->recursive_implicit_names();
  
 	# the root of $minDL_rerooted_gene_tree should have 2 children 
-	# and (at least) one should have it's subtree also present in the pre-rerooting tree.
+	# and (at least) one hould have it's subtree also present in the pre-rerooting tree.
 	# identify the node at the root of this subtree (using implicit names) and reroot there.
 	# Have to do this because some branch length info was lost in urec step. 
 
@@ -2504,9 +2514,11 @@ my $rerooted_newick;
 		($node_key, $rr_node) = $gene_tree_copy->node_from_implicit_name_string($implicit_name_string);
 		if (defined $rr_node) {
 		  $minDL_rerooted_gene_tree->decircularize();
+		  $gene_tree_copy->decircularize();
 		  my $rr_node_in_orig_gene_tree = $gene_tree->get_node($node_key);
 			return @new_root_point = 
 			    ($rr_node_in_orig_gene_tree, 0.5*($rr_node_in_orig_gene_tree->get_branch_length()));
+		 
 		}
 	}
 $| = 1;
