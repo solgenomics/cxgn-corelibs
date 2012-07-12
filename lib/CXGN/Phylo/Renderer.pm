@@ -390,10 +390,10 @@ sub recursive_draw {
 
     # get the hilite color for the hilited nodes
     #
-    print STDERR "name: ", $node->get_name(), "  node implicit names:[",
-      join( ":", @{ $node->get_implicit_names() } ), "] speciation:[",
-      $node->get_attribute("speciation"), "]  hilite:[", $node->get_hilited(),
-      "]\n";
+#    print STDERR "name: ", $node->get_name(), "  node implicit names:[",
+#      join( ":", @{ $node->get_implicit_names() } ), "] speciation:[",
+#      $node->get_attribute("speciation"), "]  hilite:[", $node->get_hilited(),
+#      "]\n";
 
     # if node's subtree has at least one species in species tree ...
     if ( $node->get_hilited()
