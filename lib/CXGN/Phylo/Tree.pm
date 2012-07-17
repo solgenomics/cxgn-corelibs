@@ -2206,9 +2206,8 @@ sub RF_distance {
   Arguments:	A tree object; and optionally a string specifying 
                 whether to compare node name or species. 
                 (Default is name)
-  Returns:	Compares tree1 and tree2. If they are topologically 
-                the same, 0 is returned. Otherwise returns a "distance" 
-                describing how different the two trees are.
+  Returns:	Compares tree1 and tree2. Returns list of 3 measures of distance:
+    robinson-foulds distance, symmetric disance and 
   Side effects:	Sets "subtree_leaves_match" field for each node
   Description:	Tree1, tree2 should be collapsed before calling this 
                 function. For each node in tree1 add branch length to 
