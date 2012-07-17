@@ -89,7 +89,7 @@ my $i = 0;
 foreach my $n (values %{$tree->{node_hash}}) {
 	next if(scalar $n->get_children() > 0); # skip non-leaves
 	$n->set_species($species_list[$i % 6]);
-	print "i, species:  $i  ", $n->get_species(), "\n";
+#	print "i, species:  $i  ", $n->get_species(), "\n";
 	$i++;
 }
 
@@ -102,7 +102,7 @@ $tree->get_root()->recursive_set_leaf_species_count();
 
 # pick out a node and test the count
 #
-print "node keys: ", join(" ", keys %{$tree->{node_hash}}), "\n";
+#print "node keys: ", join(" ", keys %{$tree->{node_hash}}), "\n";
 is($tree->get_root()->get_attribute("leaf_species_count"), 6, "subtree leaf species count test");
 #is ($tree->get_node(5)->get_attribute("leaf_species_count"), 3, "subtree leaf species count test");
 
@@ -110,7 +110,7 @@ is($tree->get_root()->get_attribute("leaf_species_count"), 6, "subtree leaf spec
 #
 #print STDERR "before tree copy\n";
 my $rm_tree = $tree->copy();
-print STDERR 'after $tree->copy() \n';
+#print STDERR 'after $tree->copy() \n';
 my @root_children = $rm_tree->get_root()->get_children();
 my $n1 = $root_children[1];
 my @children =$n1->get_children();
@@ -178,8 +178,8 @@ is ($new_tree->compare_rooted($tree), 1, "copied tree identity check");
 isnt ( $new_tree, $tree, "tree pointer non-identity check");
 
 my ($rfd, $symd, $d3) = $tree->RF_distance($new_tree);
-is($rfd, 0, "check RF distance between tree and copy is 0.\n");
-is($symd, 0, "check RF distance between tree and copy is 0.\n");
+is($rfd, 0, "check RF distance between tree and copy is 0.");
+is($symd, 0, "check RF distance between tree and copy is 0.");
 
 # check if I can remove a node in new_tree without affecting $tree
 #
@@ -230,8 +230,8 @@ $c_tree->collapse_tree();
 # test a tree collapsing with a tree that has branch lengths of zero.
 #
 my $z_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:0)C:0)D:0)E:1, (((G:1, F:1)H:0)I:1)J:1)"))->parse();
-print STDERR "Testing the recursive_collapse_zero_branches() function...\nOriginal tree:\n";
-$z_tree->get_root()->print_subtree();
+#print STDERR "Testing the recursive_collapse_zero_branches() function...\nOriginal tree:\n";
+#$z_tree->get_root()->print_subtree();
 
 my $z_tree_node_count = $z_tree->get_node_count();
 $z_tree ->get_root()->recursive_collapse_zero_branches();
