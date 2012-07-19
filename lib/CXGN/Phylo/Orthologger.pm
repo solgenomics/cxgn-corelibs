@@ -1,4 +1,4 @@
-package Orthologger;
+package CXGN::Phylo::Orthologger;
 use strict;
 use List::Util qw ( min max sum );
 
