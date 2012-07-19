@@ -1,4 +1,4 @@
-package IdTaxonMap;
+package CXGN::Phylo::IdTaxonMap;
 
 use strict;
 use List::Util qw ( min max sum );
@@ -64,6 +64,7 @@ sub id_to_taxonname{
     return $map->{$_} if($id =~ /$_/);
   }
   warn "No taxon name found for id: $id\n";
+  return;
 }
 
 1;
