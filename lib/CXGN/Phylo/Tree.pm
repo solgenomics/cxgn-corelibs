@@ -39,6 +39,7 @@ use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Layout;
 use CXGN::Phylo::Renderer;
 use CXGN::Phylo::Parser;
+use CXGN::Phylo::IdTaxonMap;
 
 use base qw | CXGN::DB::Object |;
 
@@ -130,6 +131,7 @@ sub new {
     $self->set_show_species_in_label(0);
     $self->set_show_standard_species(0);
     $self->set_species_standardizer( CXGN::Phylo::Species_name_map->new() );
+    $self->set_id_taxon_map( CXGN::Phylo::IdTaxonMap->new() );
 
     #Attribute names to show in newick extended format
     $self->{newick_shown_attributes}            = {};
@@ -1180,6 +1182,18 @@ sub get_show_species_in_label {
 sub set_show_species_in_label {
     my $self = shift;
     $self->{show_species_in_labels} = shift;
+}
+
+sub get_id_taxon_map{
+    my $self = shift;
+    return $self->{'id_taxon_map'};
+}
+
+sub set_id_taxon_map{
+	my $self = shift;
+	my $id_taxon_map = shift;
+	$self->{'id_taxon_map'} = $id_taxon_map;
+	return;
 }
 
 =head2 accessors get_line_color(), set_line_color()
@@ -2492,7 +2506,7 @@ sub find_mindl_node {
 
     my $gene_tree_copy = $gene_tree->copy();
  #   print STDERR "1 BRANCHLENGTHS: ", join( ";", map( $_->get_branch_length(), $gene_tree_copy->get_leaf_list() ) ),
-      "\n";
+#      "\n";
 
     #	for($gene_tree->get_leaf_list()){ print STDERR $_->get_attribute('species_bit_pattern'), "\n"; }
     #	print STDERR "gtcopynewick: ", $gene_tree_copy->generate_newick(), "\n";
