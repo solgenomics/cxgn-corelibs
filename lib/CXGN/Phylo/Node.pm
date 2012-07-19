@@ -29,7 +29,7 @@ use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Tree;
 use CXGN::Phylo::Label;
 use CXGN::Page::FormattingHelpers qw/tooltipped_text/;
- 
+
 
 =head2 function new()
 
@@ -3153,14 +3153,20 @@ print("in robinson-foulds, root bls: ", $root1->get_branch_length(), "   ", $roo
 sub determine_species_from_name{
 	my $self = shift;
 	my $str = shift;
-	my $species = undef;
+#	my $species = undef;
 	if (!$str) {	$str = $self->get_name(); }
 
-	#	print STDERR "string to get species from: ", $str, "\n";
-	if ($str =~ /^At/i) {					# At.... is Arabidopsis
-		$species = "Arabidopsis";
-	}
+	my $id_taxon_map = $self->get_tree()->get_id_taxon_map();
+       my $species = $id_taxon_map->id_to_taxonname($str);
 
+	#	print STDERR "string to get species from: ", $str, "\n";
+#	if ($str =~ /^At/i) {					# At.... is Arabidopsis
+#		$species = "Arabidopsis";
+#	}
+	
+	if(defined $species){
+	   # just keep this value of $species
+	}
 	# for $str of form SGN-U followed by digits,eliminate the SGN-U:
 	elsif ($str =~ /^SGN-{0,1}U(\d+)/i) { # should we require SGN to be initial?
 
