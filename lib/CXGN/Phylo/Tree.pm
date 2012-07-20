@@ -34,6 +34,8 @@ The tree object also provides the layout and rendering functions. The both layou
 use strict;
 use warnings;
 
+use Math::BigInt;
+
 use CXGN::Phylo::Node;
 use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Layout;
@@ -2501,17 +2503,21 @@ sub find_mindl_node {
     my $species_tree = shift;    # a species tree
 #    print STDERR "0 BRANCHLENGTHS: ", join( ";", map( $_->get_branch_length(), $gene_tree->get_leaf_list() ) ), "\n";
 
-    #	for($gene_tree->get_leaf_list()){ print STDERR $_->get_attribute('species_bit_pattern'), "\n"; }
+ #  	for($gene_tree->get_leaf_list()){ print STDERR "genetree sbts: ", $_->get_attribute('species_bit_pattern'), "\n"; }
     #	print STDERR "gtnewick: ", $gene_tree->generate_newick(), "\n";
 
     my $gene_tree_copy = $gene_tree->copy();
  #   print STDERR "1 BRANCHLENGTHS: ", join( ";", map( $_->get_branch_length(), $gene_tree_copy->get_leaf_list() ) ),
 #      "\n";
 
-    #	for($gene_tree->get_leaf_list()){ print STDERR $_->get_attribute('species_bit_pattern'), "\n"; }
-    #	print STDERR "gtcopynewick: ", $gene_tree_copy->generate_newick(), "\n";
+#    	for($gene_tree->get_leaf_list()){ 
+#	    print STDERR $_->get_name(), "  ", $_->get_species(), "  ",
+#	    $_->get_attribute('species_bit_pattern'), "\n"; 
+#	}
+#    	print STDERR "gtcopynewick before pruning: ", $gene_tree_copy->generate_newick(), "\n";
 
     my @non_speciestree_leafnodes = values %{ $gene_tree_copy->non_speciestree_leafnode_names() };
+#    print STDERR "nonspeciestreeleafnodes: \n", join("\n", map($_->get_name() . "--" . $_->get_species(), @non_speciestree_leafnodes)), "\n";
 
     $gene_tree_copy->prune_leaves(@non_speciestree_leafnodes);
     my $n_leaves_after_pruning = scalar $gene_tree_copy->get_leaf_list();
@@ -2520,7 +2526,7 @@ sub find_mindl_node {
           $gene_tree_copy->generate_newick(), "\n";
         return ( undef, undef );
     }
-  
+ #   print STDERR "gt newick after pruning: ", $gene_tree_copy->generate_newick(), "\n";
     # urec requires binary tree - make sure the tree is binary
     # if polytomy at root, reroot a bit down one branch, to get binary root (if was tritomy)
     my @new_root_point;
@@ -2558,6 +2564,9 @@ sub find_mindl_node {
     my $species_newick_string = $species_tree->generate_newick();
     $species_newick_string =~ s/\s//g;    # remove whitespace
 
+  #  print STDERR "gene tree: $gene_newick_string \n";
+  #  print STDERR "species tree: $species_newick_string \n";
+
 #	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
 
     my $urec_cmd = '/data/prod/bin/urec';
@@ -2565,6 +2574,7 @@ sub find_mindl_node {
 
     #	print STDERR `which $urec_cmd`;
     my $rerooted_newick = `$urec_cmd -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
+  #  print STDERR "in mindl rerooted newick: [$rerooted_newick] \n";
     my $minDL_rerooted_gene_tree = ( CXGN::Phylo::Parse_newick->new( $rerooted_newick, $do_parse_set_error ) )->parse();
 
 # $minDL_rerooted_gene_tree is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
@@ -2631,7 +2641,7 @@ sub get_species_bithash {    #get a hash giving a bit pattern for each species i
     my @species_list = sort ( keys %spechash );
 
     # assign 1,2,4,8, etc. to the various species (only the species in both gene and species trees)
-    my $bits = 1;
+    my $bits = Math::BigInt->new(1);
     foreach (@species_list) {
         $bithash->{$_} = $bits;
         $bits          = $bits << 1;   # mult by two
@@ -2640,7 +2650,8 @@ sub get_species_bithash {    #get a hash giving a bit pattern for each species i
     return $bithash;
 }
 
-# returns 1 if can delete one of the leaf nodes in arg list, 0 if OK.
+
+# returns 1 if can't delete one of the leaf nodes in arg list, 0 if OK.
 sub prune_leaves {                     # prune leaves from tree 1 if their species does not occur in tree2
     my $self   = shift;
     my @leaves = @_;
@@ -2651,7 +2662,9 @@ sub prune_leaves {                     # prune leaves from tree 1 if their speci
             warn 'The node you want to delete does not exist!';
             return;
         }
+	my $parent_of_pruned_node = $leaf_node->get_parent();
         $retval ||= $leaf_node->delete_self();
+ $parent_of_pruned_node->recursive_collapse_single_nodes(); # so if e.g. you delete two neighbor leaves, their parent is also deleted
     }
  
     $self->collapse_tree();
