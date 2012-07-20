@@ -5,7 +5,7 @@ use List::Util qw ( min max sum );
 # use Devel::Cycle; # not gonna use this anymore?
 
 my $default_arg_href = {
-			'reroot_method' => 'none',
+			'reroot_method' => 'none', # choices are  mindl  maxmin  minmax  minvar
 			'gene_tree' => undef,
 			'gene_tree_newick' => undef,
 			'species_tree' => undef, # tree object.
