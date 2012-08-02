@@ -135,7 +135,7 @@ sub ortholog_result_string{
   my $self = shift;
   my $gene_tree = $self->get_gene_tree();
   my $ortholog_str = '';
-  my $leaf_ortholog_hashref = $gene_tree->get_leaf_ortholog_hashref();
+  my $leaf_ortholog_hashref = $gene_tree->leaf_ortholog_table();
   foreach my $leafname (keys %$leaf_ortholog_hashref) {
     $ortholog_str .= "orthologs of " . $leafname . ":  ";
     my @orthologs = @{$leaf_ortholog_hashref->{$leafname}};
