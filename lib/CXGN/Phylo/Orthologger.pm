@@ -135,49 +135,15 @@ sub ortholog_result_string{
   my $self = shift;
   my $gene_tree = $self->get_gene_tree();
   my $ortholog_str = '';
-  my @leaves = $gene_tree->get_leaves();
-  my $query_species = $self->get_query_species();
-  my $standard_query_species = undef;
-  if (defined $query_species) {
-    $standard_query_species =  $self->get_species_name_map()->get_standard_name($query_species); #e.g. "Ipomoea_batatas";
-  }
-  my $query_id_regex = $self->get_query_id_regex();
-
-  my $non_species_tree_leaf_node_names = $self->get_gene_tree()->non_speciestree_leafnode_names();
-  foreach my $leaf (@leaves) {
-    my $species_ok = (! defined $query_species or ( $leaf->get_standard_species() =~ /$standard_query_species/) );
-    my $name_ok = (! defined $query_id_regex or $leaf->get_name() =~ /$query_id_regex/);
-    next if(!$species_ok or !$name_ok);
-    my $leafname = $leaf->get_name();
-    next if( exists $non_species_tree_leaf_node_names->{$leafname} );
+  my $leaf_ortholog_hashref = $gene_tree->get_leaf_ortholog_hashref();
+  foreach my $leafname (keys %$leaf_ortholog_hashref) {
     $ortholog_str .= "orthologs of " . $leafname . ":  ";
-
-  my @cand_orthologs = $leaf->collect_orthologs_of_leaf();
-
-            # keep only leaves whose species appear in species tree
-            my @orthologs = ();
-
-            #  my $non_species_tree_leaf_node_names =
-            #  $browser->get_tree()->non_speciestree_leafnode_names();
-            if ( scalar keys %$non_species_tree_leaf_node_names > 0 ) {
-                foreach (@cand_orthologs) {
-                    if ( exists $non_species_tree_leaf_node_names->{$_} ) {
-                        #  unknown species, can't claim orthology
-                    } else {
-                        push @orthologs, $_;
-                    }
-                }
-            } else {
-                @orthologs = @cand_orthologs;
-            }
-
- #   my @orthologs = $leaf->collect_orthologs_of_leaf(); # list of leaf names
+    my @orthologs = @{$leaf_ortholog_hashref->{$leafname}};
     $ortholog_str .= join(" ", @orthologs) . "\n";
   }
-  my $non_speciestree_names_str = "Leaves not in species tree: " . join(" ", keys %{$non_species_tree_leaf_node_names}) . "\n";
-  $ortholog_str .= $non_speciestree_names_str;
+  $ortholog_str .= "Leaves not in species tree: " . join(" ", keys %{$self->get_gene_tree()->non_speciestree_leafnode_names()}) . "\n";
   return $ortholog_str;
-} # end of ortholog_result_string
+}				# end of ortholog_result_string
 
 sub get_species_bithash{ #  get a hash giving a bit pattern for each species which is in both $gene_tree and $spec_tree
   my $self = shift;
