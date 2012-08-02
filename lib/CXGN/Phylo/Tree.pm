@@ -2672,6 +2672,58 @@ sub prune_leaves {                     # prune leaves from tree 1 if their speci
     return $retval;
 }
 
+# returns a ref to a hash whose keys are names of leaf nodes, values are refs to arrays of names of other
+# leaf nodes inferred to be orthologs
+sub leaf_ortholog_table{
+my $self = shift;
+my $hilited_only = shift || undef;
+my $query_species = shift || undef;
+my $query_id_regex = shift || undef;
+my $standard_query_species = undef;
+if (defined $query_species) {
+    $standard_query_species =  $self->get_species_standardizer()->get_standard_name($query_species); #e.g. "Ipomoea_batatas";
+  }
+my %leaf_ortholog_hash = ();
+ my @leaves = $self->get_leaves();
+  my $non_species_tree_leaf_node_names = $self->non_speciestree_leafnode_names();
+  foreach my $leaf (@leaves) {
+#    print STDERR $leaf->get_name(), "  [", $leaf->get_label()->get_hilite(), "]\n";
+    next if($hilited_only && !$leaf->get_label()->get_hilite());
+    my $species_ok = (! defined $query_species or ( $leaf->get_standard_species() =~ /$standard_query_species/) );
+    my $name_ok = (! defined $query_id_regex or $leaf->get_name() =~ /$query_id_regex/);
+    next if(!$species_ok or !$name_ok);
+    my $leafname = $leaf->get_name();
+  
+    next if( exists $non_species_tree_leaf_node_names->{$leafname} );
+  #  $ortholog_str .= "orthologs of " . $leafname . ":  ";
+
+  my @cand_orthologs = $leaf->collect_orthologs_of_leaf();
+
+            # keep only leaves whose species appear in species tree
+            my @orthologs = ();
+
+            #  my $non_species_tree_leaf_node_names =
+            #  $browser->get_tree()->non_speciestree_leafnode_names();
+            if ( scalar keys %$non_species_tree_leaf_node_names > 0 ) {
+                foreach (@cand_orthologs) {
+                    if ( exists $non_species_tree_leaf_node_names->{$_} ) {
+                        #  unknown species, can't claim orthology
+                    } else {
+                        push @orthologs, $_;
+                    }
+                }
+            } else {
+                @orthologs = @cand_orthologs;
+            }
+
+ #   my @orthologs = $leaf->collect_orthologs_of_leaf(); # list of leaf names
+ #   $ortholog_str .= join(" ", @orthologs) . "\n";
+ $leaf_ortholog_hash{$leafname} = \@orthologs;
+  } # loop over leaves
+return \%leaf_ortholog_hash;
+
+}
+
 # return a hash whose keys are leaf node names (hidden nodes excluded)
 # and whose values are refs to arrays of 1's and 0's, the 1's indicating orthology.
 sub ortho_matrix_hash {
