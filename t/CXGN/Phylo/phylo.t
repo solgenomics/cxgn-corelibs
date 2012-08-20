@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use Test::Most tests => 52;  # qw/no_plan/;
+use Test::Most tests => 53;  # qw/no_plan/;
 use Modern::Perl;
 
 # tests Parser, Tree, and Node modules.
@@ -24,7 +24,6 @@ my @tokens =  $parser -> tokenize($newick_expression);
 is (@tokens, 22, "Token count test");
 
 my $tree = $parser-> parse();
-
 #print STDERR Dumper($tree);
 
 #print STDERR "Total Nodes: ".(keys(%{$tree->{node_hash}}))."\n";
@@ -33,6 +32,7 @@ my $tree = $parser-> parse();
 # check the number of nodes returned by get_all_nodes
 #
 is ($tree->get_all_nodes(), 10, "node count test [node_hash]");
+is ($tree->retrieve_longest_branch_node->get_branch_length(), 0.354293, 'Longest branch length test');
 
 # pick an element and verify if it is a CXGN::Phylo::Node object
 #
