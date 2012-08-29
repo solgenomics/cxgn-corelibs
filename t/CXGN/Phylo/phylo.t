@@ -1,9 +1,11 @@
 #!/usr/bin/perl
-use Test::Most tests => 53;  # qw/no_plan/;
+use Test::Most tests => 60;  # qw/no_plan/;
 use Modern::Perl;
 
 # tests Parser, Tree, and Node modules.
 
+use CXGN::Phylo::BasicTree;
+use CXGN::Phylo::BasicNode;
 use CXGN::Phylo::Tree;
 use CXGN::Phylo::Node;
 use CXGN::Phylo::Parser;
@@ -23,9 +25,16 @@ my @tokens =  $parser -> tokenize($newick_expression);
 # print STDERR "\tTOKENS: ".join("|", @tokens)."\n";
 is (@tokens, 22, "Token count test");
 
-my $tree = $parser-> parse();
-#print STDERR Dumper($tree);
+my $tree = $parser-> parse( CXGN::Phylo::Tree->new("") );
+is(ref($tree), 'CXGN::Phylo::Tree', 'test  ref($tree) eq CXGN::Phylo::Tree');
+is ( UNIVERSAL::isa($tree, "CXGN::Phylo::Tree"), 1, "Test $tree isa CXGN::Phylo::Tree.");
+is ( UNIVERSAL::isa($tree, "CXGN::Phylo::BasicTree"), 1, "Test $tree isa CXGN::Phylo::BasicTree.");
 
+my $basic_tree = $parser->parse(CXGN::Phylo::BasicTree->new("") );
+is(ref($basic_tree), 'CXGN::Phylo::BasicTree', 'test  ref($basic_tree) eq CXGN::Phylo::BasicTree');
+is ( UNIVERSAL::isa($basic_tree, "CXGN::Phylo::BasicTree"), 1, "test $basic_tree isa CXGN::Phylo::BasicTree.");
+my $new_basic_tree = $basic_tree->copy();
+is (ref($new_basic_tree), ref($basic_tree), 'test $basic_tree->copy()');
 #print STDERR "Total Nodes: ".(keys(%{$tree->{node_hash}}))."\n";
 #is (keys(%{$tree->{node_hash}}), 10, "node count test");
 
@@ -33,6 +42,9 @@ my $tree = $parser-> parse();
 #
 is ($tree->get_all_nodes(), 10, "node count test [node_hash]");
 is ($tree->retrieve_longest_branch_node->get_branch_length(), 0.354293, 'Longest branch length test');
+
+
+# exit;
 
 # pick an element and verify if it is a CXGN::Phylo::Node object
 #
@@ -143,11 +155,12 @@ $tree->reset_root( $tree->get_node(5) );
 #
 my $species_tree_newick = "((((( tomato_tomato:1, potato_potato:1):1, pepper_pepper:1 ):1, eggplant_eggplant):1, nicotiana_nicotiana:1):1, coffee_coffee:1)";
 my $species_tree_parser = CXGN::Phylo::Parse_newick->new($species_tree_newick);
-my $species_tree = $species_tree_parser->parse();
+my $species_tree = $species_tree_parser->parse( CXGN::Phylo::BasicTree->new('') );
+# exit;
 
 my $species_tree_newick2 = "((((( tomato_tomato:5, potato_potato:1):1, pepper_pepper:1 ):1, eggplant_eggplant):1, nicotiana_nicotiana:1):1, coffee_coffee:1)";
 my $species_tree_parser2 = CXGN::Phylo::Parse_newick->new($species_tree_newick2);
-my $species_tree2 = $species_tree_parser2->parse();
+my $species_tree2 = $species_tree_parser2->parse(CXGN::Phylo::BasicTree->new(''));
 
 # compare the tree to itself
 #
@@ -162,14 +175,15 @@ is($species_tree->compare_rooted($tree), 0, "tree inequality test");
 
 # test that two topologically identical but specified differently match in the comparison
 #
-my $tree_a = CXGN::Phylo::Parse_newick->new("(A:1, B:1)")->parse();
-my $tree_b = CXGN::Phylo::Parse_newick->new("(B:1, A:1)")->parse();
+my $tree_a = CXGN::Phylo::Parse_newick->new("(A:1, B:1)")->parse(CXGN::Phylo::BasicTree->new(''));
+my $tree_b = CXGN::Phylo::Parse_newick->new("(B:1, A:1)")->parse(CXGN::Phylo::BasicTree->new(''));
 is ($tree_a->compare_rooted($tree_b), 1, "tree topology specification test");
 
 
 # test the copy function
-# 
+#
 my $new_tree = $tree->copy();
+is( ref($new_tree),  ref($tree), 'test $tree->copy()');
 if ($tree->compare_rooted($new_tree)) {  # should be the same, shouldn't it?
     # print STDERR "Compared tree to newtree and found them to be identical.\n";
 }
@@ -196,7 +210,7 @@ is($new_tree->compare_rooted($tree), 0, "changed copied tree identity check");
 # have only one child.
 #
 #print STDERR "\tTesting CXGN::Phylo::Node::recursive_collapse_nodes\n";
-my $c_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1)C:1)D:1)E:1)"))->parse();
+my $c_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1)C:1)D:1)E:1)"))->parse(CXGN::Phylo::BasicTree->new(''));
 
 $c_tree->set_renderer(CXGN::Phylo::Text_tree_renderer->new($c_tree));
 
@@ -223,13 +237,13 @@ is ($c_tree->get_all_nodes(), 3, "node count after collapse");
 
 # test a more complex case for collapsing
 #
-$c_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1)C:1)D:1)E:1, (((G:1, F:1)H:1)I:1)J:1)"))->parse();
+$c_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1)C:1)D:1)E:1, (((G:1, F:1)H:1)I:1)J:1)"))->parse(CXGN::Phylo::BasicTree->new(''));
 $c_tree->set_renderer(CXGN::Phylo::Text_tree_renderer->new($c_tree));
 $c_tree->collapse_tree();
 
 # test a tree collapsing with a tree that has branch lengths of zero.
 #
-my $z_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:0)C:0)D:0)E:1, (((G:1, F:1)H:0)I:1)J:1)"))->parse();
+my $z_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:0)C:0)D:0)E:1, (((G:1, F:1)H:0)I:1)J:1)"))->parse(CXGN::Phylo::BasicTree->new(''));
 #print STDERR "Testing the recursive_collapse_zero_branches() function...\nOriginal tree:\n";
 #$z_tree->get_root()->print_subtree();
 
@@ -242,7 +256,7 @@ is ($z_tree->get_node_count(), $z_tree_node_count-4, "recursive_collapse_zero_no
 # first, check if we can delete an internal node...
 #
 print STDERR "\tDeleting internal node (key=4)...\n";
-my $ind_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1)C:1)D:1)E:1, (((G:1, F:1)H:1)I:1)J:1)"))->parse();
+my $ind_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1)C:1)D:1)E:1, (((G:1, F:1)H:1)I:1)J:1)"))->parse(CXGN::Phylo::BasicTree->new(''));
 my $ind_tree_copy = $ind_tree->copy();
 $ind_tree->delete_node(4);
 is ($ind_tree_copy->get_all_nodes(), ($ind_tree->get_all_nodes()+1), "node count after delete test");
@@ -258,11 +272,11 @@ is ($ind_tree_copy->get_all_nodes(), ($ind_tree->get_all_nodes()+2), "node count
 # test the newick generation from the node
 #
 my $original_newick = "((((A:1,B:1)C:1)D:1)E:1,(((G:1,F:1)H:1)I:1)J:1)";
-my $t = (CXGN::Phylo::Parse_newick->new($original_newick))->parse();
+my $t = (CXGN::Phylo::Parse_newick->new($original_newick))->parse(CXGN::Phylo::BasicTree->new(''));
 my $new = $t->get_root()->recursive_generate_newick();
 # print STDERR "Original: $original_newick\n";
 # print STDERR "Regenerated newick = $new\n";
-my $t2 = (CXGN::Phylo::Parse_newick->new($new))->parse();
+my $t2 = (CXGN::Phylo::Parse_newick->new($new))->parse(CXGN::Phylo::BasicTree->new(''));
 is($t->compare_rooted($t2), 1, "Newick regeneration from tree test");
 
 
@@ -312,7 +326,7 @@ $newick_expression = "(A:0.082376,(B:0.196674,((C:0.038209,F:0.354293):0.026742,
 #my  $newick_expression = "((A:0.89, D:1.2):1.4, (B:1, C:1.1, E:0.9):1)";
 #my $newick_expression = "(C:1, D:3, (A:5, B:2): 1)"; 
 #my $newick_expression = "(A:3, ((B:1, C:2):1.5):1)"; 
-$tree = CXGN::Phylo::Parse_newick->new($newick_expression)->parse();
+$tree = CXGN::Phylo::Parse_newick->new($newick_expression)->parse(CXGN::Phylo::BasicTree->new(''));
 ok($tree->test_tree(), "tree test 1");
 $tree->get_root()->recursive_collapse_single_nodes();
 ok($tree->test_tree(), "tree test 2");
@@ -407,7 +421,7 @@ is($count_compare_rooted2, @node_list, "tree reset_root and compare test 3.");
 is($count_compare_unrooted2, @node_list, "tree reset_root and compare test 4.");
 
 # Test pre- in- post- order traversals.
-my $t_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1):1, C:1):1, D:1):1, E:1)"))->parse();
+my $t_tree = (CXGN::Phylo::Parse_newick->new("((((A:1, B:1):1, C:1):1, D:1):1, E:1)"))->parse(CXGN::Phylo::BasicTree->new(''));
 
 my $preorder_names_by_hand = "node: .\n" . "node: \n" . "node: \n" . "node: \n" . "node: A\n" . "node: B\n"
 	. "node: C\n" . "node: D\n" . "node: E\n";
@@ -440,10 +454,10 @@ is($postorder_names, $postorder_names_by_hand, "postorder traversal test.");
 
 # Test the species bit hash using a bigger tree
 my $species_tree_newick_expression = "( chlamydomonas[species=Chlamydomonas_reinhardtii]:1, ( physcomitrella[species=Physcomitrella_patens]:1, ( selaginella[species=Selaginella_moellendorffii]:1, ( loblolly_pine[species=Pinus_taeda]:1, ( amborella[species=Amborella_trichopoda]:1, ( date_palm[species=Phoenix_dactylifera]:1, ( ( foxtail_millet[species=Setaria_italica]:1, ( sorghum[species=Sorghum_bicolor]:1, maize[species=Zea_mays]:1 ):1 ):1, ( rice[species=Oryza_sativa]:1, ( brachypodium[species=Brachypodium_distachyon]:1, ( (wheat[species=Triticum_aestivum]:1, wheat_x[species=Triticum_aestivum_x]:1):1, barley[species=Hordeum_vulgare]:1 ):1 ):1 ):1 ):1):1):1):1):1):1)";
-$species_tree = CXGN::Phylo::Parse_newick -> new($species_tree_newick_expression)->parse();
+$species_tree = CXGN::Phylo::Parse_newick -> new($species_tree_newick_expression)->parse(CXGN::Phylo::BasicTree->new(''));
 
 my $gene_tree_newick_expression = "( chlamydomonas[species=Chlamydomonas_reinhardtii]:1, ( physcomitrella[species=Physcomitrella_patens]:1, ( selaginella[species=Selaginella_moellendorffii]:1, ( loblolly_pine[species=Pinus_taeda]:1, ( amborella[species=Amborella_trichopoda]:1, ( date_palm[species=Phoenix_dactylifera]:1, ( ( foxtail_millet[species=Setaria_italica]:1, ( sorghum[species=Sorghum_bicolor]:1, maize[species=Zea_mays]:1 ):1 ):1, ( rice[species=Oryza_sativa]:1, ( brachypodium[species=Brachypodium_distachyon]:1, ( wheat[species=Triticum_aestivum]:1, barley[species=Hordeum_vulgare]:1 ):1 ):1 ):1 ):1):1):1):1):1):1)";
-my $gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse();
+my $gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse(CXGN::Phylo::BasicTree->new(''));
 
 $gene_tree->show_newick_attribute('species');
 my $nwck = $gene_tree->generate_newick(); #print $nwck, "\n";
@@ -475,7 +489,7 @@ is($spec_bithash_got, $spec_bithash_expected, "Species bithash test 1.");
 
 
 $gene_tree_newick_expression = "( chlamydomonas[species=Chlamydomonas_reinhardtii]:1, ( physcomitrella[species=Physcomitrella_patens]:1, ( selaginella_x[species=Selaginella_moellendorffii_x]:1, ( loblolly_pine[species=Pinus_taeda]:1, ( amborella[species=Amborella_trichopoda]:1, ( date_palm[species=Phoenix_dactylifera]:1, ( ( foxtail_millet[species=Setaria_italica]:1, ( sorghum[species=Sorghum_bicolor]:1, maize[species=Zea_mays]:1 ):1 ):1, ( rice[species=Oryza_sativa]:1, ( brachypodium[species=Brachypodium_distachyon]:1, ( wheat[species=Triticum_aestivum]:1, barley[species=Hordeum_vulgare]:1 ):1 ):1 ):1 ):1):1):1):1):1):1)";
-$gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse();
+$gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse(CXGN::Phylo::BasicTree->new(''));
 
 $gene_tree->show_newick_attribute('species');
 $nwck = $gene_tree->generate_newick(); #print $nwck, "\n";
@@ -507,7 +521,7 @@ is($spec_bithash_got, $spec_bithash_expected, "Species bithash test 2.");
 
 
 $gene_tree_newick_expression = "( chlamydomonas[species=Chlamydomonas_reinhardtii]:1, ( physcomitrella[species=Physcomitrella_patens]:1, ( selaginella_x[species=Selaginella_moellendorffii_x]:1, ( loblolly_pine[species=Pinus_taeda]:1, ( amborella[species=Amborella_trichopoda]:1, ( date_palm_x[species=Phoenix_dactylifera_x]:1, ( ( foxtail_millet[species=Setaria_italica]:1, ( sorghum[species=Sorghum_bicolor]:1, maize[species=Zea_mays]:1 ):1 ):1, ( rice[species=Oryza_sativa]:1, ( brachypodium_x[species=Brachypodium_distachyon_x]:1, ( wheat[species=Triticum_aestivum]:1, barley[species=Hordeum_vulgare]:1 ):1 ):1 ):1 ):1):1):1):1):1):1)";
-$gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse();
+$gene_tree = CXGN::Phylo::Parse_newick -> new($gene_tree_newick_expression)->parse(CXGN::Phylo::BasicTree->new(''));
 
 $gene_tree->show_newick_attribute('species');
 $nwck = $gene_tree->generate_newick(); #print $nwck, "\n";
