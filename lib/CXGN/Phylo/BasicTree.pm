@@ -36,7 +36,7 @@ use warnings;
 
 use Math::BigInt;
 
-use CXGN::Phylo::Node;
+use CXGN::Phylo::BasicNode;
 use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Parser;
 use CXGN::Phylo::IdTaxonMap;
@@ -58,95 +58,103 @@ my $do_parse_set_error = 0;
 =cut
 
 sub new {
-    my $class = shift;
-    my $self = bless {}, $class;
+  my $class = shift;
+  my $self = bless {}, $class;
+  my $arg           = shift;
+# print STDERR "class: $class;  arg: [$arg]\n";
+ 
+  $self->set_root( CXGN::Phylo::BasicNode->new() ); # initialize the root node
+  $self->init($arg);		# build the tree.
 
-    #You can feed constructor with a newick string, which will create
-    #a parser object that creates a tree object *without* passing a
-    #string, which would lead to an infinite loop.  Watch out!
-    my $arg           = shift;
-    my $newick_string = "";
-    unless ( ref($arg) ) {
+warn "bottom of BasicTree->new; ref(self): ", ref($self), "\n" if(ref($self) ne 'CXGN::Phylo::BasicTree');
+  return $self;
+}
 
-        #	print STDERR "Tree::new. [$newick_string] \n";
-        $newick_string = $arg;
 
-        # print STDERR "Tree::new. [$newick_string] \n";
-    } else {
-        my $newick_file = '';
-        if ( $arg->{from_files} ) { # both newick and alignment files are specified
-            $newick_file = $arg->{from_files}->{newick};
-            die "Need a newick file if 'from_files' is used\n" unless -f $newick_file;
+sub init{
+  my $self = shift;
+my $arg = shift;
+  my $root = $self->get_root();
+  $root->set_name(".");
+  $root->set_tree($self);
 
-            $self = _tree_from_file($newick_file);
-            my $alignment_file = $arg->{from_files}->{alignment};
-            if ($alignment_file) {
-                die "Alignment file: $alignment_file not found" unless -f $alignment_file;
-                my $alignment = CXGN::Phylo::Alignment->new( from_file => $alignment_file );
-                $self->set_alignment($alignment);
-                $self->standard_alignment_leaf_association();
-            }
-            return $self;
-        } elsif ( $arg->{from_file} ) { # newick filename specified
-            $newick_file = $arg->{from_file};
-            $self        = _tree_from_file($newick_file);
-            return $self;
-        }
-    }
+  $self->set_unique_node_key(0);
+  $root->set_node_key( $self->get_unique_node_key() );
+  $self->add_node_hash( $root, $root->get_node_key() );
+
+  # initialize some imaging parameters
+  $self->set_show_labels(1);
+  $self->set_hilite_color( 255, 0, 0 );
+  $self->set_line_color( 100, 100, 100 );
+  $self->set_bgcolor( 0, 0, 0 );
+
+  $self->set_show_species_in_label(0);
+  $self->set_show_standard_species(0);
+  $self->set_species_standardizer( CXGN::Phylo::Species_name_map->new() );
+  $self->set_id_taxon_map( CXGN::Phylo::IdTaxonMap->new() );
+
+  #Attribute names to show in newick extended format
+  $self->{newick_shown_attributes}            = {};
+  $self->{shown_branch_length_transformation} = "branch_length"; # other possibilities: "proportion_different", equal
+  $self->{min_shown_branch_length} = 0.001; # when showing branches graphically, this is added to the displayed length
+  $self->set_min_branch_length(0.0001);
+  $self->set_show_species_in_label(0);
+  $self->set_show_standard_species(0);
+  $self->set_species_standardizer( CXGN::Phylo::Species_name_map->new() );
+  $self->set_id_taxon_map( CXGN::Phylo::IdTaxonMap->new() );
+
+  #Attribute names to show in newick extended format
+  $self->{newick_shown_attributes}            = {};
+  $self->{shown_branch_length_transformation} = "branch_length"; # other possibilities: "proportion_different", equal
+  $self->{min_shown_branch_length} = 0.001; # when showing branches graphically, this is added to the displayed length
+  $self->set_min_branch_length(0.0001);
+
+
+my $newick_string = "";
+  if (!defined $arg or $arg eq "") {
+     if (! UNIVERSAL::isa($self, 'CXGN::Phylo::BasicTree') ) {
+       warn "Not a BasicTree.\n";
+     }
+ #   return $self;
+  } elsif (! ref($arg) ) {	# arg should be a newick string
+    $newick_string = $arg;
     if ($newick_string) {
-        $newick_string =~ s/\s//g;
-        $newick_string =~ s/\n|\r//sg;
-        if ( $newick_string =~ /^\(.*\)|;$/ ) {    # start with (, end with ) or ;
-                                                   #	print STDERR "in Tree::new, about to parse the newick_string \n";
-            my $parser = CXGN::Phylo::Parse_newick->new( $newick_string, $do_parse_set_error );
-            print "calling parse in Tree constructor\n";
-            my $self = $parser->parse();
-            return $self;
-        } elsif ($newick_string) {
-            print STDERR "String passed not recognized as newick\n";
-        }
+      $newick_string =~ s/\s//g;
+#      $newick_string =~ s/\n|\r//sg;
+      if ( $newick_string =~ /^\(.*\)|;$/ ) { # start with (, end with ) or ;
+	my $parser = CXGN::Phylo::Parse_newick->new( $newick_string, $do_parse_set_error );
+#	print "calling parse in Tree constructor\n";
+#	my 
+#$self = 
+$parser->parse($self); # parse the newick string into the tree obj $self.
+#	return $self;
+      } elsif ($newick_string) {
+	warn "String passed not recognized as newick\n";
+      }
     }
 
-    ##############################################################
-    #$self is a new tree, not predefined by newick; instead it will be
-    #constructed by methods on this object and Phylo::Node's
+  } else { # arg is a ref. (Used in browser (?) when there is an associated alignment.)
+    my $newick_file = '';
+    if ( $arg->{from_files} ) { # both newick and alignment files are specified
+      $newick_file = $arg->{from_files}->{newick};
+      die "Need a newick file if 'from_files' is used\n" unless -f $newick_file;
 
-    #print STDERR "constructing Tree not predefined by a newick\n";
-
-    $self->set_unique_node_key(0);
-
-    # initialize the root node
-    #
-    my $root = CXGN::Phylo::Node->new();
-    $root->set_name(".");
-    $root->set_tree($self);
-    $root->set_node_key( $self->get_unique_node_key() );
-    $self->add_node_hash( $root, $root->get_node_key() );
-    $self->set_root($root);
-
-    # initialize some imaging parameters
-    #
-    $self->set_show_labels(1);
-    $self->set_hilite_color( 255, 0, 0 );
-    $self->set_line_color( 100, 100, 100 );
-    $self->set_bgcolor( 0, 0, 0 );
-    $self->set_show_species_in_label(0);
-    $self->set_show_standard_species(0);
-    $self->set_species_standardizer( CXGN::Phylo::Species_name_map->new() );
-    $self->set_id_taxon_map( CXGN::Phylo::IdTaxonMap->new() );
-
-    #Attribute names to show in newick extended format
-    $self->{newick_shown_attributes}            = {};
-    $self->{shown_branch_length_transformation} = "branch_length";  # other possibilities: "proportion_different", equal
-    $self->{min_shown_branch_length} = 0.001; # when showing branches graphically, this is added to the displayed length
-    $self->set_min_branch_length(0.0001);
-
-    # initialize a default layout and renderer
-    #
-#    $self->set_layout( CXGN::Phylo::Layout->new($self) );
-#    $self->set_renderer( CXGN::Phylo::PNG_tree_renderer->new($self) );
-
-    return $self;
+      $self = _tree_from_file($newick_file);
+      my $alignment_file = $arg->{from_files}->{alignment};
+      if ($alignment_file) {
+	die "Alignment file: $alignment_file not found" unless -f $alignment_file;
+	my $alignment = CXGN::Phylo::Alignment->new( from_file => $alignment_file );
+	$self->set_alignment($alignment);
+	$self->standard_alignment_leaf_association();
+      }
+     # return $self;
+    } elsif ( $arg->{from_file} ) { # newick filename specified
+      $newick_file = $arg->{from_file};
+      $self        = _tree_from_file($newick_file);
+    #  return $self;
+    }
+  }
+# return $self;
 }
 
 # copy some of the tree's fields. Other fields will just have default values as set in constructor
@@ -182,14 +190,16 @@ sub copy_tree_fields {
   Arguments:	none
   Returns: A copy of $a_tree
   Side effects:	creates the object, and makes it be a copy.
-  Description:	 
+  Description:
 
 =cut
 
 sub copy {
     my $self = shift;
+# my $the_class = ref($self);
+# $the_class->new();
     my $new  = $self->get_root()->copy_subtree();
-    $new->update_label_names();
+#    $new->update_label_names();
     return $new;
 }
 
@@ -2392,8 +2402,10 @@ sub find_mindl_node {
 
  #  	for($gene_tree->get_leaf_list()){ print STDERR "genetree sbts: ", $_->get_attribute('species_bit_pattern'), "\n"; }
     #	print STDERR "gtnewick: ", $gene_tree->generate_newick(), "\n";
-
+#print STDERR "YYYYYY ref(gene_tree): ", ref($gene_tree), "\n";
     my $gene_tree_copy = $gene_tree->copy();
+warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_tree_copy), "\n" if(ref($gene_tree) ne ref($gene_tree_copy));
+ 
  #   print STDERR "1 BRANCHLENGTHS: ", join( ";", map( $_->get_branch_length(), $gene_tree_copy->get_leaf_list() ) ),
 #      "\n";
 
@@ -2418,7 +2430,7 @@ sub find_mindl_node {
     # if polytomy at root, reroot a bit down one branch, to get binary root (if was tritomy)
     my @new_root_point;
 
-    #	print STDERR "pruned copy newick: ", $gene_tree_copy->generate_newick(), "\n";
+#    print STDERR "pruned copy newick: ", $gene_tree_copy->generate_newick(), "\n";
     {
         my @root_children = $gene_tree_copy->get_root()->get_children();
         if ( scalar @root_children != 2 ) {
@@ -2462,7 +2474,7 @@ sub find_mindl_node {
     #	print STDERR `which $urec_cmd`;
     my $rerooted_newick = `$urec_cmd -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
   #  print STDERR "in mindl rerooted newick: [$rerooted_newick] \n";
-    my $minDL_rerooted_gene_tree = ( CXGN::Phylo::Parse_newick->new( $rerooted_newick, $do_parse_set_error ) )->parse();
+    my $minDL_rerooted_gene_tree = ( CXGN::Phylo::Parse_newick->new( $rerooted_newick, $do_parse_set_error ) )->parse(ref($gene_tree_copy)->new(""));
 
 # $minDL_rerooted_gene_tree is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
 # but  branch lengths will be wrong for nodes whose parent has changed in the rerooting (they are just the branch lengths to the old parents).
@@ -2683,6 +2695,27 @@ sub non_speciestree_leafnode_names {
     return \%non_species_tree_leaf_node_names;
 }
 
+=head2 accessors get_renderer(), set_renderer()
+
+  Synopsis:	$tree->set_renderer($renderer)
+  Arguments:	a CXGN::Phylo::Renderer object or subclass
+  Returns:	nothing
+  Side effects:	the $renderer is used for rendering the tree
+  Description:	
+
+=cut
+
+sub get_renderer {
+    my $self = shift;
+    return $self->{renderer};
+}
+
+sub set_renderer {
+    my $self = shift;
+    $self->{renderer} = shift;
+}
+
+
 sub set_branch_lengths_equal {
     my $self = shift;
     my $bl = shift || 1.0;
@@ -2692,8 +2725,8 @@ sub set_branch_lengths_equal {
 sub decircularize {
     my $self = shift;
     $self->get_root()->recursive_decircularize();
-    $self->set_renderer(undef);
-    $self->set_layout(undef);
+#    $self->set_renderer(undef);
+#    $self->set_layout(undef);
 }
 
 sub DESTROY {
