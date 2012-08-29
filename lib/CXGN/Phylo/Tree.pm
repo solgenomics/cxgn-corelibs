@@ -39,11 +39,54 @@ use CXGN::Phylo::Renderer;
 
 sub new {
   my $class = shift;
-  my $self  = $class->SUPER::new(@_);
+  my $self  = bless {}, $class;    # ->SUPER::new(@_);
+ my $arg           = shift;
+#print STDERR "class: $class;  arg: [$arg]\n";
+  $self->set_root( CXGN::Phylo::Node->new() ); # initialize the root node
+  $self->init($arg);		# initialize some fields with defaults
+
+#print STDERR "ref(self) in Tree constructor: ", ref($self), "\n";
+#print STDERR "ref(root) in Tree constructor: ", ref($self->get_root()), "\n";
+
   $self->set_layout( CXGN::Phylo::Layout->new($self) );
   $self->set_renderer( CXGN::Phylo::PNG_tree_renderer->new($self) );
+
+print STDERR 'bottom of Tree->new; ref($self): ', ref($self), "\n" if(ref($self) ne 'CXGN::Phylo::Tree');
   return $self;
 }
+
+=head2 function copy()
+
+  Synopsis:	my $t_copy = $a_tree->copy()
+  Arguments:	none
+  Returns: A copy of $a_tree
+  Side effects:	creates the object, and makes it be a copy.
+  Description:	 
+
+=cut
+
+sub copy {
+    my $self = shift;
+    my $new  = $self->get_root()->copy_subtree();
+    $new->update_label_names();
+    return $new;
+}
+
+sub _tree_from_newick {
+    my $newick_string = shift;
+    $newick_string =~ s/\s//g;      # remove whitespace from newick string
+    $newick_string =~ s/\n|\r//g;
+    if ( $newick_string =~ /^\(.*\)|;$/ ) {
+        my $parser = CXGN::Phylo::Parse_newick->new( $newick_string, $do_parse_set_error );
+        print "parsing tree in Tree::_tree_from_newick\n";
+        my $tree = $parser->parse( CXGN::Phylo::Tree->new("") );
+        return $tree;
+    } elsif ($newick_string) {
+        print STDERR "String passed not recognized as newick\n";
+        return undef;
+    }
+}
+
 
 =head2 function get_layout(), set_layout()
 
@@ -82,25 +125,6 @@ sub layout {
     $self->get_layout()->layout();
 }
 
-=head2 accessors get_renderer(), set_renderer()
-
-  Synopsis:	$tree->set_renderer($renderer)
-  Arguments:	a CXGN::Phylo::Renderer object or subclass
-  Returns:	nothing
-  Side effects:	the $renderer is used for rendering the tree
-  Description:	
-
-=cut
-
-sub get_renderer {
-    my $self = shift;
-    return $self->{renderer};
-}
-
-sub set_renderer {
-    my $self = shift;
-    $self->{renderer} = shift;
-}
 
 =head2 function render()
 
@@ -157,6 +181,13 @@ sub render_png {
     } else {
         return $png_string;
     }
+}
+
+sub decircularize {
+    my $self = shift;
+    $self->get_root()->recursive_decircularize();
+    $self->set_renderer(undef);
+    $self->set_layout(undef);
 }
 
 
