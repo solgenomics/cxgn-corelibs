@@ -5,12 +5,14 @@ use warnings FATAL => 'all';
 # tests for Orthologger Module/
 use Test::More tests => 10;
 
-#use lib '/home/tomfy/cxgn/cxgn-corelibs/lib';
-#use lib '/home/tomfy/Orthologger/lib';
+# use lib '/home/tomfy/Oger/';
+# no lib '/home/tomfy/cxgn/cxgn-corelibs/lib';
 
-use CXGN::Phylo::Parser;
-use CXGN::Phylo::Orthologger;
+# print STDERR '@INC:', "\n", join("\n", @INC), "\n";
 
+ use CXGN::Phylo::Parser;
+ use CXGN::Phylo::Orthologger;
+ use CXGN::Phylo::BasicTree;
 
 # This is family 2830, with 25 genes in 13 taxa.
 my $gene_tree_newick =
@@ -27,10 +29,10 @@ $species_tree_newick =
 # $species_tree_newick =~ s/\s*//g; # remove whitespace
 
 my $gt_parser = CXGN::Phylo::Parse_newick->new($gene_tree_newick);
-my $gene_tree = $gt_parser->parse();
+my $gene_tree = $gt_parser->parse( CXGN::Phylo::BasicTree->new("") );
 
 my $st_parser    = CXGN::Phylo::Parse_newick->new($species_tree_newick);
-my $species_tree = $st_parser->parse();
+my $species_tree = $st_parser->parse( CXGN::Phylo::BasicTree->new("") );
 
 #********* test Orthologger->new returns Orthologger obj. **********
 my $Orthologger_obj =
@@ -94,6 +96,7 @@ $expected_ortholog_result_string = join( "\n", @sorted_expected_ortholog_lines )
 is( $ortholog_result_string, $expected_ortholog_result_string,
     'Check ortholog result string agrees with expectation.' );
 
+
 $gene_tree_newick =
 '((foxtail_millet[species=Setaria_italica]:1,(sorghum[species=Sorghum_bicolor]:1,maize[species=Zea_mays_x]:1):1):1,(rice[species=Oryza_sativa]:1,brachypodium[species=Brachypodium_distachyon]:1):1)';
 
@@ -113,10 +116,10 @@ $gene_tree_newick = '(
 )';
 
 $gt_parser = CXGN::Phylo::Parse_newick->new($gene_tree_newick);
-$gene_tree = $gt_parser->parse();
+$gene_tree = $gt_parser->parse( CXGN::Phylo::BasicTree->new("") );
 
 $st_parser    = CXGN::Phylo::Parse_newick->new($species_tree_newick);
-$species_tree = $st_parser->parse();
+$species_tree = $st_parser->parse( CXGN::Phylo::BasicTree->new("") );
 
 #********* test Orthologger->new returns Orthologger obj. **********
 $Orthologger_obj =
