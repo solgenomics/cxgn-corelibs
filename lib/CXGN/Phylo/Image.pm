@@ -232,7 +232,7 @@ sub generate_html {
 #
     open (F, "<".$self->get_file()) || die "Can't open file\n";
     my $newick="";
-    while (<F>) { 
+    while (<F>) {
 	chomp;
 	$newick .=$_;
     }
@@ -240,7 +240,7 @@ sub generate_html {
 
    print STDERR "Newick String: $newick\n";
     my $parser = CXGN::Phylo::Parse_newick->new($newick);
-    my $tree = $parser->parse();
+    my $tree = $parser->parse( CXGN::Phylo::Tree->new("") );
 
     
 
