@@ -25,7 +25,7 @@ package CXGN::Phylo::BasicNode;
  use strict;
 
 use CXGN::Phylo::Species_name_map;
-use CXGN::Phylo::Tree;
+use CXGN::Phylo::BasicTree;
 
 =head2 function new()
 
@@ -226,7 +226,7 @@ sub set_children {
 
 sub add_child {
     my $self  = shift;
-    my $child = CXGN::Phylo::Node->new();
+    my $child = ref($self)->new();  # CXGN::Phylo::Node->new();
     $self->add_child_node($child);
     my $tree = $self->get_tree();
     $child->set_tree($tree);
@@ -403,7 +403,7 @@ sub binarify_children {
     # print ("In binarify_children. number of children is > 2: ", scalar @children, " newbl: $new_bl\n");
     my $c1 = shift @children;
     my $c2 = shift @children;
-    my $b  = CXGN::Phylo::Node->new();
+    my $b  = ref($self)->new(); # CXGN::Phylo::Node->new();
     $b->set_children( $c1, $c2 );
     $c1->set_parent($b);
     $c2->set_parent($b);
@@ -442,7 +442,7 @@ sub binarify_with_specified_resolution {
     foreach my $css (@new_child_species_sets) {
 
         if ( @$css > 1 ) {
-            my $b = CXGN::Phylo::Node->new();
+            my $b = ref($self)->new(); # CXGN::Phylo::Node->new();
             $b->set_parent($self);
             $b->set_children(@$css);
             my $new_bp               = 0;
@@ -1474,7 +1474,7 @@ sub collect_orthologs {
 
 sub copy_subtree {
     my $self      = shift;
-    my $new_tree  = CXGN::Phylo::Tree->new();
+    my $new_tree  = ref($self->get_tree())->new("");  #  CXGN::Phylo::Tree->new();
     my $orig_tree = $self->get_tree();
     $orig_tree->copy_tree_fields($new_tree);    #
     my $new_root = $self->recursive_copy( undef, $new_tree );
@@ -1784,7 +1784,7 @@ sub copy {
     my $new_parent = shift;
     my $new_tree   = shift;
 
-    my $new = CXGN::Phylo::BasicNode->new();    # the copy
+    my $new = ref($self)->new(); # CXGN::Phylo::BasicNode->new();    # the copy
 
         $new_parent->add_child_node($new) if($new_parent);
     $new->set_tree($new_tree);
