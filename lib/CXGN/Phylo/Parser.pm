@@ -4,11 +4,11 @@ Essentially implements a tree parsing interface. There should be at least two fu
 
 =cut
 
-use strict; 
+use strict;
 use URI::Escape;
 
-use CXGN::Phylo::Tree;
-use CXGN::Phylo::Node;
+use CXGN::Phylo::BasicTree;
+use CXGN::Phylo::BasicNode;
 
 package CXGN::Phylo::Abstract_tree_parser;
 
@@ -74,7 +74,7 @@ sub new {
     
   my $do_set_error = shift;
   $do_set_error = 1 unless(defined $do_set_error); # can speed up parsing by setting this to 0 to skip.
-  # print "XXXX [$do_set_error]\n"; 
+
   my $self = $class->SUPER::new();
   $self->{do_set_error} = $do_set_error; 
   $self->set_string($string);
@@ -84,28 +84,30 @@ sub new {
 
 =head2 function parse()
 
-  Synopsis:	my $tree = $parser->parse();
-  Arguments:	Optionally a Tree (or class inheriting from Tree)
-  Returns:	a Tree object
-  Side effects:	
-  Description:	
+  Synopsis:	my $tree = $parser->parse($the_tree);
+  Arguments:	A BasicTree (or class inheriting from BasicTree)
+  Returns:	an object of same class as argument.
+  Side effects:
+  Description:
 
 =cut
 
 sub parse {
   my $self = shift;
-  my $the_tree = shift;
+  my $the_tree = shift; # can give it an object (e.g. a  CXGN::Phylo::BasicTree ) as argument.
+
   if (! defined $the_tree) {
-    $the_tree  = CXGN::Phylo::Tree->new("");
+    warn "Parser::parse() called with no argument! Should be called with Tree or BasicTree as arg.\n";
+    $the_tree  = CXGN::Phylo::BasicTree->new(""); # default is BasicTree
   }
-#elsif(! $the_tree->isa('CXGN::Phylo::Tree')) {
+warn 'In Parser::parse. $the_tree is not a CXGN::Phylo::BasicTree; ref($the_tree): ', ref($the_tree), "\n" if(! $the_tree->isa('CXGN::Phylo::BasicTree'));
 
 $self->{tree} = $the_tree;
   my $root = $self->{tree}->get_root();
   my $current_node = $root;
 
   my $string = $self->get_string();
-  if (!$string) { 
+  if (!$string) {
     print STDERR "The string to be parsed has to be set in the constructor.\n";
     return undef;
   }
@@ -146,8 +148,8 @@ $self->{tree} = $the_tree;
       if (!defined($current_node) || !$current_node->is_root()) { 
 	print STDERR "Illegal Expression Error Type 2.\n"; return undef;
       }
-      return $self->{tree}; 
-    } else { 
+      return $self->{tree};
+    } else {
       #print STDERR "encountered token $t\n";
 
       #Strip out extended specification (see below) first, so that we
@@ -248,7 +250,7 @@ $self->{tree} = $the_tree;
   return $self->{tree};
 }
 
-sub set_error { 
+sub set_error {
   my $self = shift;
   my $token_ref = shift;
   my $error_token=shift;
@@ -326,9 +328,9 @@ package CXGN::Phylo::Parse_ncbi_taxo_file;
 
 use base qw/ CXGN::Phylo::Abstract_tree_parser /;
 
-=head1 Package CXGN::Phylo::Tree
+=head1 Package CXGN::Phylo::Parse_ncbi_taxo_file
 
-This class deals with generating and manipulating tree objects.
+
 
 =cut
 
