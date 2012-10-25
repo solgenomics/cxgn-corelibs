@@ -1,4 +1,4 @@
-package Overlap;
+package CXGN::Phylo::Overlap;
 use strict;
 use List::Util qw ( min max sum );
 
