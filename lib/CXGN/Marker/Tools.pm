@@ -87,6 +87,15 @@ sub clean_marker_name {
   my $name = shift;
   my $subscript= '';
 
+  if ($name =~ /Solyc\d\dg\d{6}/) { 
+      if (wantarray) { 
+	  return ($name, $subscript);
+      }
+      else { 
+	  return $name;
+      }
+  }
+
   # just in case
   chomp $name;
   $name =~ s/\s+//g;
