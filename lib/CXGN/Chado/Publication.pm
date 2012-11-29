@@ -911,10 +911,14 @@ sub print_pub_ref {
 
 =head2 print_mini_ref
 
- Usage: $self->print_mini_ref()
+ Usage: $self->print_mini_ref( { opts } )
  Desc:  printing a truncated reference string for your publication 
  Ret:  string
- Args: none
+ Args: optional options for print format.:
+       author => 0 [do not print author. default = 1]
+       title  => 0 [default = 1]
+       year   => 0 [default = 1]
+       series => 0 [default = 1]
  Side Effects:
  Example:
 
@@ -922,17 +926,23 @@ sub print_pub_ref {
 
 sub print_mini_ref {
     my $self      = shift;
+    my $opts = shift;
     my $accession = $self->get_accession();
-    my $title     = $self->get_title();
+    my $title     = $self->get_title . " ";
     my $series    = $self->get_series_name();
 
-    my $pyear   = $self->get_pyear();
+    my $year   = $self->get_pyear;
+    my $pyear =  " (" . $year . ") ";
     my @authors = $self->get_authors()
       || ( split( /\./, $self->get_authors_as_string() ) );
     my $author_string = $authors[0];
-    if    ( scalar(@authors) == 2 ) { $author_string .= " and " . $authors[1]; }
+    if    ( scalar(@authors) == 2 ) { $author_string .= " and " . $authors[1] . ". "; }
     elsif ( scalar(@authors) > 2 )  { $author_string .= " et al., "; }
-    my $ref = $author_string . ".  " . $title . " (" . $pyear . ") " . $series;
+    if ( defined $opts->{author} ) { $author_string = '' ; }
+    if ( defined $opts->{title}  )  { $title = ''; }
+    if ( defined $opts->{year}  ) { $pyear = ''; }
+    if ( defined $opts->{series} ) { $series = ''; }
+    my $ref = $author_string  . $title .  $pyear  . $series;
     return $ref;
 }
 
