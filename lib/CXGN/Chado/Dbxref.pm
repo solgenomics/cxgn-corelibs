@@ -495,7 +495,7 @@ sub get_publication {
     $sth->execute($self->get_dbxref_id() );
     my ($pub_id) = $sth->fetchrow_array();
     my $pub_obj= CXGN::Chado::Publication->new($self->get_dbh(), $pub_id);
-    
+    return $pub_obj;
 }
 
 =head2 get_feature
