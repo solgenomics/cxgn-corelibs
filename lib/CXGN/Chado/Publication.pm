@@ -931,8 +931,8 @@ sub print_mini_ref {
     my $title     = $self->get_title . " ";
     my $series    = $self->get_series_name();
 
-    my $year   = $self->get_pyear;
-    my $pyear =  " (" . $year . ") ";
+    my $pyear   = $self->get_pyear . ". ";
+
     my @authors = $self->get_authors()
       || ( split( /\./, $self->get_authors_as_string() ) );
     my $author_string = $authors[0];
