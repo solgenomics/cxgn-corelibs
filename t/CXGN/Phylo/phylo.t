@@ -551,6 +551,23 @@ $spec_bithash_expected =
 
 is($spec_bithash_got, $spec_bithash_expected, "Species bithash test 3.");
 
+my $impl_species_test_newick = 
+'(evm.model.supercontig_5.162[species=papaya]:0.27689,(X_29733.m000746[species=castorbean]:0.17114,POPTR_0006s03780.1[species=poplar]:0.10602)0.999:0.06706,(Solyc03g094020.2.1[species=tomato]:0.32707,(GSVIVT01033641001[species=grape]:0.17569,((IMGA_Medtr7g089780.1[species=medicago]:0.11304,Glyma03g28280.1[species=soybean]:0.11484)0.997:0.12124,((jgi_Selmo1_82321[species=selaginella]:0.02361,jgi_Selmo1_88597[species=selaginella]:0.02671)1.000:0.52142,(Bradi2g10060.1[species=brachypodium]:0.15671,(LOC_Os01g16310.1[species=rice]:0.25530,(Sb03g010640.1[species=sorghum]:0.07490,(GRMZM2G029243_P01[species=maize]:0.00017,GRMZM2G029243_P02[species=maize]:0.00018)1.000:0.08879)1.000:0.15819)0.705:0.07154)1.000:0.35490)1.000:0.29809)0.979:0.08914)0.652:0.03314)0.716:0.01972);';
+
+# $impl_species_test_newick = 
+#    '(a[species=maize]:0.1,b[species=medicago]:0.1);'; 
+#     '(d[species=maize]:0.1,(a[species=papaya]:0.1,(b[species=medicago]:0.1,c[species=arabidopsis]:0.1):0.1):0.1);';
+$parser = CXGN::Phylo::Parse_newick -> new($impl_species_test_newick);
+
+my $impl_species_test_tree = $parser->parse(CXGN::Phylo::BasicTree->new("") );
+$impl_species_test_tree->calculate_implicit_species_hashes();
+my $impl_species_hash = $impl_species_test_tree->get_root()->{implicit_species_hash};
+
+while (my ($species, $count) = each( %$impl_species_hash) ){
+	print "In phylo.t;  species: $species   count: $count \n";
+}
+
+print $impl_species_test_tree->min_clade('IMGA_Medtr7g089780.1', 3, [ 'Zea_mays', 'Brachypodium_distachyon', 'Sorghum_bicolor']);
 exit;
 
 
