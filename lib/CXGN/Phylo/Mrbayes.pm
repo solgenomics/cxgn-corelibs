@@ -1,4 +1,4 @@
-package Mrbayes;
+package CXGN::Phylo::Mrbayes;
 use strict;
 use List::Util qw ( min max sum );
 #use TlyUtil qw ( Kolmogorov_Smirnov_D );
@@ -7,7 +7,7 @@ use List::Util qw ( min max sum );
 # inference program). The main functionality it adds is a relatively
 # easy way to control the criteria for deciding when to end a run.
 
-my $default_chunk_size = 2000;
+# my $default_chunk_size = 2000;
 
 sub  new {
   my $class = shift;
@@ -18,20 +18,21 @@ sub  new {
 			   'swapseed' => undef,
 			   'n_runs' => 2,
 			   'n_temperatures' => 4,
-			   'temperature_gap' => 0.25,
-			   'chunk_size' => $default_chunk_size,
+			   'delta_temperature' => 0.1,
+			   'n_swaps' => 1,
+			   'chunk_size' => 2000,   # $default_chunk_size,
 			   'print_freq' => undef,
 			   'sample_freq' => 20,
-			   'burnin_frac' => 0.1,
+			   'burnin_fraction' => 0.1,
 			   'diag_freq' => undef,
 			   'converged_chunks_required' => 10,
 
 			   'fixed_pinvar' => undef, # undef -> leaves default of uniform(0,1) in effect
 			   # convergence criteria
-			   'splits_min_hits' => 25,
+			   'splits_min_hits' => 50,
 			   'splits_max_ok_stddev' => 0.03,
-			   'splits_max_ok_avg_stddev' => 0.01,
-			   'modelparam_min_ok_ESS' => 250,
+			   'splits_max_ok_avg_stddev' => 0.015,
+			   'modelparam_min_ok_ESS' => 200,
 			   'modelparam_max_ok_PSRF' => 1.02,
 			   'modelparam_max_ok_KSD' => 0.2,
 			   'ngens_run' => 0,
@@ -41,7 +42,9 @@ sub  new {
 
   foreach my $option (keys %$arg) {
     warn "Unknown option: $option in Mrbayes constructor.\n" if(!exists $self->{$option});
-    $self->{$option} = $arg->{$option};
+	if(defined $arg->{$option}) { # if arg is undef, leaves default in effect
+    		$self->{$option} = $arg->{$option};
+	}
   }
   $self->{print_freq} = $self->{chunk_size} if(!defined $self->{print_freq});
   $self->{diag_freq} = $self->{chunk_size} if(!defined $self->{diag_freq});
@@ -56,9 +59,10 @@ sub  new {
     $self->{file_basename} = $file_basename;
   }
   my $n_runs = $self->{n_runs};
-  my $burnin_frac = $self->{burnin_frac};
+  my $burnin_fraction = $self->{burnin_fraction};
   my $n_temperatures = $self->{n_temperatures};
-  my $temperature_gap = $self->{temperature_gap};
+  my $delta_temperature = $self->{delta_temperature};
+  my $n_swaps = $self->{n_swaps};
   my $sample_freq = $self->{sample_freq};
   my $print_freq = $self->{print_freq};
   my $chunk_size = $self->{chunk_size};
@@ -75,36 +79,34 @@ sub  new {
   if (defined $self->{swapseed}) {
     my $swapseed = $self->{swapseed}; $seed_piece .= "set swapseed=$swapseed;\n";
   }
+print "Delta temperature: $delta_temperature.\n";
   my $middle_piece =  "execute $alignment_nex_filename;\n" .
     "set precision=6;\n" .
       "lset rates=invgamma;\n" .
 	"prset aamodelpr=fixed(wag);\n" .
-	  "$prset_pinvarpr" . 
+	  "$prset_pinvarpr" .
 	    # "prset pinvarpr=fixed(0.15);\n" .
 	    "mcmcp minpartfreq=0.02;\n" . # bipartitions with freq. less than this are not used in the  diagnostics (default is 0.10)
 	      "mcmcp allchains=yes;\n" .
-		"mcmcp burninfrac=$burnin_frac;\n" .
+		"mcmcp burninfrac=$burnin_fraction;\n" .
 		  "mcmcp nchains=$n_temperatures;\n" .
+		    "mcmcp nswaps=$n_swaps;\n" .
 		    "mcmcp nruns=$n_runs;\n" .
-		      "mcmcp temp=$temperature_gap;\n" .
+		      "mcmcp temp=$delta_temperature;\n" .
 			"mcmcp samplefreq=$sample_freq;\n" .
 			  "mcmcp printfreq=$print_freq;\n" .
 			    #  "mcmcp filename=$file_basename;\n" .
 			    "mcmcp checkpoint=yes checkfreq=$chunk_size;\n";
   my $end_piece = "sump;\n" . "sumt;\n" . "end;\n";
-
   $self->{mrbayes_block1} = 
     $begin_piece . $seed_piece .
       $middle_piece . "mcmc ngen=$chunk_size;\n" .
 	$end_piece;
-
   $self->{mrbayes_block2} = 
     $begin_piece . $middle_piece .
       "mcmc append=yes ngen=$chunk_size;\n" .
 	$end_piece;
-
   $self->setup_id_species_map();
-
   return $self;
 }
 
@@ -135,6 +137,8 @@ sub run{
   open my $fhc, ">MB.converge";
   print $fhc "$ngen $converge_count  $conv_string\n";
 
+print "$ngen $converge_count  $conv_string";
+my $stdout_newline_interval = 20 * $self->{chunk_size};
   foreach (my $i=1; $i>0; $i++) { # infinite loop
     $ngen += $chunk_size;
     my $mrbayes_block2 = $self->{mrbayes_block2};
@@ -156,6 +160,9 @@ sub run{
     ($converged, $conv_string) = $self->test_convergence($self->{file_basename});
     $converge_count += $converged;
     print $fhc "$ngen $converge_count  $conv_string\n";
+print "\r                                                                          \r";
+print "$ngen $converge_count  $conv_string";
+print "\n" if(($ngen % $stdout_newline_interval) == 0);
     last if($converge_count >= $self->{converged_chunks_required});
   }
   close $fhmc3; close $fhc;
@@ -163,7 +170,7 @@ sub run{
 }
 
 
-sub splits_convergence{
+sub splits_convergence{ # looks at splits, i.e. sets of leaves of subtrees produced by removing a branch, for each (non-terminal) branch.
   my $self = shift;
   my $file_basename = shift;	# e.g. fam9877
   my $min_hits = $self->{splits_min_hits}; # ignore splits with fewer hits than this.
@@ -177,7 +184,7 @@ sub splits_convergence{
   my @lines = <$fh>;
 
   my ($avg_stddev, $count, $bad_count) = (0, 0, 0);
-  foreach (@lines) {
+  foreach (@lines) { # each line has info on one split
     #   print;
     next unless(/^\s*\d/); # skip if first non-whitespace is not numeral.
     my @cols = split(" ", $_);
@@ -191,8 +198,10 @@ sub splits_convergence{
       next;
     }
   }
-  $avg_stddev = ($count == 0)? 100 : $avg_stddev/$count;
+  $avg_stddev = ($count == 0)? 9.9999 : $avg_stddev/$count;
+
   my $splits_converged = ($bad_count == 0  and  $avg_stddev < $max_ok_avg_stddev);
+ # print "conv? count, bad_count avg_stddev: $splits_converged, $count, $bad_count, $avg_stddev.\n";
   return ($splits_converged, $count, $bad_count, $avg_stddev);
 }
 
@@ -205,16 +214,16 @@ sub modelparam_convergence{	# look at numbers in *.pstat file
   my $max_ok_PSRF = $self->{modelparam_max_ok_PSRF};
   my $max_ok_KSD = $self->{modelparam_max_ok_KSD};
   my $string = '';
-  my $ngens_skip = int($self->{burnin_frac} * $self->{ngens_run});
+  my $ngens_skip = int($self->{burnin_fraction} * $self->{ngens_run});
 
   open my $fh, "<$file_basename.nex.pstat";
-  my @lines = <$fh>;
+  my @lines = <$fh>; # 2 header lines, then each line a parameter (TL, alpha, pinvar)
   close $fh;
-  my $discard = shift @lines;
+  my $discard = shift @lines; 
   my $count_param_lines = 0;
   my $KSD_datacol = 1;
   my $LL_KSD = $self->KSDmax($ngens_skip, 1);
-  my $n_bad = ($LL_KSD <= $max_ok_KSD)? 0 : 1;
+  my $n_bad = ($LL_KSD <= $max_ok_KSD)? 0 : 1; #n_bad considers LL_KSD
   my @KSDmaxes = ($LL_KSD);
   #  $n_bad++ if($LL_KSD > $self->{modelparam_max_ok_KSD}); # require LogL just to pass KSD test
   foreach (@lines) {
@@ -224,14 +233,17 @@ sub modelparam_convergence{	# look at numbers in *.pstat file
     $KSD_datacol++; # 2,3,4,... the params in pstat file are in cols 2,3,4,... in *.run?.p
     my $KSDmax = $self->KSDmax($ngens_skip, $KSD_datacol);
     push @KSDmaxes, $KSDmax;
-    $string .= "$avgESS $PSRF ";
+ #   my $xxx = sprintf("%3.0f %6.4f ", $avgESS, $PSRF);
+    $string .= sprintf("%3.0f %6.4f ", $avgESS, $PSRF); #$xxx; # "$avgESS $PSRF ";
+# print "string $string   $KSDmax \n";
     if ($avgESS < $min_ok_ESS
 	or $PSRF > $max_ok_PSRF
 	or  $KSDmax > $max_ok_KSD) {
-      $n_bad++;
+      $n_bad++; # this parameter is 'bad' i.e. doesn't look converged.
     }
+#    print join(",",@cols), " [$n_bad] \n";
   }
-  $string .=  join(" ", map sprintf("%5.3f", $_), @KSDmaxes); #    join(" ", @KSDmaxes);
+  $string .=  "  " . join(" ", map sprintf("%5.3f", $_), @KSDmaxes); #    join(" ", @KSDmaxes);
   return ($n_bad, $string);
 }
 
@@ -243,13 +255,13 @@ sub test_convergence{
     $self->splits_convergence($file_basename);
   my ($modelparam_n_bad, $modelparam_string) =
     $self->modelparam_convergence($file_basename);
-  my $ngens_skip = int($self->{burnin_frac} * $self->{ngens_run});
- 
-  my $conv_string = "$splits_count $splits_bad_count $splits_avg_stddev " .
+  my $ngens_skip = int($self->{burnin_fraction} * $self->{ngens_run});
+
+  my $conv_string = "$splits_count $splits_bad_count " . sprintf("%6.4f", $splits_avg_stddev) .
     " $modelparam_string  $modelparam_n_bad  ";
- 
+
   my $converged = ($splits_converged  and  $modelparam_n_bad == 0);
- 
+
   return ($converged? 1 : 0, $conv_string);
 }
 
@@ -347,7 +359,7 @@ sub KSDmax{	     # This does all pairwise comparisons between runs
   my $self = shift;
 
   my $ngen_skip = shift || 0;
-  my $datacol = shift;		# data column to use.
+  my $datacol = shift;		# data column to use. 
   $datacol = 1 if(!defined $datacol);
 
   my $bigneg = -1e300;
@@ -417,7 +429,7 @@ sub retrieve_param_samples{
 
     while (my $line = <$fhp>) {
       chomp $line;
-      next unless($line =~ /^\s*(\d+)/);
+      next unless($line =~ /^\s*(\d+)/); # first non-whitespace on line should be number
       #  print "$line \n";
       my @cols = split(" ", $line);
       my $generations = shift @cols;
@@ -505,9 +517,9 @@ my $total_trees = 0;
 foreach my $i_run (1..scalar @$gen_ntopo_hrefs) {
   my $gen_ntopo = $gen_ntopo_hrefs->[$i_run-1];
   my $trees_read_in = scalar keys %{$gen_ntopo};
-  print "Run: $i_run. Trees read in: $trees_read_in\n";
+  print "# Run: $i_run. Trees read in: $trees_read_in\n";
   # store trees from array in hash, skipping burn-in
-  my $n_burnin = int($self->{burnin_frac} * $trees_read_in);
+  my $n_burnin = int($self->{burnin_fraction} * $trees_read_in);
 #  print "trees read in: $trees_read_in. Post burn-in: ", $trees_read_in - $n_burnin, "\n";
   my @sorted_generations = sort {$a <=> $b} keys %{$gen_ntopo};
   foreach my $i_gen (@sorted_generations[$n_burnin..$trees_read_in-1]) {
@@ -549,10 +561,21 @@ while (my $line = <$fh>){
 my $species = $2;
 #print $line;
   $self->{id_species_map}->{$id} = $species;
-  print "$id  $species \n";
+  #print "$id  $species \n";
 }
-#exit;
+
 return;
+}
+
+sub get_id_species_string_array{
+  my $self = shift;
+  my $id_species_href = $self->{id_species_map};
+  my @string_array = ();
+  for my $id (keys %$id_species_href){
+    my $species = $id_species_href->{$id};
+    push @string_array, "$id  $species";
+  }
+  return \@string_array;
 }
 
 my $bigneg = -1e300;
