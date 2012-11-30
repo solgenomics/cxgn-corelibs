@@ -95,9 +95,9 @@ sub new {
 sub parse {
   my $self = shift;
   my $the_tree = shift; # can give it an object (e.g. a  CXGN::Phylo::BasicTree ) as argument.
-
+# e.g. $the_parser->parse(CXGN::Phylo::Tree->new());
   if (! defined $the_tree) {
-    warn "Parser::parse() called with no argument! Should be called with Tree or BasicTree as arg.\n";
+    warn "Parser::parse() called with no argument; Using default BasicTree. Can call with Tree object as arg.\n";
     $the_tree  = CXGN::Phylo::BasicTree->new(""); # default is BasicTree
   }
 warn 'In Parser::parse. $the_tree is not a CXGN::Phylo::BasicTree; ref($the_tree): ', ref($the_tree), "\n" if(! $the_tree->isa('CXGN::Phylo::BasicTree'));
