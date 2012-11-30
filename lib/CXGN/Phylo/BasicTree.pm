@@ -830,7 +830,45 @@ sub postorder_traversal {
         $self->postorder_traversal( $function, $_ );
     }
     &$function($node);
-}
+  }
+
+sub calculate_implicit_species_hashes{
+  my $self = shift;
+  #  my $root = $self->get_root();
+  $self->postorder_traversal(
+
+			     sub { # anonymous subroutine
+			       my $a_node = shift;
+			       my @children = $a_node->get_children();
+			 #      print "number of children: [", scalar @children, "]\n";
+			       if ($a_node->is_leaf()) {
+				 my $std_species = $a_node->get_standard_species();
+			#	 print "leaf name, species: ", $a_node->get_name(), "  ", $std_species, "\n";
+				 my $impl_species_hash = { $std_species => 1 };
+				 $a_node->{implicit_species_hash} = $impl_species_hash;
+			       } else {
+				 my $the_child = $children[0];
+			#	 print "child0 name, species: ", $the_child->get_name(), "  ", $the_child->get_standard_species(), "\n";
+
+				 my %impl_species_hash = (); # %{$children[0]->{implicit_species_hash}};
+				 #	 for (my $i = 1; $i < scalar @children; $i++} {
+				 foreach my $child (@children){  # [1..(scalar @children - 1)]){ #) {
+				   #    for my $species (keys %{$children[$i]->{implicit_species_hash}}){
+				   while ( my ($species, $count) = each(%{$child->{implicit_species_hash}}) ) {
+				       $impl_species_hash{$species} += $count;
+			#	     print "species, count: $species  $count \n";
+				   } # loop over keys
+				 }   # loop over children
+				 	 $a_node->{implicit_species_hash} = \%impl_species_hash;
+			       } # end of else branch
+			     }	 # end of anon. subroutine
+			    );	 # end of postorder_traversal call
+  #	     , $root); # end of postorder_traversal arg list
+} # end of subroutine calculate_implicit_species_hashes
+
+
+
+
 
 sub newick_shown_attributes {       # just return list of keys (attributes), so everything should work the same.
     my $self = shift;
@@ -1501,7 +1539,7 @@ sub collapse_unique_species_subtrees {
   Description:	For each point there is a nearest leaf at distance 
                 dnear. This returns the point which maximizes dnear.
 
-=cut					
+=cut
 
 sub find_point_furthest_from_leaves {
     my $self = shift;
@@ -1521,12 +1559,62 @@ sub find_point_furthest_from_leaves {
                 which sets some attributes.
   Description:	For each point there is a furthest leaf at distance 
                 dfar. This returns the point which minimizes dfar.
+                This is the 'midpoint', the midpoint of the longest leaf-leaf path.
 
-=cut					
+=cut
 
 # returns a list containing a node object, and the distance of the point above that node
 sub find_point_closest_to_furthest_leaf {
     my $self = shift;
+    return $self->find_midpoint();
+  }
+
+ #    $self->get_root()->recursive_set_max_dist_to_leaf_in_subtree();
+
+#     my @nodes = $self->get_root()->recursive_subtree_node_list();
+#     push @nodes, $self->get_root();    # we want the root in our list
+
+#     my @sorted_nodes = sort {
+#         $a->get_max_leaf_leaf_pathlength_in_subtree_thru_node()
+#           <=> $b->get_max_leaf_leaf_pathlength_in_subtree_thru_node()
+#     } @nodes;
+
+#     # using attribute "lptl_child" (longest path to leaf child) follow the longest path to leaf,
+#     # until you reach the midpoint of the longest leaf to leaf path
+#     my $current_node = pop @sorted_nodes;
+#     my $distance_to_go =
+#       0.5 *
+#       ( $current_node->get_attribute("dist_to_leaf_longest") -
+#         $current_node->get_attribute("dist_to_leaf_next_longest") );
+#     for ( ; ; ) {
+#         my $next_node     = $current_node->get_attribute("lptl_child");
+#         my $branch_length = $next_node->get_branch_length();
+#         if ( $branch_length >= $distance_to_go ) {
+#             return ( $next_node, $branch_length - $distance_to_go );
+#         } else {
+#             $distance_to_go -= $branch_length;
+#             $current_node = $next_node;
+#         }
+#     }
+# }
+
+
+=head2 function find_midpoint()
+
+  Synopsis:	$t->find_midpoint();
+  Arguments:	None.
+  Returns:	A list containing a node object, and the distance 
+                above that node of the midpoint.
+  Side effects:	Calls recursive_set_max_dist_to_leaf_in_subtree, 
+                which sets some attributes.
+  Description:	For each point there is a furthest leaf at distance 
+                dfar. This returns the point which minimizes dfar.
+                This is the 'midpoint': the midpoint of the longest leaf-leaf path.
+
+=cut
+
+sub find_midpoint{
+ my $self = shift;
     $self->get_root()->recursive_set_max_dist_to_leaf_in_subtree();
 
     my @nodes = $self->get_root()->recursive_subtree_node_list();
@@ -2392,6 +2480,64 @@ sub leaf_species_bit_pattern_string {
     }
     return $str;
 }
+
+
+sub min_clade{
+  my $self = shift;
+  my $sequence_id = shift;
+  my $at_least = shift;
+  my $outer_species = shift; # array ref. this finds min. clade s.t. has at least $at_least
+  # leaves with species in $outer_species
+  # my $at_most = shift || 1;
+  # my $inner_species = shift || [ $leaf->get_species() ]; 
+  # can limit number of leaves in a set of species in the clade. default - only one leaf with species of $leaf is allowed
+  if (!ref $outer_species eq 'HASH') {
+    warn "in min_clade, no outer species hash specified. Returning root nodes.\n";
+    return $self->get_root();
+  }
+
+  my $node = undef;
+  my @leaves = $self->get_leaves();
+  foreach (@leaves) {
+    my $leaf_name = $_->get_name();
+    if ($sequence_id eq $leaf_name) {
+      #      print 'found the node with correct sequence id: ', $sequence_id, "  ", $leaf_name, "\n";
+      $node = $_;
+      last;
+    }
+  }
+  if(!defined $node){
+    warn "In min_clade. No leaf found with specified id: $sequence_id .\n";
+    return $self->get_root();
+  }
+  #$node = $leaf;
+  $self->calculate_implicit_species_hashes();
+
+  while (1) {
+    my $implicit_species_hashx = $node->{implicit_species_hash};
+    #   print "implicit species: [", join("; ", keys %$implicit_species_hashx), "]\n";
+
+    my $outer_count = 0; # count of remote species in clade with root at this node.
+    for my $species ( keys %$outer_species) {
+      #     print "outer_species $species\n";
+      if (exists $implicit_species_hashx->{$species}) {
+	$outer_count +=  $implicit_species_hashx->{$species};
+	#	print "outer count: $outer_count \n";
+      }
+    }
+    if ($outer_count >= $at_least) { # this is the place
+      # return a newick expression for this clade
+      return $node; #->recursive_generate_newick();
+    }
+    #   print "In min_clade. No subtree satisfies condition. Returning entire tree.\n";
+    if ($node->is_root()) {
+      return $node; # self->generate_newick();
+    } else {
+      $node = $node->get_parent();
+    }
+  }				# while(1) loop
+}				# end of min_clade
+
 
 # using urec, find the node s.t. rooting on its branch gives minimal duplications and losses
 # w.r.t. a species tree
