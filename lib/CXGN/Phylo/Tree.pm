@@ -34,6 +34,7 @@ The tree object also provides the layout and rendering functions. The both layou
 use base 'CXGN::Phylo::BasicTree';
 use base qw | CXGN::DB::Object |; # needed??
 
+# <<<<<<< HEAD
 use CXGN::Phylo::Layout;
 use CXGN::Phylo::Renderer;
 
@@ -190,5 +191,5 @@ sub decircularize {
     $self->set_layout(undef);
 }
 
-
 1;
+

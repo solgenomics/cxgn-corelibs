@@ -22,6 +22,7 @@ This class implements the following functions:
 
 package CXGN::Phylo::Node;
 
+# <<<<<<< HEAD
 use strict;
 use base 'CXGN::Phylo::BasicNode';
 
@@ -210,4 +211,3 @@ sub wrap_tooltip {
 }
 
 1;
-
