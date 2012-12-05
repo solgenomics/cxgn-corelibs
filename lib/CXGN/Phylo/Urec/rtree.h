@@ -15,6 +15,10 @@
 #define SHOW_INTERIOR_LABELS 0
 
 #include <iostream>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+
 #include <map>
 using namespace std;
 
