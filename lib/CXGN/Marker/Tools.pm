@@ -187,11 +187,12 @@ The name is searched case-insensitively, so 'tm2' turns up results for
 #this function attempts to return all ids of marker table entries which SHOULD be referring to the SAME MARKER.
 #since this is based on name only, it will falsely return multiple marker table entries IF TWO DIFFERENT MARKERS HAVE THE SAME NAME (ie TM2 and Tm2).
 sub marker_name_to_ids {
-    my($dbh,$marker_name)=@_;
+    my($dbh,$marker_name, $no_clean)=@_;
     unless(CXGN::DB::Connection::is_valid_dbh($dbh)){die"Invalid DBH";}
     my @ids;
     my $caps_name;
     my $clean_name=&clean_marker_name($marker_name);
+    $clean_name = $marker_name if $no_clean;
     my $dirty_caps_name=$marker_name."_CAPS";
     my $clean_caps_name=$clean_name."_CAPS";
     my $query = "select distinct marker_id from marker_alias where alias ilike ? or alias ilike ? or alias ilike ? or alias ilike ?";
