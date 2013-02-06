@@ -2,8 +2,7 @@ package CXGN::Phylo::Mrbayes;
 use strict;
 use List::Util qw ( min max sum );
 use CXGN::Phylo::ChainData;
-use lib '/home/tomfy/Orthologger/lib';
-use Histograms;
+use CXGN::Phylo::Histograms;
 
 # this is an object to facilitate running MrBayes (Bayesian phylogeny
 # inference program). The main functionality it adds is a relatively
@@ -22,24 +21,26 @@ sub new {
         'delta_temperature'         => 0.1,
         'n_swaps'                   => 1,
         'chunk_size'                => 2000,          # $default_chunk_size,
-        'print_freq'                => undef,
-        'sample_freq'               => 20,
-        'burnin_fraction'           => 0.1,
-        'diag_freq'                 => undef,
-        'converged_chunks_required' => 10,
-        'fixed_pinvar'              => undef,         # undef -> leaves default of uniform(0,1) in effect
-                                                      # convergence criteria
-        'splits_min_hits'           => 50,
-        'splits_max_ok_stddev'      => 0.03,
-        'splits_max_ok_avg_stddev'  => 0.015,
-        'modelparam_min_ok_ESS'     => 200,
-        'modelparam_max_ok_PSRF'    => 1.02,
-        'modelparam_max_ok_KSD'     => 0.2,
-        'ngens_run'                 => 0,
-        'id_species_map'            => {},
-        'append'                    => 'yes',
-        'max_gens'                  => '1000000000'
-    };
+			     'print_freq'                => undef,
+			     'sample_freq'               => 20,
+			     'burnin_fraction'           => 0.1,
+			     'diag_freq'                 => undef,
+			     'converged_chunks_required' => 10,
+			     'fixed_pinvar'              => undef, # undef -> leaves default of uniform(0,1) in effect
+			     # convergence criteria
+			     'splits_min_hits'           => 50,
+			     'splits_max_ok_stddev'      => 0.03,
+			     'splits_max_ok_avg_stddev'  => 0.015,
+			     'modelparam_min_ok_ESS'     => 200,
+			     'modelparam_max_ok_PSRF'    => 1.02,
+			     'modelparam_max_ok_KSD'     => 0.2,
+			     'ngens_run'                 => 0,
+			     'id_species_map'            => {},
+			     'append'                    => 'yes',
+			     'max_gens'                  => '1000000000',
+
+			     'min_binweight' => 0.02,
+			    };
     my $self = bless $default_arguments, $class;
     my $min_chunk_size = 100;
 
@@ -128,8 +129,11 @@ sub new {
     $self->{mrbayes_block2} =
       $begin_piece . $middle_piece . "mcmc append=" . $self->{append} . " ngen=$chunk_size;\n" . $end_piece;
     $self->setup_id_species_map();
-    $self->{pbi_generations}     = [0];
+#    $self->{pbi_generations}     = [0];
     $self->{topology_histograms} = undef;
+$self->{topo_chain_data} =  CXGN::Phylo::ChainData->new( { 'parameter_name' => 'topology', 
+'n_runs' => $n_runs,
+'gen_spacing' => $sample_freq } );
     return $self;
 }
 
@@ -139,7 +143,7 @@ sub run {
     my $chunk_size     = $self->{chunk_size};
     my $ngen           = $chunk_size;
     my $mrbayes_block1 = $self->{mrbayes_block1};
-
+my $n_runs = $self->{n_runs};
     open my $fh, ">tmp_mrb1.nex";    # run params for first chunk
     print $fh "$mrbayes_block1";
     close $fh;
@@ -180,52 +184,79 @@ sub run {
 
         #****************************************************************
         my $burn_in_gen = int( $ngen * $self->{burnin_fraction} );
+my $min_binweight = $self->{min_binweight};
         # topologies
-        my ( $generation_toponumber_hrefs, $newick_number_map, $number_newick_map ) =
-          $self->retrieve_topology_samples( undef, $ngen_old + 1, $burn_in_gen );    #read in from * .run?.t file
-        my ( $topo_countsarray, $total_trees ) = $self->count_post_burn_in_topologies($generation_toponumber_hrefs);
+        # my ( $generation_toponumber_hrefs, $newick_number_map, $number_newick_map ) =
+     #     $self->retrieve_topology_samples( undef, $ngen_old + 1, $burn_in_gen );   
+#	my ( $chunk_gens, $chunk_gen_toponumber_hrefs ) = 
+	  $self->retrieve_topology_samples(undef, $ngen_old+1); #read in from * .run?.t file
 
-# get sorted topology numbers (sorted by total hits, greatest to least).
+#	my $chunk_topo_hists = CXGN::Phylo::Histograms->new( { title => 'topologies' } );    # $topo_histograms;
+#            $chunk_topo_hists->populate( $chunk_gen_toponumber_hrefs, 0); # 
+#print "C Chunk histos: \n", $chunk_topo_hists->histogram_string(), "\n";
 
-        print "\n\n" . "Post burn-in topologies histogram: \n";
-        print histogram_string($topo_countsarray), "\n";    #, @sorted_toponumbers), "\n";
-        my $topo_histograms;
-        if ( !defined $self->{topology_histograms} ) {
-            $topo_histograms = Histograms->new( { title => 'topologies' } );    # $topo_histograms;
-            $topo_histograms->populate( $generation_toponumber_hrefs, 0); # $self->{chunk_size} );
-	    print "constructed new histograms. \n"; #sleep(1);
-        }
-        else {
-            $topo_histograms = $self->{topology_histograms};
-            $topo_histograms->populate( $generation_toponumber_hrefs, $ngen_old + 1 ); 
-            $topo_histograms->remove($burn_in_gen);
-	    $topo_histograms->rearrange_histograms();
-	    print "LLLLLLLLLLLLLLLL1: ", $topo_histograms->avg_L1_distance(
-# $self->{rearr_histograms}), "\n"; # uses raw histogram (no rebinning)
-$topo_histograms->minweight_rebin(0.1) );       }
+# my $topo_chain_data = CXGN::Phylo::ChainData->new( { 'parameter_name' => 'topology', 'n_runs' => $n_runs } );
+	# while( my ($i, $g_t) = each @$chunk_gen_toponumber_hrefs){
+	#   for my $gg (sort {$a <=> $b} keys %$g_t){
+	#     print "XXX run $i. gen $gg. topo: ", $g_t->{$gg}, "\n";
+	#   }
+	# }
+	 
+#$self->{topo_chain_data}->update($chunk_gen_toponumber_hrefs);
+print "Topology histograms: \n", $self->{topo_chain_data}->{histograms}->histogram_string(), "\n";
+#$self->{topo_chain_data}->{histograms}->rearrange_histograms();
+#print "DDD L1: ", $self->{topo_chain_data}->{histograms}->minweight_L1(0.01), "\n";
 
-        $self->{topology_histograms} = $topo_histograms;
-        print "topology histograms: \n",
-$self->{topology_histograms}->histogram_string(), "\n";
+printf("Avg L1 distance: %8.5f \n", $self->{topo_chain_data}->{histograms}->minweight_L1($min_binweight));
 
-        my $lumped_tail_fraction = 0.05;
-        my $avg_topo_L1_post_burn_in_lrt =
-          avg_L1_distance( lump_right_tail( $topo_countsarray, $lumped_tail_fraction ) );
-        my $target_bin_weight = 0.02;
-        my $avg_topo_L1_post_burn_in_minweightbin =
-          avg_L1_distance( minweight_rebin( $topo_countsarray, $target_bin_weight ) );
+ # 	if(0){
+ #         my $topo_histograms;
+ #         if ( !defined $self->{topology_histograms} ) {
+ #             $topo_histograms = CXGN::Phylo::Histograms->new( { title => 'topologies' } );    # $topo_histograms;
+ #             $topo_histograms->populate( $generation_toponumber_hrefs, 0); # $self->{chunk_size} );
+ # 	    print "constructed new histograms. \n"; #sleep(1);
+ #         }
+ #         else {
+ #             $topo_histograms = $self->{topology_histograms};
+ #             $topo_histograms->populate( $generation_toponumber_hrefs, $ngen_old + 1 ); 
+ #             $topo_histograms->remove($burn_in_gen);
+ # 	    $topo_histograms->rearrange_histograms();
+ # 	    print "LL1: ", $topo_histograms->avg_L1_distance(
+ # # $self->{rearr_histograms}), "\n"; # uses raw histogram (no rebinning)
+ # $topo_histograms->minweight_rebin($min_binweight) );       }
 
-        my $L1_output_string =
-          sprintf( "%i %8.4f %8.4f ", $ngen, $avg_topo_L1_post_burn_in_lrt, $avg_topo_L1_post_burn_in_minweightbin );
+ #         $self->{topology_histograms} = $topo_histograms;
+ #         print "topology histograms: \n",
+ # $self->{topology_histograms}->histogram_string(), "\n";
+ #       }
+
+
+#         my ( $topo_countsarray, $total_trees ) = $self->count_post_burn_in_topologies($generation_toponumber_hrefs);
+
+# # get sorted topology numbers (sorted by total hits, greatest to least).
+
+#          print "\n" . "Post burn-in topologies histogram: \n";
+#         print histogram_string($topo_countsarray), "\n";    #, @sorted_toponumbers), "\n";
+
+#         my $lumped_tail_fraction = 0.05;
+#         my $avg_topo_L1_post_burn_in_lrt =
+#           avg_L1_distance( lump_right_tail( $topo_countsarray, $lumped_tail_fraction ) );
+#         my $target_bin_weight = 0.02;
+#         my $avg_topo_L1_post_burn_in_minweightbin =
+#           avg_L1_distance( minweight_rebin( $topo_countsarray, $target_bin_weight ) );
+
+#         my $L1_output_string =
+#           sprintf( "%i %8.4f %8.4f ", $ngen, $avg_topo_L1_post_burn_in_lrt, $avg_topo_L1_post_burn_in_minweightbin );
+
 
         # logL, treelength, alpha, p_inv
         $self->retrieve_param_samples( $ngen_old + 1 );    # read in from *.run?.p file
-
+ my $L1_output_string = '';
 	if(0){
         for ( keys %{ $self->{chain_data} } ) {
             print STDERR "param name: $_.", $self->{chain_data}->{$_}->get_param_name(), "\n";
         }
-
+ 
         #   for my $param_data_obj (@$params_data) {
         for my $param_data_obj ( values %{ $self->{chain_data} } ) {
             my $param_data_arrays = $param_data_obj->get_post_burn_in_param_data_arrays();
@@ -250,7 +281,7 @@ $self->{topology_histograms}->histogram_string(), "\n";
         print $fhc "$ngen $converge_count  $conv_string\n";
 
         #       print "\r                                                                          \r";
-        print "$ngen $converge_count  $conv_string";
+        print "$ngen $converge_count  $conv_string \n";
         print "\n" if ( ( $ngen % $stdout_newline_interval ) == 0 );
         last if ( $converge_count >= $self->{converged_chunks_required} );
     }
@@ -539,7 +570,7 @@ sub retrieve_param_samples {
               CXGN::Phylo::ChainData->new( { 'parameter_name' => $param_name, 'n_runs' => $n_runs } );
         }
         else {
-            print STDERR '$self->{chain_data}-> exists.' . " Key: $param_name \n";
+         #   print STDERR '$self->{chain_data}-> exists.' . " Key: $param_name \n";
         }
     }
 
@@ -562,7 +593,7 @@ sub retrieve_param_samples {
             my $param_string = join( "  ", @cols );
             while ( my ( $i, $param_value ) = each @cols ) {
                 my $param_name = $col_param{$i};
-                $self->{chain_data}->{$param_name}->store_data_point( $i_run, $generations, $param_value );
+                $self->{chain_data}->{$param_name}->store_data_point( $i_run-1, $generations, $param_value );
             }
         }
     }
@@ -570,6 +601,7 @@ sub retrieve_param_samples {
 }
 
 # end of reading in parameter values
+
 
 sub retrieve_topology_samples {    # and store them ...
                                    # read topology samples from file,
@@ -581,35 +613,43 @@ sub retrieve_topology_samples {    # and store them ...
     my $t_files                        = `ls $pattern.run?.t`;
     my @t_infiles                      = split( " ", $t_files );
     my $n_runs                         = scalar @t_infiles;
-    my @generation_toponumber_hashrefs = @{ $self->{generation_toponumber_hashrefs} };
+    my @generations = ();
+    my @generation_toponumber_hashrefs = ();
+    for (1..$n_runs) {
+      push @generation_toponumber_hashrefs, {};
+    }
     my %newick_number_map              = %{ $self->{newick_number_map} };
     my %number_newick_map              = %{ $self->{number_newick_map} };
     my $topology_number                = $self->{n_distinct_topologies};
     my $generation;
 
+#print "ref(): ", ref $generation_toponumber_hashrefs[0], "\n";
+#print STDERR "nruns: $n_runs, \n";
     foreach my $i_run ( 1 .. $n_runs ) {
         my $t_infile = "$pattern.run$i_run.t";
         open my $fh, "<$t_infile";
 
+#print "$i_run  infile: $t_infile \n";
         # read trees in, remove branch lengths, storeg in array
         while ( my $line = <$fh> ) {
+#print $line;
             chomp $line;
             if ( $line =~ s/tree gen[.](\d+) = .{4}\s+// ) {
                 my $newick = $line;
                 $generation = $1;
 
                 # skip data for generations which are already stored:
-                next if ( defined $self->{max_stored_gen} and $generation <= $self->{max_stored_gen} );
+                next if ( $generation < $start_generation );
 
-                print STDERR "current run, gen: $i_run, $generation. pbi gen range: ",
-                  $self->{pbi_generations}->[0], ":", $self->{pbi_generations}->[-1], " \n";
-                if ( $i_run eq 1 ) {
-		  if (!defined $self->{pbi_generations}->[-1]  or 
-		      (defined $self->{pbi_generations}->[-1] and $generation > $self->{pbi_generations}->[-1] )) {
-		    push @{ $self->{pbi_generations} }, $generation;
-		    print STDERR "pushed $generation onto pbi_generations array\n";
-		  }
-                }
+              #  print STDERR "ALT current run, gen: $i_run, $generation. pbi gen range: ",
+                #   $self->{pbi_generations}->[0], ":", $self->{pbi_generations}->[-1], " \n";
+                # if ( $i_run eq 1 ) {
+		#   if (!defined $self->{pbi_generations}->[-1]  or 
+		#       (defined $self->{pbi_generations}->[-1] and $generation > $self->{pbi_generations}->[-1] )) {
+		#     push @{ $self->{pbi_generations} }, $generation;
+		#     print STDERR "pushed $generation onto pbi_generations array\n";
+		#   }
+                # }
 
                 $newick =~ s/:[0-9]+[.][0-9]+(e[-+][0-9]{2,3})?(,|[)])/$2/g; # remove branch lengths
                 $newick =~ s/^\s+//;
@@ -622,34 +662,44 @@ sub retrieve_topology_samples {    # and store them ...
                     $number_newick_map{$topology_number} = $newick;
                 }
                 $self->{toponumber_count}->{$topology_number}++;
+		push @generations, $generation;
                 $generation_toponumber_hashrefs[ $i_run - 1 ]->{$generation} = $newick_number_map{$newick};
-
-   # generation_toponumber_hashrefs: array with n_run elements, each is hashref; key is generation, value is topo number
-            }
+#		print "AAAA: $i_run  $generation $topology_number ",  $newick_number_map{$newick}, "\n";
+#print "BBBB: ", $generation_toponumber_hashrefs[ $i_run - 1 ]->{$generation}, ,"\n";
+#   # generation_toponumber_hashrefs: array with n_run elements, each is hashref; key is generation, value is topo number
+	      }
         } # now $generation_toponumber_hashrefs[$i_run] is hash ref with generations as keys, and topology numbers as values.
-          # my $old_pbi_generations = $self->{pbi_generations};
-	  printf( "\n min/max pbi generations: %8i %8i \n", @{ $self->{pbi_generations} }[ 0, -1 ] );
-	  print join(";", @{ $self->{pbi_generations} }), "\n";
+	close $fh;
+ # my $old_pbi_generations = $self->{pbi_generations};
+#	  printf( "\n min/max pbi generations: %8i %8i \n", @{ $self->{pbi_generations} }[ 0, -1 ] );
+#	  print join(";", @{ $self->{pbi_generations} }), "\n";
 
-        for my $the_gen ( @{ $self->{pbi_generations} } )
-        {    # delete pre-burn-in data from generation_toponumber_hashrefs
-            last if ( $the_gen >= $burn_in_gen );
-            print STDERR "deleting (from generation_toponumber_hashrefs) run $i_run gen $the_gen . topo number: ",
-              $generation_toponumber_hashrefs[ $i_run - 1 ]->{$the_gen}, "\n";
-            delete $generation_toponumber_hashrefs[ $i_run - 1 ]->{$the_gen};
-        }
+        # for my $the_gen ( @{ $self->{pbi_generations} } )
+        # {    # delete pre-burn-in data from generation_toponumber_hashrefs
+        #     last if ( $the_gen >= $burn_in_gen );
+        #     print STDERR "deleting (from generation_toponumber_hashrefs) run $i_run gen $the_gen . topo number: ",
+        #       $generation_toponumber_hashrefs[ $i_run - 1 ]->{$the_gen}, "\n";
+        #     delete $generation_toponumber_hashrefs[ $i_run - 1 ]->{$the_gen};
+        # }
     }    # loop over runs
-    while ( @{ $self->{pbi_generations} } and $self->{pbi_generations}->[0] < $burn_in_gen )
-    {    # delete pre burn-in generations
-        my $g = shift @{ $self->{pbi_generations} };
-  #      push @gens_to_remove, $g;
-    }
+  #   while ( @{ $self->{pbi_generations} } and $self->{pbi_generations}->[0] < $burn_in_gen )
+  #   {    # delete pre burn-in generations
+  #       my $g = shift @{ $self->{pbi_generations} };
+  # #      push @gens_to_remove, $g;
+  #   }
     $self->{max_stored_gen}                 = $generation;
     $self->{generation_toponumber_hashrefs} = \@generation_toponumber_hashrefs;
     $self->{newick_number_map}              = \%newick_number_map;
     $self->{number_newick_map}              = \%number_newick_map;
     $self->{n_distinct_topologies}          = $topology_number;
-    return ( \@generation_toponumber_hashrefs, \%newick_number_map, \%number_newick_map );
+
+	# while( my ($i, $g_t) = each @generation_toponumber_hashrefs){
+	#   for my $gg (sort {$a <=> $b} keys %$g_t){
+	#     print "YYY run $i. gen $gg. topo: ", $g_t->{$gg}, "\n";
+	#   }
+	# }
+    $self->{topo_chain_data}->update(\@generation_toponumber_hashrefs);
+    return (\@generations, \@generation_toponumber_hashrefs); #, \%newick_number_map, \%number_newick_map );
 }
 
 sub retrieve_number_id_map {
@@ -687,8 +737,8 @@ sub count_post_burn_in_topologies {
         my $n_burnin = int( $self->{burnin_fraction} * $trees_read_in );
         my @sorted_generations =
           sort { $a <=> $b } keys %{$generation_toponumber};
-	print "min/max of sorted gens: ", min(@sorted_generations), " ", max(@sorted_generations), "\n";
-print "n_burnin, trees_read_in: $n_burnin  $trees_read_in \n";
+#	print "min/max of sorted gens: ", min(@sorted_generations), " ", max(@sorted_generations), "\n";
+#print "n_burnin, trees_read_in: $n_burnin  $trees_read_in \n";
         foreach my $i_gen ( @sorted_generations[ $n_burnin .. $trees_read_in - 1 ] ) {
 # print STDERR "HHHHHHHHH: i_gen: $i_gen, " if($i_run == 1);
             my $topo_number = $generation_toponumber->{$i_gen};
@@ -886,7 +936,6 @@ sub avg_L1_distance {    # just find for histograms as given, no rebinning.
         my ( $numerator, $denominator ) = ( 0, 0 );
         foreach my $label (@labels) {                              # loop over topologies
             my @weights = sort { $b <=> $a } @{ $label_weightslist->{$label} };
-print "YYY bin, weights: $label (", join(",",  @{ $label_weightslist->{$label} }), ")\n";
             my $coeff = $n_runs - 1;
             for my $run_weight (@weights) {                        # loop over runs
    
@@ -1037,33 +1086,6 @@ sub equal_weight_bins {    #input here is not yet binned, just a few sets of dat
     return $result;
 }
 
-sub histogram_string {
-
-    # argument: hashref, keys: category labels; values: array ref holding weights for the histograms
-    # (e.g. for different runs)
-    # Output: 1st col: category labels, next n_runs cols: weights, last col sum of weights over runs.
-    # supply ref to array of categories in desired order, or will sort bins by total weight.
-    my $category_weightarray = shift;
-    my $s_categories = shift || undef;
-    my @sorted_categories =
-      ( defined $s_categories )
-      ? @{$s_categories}
-      : sort { sum( @{ $category_weightarray->{$b} } ) <=> sum( @{ $category_weightarray->{$a} } ) }
-      keys %$category_weightarray;
-    my $string = "";
-    my $total  = 0;
-    for (@sorted_categories) {
-        my @counts = @{ $category_weightarray->{$_} };
-        $string .= sprintf( "%6s  ", $_ );
-        for (@counts) {
-            $string .= sprintf( "%6i  ", $_ );
-        }
-        $string .= sprintf( "%6i \n", sum(@counts) );
-        $total += sum(@counts);
-    }
-    $string .= "total  $total \n";
-    return $string;
-}
 
 ############################
 
@@ -1123,5 +1145,119 @@ sub histogram_string {
 #   die "In topology_avg_L1_distance. avg_L1_distance is < 0.0: $result.\n" if($result < 0.0);
 #   return $result;
 # }
+
+
+
+# sub retrieve_topology_samples_old {    # and store them ...
+#                                    # read topology samples from file,
+#                                    #
+#     my $self                           = shift;
+#     my $pattern                        = shift || $self->{alignment_nex_filename};    # e.g. fam987?.nex
+#     my $start_generation               = shift || 0;
+#     my $burn_in_gen                    = shift;                                       # gen < this -> discard as burn-in
+#     my $t_files                        = `ls $pattern.run?.t`;
+#     my @t_infiles                      = split( " ", $t_files );
+#     my $n_runs                         = scalar @t_infiles;
+#     my @generation_toponumber_hashrefs = @{ $self->{generation_toponumber_hashrefs} };
+#     my %newick_number_map              = %{ $self->{newick_number_map} };
+#     my %number_newick_map              = %{ $self->{number_newick_map} };
+#     my $topology_number                = $self->{n_distinct_topologies};
+#     my $generation;
+
+#     foreach my $i_run ( 1 .. $n_runs ) {
+#         my $t_infile = "$pattern.run$i_run.t";
+#         open my $fh, "<$t_infile";
+
+#         # read trees in, remove branch lengths, storeg in array
+#         while ( my $line = <$fh> ) {
+#             chomp $line;
+#             if ( $line =~ s/tree gen[.](\d+) = .{4}\s+// ) {
+#                 my $newick = $line;
+#                 $generation = $1;
+
+#                 # skip data for generations which are already stored:
+#                 next if ( defined $self->{max_stored_gen} and $generation <= $self->{max_stored_gen} );
+
+#                 # print STDERR "current run, gen: $i_run, $generation. pbi gen range: ",
+#                 #   $self->{pbi_generations}->[0], ":", $self->{pbi_generations}->[-1], " \n";
+#                  if ( $i_run eq 1 ) {
+# 		   if (!defined $self->{pbi_generations}->[-1]  or 
+# 		       (defined $self->{pbi_generations}->[-1] and $generation > $self->{pbi_generations}->[-1] )) {
+# 		     push @{ $self->{pbi_generations} }, $generation;
+# 		 #    print STDERR "pushed $generation onto pbi_generations array\n";
+# 		   }
+#                  }
+
+#                 $newick =~ s/:[0-9]+[.][0-9]+(e[-+][0-9]{2,3})?(,|[)])/$2/g; # remove branch lengths
+#                 $newick =~ s/^\s+//;
+#                 $newick =~ s/;\s*//;
+#                 $newick = order_newick($newick);
+#                 if ( !exists $newick_number_map{$newick} ) {
+#                     $topology_number++;
+#                     print "encountered new topo number, newick:{{{   $topology_number   $newick }}}\n";
+#                     $newick_number_map{$newick}          = $topology_number;    # 1,2,3,...
+#                     $number_newick_map{$topology_number} = $newick;
+#                 }
+#                 $self->{toponumber_count}->{$topology_number}++;
+#                 $generation_toponumber_hashrefs[ $i_run - 1 ]->{$generation} = $newick_number_map{$newick};
+
+#    # generation_toponumber_hashrefs: array with n_run elements, each is hashref; key is generation, value is topo number
+#             }
+#         } # now $generation_toponumber_hashrefs[$i_run] is hash ref with generations as keys, and topology numbers as values.
+#           # my $old_pbi_generations = $self->{pbi_generations};
+# 	close $fh;
+# #	  printf( "\n min/max pbi generations: %8i %8i \n", @{ $self->{pbi_generations} }[ 0, -1 ] );
+# #	  print join(";", @{ $self->{pbi_generations} }), "\n";
+
+#         for my $the_gen ( @{ $self->{pbi_generations} } )
+#         {    # delete pre-burn-in data from generation_toponumber_hashrefs
+#             last if ( $the_gen >= $burn_in_gen );
+#             print STDERR "deleting (from generation_toponumber_hashrefs) run $i_run gen $the_gen . topo number: ",
+#               $generation_toponumber_hashrefs[ $i_run - 1 ]->{$the_gen}, "\n";
+#             delete $generation_toponumber_hashrefs[ $i_run - 1 ]->{$the_gen};
+#         }
+#     }    # loop over runs
+#     while ( @{ $self->{pbi_generations} } and $self->{pbi_generations}->[0] < $burn_in_gen )
+#     {    # delete pre burn-in generations
+#         my $g = shift @{ $self->{pbi_generations} };
+#   #      push @gens_to_remove, $g;
+#     }
+#     $self->{max_stored_gen}                 = $generation;
+#     $self->{generation_toponumber_hashrefs} = \@generation_toponumber_hashrefs;
+#     $self->{newick_number_map}              = \%newick_number_map;
+#     $self->{number_newick_map}              = \%number_newick_map;
+#     $self->{n_distinct_topologies}          = $topology_number;
+#     return ( \@generation_toponumber_hashrefs, \%newick_number_map, \%number_newick_map );
+# }
+
+# sub histogram_string {
+
+#     # argument: hashref, keys: category labels; values: array ref holding weights for the histograms
+#     # (e.g. for different runs)
+#     # Output: 1st col: category labels, next n_runs cols: weights, last col sum of weights over runs.
+#     # supply ref to array of categories in desired order, or will sort bins by total weight.
+#     my $category_weightarray = shift;
+#     my $s_categories = shift || undef;
+#     my @sorted_categories =
+#       ( defined $s_categories )
+#       ? @{$s_categories}
+#       : sort { sum( @{ $category_weightarray->{$b} } ) <=> sum( @{ $category_weightarray->{$a} } ) }
+#       keys %$category_weightarray;
+#     my $string = "";
+#     my $total  = 0;
+#     for (@sorted_categories) {
+#         my @counts = @{ $category_weightarray->{$_} };
+#         $string .= sprintf( "%6s  ", $_ );
+#         for (@counts) {
+#             $string .= sprintf( "%6i  ", $_ );
+#         }
+#         $string .= sprintf( "%6i \n", sum(@counts) );
+#         $total += sum(@counts);
+#     }
+#     $string .= "total  $total \n";
+#     return $string;
+# }
+
+
 
 1;

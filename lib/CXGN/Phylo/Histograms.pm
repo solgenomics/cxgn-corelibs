@@ -1,4 +1,4 @@
-package Histograms;
+package CXGN::Phylo::Histograms;
 use strict;
 use List::Util qw ( min max sum );
 
@@ -99,13 +99,14 @@ my $v = $g_v->{$g};
  
 }
 
-sub adjust_weight{
+sub adjust_count{
   my $self = shift;
   my $hist_number = shift;	# 0,1,2,...
   my $category = shift;
   my $increment = shift || 1;
-  $self->{histograms}->[$hist_number]->{category} += $increment;
-  $self->{sum_histogram}->{category} += $increment;
+# print STDERR "in adjust_count, run, cat, inc: $hist_number, $category, $increment \n";
+  $self->{histograms}->[$hist_number]->{$category} += $increment;
+  $self->{sum_histogram}->{$category} += $increment;
 }
 
 sub n_histograms{
@@ -169,6 +170,12 @@ my $sum_cat_weight = $self->{sum_histogram};
    }
    $self->{rearr_histograms} = $rearr_histograms;
  }
+sub minweight_L1{
+my $self = shift;
+my $minweight = shift || 0.02;
+$self->rearrange_histograms();
+return $self->avg_L1_distance($self->minweight_rebin($minweight));
+}
 
  sub minweight_rebin {
    # input here is already binned
@@ -224,7 +231,6 @@ my $sum_cat_weight = $self->{sum_histogram};
      foreach my $label (@labels) { # loop over topologies
        my @weights = sort { $b <=> $a } @{ $label_weightslist->{$label} };
 
- #      print "XXX bin, weights: $label (", join(",",  @{ $label_weightslist->{$label} }), ")\n";
        my $coeff = $n_runs - 1;
        for my $run_weight (@weights) { # loop over runs
 	 my $sum_abs_diffs = $coeff * $run_weight;
@@ -238,6 +244,8 @@ my $sum_cat_weight = $self->{sum_histogram};
    }
    return $L1;
  }
+
+
 
 
 
