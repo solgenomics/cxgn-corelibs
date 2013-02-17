@@ -2,7 +2,6 @@ package CXGN::Phylo::ChainData;
 use strict;
 use List::Util qw ( min max sum );
 use CXGN::Phylo::Histograms;
-
 # for handling Mrbayes parameter output
 
 # param name (topology, logL, treelength, etc.
@@ -11,12 +10,16 @@ use CXGN::Phylo::Histograms;
 
 sub  new {
   my $class = shift;
+  #my $gen_val_hashrefs = shift; 
   my $arg = shift;
   my $default_arguments = {
 			   'parameter_name' => 'unnamed parameter',
 			   'n_runs' => undef,
 			   'burn_in_fraction' => 0.1,
 			   'gen_spacing' => undef,
+			   'binnable' => 1, # by default, assume this is continuous data which should be binned.
+			   'next_bin_gen' => 0,
+		#	   'type' => 'numerical' # or categorical
 			  };
   my $self = bless $default_arguments, $class;
 
@@ -24,18 +27,42 @@ sub  new {
     warn "Unknown option: $option in ParamData constructor.\n" if(!exists $self->{$option});
     if (defined $arg->{$option}) { # if arg is undef, leaves default in effect
       $self->{$option} = $arg->{$option};
+#      print STDERR "In ChainData constructor. Setting option $option to ", $arg->{$option}, "  ", $self->{$option},"\n";
     }
   }
-$self->{max_gen} = 0;
+  $self->{max_gen} = 0;
   $self->{generations} = [ ];	# ref to array of n_runs arrayrefs
   for (1..$self->{n_runs}) {
     push @{$self->{generations}}, [];
     push @{$self->{run_gen_value}}, {};
   }
-  $self->{gen_array} = []; # just generations
-$self->{gen_count} = {}; # keys generations, counts: number of data points at that generation (should be == number of runs)
-  $self->{histograms} = CXGN::Phylo::Histograms->new({title => $self->{parameter_name}});
+#  $self->{gen_array} = [];	# just generations
+#  $self->{gen_count} = {}; # keys generations, counts: number of data points at that generation (should be == number of runs)
+#  print STDERR "param name, binnable:  ", $self->{parameter_name}, "  ", $self->{binnable}, "\n";
+
+  if ($self->{binnable}) {
+ #   print "numerical \n";
+    $self->{histograms} = CXGN::Phylo::BinnedHistograms->new({title => $self->{parameter_name}});
+  } else {
+#    print "NOT numerical \n";
+    $self->{histograms} = CXGN::Phylo::Histograms->new({title => $self->{parameter_name}});
+  }
+
+  #$self->store_data_chunk($gen_val_hashrefs);
+#  print "bottom of ChainData constructor\n";
   return $self;
+}
+
+sub store_data_point{		# store a new data point
+  my $self = shift;
+  my ($run, $gen, $val) = @_;
+  $self->{max_gen} = max($gen, $self->{max_gen});
+  $self->{run_gen_value}->[$run]->{$gen} = $val;
+   if (!($self->{binnable})) {
+     $self->{histograms}->adjust_val_count($run, $val, 1);
+   } elsif (defined $self->{histograms}->{binning_lo_val}) {
+     $self->{histograms}->adjust_val_count($run, $val, 1);
+   }
 }
 
 sub store_data_chunk{
@@ -54,6 +81,10 @@ sub store_data_chunk{
     }
   }
   if (defined $self->{histograms}) {
+    if ($self->{binnable}  and  !defined $self->{histograms}->{binning_lo_val}) { # do initial binning.
+      print "ChainData param name: ", $self->{parameter_name}, ". Doing initial binning.\n"; # sleep(1);
+      $self->bin_the_data();
+    }
     $self->{histograms}->populate($gen_val_hashrefs);
   } else {
     die "**************************\n";
@@ -61,58 +92,37 @@ sub store_data_chunk{
 }
 
 sub update{
-my $self = shift;
-my $gen_val_hashrefs = shift;
-$self->store_data_chunk($gen_val_hashrefs);
-$self->delete_pre_burn_in();
-}
-
-sub store_data_point{		# store a new data point
   my $self = shift;
-  my ($run, $gen, $val) = @_;
- # if (!exists $self->{run_gen_value}->[$run-1]->{$gen}) {
-    $self->{run_gen_value}->[$run]->{$gen} = $val;
-$self->{gen_counts}->{$gen}++;
- #   push @{$self->{generations}->[$run-1]}, $gen;
- # }
+  my $gen_val_hashrefs = shift;
+  print stderr "In update. before store_data_chunk\n";
+  $self->store_data_chunk($gen_val_hashrefs);
+  #$self->{histograms}->populate($gen_val_hashrefs);
+  # if (defined $self->{histograms}) {
+  #    $self->{histograms}->populate($gen_val_hashrefs);
+  #  } else {
+  #    die "**************************\n";
+  #  }
+  print stderr "In update. before delete_pre_burn_in\n";
+
+  $self->delete_pre_burn_in();
 }
 
 sub delete_data_point{
- my $self = shift;
+  my $self = shift;
   my ($run, $gen) = @_;
- my $value = $self->{run_gen_value}->[$run]->{$gen}; # $run zero-based
-# print STDERR "in delete_data_point. run, gen, value $run $gen $value \n";
+  my $value = $self->{run_gen_value}->[$run]->{$gen}; # $run zero-based
   delete $self->{run_gen_value}->[$run]->{$gen};
- $self->{gen_counts}->{$gen}--;
-# print STDERR "in delete_data_point. value $value \n";
- if($value < 1){
-warn "in delete_data_point value is [$value]\n";
-sleep(5);
-}
-$self->{histograms}->adjust_count($run, $value, -1);
-# $self->{histograms}->{histograms}->[$run]->{$value}--;
-#$self->{histograms}->{sum_histogram}->{$value}--;
-}
-
-sub delete_pre_burn_in{
-my $self = shift;
-my $max_pre_burn_in_gen = int($self->{max_gen}*$self->{burn_in_fraction}); 
-$max_pre_burn_in_gen = $self->{gen_spacing}*int($max_pre_burn_in_gen/$self->{gen_spacing});
-#print STDERR "in delete_pre_burn_in: $max_pre_burn_in_gen \n"; 
-$self->delete_low_gens($max_pre_burn_in_gen);
+  $self->{histograms}->adjust_val_count($run, $value, -1);
 }
 
 sub delete_low_gens{
   my $self = shift;
   my $max_pre_burn_in_gen = shift;
   my $delta_gen = $self->{gen_spacing};
-#print "in delete_low_gens. [", join('][', sort {$a <=> $b} keys %{$self->{run_gen_value}->[0]}), "]\n";
   for (my $i_run=0; $i_run<$self->{n_runs}; $i_run++) {
-  for(my $g = $max_pre_burn_in_gen; 1; $g -= $delta_gen){
- #   print STDERR "in delete_low_gens, $max_pre_burn_in_gen, $g, $i_run, ", $self->{run_gen_value}->[$i_run]->{$g}, "\n";
-    if(exists $self->{run_gen_value}->[$i_run]->{$g}){
-      my $value =  $self->{run_gen_value}->[$i_run]->{$g};
-#print STDERR "deleting point: run, gen, value: $i_run, $g, [$value] \n";
+    for (my $g = $max_pre_burn_in_gen; 1; $g -= $delta_gen) {
+      if (exists $self->{run_gen_value}->[$i_run]->{$g}) {
+	my $value =  $self->{run_gen_value}->[$i_run]->{$g};
 	$self->delete_data_point($i_run, $g); # $i_run zero-based
       } else {
 	last;
@@ -121,9 +131,17 @@ sub delete_low_gens{
   }
 }
 
+sub delete_pre_burn_in{
+  my $self = shift;
+  my $max_pre_burn_in_gen = int($self->{max_gen}*$self->{burn_in_fraction}); 
+  $max_pre_burn_in_gen = $self->{gen_spacing}*int($max_pre_burn_in_gen/$self->{gen_spacing});
+#  print STDERR "in delete_pre_burn_in: ", $self->{max_gen}, "  $max_pre_burn_in_gen \n";
+  $self->delete_low_gens($max_pre_burn_in_gen);
+}
+
 sub get_run_data{ # returns hashref with generation/parameter value pairs
   my $self = shift;
-  my $run = shift; # 0-based
+  my $run = shift;		# 0-based
   return $self->{run_gen_value}->[$run];
 }
 
@@ -142,36 +160,36 @@ sub get_post_burn_in_param_data_arrays{ # return array ref holding an array ref 
   my @gens_big_to_small = reverse @{$self->{generations}->[0]};
   my @runs_param_data = @{$self->{run_gen_value}}; # 
   my @y = ();
-my $max_gen = $gens_big_to_small[0];
-my $end_burn_in = int($self->{burn_in_fraction} * $max_gen);
-#print "max gen end burnin: $max_gen,  $end_burn_in \n";
+  my $max_gen = $gens_big_to_small[0];
+  my $end_burn_in = int($self->{burn_in_fraction} * $max_gen);
+  #print "max gen end burnin: $max_gen,  $end_burn_in \n";
   for my $run_data (@runs_param_data) { # one element for each param
-#print "ref(run_data): ", ref($run_data), "\n";
-#print "run_data values: ", join(";", values %$run_data), "\n";
-# while(my ($k, $v) = each %$run_data){
-#   print "key, value: $k  $v  \n";
-# }
+    #print "ref(run_data): ", ref($run_data), "\n";
+    #print "run_data values: ", join(";", values %$run_data), "\n";
+    # while(my ($k, $v) = each %$run_data){
+    #   print "key, value: $k  $v  \n";
+    # }
     my @data_array = ();
-    for my $gen (@gens_big_to_small){
-    #  print "GENERATION: $gen  $end_burn_in.\n";
+    for my $gen (@gens_big_to_small) {
+      #  print "GENERATION: $gen  $end_burn_in.\n";
       last if($gen <= $end_burn_in);
-    my $datum = $run_data->{$gen};
-    #  print "datum: $datum\n";
-   push @data_array, $datum;
+      my $datum = $run_data->{$gen};
+      #  print "datum: $datum\n";
+      push @data_array, $datum;
     }
-#print "Data array: ", join(";", @data_array), "\n";
+    #print "Data array: ", join(";", @data_array), "\n";
     push @y, \@data_array;
   }
   return \@y;
 }
 
-sub bin_the_data{
+sub get_binning_parameters{
   my $self = shift;
-  my $n_bins = shift || 60;
+  my $n_bins = shift || 40;
   my $tail_p = shift || 0.05;
   my $tail_d = shift || 0.25;
-
- my $the_histograms =  $self->{histograms} = CXGN::Phylo::Histograms->new({title => $self->{parameter_name}});
+  # print "top of bin the data. parameter name: ", $self->{parameter_name}, "\n";
+  # print "in bin the data. after the histograms constructor.\n";
   my @rgv = @{$self->{run_gen_value}};
 
   my @values = ();
@@ -181,24 +199,58 @@ sub bin_the_data{
   @values = sort {$a <=> $b} @values;
   my $size = scalar @values;
   my ($lo_val, $hi_val) = ($values[int($tail_p*$size)], $values[int((1 - $tail_p)*$size)]);
+  my $central_range = $hi_val - $lo_val;
 
-  my $lo = $lo_val - $tail_d*($hi_val - $lo_val);
-  my $hi = $hi_val + $tail_d*($hi_val - $lo_val);
-  my $bin_width = ($hi_val - $lo_val + 2*$tail_d)/$n_bins;
+  $lo_val -= $tail_d*$central_range;
+  $hi_val += $tail_d*$central_range;
+  if ($lo_val < $values[0]) {
+    $lo_val = 0.5*sum($values[0], $lo_val);
+  }
+  ;
+  if ($hi_val > $values[-1]) {
+    $hi_val = 0.5*sum($values[-1], $hi_val);
+  }
+  ;
+  if ($lo_val > 0  and   $lo_val < 0.1*$hi_val) {
+    $lo_val = 0;
+  }
+  my $bin_width = ($hi_val - $lo_val)/$n_bins;
+  return ($lo_val, $bin_width);
+}
 
-  while( my ($i_run, $g_v) = each @rgv) {
-    for my $val (values @$g_v) {
-      my $bin = inf(($val - $lo)/$bin_width);
-      if ($bin < 0) {
-	$bin = 0;
-      }
-      if ($bin >= $n_bins) {
-	$bin = $n_bins-1;
-      }
-      $the_histograms->adjust_count($i_run, $bin, +1);
+sub bin_the_data{
+  my $self = shift;
+  my $n_bins = shift || 20;
+  my $tail_p = shift || 0.05;
+  my $tail_d = shift || 0.2;
+#  print "top of bin the data. parameter name: ", $self->{parameter_name}, "\n";
+  my ($lo_val, $bin_width) = $self->get_binning_parameters($n_bins, $tail_p, $tail_d);
+  my $the_histograms =  $self->{histograms} = 
+    CXGN::Phylo::BinnedHistograms->new({title => $self->{parameter_name}, n_bins => $n_bins, 
+					binning_lo_val => $lo_val, bin_width => $bin_width});
+#  print "In bin_the_data. nbins, loval, bw: $n_bins, $lo_val, $bin_width \n";
+  my ($min_bin, $max_bin) = ($n_bins, 0);
+  my @rgv = @{$self->{run_gen_value}};
+  while ( my ($i_run, $g_v) = each @rgv) {
+    for my $val (values %$g_v) {
+      my $bin = $the_histograms->bin_the_point($val);
+$the_histograms->adjust_cat_count($i_run, $bin, 1);
+      $min_bin = min($min_bin, $bin);
+      $max_bin = max($max_bin, $bin);
+ #     $the_histograms->adjust_val_count($i_run, $val, +1);
     }
   }
-$self->{histograms} = $the_histograms;
+   for my $i_run (0 .. scalar @rgv-1) {
+     for my $the_bin ($min_bin .. $max_bin) { #  (0..$n_bins-1){
+       $the_histograms->adjust_cat_count($i_run, $the_bin, 0);
+     }
+   }
+  $the_histograms->set_min_max_bins($min_bin, $max_bin);
+  $self->{histograms} = $the_histograms;
 }
+
+
+
+  
 
 1;
