@@ -160,21 +160,30 @@ sub run {
   my $ngen           = $chunk_size;
   my $mrbayes_block1 = $self->{mrbayes_block1};
   my $n_runs = $self->{n_runs};
-my $file_basename = $self->{file_basename};
- 
-  open my $fh, ">first_chunk_mb_control.nex";	# run params for first chunk
-  print $fh "$mrbayes_block1";
-  close $fh;
+  my $file_basename = $self->{file_basename};
 
-  my $mb_output_string = `mb first_chunk_mb_control.nex`; # run the first chunk
+ my $mb_output_string;
+
+ #  if(0){
+#   ######### first chunk #################
+#   open my $fh, ">first_chunk_mb_control.nex"; # run params for first chunk
+#   print $fh "$mrbayes_block1";
+#   close $fh;
+
+#   $mb_output_string = `mb first_chunk_mb_control.nex`; # run the first chunk
+#   #######################################
+# }else{
+  $mb_output_string = $self->run_chunk($mrbayes_block1);
+#}
+
   $self->{ngens_run} = $ngen;
 
   my $mc3swap_filename = $file_basename . ".mc3swap";
   open my $fhmc3, ">$mc3swap_filename";
-  $self->{mc3_swap_info} = $self->extract_swap_info($mb_output_string);# $this_chunk_mc3_swap_info;
+  $self->{mc3_swap_info} = $self->extract_swap_info($mb_output_string);	# $this_chunk_mc3_swap_info;
   print $fhmc3 "$ngen ", $self->{mc3_swap_info}, "\n";
 
-  open $fh, ">first_chunk.stdout";
+  open my $fh, ">first_chunk.stdout";
   print $fh "$mb_output_string \n";
   close $fh;
 
@@ -194,13 +203,17 @@ my $file_basename = $self->{file_basename};
     $ngen += $chunk_size;
     my $mrbayes_block2 = $self->{mrbayes_block2};
     $mrbayes_block2 =~ s/ngen=\d+;/ngen=$ngen;/; # subst in the new ngen
+  #   if(0){
+  #   open $fh, ">later_chunks_mb_control.nex";
+  #   print $fh "$mrbayes_block2";
+  #   close $fh;
 
-    open $fh, ">later_chunks_mb_control.nex";
-    print $fh "$mrbayes_block2";
-    close $fh;
+  #   $mb_output_string = `mb later_chunks_mb_control.nex`; # RUN mb FOR THIS CHUNK.
+  # }else{
+    $mb_output_string = $self->run_chunk($mrbayes_block2);
+ # }
 
-    $mb_output_string = `mb later_chunks_mb_control.nex`; # RUN mb FOR THIS CHUNK.
-    $self->{ngens_run} = $ngen;
+$self->{ngens_run} = $ngen;
 
     #****************************************************************
     my $burn_in_gen = int( $ngen * $self->{burnin_fraction} );
@@ -238,20 +251,20 @@ my $file_basename = $self->{file_basename};
     # $self->plot_params();
 
     #****************************************************************
-  my @this_chunk_mc3_swap_info = split(" ", $self->extract_swap_info($mb_output_string));
+    my @this_chunk_mc3_swap_info = split(" ", $self->extract_swap_info($mb_output_string));
     my @cumulative_mc3_swap_info = split(" ", $self->{mc3_swap_info});
 
-    while(my ($i, $v) = each @this_chunk_mc3_swap_info){
-#print "$i, $v, $cumulative_mc3_swap_info[$i],  ";
+    while (my ($i, $v) = each @this_chunk_mc3_swap_info) {
+      #print "$i, $v, $cumulative_mc3_swap_info[$i],  ";
       $cumulative_mc3_swap_info[$i] += $v;
-#print "         $cumulative_mc3_swap_info[$i] \n";
+      #print "         $cumulative_mc3_swap_info[$i] \n";
     }
-#print "ngen: $ngen   mc3swap: ", join(" ", @cumulative_mc3_swap_info), "\n";
+    #print "ngen: $ngen   mc3swap: ", join(" ", @cumulative_mc3_swap_info), "\n";
 
 
-  $self->{mc3_swap_info} = join(" ", @cumulative_mc3_swap_info); #$this_chunk_mc3_swap_info;
-  print $fhmc3 $ngen, "  ", $self->{mc3_swap_info}, "\n";
-  #  print $fhmc3 "$ngen ", $self->extract_swap_info($mb_output_string), "\n";
+    $self->{mc3_swap_info} = join(" ", @cumulative_mc3_swap_info); #$this_chunk_mc3_swap_info;
+    print $fhmc3 $ngen, "  ", $self->{mc3_swap_info}, "\n";
+    #  print $fhmc3 "$ngen ", $self->extract_swap_info($mb_output_string), "\n";
 
     open $fh, ">later_chunk.stdout";
     print $fh "$mb_output_string \n";
@@ -265,11 +278,23 @@ my $file_basename = $self->{file_basename};
     print "$ngen $converge_count  $conv_string \n";
     print "\n" if ( ( $ngen % $stdout_newline_interval ) == 0 );
     last if ( $converge_count >= $self->{converged_chunks_required} );
-  }
+  } # end of loop over chunks
   close $fhmc3;
   close $fhc;
   return;
 }
+
+sub run_chunk{
+  my $self = shift;
+  my $mb_block = shift;
+  open my $fh, ">mb_chunk_control.nex";	# run params for first chunk
+  print $fh "$mb_block";
+  close $fh;
+
+  my $mb_output_string = `mb mb_chunk_control.nex`; # run the chunk
+  return $mb_output_string;
+}
+
 
 sub splits_convergence
   { # looks at splits, i.e. sets of leaves of subtrees produced by removing a branch, for each (non-terminal) branch.
@@ -284,8 +309,8 @@ sub splits_convergence
     my @lines = <$fh>;
 
     my ( $avg_stddev, $count, $bad_count ) = ( 0, 0, 0 );
-    foreach (@lines) {		# each line has info on one split
-				#   print;
+    foreach (@lines) {	      # each line has info on one split
+			      #   print;
       next unless (/^\s*\d/); # skip if first non-whitespace is not numeral.
       my @cols   = split( " ", $_ );
       my $hits   = $cols[1];
@@ -453,7 +478,7 @@ sub extract_swap_info {
 	if ( exists $ij_swap_pA{$key} and exists $ij_swap_tries{$key} ) {
 	  $ij_swap_accepts{$key} = $ij_swap_tries{$key} * $ij_swap_pA{$key};
 	  $out_string .= int( $ij_swap_accepts{$key} + 0.5 ) . " " . $ij_swap_tries{$key} . "  ";
-#	  print "i,j: $i, $j, ", int( $ij_swap_accepts{$key} + 0.5 ) . " " . $ij_swap_tries{$key} . "\n";
+	  #	  print "i,j: $i, $j, ", int( $ij_swap_accepts{$key} + 0.5 ) . " " . $ij_swap_tries{$key} . "\n";
 	} else {
 	  warn "key $key present in neither ij_swap_tries nor ij_swap_pA.\n";
 	}
@@ -916,39 +941,39 @@ sub plot_params{
 ###########################################################3############################
 
 
-  # sub lump_right_tail {
-  #     my $label_weightslist = shift;
-  #     my $r_tail_weight     = shift || 0.05;
-  #     my %label_sumweights  = ();
+# sub lump_right_tail {
+#     my $label_weightslist = shift;
+#     my $r_tail_weight     = shift || 0.05;
+#     my %label_sumweights  = ();
 
-  #     while ( my ( $l, $ws ) = each %$label_weightslist ) {
-  #         $label_sumweights{$l} = sum(@$ws);
-  #     }
-  #     my @sorted_labels = sort { $label_sumweights{$b} <=> $label_sumweights{$a} }
-  #       keys %$label_weightslist;    #
-  #     my $n_labels   = scalar @sorted_labels;
-  #     my $total_hits = sum( map( @{ $label_weightslist->{$_} }, @sorted_labels ) );
-  #     my $run0_hits  = sum( map( $label_weightslist->{$_}->[0], @sorted_labels ) );
-  #     my $n_runs     = scalar @{ $label_weightslist->{ $sorted_labels[0] } };
+#     while ( my ( $l, $ws ) = each %$label_weightslist ) {
+#         $label_sumweights{$l} = sum(@$ws);
+#     }
+#     my @sorted_labels = sort { $label_sumweights{$b} <=> $label_sumweights{$a} }
+#       keys %$label_weightslist;    #
+#     my $n_labels   = scalar @sorted_labels;
+#     my $total_hits = sum( map( @{ $label_weightslist->{$_} }, @sorted_labels ) );
+#     my $run0_hits  = sum( map( $label_weightslist->{$_}->[0], @sorted_labels ) );
+#     my $n_runs     = scalar @{ $label_weightslist->{ $sorted_labels[0] } };
 
-  #     my $result       = {};
-  #     my $cume_weight  = 0;
-  #     my @cume_weights = ( (0) x $n_runs );
-  #     foreach my $label (@sorted_labels) {    # loop over categories-
-  #         my @weights = @{ $label_weightslist->{$label} };
-  #         @cume_weights = map { $cume_weights[$_] + $weights[$_] } 0 .. $#weights;
-  #         my $weight = sum(@weights);         # number of hits for this categories, summed over runs.
-  #         $cume_weight += $weight;
-  #         $result->{$label} = \@weights;
-  #         last if ( $label eq $sorted_labels[-1] );
-  #         if ( $cume_weight >= ( 1 - $r_tail_weight ) * $total_hits ) {
-  #             my @other_weights = ();
-  #             for (@cume_weights) {
-  #                 push @other_weights, $run0_hits - $_;
-  #             }
-  #             $result->{ $n_labels + 1000 } = \@other_weights;
-  #             last;
-  #         }
-  #     }
-  #     return $result;
-  # }
+#     my $result       = {};
+#     my $cume_weight  = 0;
+#     my @cume_weights = ( (0) x $n_runs );
+#     foreach my $label (@sorted_labels) {    # loop over categories-
+#         my @weights = @{ $label_weightslist->{$label} };
+#         @cume_weights = map { $cume_weights[$_] + $weights[$_] } 0 .. $#weights;
+#         my $weight = sum(@weights);         # number of hits for this categories, summed over runs.
+#         $cume_weight += $weight;
+#         $result->{$label} = \@weights;
+#         last if ( $label eq $sorted_labels[-1] );
+#         if ( $cume_weight >= ( 1 - $r_tail_weight ) * $total_hits ) {
+#             my @other_weights = ();
+#             for (@cume_weights) {
+#                 push @other_weights, $run0_hits - $_;
+#             }
+#             $result->{ $n_labels + 1000 } = \@other_weights;
+#             last;
+#         }
+#     }
+#     return $result;
+# }
