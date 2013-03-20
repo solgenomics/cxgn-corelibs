@@ -173,11 +173,12 @@ sub overlap_nexus_string{ # basic nexus format string for use by MrBayes.
   foreach my $id (@{$self->{ids}}) {
     my $sequence = $self->{id_overlapseq}->{$id};
     $id =~ s/[|].*//;
-#print "id, nexid: $id  $nexid  \n";
-
-    my $id50 = $id . "                                                  ";
-    $id50 = substr($id50, 0, 50);
-    $nexus_string .= "$id50$sequence\n";
+    my $id_padded =  $id . "                                                  ";
+    my $target_l = 50;
+    my $l = length $id;
+    while($target_l < $l+5){ $target_l += 10; }
+    $id_padded = substr($id_padded, 0, $target_l);
+    $nexus_string .= "$id_padded$sequence\n";
   }
   $nexus_string .= "\n;\n\n" . "end;\n";
   return $nexus_string;
