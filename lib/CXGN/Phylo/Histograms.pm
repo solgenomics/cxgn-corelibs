@@ -47,7 +47,9 @@ sub populate{
   my $self = shift;
   my $run_gen_value = shift; # ref to array of gen/value hashrefs. $rgv->[0]->{120} is value for run 0, gen 120
   my $min_gen = shift || 0;
-  while (my ($run, $g_v) = each @$run_gen_value) {
+#  while (my ($run, $g_v) = each @$run_gen_value) { # can  use this if perl 5.12 or later.
+     for my $run (0 .. $#$run_gen_value){
+       my $g_v = $run_gen_value->{$run};
     for my $g (sort {$a <=> $b} keys %$g_v) {
       my $v = $g_v->{$g};
       if ($g >= $min_gen) {
@@ -119,10 +121,12 @@ sub histogram_string{
   my $self = shift;
   #  my $s_categories = shift || undef;
   my $sorting = shift || 'by_bin_number';
+  my $max_lines_to_print = shift || 1000000; # 
   my $run_cat_weight = $self->{histograms};
   my $sum_cat_weight = $self->{sum_histogram};
   my @sorted_categories;
   my @cats = keys %$sum_cat_weight;
+my $total_weight = sum(values %$sum_cat_weight);
   if ($sorting eq 'by_bin_number') {
     @sorted_categories = sort {$a <=> $b} keys %$sum_cat_weight;
   } else {
@@ -136,18 +140,27 @@ sub histogram_string{
   $string .= "binning_lo_val: " . $self->{binning_lo_val} . "  ";
   $string .= "bin_width: " . $self->{bin_width} . ".\n";
 
-  my $total = 0;
+  my ($total, $shown_total) = (0, 0);
+  my $count = 0;
   for my $cat (@sorted_categories) {
-    my $cat_string = $self->category_string($cat);
-    $string .= $cat_string;
-    for my $c_w (@$run_cat_weight) {
-      $string .=  sprintf("%6i  ", $c_w->{$cat});
-    }
     my $sum_weight =  $sum_cat_weight->{$cat};
-    $string .= sprintf("%6i \n", $sum_weight);
     $total += $sum_weight;
+    # $string .= "sum weight: $sum_weight. total weight: $total_weight \n";
+    #  if(1  or  $sum_weight/$total_weight >= $min_fraction_in_bin){
+my $line_string = '';
+    my $cat_string = $self->category_string($cat);
+    $line_string .= $cat_string;
+    for my $c_w (@$run_cat_weight) {
+      $line_string .=  sprintf("%6i  ", $c_w->{$cat});
+    }
+    $line_string .= sprintf("%6i \n", $sum_weight);
+    $count++;
+    if($count <= $max_lines_to_print){
+      $string .= $line_string;
+      $shown_total += $sum_weight;
+    }
   }
-  $string .= "#  total  $total \n";
+  $string .= "#  total  $total ($shown_total shown).\n";
   return $string;
 }
 
@@ -163,7 +176,9 @@ sub rearrange_histograms{ # go from an array of bin:count hashes to hash of bin:
   my $n_runs = scalar @histograms;
   my $rearr_histograms = {};
 # print "in rearrange_histograms. n histograms: ", scalar @histograms, "\n";
-  while (my ($i_run, $histogram) = each @histograms) {
+# while (my ($i_run, $histogram) = each @histograms) { # can use if per 5.12 or later
+    for my $i_run (0..$#histograms){
+      my $histogram = $histograms[$i_run];
     while (my ($bin, $count) = each %$histogram) {
       if (!exists $rearr_histograms->{$bin}) {
 	$rearr_histograms->{$bin} = [(0) x $n_runs];
@@ -260,7 +275,10 @@ sub binned_max_ksd{
   # print "In binned_max_ksd. total counts: $total_counts. ", $self->{min_bin}, "  ", $self->{max_bin},  "\n";
 
   for my $bin ($self->{min_bin} .. $self->{max_bin}) {
-    while (my ($i_run, $b_c) = each @{$self->{histograms}}) {
+    my @histograms =  @{$self->{histograms}};
+#    while (my ($i_run, $b_c) = each @{$self->{histograms}}) { # can use this if perl 5.12 or later
+      for my $i_run (0.. $#histograms){
+	my $b_c = $histograms[$i_run];
       $cume_probs[$i_run] += $b_c->{$bin};
     }
     my $cdf_range = max(@cume_probs) - min(@cume_probs);
@@ -328,7 +346,9 @@ sub populate{
   my $self = shift;
   my $run_gen_value = shift; # ref to array of gen/value hashrefs. $rgv->[0]->{120} is value for run 0, gen 120
   my $min_gen = shift || 0;
-  while (my ($run, $g_v) = each @$run_gen_value) {
+#  while (my ($run, $g_v) = each @$run_gen_value) { # can  use this if perl 5.12 or later
+    for my $run (0 .. $#$run_gen_value){
+      my $g_v = $run_gen_value->[$run];
     for my $g (sort {$a <=> $b} keys %$g_v) {
       my $v = $g_v->{$g};
       if ($g >= $min_gen) {

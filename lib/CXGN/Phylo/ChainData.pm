@@ -231,7 +231,9 @@ sub bin_the_data{
 #  print "In bin_the_data. nbins, loval, bw: $n_bins, $lo_val, $bin_width \n";
   my ($min_bin, $max_bin) = ($n_bins, 0);
   my @rgv = @{$self->{run_gen_value}};
-  while ( my ($i_run, $g_v) = each @rgv) {
+#  while ( my ($i_run, $g_v) = each @rgv) { # can use this if perl 5.12 or later
+    for my $i_run (0 .. $#rgv){
+      my $g_v = $rgv[$i_run];
     for my $val (values %$g_v) {
       my $bin = $the_histograms->bin_the_point($val);
 $the_histograms->adjust_cat_count($i_run, $bin, 1);

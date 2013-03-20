@@ -1,10 +1,10 @@
 package CXGN::Phylo::Mrbayes;
 use strict;
 use List::Util qw ( min max sum );
+#use List::MoreUtils qw ( pairwise );
 use CXGN::Phylo::ChainData;
 use CXGN::Phylo::Histograms;
 use lib '/usr/share/perl/5.14.2/';
-use Graphics::GnuplotIF qw(GnuplotIF);
 
 # this is an object to facilitate running MrBayes (Bayesian phylogeny
 # inference program). The main functionality it adds is a relatively
@@ -43,7 +43,9 @@ sub new {
 			   'append'                    => 'yes',
 			   'max_gens'                  => '1000000000',
 			   'min_binweight' => 0.02,
+			   'reproducible' => 0,
 			  };
+
   my $self = bless $default_arguments, $class;
   my $min_chunk_size = 100;
 
@@ -101,6 +103,10 @@ sub new {
     my $swapseed2 = $seed2 + 1000;
     $seed_piece2 .= "set swapseed=$swapseed2;\n";
   }
+#print "reproducible: ", "  ", $default_arguments->{reproducible}, "  ", $self->{reproducible}, "\n";
+  $seed_piece2 = '' if(! $self->{reproducible});
+# print "seed piece2: [$seed_piece2] \n";
+# exit;
 
   $self->{max_stored_gen} = undef;
   my @generation_toponumber_hashrefs = ();
@@ -141,15 +147,10 @@ sub new {
   $self->{mrbayes_block1} = $begin_piece . $seed_piece . $middle_piece . "mcmc ngen=$chunk_size;\n" . $end_piece;
   $self->{mrbayes_block2} =
     $begin_piece .
-      #	$seed_piece2 . # only for debugging!!! 
+      $seed_piece2 . # only for debugging!!! 
       $middle_piece . "mcmc append=" . $self->{append} . " ngen=$chunk_size;\n" . $end_piece;
   $self->setup_id_species_map();
-  #print STDERR "about to construct ChainData obj for topology. \n";
-  # $self->{topo_chain_data} =  CXGN::Phylo::ChainData->new( { 'parameter_name' => 'topology',
-  # 							       'n_runs' => $n_runs,
-  # 							       'gen_spacing' => $sample_freq,
-  # 							       'binnable' => 0 } ); 
-  # 'binnable' for continuous values to be binned, binnable = 0 if values are labels for discrete categories such as topologies.
+
   return $self;
 }
 
@@ -158,117 +159,52 @@ sub run {
 
   my $chunk_size     = $self->{chunk_size};
   my $ngen           = $chunk_size;
-  my $mrbayes_block1 = $self->{mrbayes_block1};
-  my $n_runs = $self->{n_runs};
   my $file_basename = $self->{file_basename};
+  my $stdout_newline_interval = 10 * $self->{chunk_size};
 
- my $mb_output_string;
+###### First chunk. ######
+# Run:
+ my $mb_output_string = $self->run_chunk($self->{mrbayes_block1});
 
- #  if(0){
-#   ######### first chunk #################
-#   open my $fh, ">first_chunk_mb_control.nex"; # run params for first chunk
-#   print $fh "$mrbayes_block1";
-#   close $fh;
-
-#   $mb_output_string = `mb first_chunk_mb_control.nex`; # run the first chunk
-#   #######################################
-# }else{
-  $mb_output_string = $self->run_chunk($mrbayes_block1);
-#}
-
-  $self->{ngens_run} = $ngen;
-
-  my $mc3swap_filename = $file_basename . ".mc3swap";
-  open my $fhmc3, ">$mc3swap_filename";
-  $self->{mc3_swap_info} = $self->extract_swap_info($mb_output_string);	# $this_chunk_mc3_swap_info;
-  print $fhmc3 "$ngen ", $self->{mc3_swap_info}, "\n";
-
-  open my $fh, ">first_chunk.stdout";
+  open my $fh, ">", "first_chunk.stdout";
   print $fh "$mb_output_string \n";
   close $fh;
 
-  my ( $converged, $conv_string ) = (0,''); # $self->test_convergence( $self->{file_basename} );
+# Analyze:
+  $self->mc3swap($mb_output_string);
+
+  my ( $converged, $conv_string ) = (0,'');
   my $converge_count += $converged;
   my $converge_filename = $file_basename . ".converge";
-  open my $fhc, ">$converge_filename";
+  open my $fhc, ">", "$converge_filename";
   print $fhc "$ngen $converge_count  $conv_string\n";
 
   print "$ngen $converge_count  $conv_string";
 
-  ################ later chunks:
-  my $stdout_newline_interval = 20 * $self->{chunk_size};
+###### Later chunks: ######
 
-  foreach ( my $i = 1 ; $i > 0 and $ngen < $self->{max_gens} ; $i++ ) {	# infinite loop
-    my $ngen_old = $ngen;	# final generation of previous chunk
-    $ngen += $chunk_size;
+ foreach ( my $prev_chunk_ngen = $ngen, $ngen += $chunk_size ;
+ $ngen <= $self->{max_gens} ;
+ $prev_chunk_ngen = $ngen, $ngen += $chunk_size ) {	# loop over later chunks.
     my $mrbayes_block2 = $self->{mrbayes_block2};
+
+# Run the chunk:
     $mrbayes_block2 =~ s/ngen=\d+;/ngen=$ngen;/; # subst in the new ngen
-  #   if(0){
-  #   open $fh, ">later_chunks_mb_control.nex";
-  #   print $fh "$mrbayes_block2";
-  #   close $fh;
-
-  #   $mb_output_string = `mb later_chunks_mb_control.nex`; # RUN mb FOR THIS CHUNK.
-  # }else{
     $mb_output_string = $self->run_chunk($mrbayes_block2);
- # }
 
-$self->{ngens_run} = $ngen;
-
-    #****************************************************************
-    my $burn_in_gen = int( $ngen * $self->{burnin_fraction} );
-    my $min_binweight = $self->{min_binweight};
-    # topologies
-    if (1) {
-      $self->retrieve_topology_samples(undef, $ngen_old+1); #read in from * .run?.t file
-    } else {
-      $self->retrieve_topology_samples_alt(undef, $ngen_old+1); #read in from * .run?.t file
-    }
-    print "\n *******************\n", "N generations so far: $ngen \n";
-    my $histogram_filename = $file_basename . "." . "topology_histograms";
-    open my $fhhist, ">$histogram_filename";
-    print $fhhist "# After $ngen generations. \n",  $self->{topo_chain_data}->{histograms}->histogram_string('by_bin_weight');
-    printf $fhhist ("# Avg L1 distance: %8.5f \n\n", $self->{topo_chain_data}->{histograms}->minweight_L1($min_binweight));
-    close $fhhist;
-
-    $self->retrieve_param_samples( $ngen_old );	# read in from *.run?.p file
-
-    for my $chain_data_obj (values %{$self->{chain_data}}) {
-      $histogram_filename = $file_basename . "." . $chain_data_obj->{parameter_name} . "_histograms";
-      open $fhhist, ">$histogram_filename";
-      print $fhhist $chain_data_obj->{histograms}->histogram_string('by_bin_number');
-      $chain_data_obj->{histograms}->rearrange_histograms();
-      printf $fhhist ("# Avg L1 distance: %8.5f \n", $chain_data_obj->{histograms}->avg_L1_distance());
-      print $fhhist "# Max Kolmogorov-Smirnov D for parameter ", $chain_data_obj->{parameter_name},
-	" is: ", $chain_data_obj->{histograms}->binned_max_ksd(), "\n\n";
-      close $fhhist;
-    }
-
-    # for(@{$self->{param_names}}){
-    #   my $chdatobj = $self->{chain_data}->{$_};
-    #   print "param: $_  ;[", ref($chdatobj), "]\n";
-    # }
-    # $self->plot_params();
-
-    #****************************************************************
-    my @this_chunk_mc3_swap_info = split(" ", $self->extract_swap_info($mb_output_string));
-    my @cumulative_mc3_swap_info = split(" ", $self->{mc3_swap_info});
-
-    while (my ($i, $v) = each @this_chunk_mc3_swap_info) {
-      #print "$i, $v, $cumulative_mc3_swap_info[$i],  ";
-      $cumulative_mc3_swap_info[$i] += $v;
-      #print "         $cumulative_mc3_swap_info[$i] \n";
-    }
-    #print "ngen: $ngen   mc3swap: ", join(" ", @cumulative_mc3_swap_info), "\n";
-
-
-    $self->{mc3_swap_info} = join(" ", @cumulative_mc3_swap_info); #$this_chunk_mc3_swap_info;
-    print $fhmc3 $ngen, "  ", $self->{mc3_swap_info}, "\n";
-    #  print $fhmc3 "$ngen ", $self->extract_swap_info($mb_output_string), "\n";
-
-    open $fh, ">later_chunk.stdout";
+   open $fh, ">", "later_chunk.stdout";
     print $fh "$mb_output_string \n";
     close $fh;
+
+# Analyze the chunk:
+
+    $self->mc3swap($mb_output_string); # mcmcmc swap 
+
+    $self->topo_analyze($prev_chunk_ngen); # topologies
+
+    $self->param_analyze($prev_chunk_ngen);
+
+    #****************************************************************
 
     ( $converged, $conv_string ) = $self->test_convergence( $file_basename );
     $converge_count += $converged;
@@ -279,7 +215,6 @@ $self->{ngens_run} = $ngen;
     print "\n" if ( ( $ngen % $stdout_newline_interval ) == 0 );
     last if ( $converge_count >= $self->{converged_chunks_required} );
   } # end of loop over chunks
-  close $fhmc3;
   close $fhc;
   return;
 }
@@ -287,14 +222,74 @@ $self->{ngens_run} = $ngen;
 sub run_chunk{
   my $self = shift;
   my $mb_block = shift;
-  open my $fh, ">mb_chunk_control.nex";	# run params for first chunk
+#print("top of run_chunk. mb_block: $mb_block \n");
+  open my $fh, ">", "mb_chunk_control.nex";	# run params for first chunk
   print $fh "$mb_block";
   close $fh;
-
+#print "In run_chunk. before mb.\n";
   my $mb_output_string = `mb mb_chunk_control.nex`; # run the chunk
+#print "In run_chunk. after mb.\n";
+  $mb_block =~ /ngen=(\d+);/;
+  $self->{ngens_run} = $1;
   return $mb_output_string;
 }
 
+sub mc3swap{
+  my $self = shift;
+  my $mb_output_string = shift;
+  my $mc3swap_filename = $self->{file_basename} . ".mc3swap";
+
+  my $mode = ">>";
+  if (defined $self->{mc3_swap_info} ) {
+    my @this_chunk_mc3_swap_info = split(" ", $self->extract_swap_info($mb_output_string));
+    my @cumulative_mc3_swap_info = split(" ", $self->{mc3_swap_info});
+
+#    while (my ($i, $v) = each @this_chunk_mc3_swap_info) {
+      for my $i (0 .. $#this_chunk_mc3_swap_info){
+	my $v = $this_chunk_mc3_swap_info[$i];
+      $cumulative_mc3_swap_info[$i] += $v;
+    }
+
+    $self->{mc3_swap_info} = join(" ", @cumulative_mc3_swap_info);
+
+  } else {
+    $mode = ">";
+    $self->{mc3_swap_info} = $self->extract_swap_info($mb_output_string); # $this_chunk_mc3_swap_info;
+  }
+  open my $fhmc3, "$mode", "$mc3swap_filename";
+  print $fhmc3 $self->{ngens_run}, "  ", $self->{mc3_swap_info}, "\n";
+}
+
+sub topo_analyze{
+my $self = shift;
+my $prev_chunk_ngen = shift || $self->{ngens_run} - $self->{chunk_size}; #
+my $ngen = $self->{ngens_run};
+      $self->retrieve_topology_samples(undef, $prev_chunk_ngen); #read in from * .run?.t file
+
+    print "\n *******************\n", "N generations so far: $ngen \n";
+    my $histogram_filename = $self->{file_basename} . "." . "topology_histograms";
+    open my $fhhist, ">", "$histogram_filename";
+    print $fhhist "# After $ngen generations. \n",  $self->{topo_chain_data}->{histograms}->histogram_string('by_bin_weight');
+    printf $fhhist ("# Avg L1 distance: %8.5f \n\n", $self->{topo_chain_data}->{histograms}->minweight_L1($self->{min_binweight}));
+    close $fhhist;
+}
+
+sub param_analyze{
+  my $self = shift;
+my $prev_chunk_ngen = shift || $self->{ngens_run} - $self->{chunk_size}; #
+  $self->retrieve_param_samples( $prev_chunk_ngen );	# read in from *.run?.p file
+
+    for my $chain_data_obj (values %{$self->{chain_data}}) {
+      my $histogram_filename = $self->{file_basename} . "." . $chain_data_obj->{parameter_name} . "_histograms";
+      open my $fhhist, ">", "$histogram_filename";
+      print $fhhist $chain_data_obj->{histograms}->histogram_string('by_bin_number');
+      printf $fhhist ("# Avg L1 distance: %8.5f \n", $chain_data_obj->{histograms}->minweight_L1($self->{min_binweight}));
+      print $fhhist "# Max Kolmogorov-Smirnov D for parameter ", $chain_data_obj->{parameter_name},
+	" is: ", $chain_data_obj->{histograms}->binned_max_ksd(), "\n\n";
+      close $fhhist;
+    }
+
+}
 
 sub splits_convergence
   { # looks at splits, i.e. sets of leaves of subtrees produced by removing a branch, for each (non-terminal) branch.
@@ -305,7 +300,7 @@ sub splits_convergence
     my $max_ok_avg_stddev = $self->{splits_max_ok_avg_stddev}; # convergence is 'ok' on avg if avg stddev < this.
 
     my $filename = $file_basename . ".nex.tstat";
-    open my $fh, "<$filename";
+    open my $fh, "<", "$filename";
     my @lines = <$fh>;
 
     my ( $avg_stddev, $count, $bad_count ) = ( 0, 0, 0 );
@@ -341,7 +336,7 @@ sub modelparam_convergence {    # look at numbers in *.pstat file
   my $string        = '';
   my $ngens_skip    = int( $self->{burnin_fraction} * $self->{ngens_run} );
 
-  open my $fh, "<$file_basename.nex.pstat";
+  open my $fh, "<", "$file_basename.nex.pstat";
   my @lines = <$fh>; # 2 header lines, then each line a parameter (TL, alpha, pinvar)
   close $fh;
   my $discard           = shift @lines;
@@ -368,7 +363,7 @@ sub modelparam_convergence {    # look at numbers in *.pstat file
     my $KSDmx = $self->KSDmax($_);
     $n_bad++ if( $KSDmx > $max_ok_KSD);
     push @KSDmaxes, $KSDmx;
-    my $avgL1 = $self->{chain_data}->{$_}->{histograms}->avg_L1_distance();
+    my $avgL1 = $self->{chain_data}->{$_}->{histograms}->minweight_L1($self->{min_binweight}); # avg_L1_distance();
     #      print "param: $_   L1: $avgL1\n";
     $n_bad++ if($avgL1 > $self->{max_L1});
     push @L1s, $avgL1;
@@ -386,7 +381,7 @@ sub test_convergence {
     $self->splits_convergence($file_basename);
   my ( $modelparam_n_bad, $modelparam_string ) = $self->modelparam_convergence($file_basename);
   #    my $ngens_skip = int( $self->{burnin_fraction} * $self->{ngens_run} );
-  my $topo_L1 = $self->{topo_chain_data}->{histograms}->minweight_L1();
+  my $topo_L1 = $self->{topo_chain_data}->{histograms}->minweight_L1($self->{min_binweight});
   my $conv_string =
     "$splits_count $splits_bad_count "
       . sprintf( "%6.4f  %6.4f  ", $splits_avg_stddev, $topo_L1 )
@@ -500,12 +495,12 @@ sub retrieve_param_samples {
   # read data from  run?.p files
   # store each param data in separate array of gen/paramval hashrefs
   my $self      = shift;
-  my $prev_max_gen   = shift || 0; # use only generation > to this.
+  my $prev_chunk_max_gen   = shift || 0; # use only generation > to this.
   my $pattern   = $self->{alignment_nex_filename}; # e.g. fam9877.nex
   my $n_runs    = $self->{n_runs};
 
   # get parameter names from .p file.
-  open my $fh1, "<$pattern.run1.p";
+  open my $fh1, "<", "$pattern.run1.p";
   <$fh1>;			# discard first line.
   my @param_names = split( " ", <$fh1> );
   close $fh1;
@@ -514,7 +509,9 @@ sub retrieve_param_samples {
   }
   $self->{param_names} = \@param_names;
   my %col_param = ();
-  while ( my ( $i, $param_name ) = each @param_names ) {
+#  while ( my ( $i, $param_name ) = each @param_names ) {
+    for my $i (0 .. $#param_names){
+my $param_name = $param_names[$i];
     $col_param{$i} = $param_name; # 0 -> LnL_chain_data, 1 -> TL_chain_data, etc.
   }
 
@@ -533,7 +530,7 @@ sub retrieve_param_samples {
   # Read param values from .p file and store in ChainData objects.
   foreach my $i_run ( 1 .. $n_runs ) { #loop over runs
     my $param_file = "$pattern.run$i_run.p";
-    open my $fhp, "<$param_file";
+    open my $fhp, "<", "$param_file";
     my @all_lines = <$fhp>;
     my @x = split(" ", $all_lines[-1]); $new_max_gen = shift @x;
     while (@all_lines) {
@@ -544,9 +541,11 @@ sub retrieve_param_samples {
       my @cols = split( " ", $line );
       my $generation = shift @cols; # now @cols just has the parameters
 
-      last if ( $generation <= $prev_max_gen );
+      last if ( $generation <= $prev_chunk_max_gen );
       my $param_string = join( "  ", @cols );
-      while ( my ( $i, $param_value ) = each @cols ) {
+#      while ( my ( $i, $param_value ) = each @cols ) {
+	for my $i (0 .. $#cols){
+	  my $param_value = $cols[$i];
 	my $param_name = $col_param{$i};
 	$self->{chain_data}->{$param_name}->store_data_point( $i_run-1, $generation, $param_value );
       }
@@ -572,7 +571,7 @@ sub retrieve_topology_samples {
   # store each param data in separate array of gen/paramval hashrefs
   my $self      = shift;
   my $pattern   = shift || $self->{alignment_nex_filename}; # e.g. fam9877.nex
-  my $start_generation  = shift || 0; # use only generation > to this.
+  my $prev_chunk_max_gen  = shift || 0; # use only generation > to this.
   my $n_runs    = $self->{n_runs};
   my %newick_number_map              = %{ $self->{newick_number_map} };
   my %number_newick_map              = %{ $self->{number_newick_map} };
@@ -592,7 +591,7 @@ sub retrieve_topology_samples {
 
   foreach my $i_run ( 1 .. $n_runs ) { #loop over runs
     my $topo_file = "$pattern.run$i_run.t";
-    open my $fht, "<$topo_file";
+    open my $fht, "<", "$topo_file";
     my @all_lines = <$fht>;
     while (@all_lines) {
       my $line = pop @all_lines; # take the last line
@@ -602,7 +601,7 @@ sub retrieve_topology_samples {
 	$generation = $1;
 
 	# skip data for generations which are already stored:
-	last if ( $generation < $start_generation );
+	last if ( $generation <= $prev_chunk_max_gen );
 
 	$newick =~ s/:[0-9]+[.][0-9]+(e[-+][0-9]{2,3})?(,|[)])/$2/g; # remove branch lengths
 	$newick =~ s/^\s+//;
@@ -623,8 +622,8 @@ sub retrieve_topology_samples {
   }				# loop over runs.
 
   $self->{topo_chain_data}->delete_pre_burn_in();
-  print $self->{topo_chain_data}->{histograms}->histogram_string('by_bin_weight'), "\n";
-  $self->{topo_chain_data}->{histograms}->rearrange_histograms();
+  print $self->{topo_chain_data}->{histograms}->histogram_string('by_bin_weight', 4), "\n";
+#  $self->{topo_chain_data}->{histograms}->rearrange_histograms();
   #	printf("Avg L1 distance: %8.5f \n", $self->{topo_chain_data}->{histograms}->avg_L1_distance());
 
   $self->{newick_number_map}              = \%newick_number_map;
@@ -641,7 +640,7 @@ sub retrieve_number_id_map {
   my $pattern = shift || $self->{alignment_nex_filename}; # e.g. fam9877.nex
 
   my $trprobs_file = "$pattern.trprobs";
-  open my $fh, "<$trprobs_file";
+  open my $fh, "<", "$trprobs_file";
 
   my %number_id_map = ();
   while ( my $line = <$fh> ) {
@@ -703,7 +702,7 @@ sub restore_ids_to_newick {
 sub setup_id_species_map {
   my $self = shift;
   my $file = $self->{alignment_nex_filename};
-  open my $fh, "<$file";
+  open my $fh, "<", "$file";
   while ( my $line = <$fh> ) {
     next unless ( $line =~ /^(\S+)\[species=(\S+)\]/ );
     my $id      = $1;
@@ -794,7 +793,7 @@ sub Kolmogorov_Smirnov_D {
 # puts the leaves in order, such that at each node the
 # subtree with smaller value is on left. The value of an
 # internal node is the min of the values of the two child
-# nodes, and the value of a leave is its id, which must be a number.
+# nodes, and the value of a leaf is its id, which must be a number.
 sub order_newick {
   my $newick = shift;
   my $depth = shift || 0;
@@ -850,95 +849,39 @@ sub order_newick {
 
 
 
-sub equal_weight_bins {	#input here is not yet binned, just a few sets of data, each
-			# just an array of N data points (numbers).
-  my $min_bin_fraction = shift || 0.01;
-  my @data_sets = @_; # each element is array ref storing data points (numbers).
 
-  my $result         = {}; # keys: binnumbers, values: ref to array of weights.
-  my @data_set_maxes = ();
-  for (@data_sets) {
-    push @data_set_maxes, max(@$_);
-    my @sorted_data_set = sort { $a <=> $b } @$_;
-    $_ = \@sorted_data_set;
-  }
-  my $max_data = max(@data_set_maxes);
-  my $big      = $max_data + 1e100;
-  for (@data_sets) {
-    push @$_, $big;
-  }
-  my $n_data_sets     = scalar @data_sets; #
-  my @n_points        = map( ( scalar @$_ - 1 ), @data_sets );
-  my $n_points_in_set = min(@n_points);
-  warn "Different numbers of data points in different runs: ", join( ", ", @n_points ), "\n"
-    if ( min(@n_points) != max(@n_points) );
-  my $n_total_points = $n_data_sets * $n_points_in_set;
 
-  my $i                    = 1;
-  my $points_binned_so_far = 0;
-  my $bin_number           = 0;
-  my @next_point_indices   = ( (0) x $n_data_sets );
-  my @counts_this_bin      = ( (0) x $n_data_sets );
-  my $total_this_bin       = 0;
-  while (1) {
-    my $desired_cumulative_points = int( $i * $min_bin_fraction * $n_total_points + 0.5 );
-    my @next_points               = ();
-    while ( my ( $i, $points ) = each @data_sets ) {
-      $next_points[$i] = $points->[ $next_point_indices[$i] ];
-    }
-    my ( $i_min, $min ) = ( 0, $next_points[0] );
-    while ( my ( $i, $v ) = each(@next_points) ) {
-      if ( defined $v and $v <= $min ) {
-	$min   = $v;
-	$i_min = $i;
-      }
-    }
-    last if ( $min > $max_data );
-    $counts_this_bin[$i_min]++;
-    $points_binned_so_far++;
-    $total_this_bin++;
-    $next_point_indices[$i_min]++;
-    if ( $points_binned_so_far >= $desired_cumulative_points ) {
-      my @copy = @counts_this_bin;
-      $result->{$bin_number} = \@copy;
-      @counts_this_bin = ( (0) x $n_data_sets );
-      $total_this_bin = 0;
-      $bin_number++;
-      $i++;
-    }
-  }
-  return $result;
-}
-
-sub plot_params{
-  my $self = shift;
-  my @param_names = @{$self->{param_names}};
-  for my $param_name (@param_names) {
-    my $chain_data_obj = $self->{chain_data}->{$param_name};
-    print "param name: $param_name.  ref(chaindataobj): ", ref($chain_data_obj), "\n";
-    my $n_runs = $chain_data_obj->{n_runs};
-    my $run_gen_val = $chain_data_obj->get_run_gen_value();
-    my @gens = sort {$a <=> $b} keys %{$run_gen_val->[0]};
-    my @run_vals = ();
-    for my $i_run (0..$n_runs-1) {
-      my $g_v = $run_gen_val->[$i_run];
-      my @vals = ();
-      for my $gen (@gens) {
-	push @vals, $g_v->{$gen};
-      }
-      push @run_vals, \@vals;
-    }
-    my @xys = (\@gens, @run_vals);
-
-    my $gnuplot_obj = GnuplotIF;
-    $gnuplot_obj->gnuplot_plot_xy(@xys);
-    $gnuplot_obj->gnuplot_pause();
-  }
-}
 
 1;
 
 ###########################################################3############################
+
+
+# sub plot_params{
+#   my $self = shift;
+#   my @param_names = @{$self->{param_names}};
+#   for my $param_name (@param_names) {
+#     my $chain_data_obj = $self->{chain_data}->{$param_name};
+#     print "param name: $param_name.  ref(chaindataobj): ", ref($chain_data_obj), "\n";
+#     my $n_runs = $chain_data_obj->{n_runs};
+#     my $run_gen_val = $chain_data_obj->get_run_gen_value();
+#     my @gens = sort {$a <=> $b} keys %{$run_gen_val->[0]};
+#     my @run_vals = ();
+#     for my $i_run (0..$n_runs-1) {
+#       my $g_v = $run_gen_val->[$i_run];
+#       my @vals = ();
+#       for my $gen (@gens) {
+# 	push @vals, $g_v->{$gen};
+#       }
+#       push @run_vals, \@vals;
+#     }
+#     my @xys = (\@gens, @run_vals);
+
+#     my $gnuplot_obj = GnuplotIF;
+#     $gnuplot_obj->gnuplot_plot_xy(@xys);
+#     $gnuplot_obj->gnuplot_pause();
+#   }
+# }
 
 
 # sub lump_right_tail {
@@ -976,4 +919,65 @@ sub plot_params{
 #         }
 #     }
 #     return $result;
+# }
+
+
+# sub equal_weight_bins {	#input here is not yet binned, just a few sets of data, each
+# 			# just an array of N data points (numbers).
+#   my $min_bin_fraction = shift || 0.01;
+#   my @data_sets = @_; # each element is array ref storing data points (numbers).
+
+#   my $result         = {}; # keys: binnumbers, values: ref to array of weights.
+#   my @data_set_maxes = ();
+#   for (@data_sets) {
+#     push @data_set_maxes, max(@$_);
+#     my @sorted_data_set = sort { $a <=> $b } @$_;
+#     $_ = \@sorted_data_set;
+#   }
+#   my $max_data = max(@data_set_maxes);
+#   my $big      = $max_data + 1e100;
+#   for (@data_sets) {
+#     push @$_, $big;
+#   }
+#   my $n_data_sets     = scalar @data_sets; #
+#   my @n_points        = map( ( scalar @$_ - 1 ), @data_sets );
+#   my $n_points_in_set = min(@n_points);
+#   warn "Different numbers of data points in different runs: ", join( ", ", @n_points ), "\n"
+#     if ( min(@n_points) != max(@n_points) );
+#   my $n_total_points = $n_data_sets * $n_points_in_set;
+
+#   my $i                    = 1;
+#   my $points_binned_so_far = 0;
+#   my $bin_number           = 0;
+#   my @next_point_indices   = ( (0) x $n_data_sets );
+#   my @counts_this_bin      = ( (0) x $n_data_sets );
+#   my $total_this_bin       = 0;
+#   while (1) {
+#     my $desired_cumulative_points = int( $i * $min_bin_fraction * $n_total_points + 0.5 );
+#     my @next_points               = ();
+#     while ( my ( $i, $points ) = each @data_sets ) {
+#       $next_points[$i] = $points->[ $next_point_indices[$i] ];
+#     }
+#     my ( $i_min, $min ) = ( 0, $next_points[0] );
+#     while ( my ( $i, $v ) = each(@next_points) ) {
+#       if ( defined $v and $v <= $min ) {
+# 	$min   = $v;
+# 	$i_min = $i;
+#       }
+#     }
+#     last if ( $min > $max_data );
+#     $counts_this_bin[$i_min]++;
+#     $points_binned_so_far++;
+#     $total_this_bin++;
+#     $next_point_indices[$i_min]++;
+#     if ( $points_binned_so_far >= $desired_cumulative_points ) {
+#       my @copy = @counts_this_bin;
+#       $result->{$bin_number} = \@copy;
+#       @counts_this_bin = ( (0) x $n_data_sets );
+#       $total_this_bin = 0;
+#       $bin_number++;
+#       $i++;
+#     }
+#   }
+#   return $result;
 # }
