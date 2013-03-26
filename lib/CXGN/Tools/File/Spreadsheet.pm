@@ -100,7 +100,7 @@ sub new
     {
         $row++;
         my $row_label=$line[0];
-        $row_label or die"Row found without a row label in spreadsheet file '$self->{filename}' line $row";
+        defined($row_label) or die"Row found without a row label in spreadsheet file '$self->{filename}' line $row";
         for(0..$#{$self->{column_labels}})
         {
             $self->{spreadsheet}{$row_label}{$self->{column_labels}[$_]}=$line[$_];
