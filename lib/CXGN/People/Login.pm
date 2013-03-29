@@ -136,6 +136,7 @@ sub store {
                                , confirm_code  = ?
                                , disabled      = ?
                                , user_type     = ?
+	                       , organization  = ?
                            WHERE
                                sp_person_id = ?
 EOQ
@@ -146,6 +147,7 @@ EOQ
             $self->get_confirm_code,
             $self->get_disabled,
             $self->get_user_type,
+            $self->get_organization,
             $self->get_sp_person_id,
         );
 	$self->add_role($self->get_user_type()); 
@@ -163,9 +165,10 @@ EOQ
         my $dsa   = $self->get_disabled();
         my $fn  = '<a href="/solpeople/contact-info.pl">[click to update]</a>';
         my $ln  = '<a href="/solpeople/contact-info.pl">[click to update]</a>';
+	my $org = $self->get_organization();
         my $sth = $self->get_sql("insert");
 
-        $sth->execute( $un, $prive, $pende, $pwd, $cc, $dsa, $fn, $ln );
+        $sth->execute( $un, $prive, $pende, $pwd, $cc, $dsa, $fn, $ln, $org );
         my $person_id =
           $self->get_dbh()->last_insert_id( 'sp_person', 'sgn_people' );
         $self->{sp_person_id} = $person_id;
@@ -610,9 +613,10 @@ sub set_sql {
                 confirm_code, 
                 disabled, 
                 first_name, 
-                last_name
+                last_name,
+                organization
             ) 
-            VALUES (?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?)
         ",
 
         get_login =>
