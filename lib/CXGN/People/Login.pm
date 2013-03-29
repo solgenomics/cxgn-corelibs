@@ -332,6 +332,21 @@ sub get_disabled {
     return $self->{disabled};
 }
 
+=head2 accessors get_organization(), set_organization()
+
+=cut
+
+sub get_organization {
+    my $self = shift;
+    return $self->{organization};
+}
+
+sub set_organization {
+    my $self = shift;
+    $self->{organization} = shift;
+}
+
+
 =head2 new_role
 
  Usage:        $p->new_role($role)

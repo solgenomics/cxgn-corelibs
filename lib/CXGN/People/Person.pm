@@ -619,10 +619,6 @@ sub set_first_name {
     $self->{first_name} = shift;
 }
 
-sub set_organization {
-    my $self = shift;
-    $self->{organization} = shift;
-}
 
 sub set_address {
     my $self = shift;
