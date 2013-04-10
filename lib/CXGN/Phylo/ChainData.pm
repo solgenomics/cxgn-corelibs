@@ -54,15 +54,18 @@ sub  new {
 }
 
 sub store_data_point{		# store a new data point
+# can be single number, or string of ';' separated numbers: '345;277;921'
   my $self = shift;
   my ($run, $gen, $val) = @_;
   $self->{max_gen} = max($gen, $self->{max_gen});
   $self->{run_gen_value}->[$run]->{$gen} = $val;
+  for my $v (split(";", $val)){ 
    if (!($self->{binnable})) {
-     $self->{histograms}->adjust_val_count($run, $val, 1);
+     $self->{histograms}->adjust_val_count($run, $v, 1);
    } elsif (defined $self->{histograms}->{binning_lo_val}) {
-     $self->{histograms}->adjust_val_count($run, $val, 1);
+     $self->{histograms}->adjust_val_count($run, $v, 1);
    }
+ }
 }
 
 sub store_data_chunk{
@@ -108,11 +111,15 @@ sub update{
 }
 
 sub delete_data_point{
+# if argument is e.g. '1;2;5', splits on ';' and deletes
+# 1, 2 and 5 from histogram. (useful with splits)
   my $self = shift;
   my ($run, $gen) = @_;
   my $value = $self->{run_gen_value}->[$run]->{$gen}; # $run zero-based
   delete $self->{run_gen_value}->[$run]->{$gen};
-  $self->{histograms}->adjust_val_count($run, $value, -1);
+  for my $v (split(";", $value)){
+  $self->{histograms}->adjust_val_count($run, $v, -1);
+}
 }
 
 sub delete_low_gens{
