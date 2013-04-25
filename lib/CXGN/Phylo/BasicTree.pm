@@ -948,7 +948,7 @@ sub subtree_newick {
 
  Args: (optional) node, defaults to root node
         (optional) $show_root - boolean, will show the root node in the newick string  
- Returns: Newick expression from the given node, or for the whole
+ Returns: Newick expression from the given nodes subtree, or for the whole
           tree if no argument is provided
 
 =cut
