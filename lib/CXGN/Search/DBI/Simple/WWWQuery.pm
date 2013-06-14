@@ -175,7 +175,7 @@ sub to_query_string {
   while( my ($k,$v) = each %force) {
     $scalars{$k} = $v;
   }
-  join ';', (map { $this->uniqify_name($_).'='.$urlencode{$scalars{$_}} } (grep {defined($scalars{$_})} keys %scalars) );
+  join '&', (map { $this->uniqify_name($_).'='.$urlencode{$scalars{$_}} } (grep {defined($scalars{$_})} keys %scalars) );
 }
 
 =head2 from_request
