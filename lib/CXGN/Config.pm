@@ -296,23 +296,23 @@ $defaults =
 
      #how to find blast stuff
      blast_path               => '',
-     blast_db_path            => '/data/shared/blast/databases/current',
+     blast_db_path            => '/export/prod/blast/databases/current',
 
      #the shared temp directory used by cluster nodes
-     cluster_shared_tempdir   => '/data/prod/tmp',
+     cluster_shared_tempdir   => '/export/prod/tmp',
 
      #how verbose we want the warnings to be in the apache error log
      verbose_warnings         => 1,
 
      # Insitu file locations
-     insitu_fullsize_dir      => '/data/prod/public/images/insitu/processed',
-     insitu_fullsize_url      => '/data/images/insitu/processed',
-     insitu_display_dir       => '/data/prod/public/images/insitu/display',
-     insitu_display_url       => '/data/images/insitu/display',
-     insitu_input_dir         => '/data/prod/public/images/insitu/incoming',
+     insitu_fullsize_dir      => '/export/prod/public/images/insitu/processed',
+     insitu_fullsize_url      => '/export/images/insitu/processed',
+     insitu_display_dir       => '/export/prod/public/images/insitu/display',
+     insitu_display_url       => '/export/images/insitu/display',
+     insitu_input_dir         => '/export/prod/public/images/insitu/incoming',
 
      #path to our production ftp site
-     ftpsite_root             => '/data/prod/public',
+     ftpsite_root             => '/export/prod/public',
      ftpsite_url              => 'ftp://ftp.solgenomics.net',
 
      #path to the pucebaboon temperature sensor file:
