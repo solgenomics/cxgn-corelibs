@@ -64,12 +64,21 @@ Related object: L<SGN::Schema::BlastDb>
 
 =cut
 
-__PACKAGE__->has_many(
-  "blast_dbs",
-  "SGN::Schema::BlastDb",
-  { "foreign.blast_db_group_id" => "self.blast_db_group_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
+#__PACKAGE__->has_many(
+#  "blast_dbs",
+#  "SGN::Schema::BlastDb",
+#  { "foreign.blast_db_group_id" => "self.blast_db_group_id" },
+#  { cascade_copy => 0 }, #cascade_delete => 0 },
+#);
+
+ __PACKAGE__->has_many(
+     "blast_db_blast_db_groups",
+     "SGN::Schema::BlastDbBlastDbGroup",
+     { "foreign.blast_db_group_id" => "self.blast_db_group_id"},
+     #{cascade_copy => 0, }, # cascade_delete => 0 },
+     );
+
+ __PACKAGE__->many_to_many("blast_dbs", "blast_db_blast_db_groups", "blast_db");
 
 
 # Created by DBIx::Class::Schema::Loader v0.07002 @ 2012-03-03 12:32:42
