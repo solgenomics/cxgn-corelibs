@@ -73,8 +73,9 @@ sub new {
   my $string = shift;
     
   my $do_set_error = shift;
-  $do_set_error = 1 unless(defined $do_set_error); # can speed up parsing by setting this to 0 to skip.
-
+  $do_set_error = 0 unless($do_set_error); # can speed up parsing by setting this to 0 to skip.
+#print "Do set error: ", $do_set_error, "\n";
+#exit;
   my $self = $class->SUPER::new();
   $self->{do_set_error} = $do_set_error; 
   $self->set_string($string);
@@ -118,6 +119,7 @@ $self->{tree} = $the_tree;
   my @tokens = $self->tokenize($string);
   #print join "\n", @tokens;
   for (my $i=0; $i<@tokens; $i++) { 
+ #   print $self->{do_set_error}, "\n"; exit;
     $self->set_error(\@tokens, $i) if($self->{do_set_error});
     my $t = $tokens[$i];
     next unless ($t =~ /\S/);	# skip tokens with only whitespace
