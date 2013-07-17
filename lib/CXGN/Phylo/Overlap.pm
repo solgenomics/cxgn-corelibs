@@ -21,14 +21,14 @@ sub  new {
   my %id_overlapseq = ();
   my %id_sequence = ();
   my @lines = ();
-#  print "arg: $arg\n";
-#  print "arg is file? ", -f $arg, "\n";
-#  print "XXX: ",  $arg =~ /\n/, "\n";
+  #  print "arg: $arg\n";
+  #  print "arg is file? ", -f $arg, "\n";
+  #  print "XXX: ",  $arg =~ /\n/, "\n";
   #  if ((! $arg =~ /\n/) and 
-  if (!($arg =~ /\n/) and -f $arg) {		# $arg is filename
+  if (!($arg =~ /\n/) and -f $arg) { # $arg is filename
     open my $fhin, "<$arg";
     @lines = <$fhin>;
-#    print "XXXXXXXlines: ", join("\n", @lines), "\n";
+    #    print "XXXXXXXlines: ", join("\n", @lines), "\n";
     close $fhin;
 	
   } else {			# treat arg as string
@@ -38,7 +38,7 @@ sub  new {
   my $sequence = '';
   while (@lines) {
     my $line = shift @lines;
- #   print $line;
+    #   print $line;
     if ($line =~ /^>/) {
       if ($id ne $NO_ID) {
 	$id_sequence{$id} = $sequence;
@@ -67,6 +67,7 @@ sub  new {
   $self->{n_sequences} = $n_sequences;
   my @position_counts = ((0) x $seq_length);
   my @position_aas = (('') x $seq_length);
+  my $max_position_counts = -1;
   foreach my $id (@ids) {
     my $sequence = $id_sequence{$id};
     my $seql = length $sequence;
@@ -76,27 +77,33 @@ sub  new {
       my $aa = substr($sequence, $i, 1);
       if ($aa ne '-') {
 	$position_counts[$i]++;
-	if(!($position_aas[$i] =~ /$aa/)){
+	#print "ZZZZZZZZ: $id $i $aa ", $position_counts[$i], "\n";
+	$max_position_counts = $position_counts[$i] if($position_counts[$i] >= $max_position_counts);
+	if (!($position_aas[$i] =~ /$aa/)) {
 	  $position_aas[$i] .= $aa; # not invariant
 	}
       }
     }
   }
+  #print "max non-gap count: $max_position_counts \n";
   my $n_invariant = 0;
-  foreach (@position_aas){
-   # print "[$_]\n";
+  foreach (@position_aas) {
+    # print "[$_]\n";
     $n_invariant++ if(length $_ == 1);
   }
-#  print "n_invariant: $n_invariant  align length: ", scalar @position_aas, "\n"; 
-#  print "pinv: ", $n_invariant/$seq_length, "\n";
+  #  print "n_invariant: $n_invariant  align length: ", scalar @position_aas, "\n"; 
+  #  print "pinv: ", $n_invariant/$seq_length, "\n";
   $self->{position_counts} = \@position_counts;
   my $n_required = ($fraction >= 1)? $n_sequences: int ($fraction * $n_sequences) + 1;
   $self->{n_required} = $n_required;
   my $overlap_length = 0;
   my %id_overlapnongapcount = ();
-my $overlap_n_invariant = 0;
+  my $overlap_n_invariant = 0;
+  foreach my $id (@ids){ $id_overlapseq{$id} = ''; $id_overlapnongapcount{$id} = 0; }
   foreach my $position (0..@position_counts-1) {
     my $count = $position_counts[$position];
+    #   print "XXXX: $count $n_required [", ($count >= $n_required)? '1': '0', "]\n";
+    #    exit;
     if ($count >= $n_required) {
       $overlap_length++;
       foreach my $id (@ids) {
@@ -107,12 +114,12 @@ my $overlap_n_invariant = 0;
       $overlap_n_invariant++ if(length $position_aas[$position] == 1);
     }
   }
-#  print "overlap n_invariant: $overlap_n_invariant,  length: $overlap_length\n";
-#  print "overlap pinv: ", $overlap_n_invariant/$overlap_length, "\n";
+  #  print "overlap n_invariant: $overlap_n_invariant,  length: $overlap_length\n";
+  #  print "overlap pinv: ", $overlap_n_invariant/$overlap_length, "\n";
 
   $self->{id_overlapseq} = \%id_overlapseq;
   $self->{id_overlapnongapcount} = \%id_overlapnongapcount;
-  die "overlap length inconsistency??? $overlap_length \n" if($overlap_length != length $id_overlapseq{$ids[0]});
+  die "overlap length inconsistency??? $overlap_length \n" if($overlap_length > 0 and $overlap_length != length $id_overlapseq{$ids[0]});
   $self->{overlap_length} = $overlap_length;
   #	$self->{ids} = \@ids;
 

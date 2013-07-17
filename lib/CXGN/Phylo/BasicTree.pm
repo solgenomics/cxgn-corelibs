@@ -1,5 +1,6 @@
 package CXGN::Phylo::BasicTree;
 
+use List::Util qw ( sum min max );
 =head1 NAME
 
 CXGN::Phylo::BasicTree - an object to handle trees
@@ -2045,7 +2046,11 @@ sub node_from_implicit_name_string {
         $self->get_root()->recursive_implicit_names();
     }
 
+
+#my @skeys = sort {$a <=> $b } $self->get_all_node_keys();
+#print STDERR "number of  leaves: ", scalar $self->get_leaf_list(), " keys (all nodes): [", scalar @skeys, "]\n";
     foreach my $k ( $self->get_all_node_keys() ) {
+      #print STDERR "node key: $k \n";
         my $n = $self->get_node($k);
         my $node_impl_name = join( "\t", @{ $n->get_implicit_names() } );
 
@@ -2485,73 +2490,174 @@ sub leaf_species_bit_pattern_string {
 sub min_clade{
   my $self = shift;
   my $sequence_id = shift;
-  my $at_least = shift;
-  my $outer_species = shift; # array ref. this finds min. clade s.t. has at least $at_least
-  # leaves with species in $outer_species
-  # my $at_most = shift || 1;
-  # my $inner_species = shift || [ $leaf->get_species() ]; 
-  # can limit number of leaves in a set of species in the clade. default - only one leaf with species of $leaf is allowed
-  if (!ref $outer_species eq 'HASH') {
-    warn "in min_clade, no outer species hash specified. Returning root nodes.\n";
-    return $self->get_root();
-  }
+  my $clade_spec_obj = shift;
+my $n_gen_back = shift || 2; # having found the desired clade, also go up $n_gen_back more nodes and return that.
+  my $other_species = shift || undef; # also count how many seqs of these species in and out of clade.
 
   my $node = undef;
   my @leaves = $self->get_leaves();
   foreach (@leaves) {
     my $leaf_name = $_->get_name();
     if ($sequence_id eq $leaf_name) {
-      #      print 'found the node with correct sequence id: ', $sequence_id, "  ", $leaf_name, "\n";
       $node = $_;
       last;
     }
   }
-  if(!defined $node){
+  if (!defined $node) {
     warn "In min_clade. No leaf found with specified id: $sequence_id .\n";
     return $self->get_root();
   }
-  #$node = $leaf;
   $self->calculate_implicit_species_hashes();
-
+  my $implicit_species_hashx = $self->get_root()->{implicit_species_hash};
+  my $whole_tree_other_count = 0;
+  for my $species ( keys %$other_species ) { # don't need to do this whole-tree counting?
+  #  if (exists $implicit_species_hashx->{$species}) {
+      $whole_tree_other_count +=  (exists $implicit_species_hashx->{$species})? 1: 0; # counts 'other' species represented in clade
+ #   }
+  }
+  my ($in_clade_other_species_count, $in_clade_other_species_sequence_count) = (0, 0);
+  my $clade_requirements_satisfied = 0;
   while (1) {
     my $implicit_species_hashx = $node->{implicit_species_hash};
-    #   print "implicit species: [", join("; ", keys %$implicit_species_hashx), "]\n";
+    # print "implicit species: [", join("; ", keys %$implicit_species_hashx), "]\n";
 
-    my $outer_count = 0; # count of remote species in clade with root at this node.
-    for my $species ( keys %$outer_species) {
-      #     print "outer_species $species\n";
-      if (exists $implicit_species_hashx->{$species}) {
-	$outer_count +=  $implicit_species_hashx->{$species};
-	#	print "outer count: $outer_count \n";
-      }
+    for my $the_species (keys %$implicit_species_hashx) { # loop over species in the clade
+      $clade_requirements_satisfied = $clade_spec_obj->store($the_species); # store each of the species found in the subtree
+ #     print "after storing: $the_species. clade requirements satisfied? ", $clade_requirements_satisfied, "\n";
     }
-    if ($outer_count >= $at_least) { # this is the place
-      # return a newick expression for this clade
-      return $node; #->recursive_generate_newick();
+
+      if ($clade_requirements_satisfied) { # this is the desired clade
+#	print "this is the clade. taxa in it: ", join("; ", keys %$implicit_species_hashx), "\n";
+      ($in_clade_other_species_count, $in_clade_other_species_sequence_count) = (0, 0);
+      # print "clade species:  ", join(";", keys %$implicit_species_hashx), "\n";
+      for my $species ( keys %$other_species) {
+#	print "other species: $species\n";
+	if (exists $implicit_species_hashx->{$species}) {
+	 
+	  $in_clade_other_species_sequence_count +=  $implicit_species_hashx->{$species};
+	  $in_clade_other_species_count++;
+ # print "$species found in clade. other taxon count: $in_clade_other_species_count \n";
+	  #		print "outer count: $outer_count \n";
+	}
+      }
+      # return root node of this clade, etc.
+      my $ancestor_node = $node;
+     for(1..$n_gen_back){
+       last if ($ancestor_node->is_root());
+#       print "gens back: $_\n";
+       $ancestor_node = $ancestor_node->get_parent();
+     }
+      
+      return ($node, 1, $in_clade_other_species_count, $in_clade_other_species_sequence_count, $ancestor_node); #, $whole_tree_other_count - $in_clade_other_species_sequence_count); #->recursive_generate_newick();
     }
     #   print "In min_clade. No subtree satisfies condition. Returning entire tree.\n";
     if ($node->is_root()) {
-      return $node; # self->generate_newick();
+      return ($node, 0,  $in_clade_other_species_count, $in_clade_other_species_sequence_count, $node);; # self->generate_newick();
     } else {
       $node = $node->get_parent();
     }
   }				# while(1) loop
 }				# end of min_clade
 
+#########################################################################################
+
+sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
+  my $self = shift;
+  my $sequence_id = shift;
+  my @clade_spec_objs = @{ shift @_ };
+my @disallowed_species = @{ shift @_  || [] };
+my $nodes_up_from_leaf = 0; #
+my $n_same_species_as_leaf = 0; 
+my %clade_info = (); # hash of hashrefs, each holding 3 key:value pairs.
+  for(@clade_spec_objs){
+    $clade_info{$_} = {'clade_root_node' => undef, # root of clade (node object)
+		       'nodes_up' => -1, # root of clade is this many nodes above the leaf with sequence_id.
+		       'n_same' => 0,   # number of leaves in clade with same species as sequence_id.
+		       'n_disallowed_species' => 0  # number of species from the @disallowed_species list present in the clade.
+		      };
+  }
+  my $node = undef;
+  my @leaves = $self->get_leaves();
+  foreach (@leaves) {
+    my $leaf_name = $_->get_name();
+    if ($sequence_id eq $leaf_name) {
+      $node = $_;
+      last;
+    }
+  }
+  if (!defined $node) {
+    warn "In find_clades. No leaf found with specified id: $sequence_id .\n";
+    return $self->get_root();
+  }
+  $self->calculate_implicit_species_hashes();
+my $leaf_species = $node->get_species();
+# print "leaf species: $leaf_species \n";
+# my $leaf_species_hash = $node->{implicit_species_hash};
+# print "leaf species: ", join(", ", keys %$leaf_species_hash), "\n";
+my @clade_requirements_met = (0,0,0);
+  while (1) {
+    my $implicit_species_hashx = $node->{implicit_species_hash};
+    # print "implicit species: [", join("; ", keys %$implicit_species_hashx), "]\n";
+
+    for my $the_species (keys %$implicit_species_hashx) { # loop over species in the clade
+      @clade_requirements_met = map($_->store($the_species), @clade_spec_objs);
+    }
+    my $n_same = $implicit_species_hashx->{$leaf_species};
+#    print "nodes up: $nodes_up_from_leaf.  clade requirements met: ", join(", ", @clade_requirements_met), "   $n_same\n";
+    while(my($i, $cso) = each @clade_spec_objs){
+
+      if($clade_requirements_met[$i]  and  ($clade_info{$cso}->{nodes_up} < 0) ){ 
+	 $clade_info{$cso}->{nodes_up} = $nodes_up_from_leaf;
+	  $clade_info{$cso}->{clade_root_node} = $node;
+ $clade_info{$cso}->{n_same} = $implicit_species_hashx->{$leaf_species}; # $n_same_species_as_leaf;
+#print "ref node: ", ref $node, "\n";
+	my $count_disallowed_species = 0;
+for(@disallowed_species){
+  $count_disallowed_species++ if($implicit_species_hashx->{$_});
+}
+ $clade_info{$cso}->{n_disallowed_species} = $count_disallowed_species;
+      }
+    }
+# print "sum: ", sum(@clade_requirements_met), "\n";
+# print "size: ", scalar @clade_requirements_met, "\n";
+# print "number of cso's: ", scalar @clade_spec_objs, "\n";
+      if((sum(@clade_requirements_met) == scalar @clade_requirements_met)  or  $node->is_root()){
+	my $count_disallowed_species = 0;
+for(@disallowed_species){
+  $count_disallowed_species++ if($implicit_species_hashx->{$_});
+}
+	for(@clade_spec_objs){
+	  $_->reset();
+	}
+#	print "RETURNING\n";
+      return (\%clade_info); #, $whole_tree_other_count - $in_clade_other_species_sequence_count); #->recursive_generate_newick();
+    } else {
+ #     print "Go up to parent node \n";
+      $node = $node->get_parent();
+      $nodes_up_from_leaf++;
+    }
+  }				# while(1) loop
+}				# end of find_clades
+
 
 # using urec, find the node s.t. rooting on its branch gives minimal duplications and losses
 # w.r.t. a species tree
 sub find_mindl_node {
-    my $gene_tree    = shift;    # a rooted gene tree
+    my $gene_tree    = shift;    # a rooted gene tree # Not calling it '$self' here as usually do.
     my $species_tree = shift;    # a species tree
 #    print STDERR "0 BRANCHLENGTHS: ", join( ";", map( $_->get_branch_length(), $gene_tree->get_leaf_list() ) ), "\n";
 
  #  	for($gene_tree->get_leaf_list()){ print STDERR "genetree sbts: ", $_->get_attribute('species_bit_pattern'), "\n"; }
-    #	print STDERR "gtnewick: ", $gene_tree->generate_newick(), "\n";
+#    	print STDERR "gtnewick: ", $gene_tree->generate_newick(), "\n";
 #print STDERR "YYYYYY ref(gene_tree): ", ref($gene_tree), "\n";
     my $gene_tree_copy = $gene_tree->copy();
+$gene_tree_copy->impose_branch_length_minimum(0.5);
+# print "gtc newick: \n", $gene_tree_copy->generate_newick(), "\n\n";
 warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_tree_copy), "\n" if(ref($gene_tree) ne ref($gene_tree_copy));
- 
+
+# print "orig tree number of node keys: ", scalar $gene_tree->get_all_node_keys(), "\n";
+# print "copy tree number of node keys: ", scalar $gene_tree_copy->get_all_node_keys(), "\n";
+
  #   print STDERR "1 BRANCHLENGTHS: ", join( ";", map( $_->get_branch_length(), $gene_tree_copy->get_leaf_list() ) ),
 #      "\n";
 
@@ -2562,9 +2668,14 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
 #    	print STDERR "gtcopynewick before pruning: ", $gene_tree_copy->generate_newick(), "\n";
 
     my @non_speciestree_leafnodes = values %{ $gene_tree_copy->non_speciestree_leafnode_names() };
-#    print STDERR "nonspeciestreeleafnodes: \n", join("\n", map($_->get_name() . "--" . $_->get_species(), @non_speciestree_leafnodes)), "\n";
+    # print STDERR "nonspeciestreeleafnodes: \n", join("\n", map($_->get_name() . "--[" . $_->get_species() . ']', @non_speciestree_leafnodes)), "\n";
+    # print "orig n leaves: ",  scalar $gene_tree->get_leaf_list(), "\n";
+    # print "copy n leaves: ", scalar $gene_tree_copy->get_leaf_list(), "\n";
 
     $gene_tree_copy->prune_leaves(@non_speciestree_leafnodes);
+
+ #  print "copy n leaves, after pruning: ", scalar $gene_tree_copy->get_leaf_list(), "\n";
+
     my $n_leaves_after_pruning = scalar $gene_tree_copy->get_leaf_list();
     if ( $n_leaves_after_pruning < 2 ) {
         warn "Problem with mindl rerooting. Only: ", $n_leaves_after_pruning, " leaves after pruning.\n Tree: ",
@@ -2577,7 +2688,7 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
     my @new_root_point;
 
 #    print STDERR "pruned copy newick: ", $gene_tree_copy->generate_newick(), "\n";
-    {
+    { # if root has > 2 children, reroot to pt on a root-child branch, so new root has 2 children.
         my @root_children = $gene_tree_copy->get_root()->get_children();
         if ( scalar @root_children != 2 ) {
 
@@ -2597,7 +2708,9 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
     $gene_tree_copy->set_show_standard_species(1);
 
     # make sure node names start with alphabetic char to make urec happy.
+#print "bef makenamesurecok. n nodes: ", scalar $gene_tree_copy->get_all_nodes(), "\n";
     $gene_tree_copy->make_names_urec_ok();
+# exit;
 
     # need to redo node implicit names here.
     my $gene_newick_string = $gene_tree_copy->generate_newick();
@@ -2619,24 +2732,93 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
 
     #	print STDERR `which $urec_cmd`;
     my $rerooted_newick = `$urec_cmd -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
-  #  print STDERR "in mindl rerooted newick: [$rerooted_newick] \n";
+#    print STDERR "in mindl rerooted newick: [$rerooted_newick] \n";
     my $minDL_rerooted_gene_tree = ( CXGN::Phylo::Parse_newick->new( $rerooted_newick, $do_parse_set_error ) )->parse(ref($gene_tree_copy)->new(""));
+
+#    print "rerooted tree, node keys: \n", join(" ", $minDL_rerooted_gene_tree->get_all_node_keys()), "\n";
+# $minDL_rerooted_gene_tree->impose_branch_length_minimum(0.5);
+
+#print "rerooted newick: \n", $minDL_rerooted_gene_tree->generate_newick(), "\n";
+#exit;
 
 # $minDL_rerooted_gene_tree is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
 # but  branch lengths will be wrong for nodes whose parent has changed in the rerooting (they are just the branch lengths to the old parents).
     $minDL_rerooted_gene_tree->get_root()->recursive_implicit_names();
 
+#    my @orig_leaf_list = $gene_tree->get_leaf_list();
+# #    print "leaf node keys, orig tree: \n";
+# my $orig_node_keys_string = '';
+#     for(@orig_leaf_list){
+#       $orig_node_keys_string .=  $_->get_node_key() . " ";
+#     }
+
+#     my @pre_rr_leaf_list = $gene_tree_copy->get_leaf_list();
+# #    print "leaf node keys, before rerooting: \n";
+# my $copy_node_keys_string = '';
+#     for(@pre_rr_leaf_list){
+#       $copy_node_keys_string .=  $_->get_node_key() . " ";
+#     }
+# # print "onks: \n", $orig_node_keys_string, "\n";
+# # print "cnks: \n", $copy_node_keys_string, "\n";
+# # exit;
+# my @orig_node_keys = $gene_tree->get_all_node_keys();
+# my $orig_snk = join("\t", sort {$a <=> $b} @orig_node_keys);
+# my @copy_node_keys = $gene_tree_copy->get_all_node_keys();
+# my $copy_snk = join("\t", sort {$a <=> $b} @copy_node_keys);
+#     if($orig_snk ne $copy_snk){
+#       print "ORIG TREE NODES:   $orig_snk \n", "COPY TREE NODES:    $copy_snk \n";
+#     }
+
+  #    for(@copy_node_keys){
+  #      my $onode = $gene_tree->get_node($_);
+  #      my $oname = (defined $onode)? $onode->get_name() : 'undefnode';
+  #        my $cnode = $gene_tree_copy->get_node($_);
+  # my $cname = (defined $cnode)? $cnode->get_name() : 'undefnode';
+
+  #      my $cnode_parent = $cnode->get_parent();
+  #      my $cnp_name = (defined $cnode_parent)? $cnode_parent->get_name() : 'parentundef';
+  # my $cnp_key = (defined $cnode_parent)? $cnode_parent->get_node_key() : 'parentundef';
+  #      my @child_node_keys = map($_->get_node_key(), $cnode->get_children());
+  #      print "$_  $oname  \n", "$_  [$cnp_key || $cname] ", join(";", @child_node_keys), "\n";
+  #    }
+
+#  print "gene tree newick: \n", $gene_tree->generate_newick(), "\n\n";
+# #  print "gene tree copy newick: \n", $gene_tree_copy->generate_newick(), "\n\n";
+
+#  my @onodekeys = sort {$a <=> $b} $gene_tree->get_all_node_keys();
+
+#  my @cnodekeys = sort {$a <=> $b} $gene_tree_copy->get_all_node_keys();
+#  print "node keys. orig: \n", join(" ", @onodekeys), " \n", "copy: \n", join(" ", @cnodekeys), "\n";
+#  #exit;
+#  # print "orig, copy node keys identical?: ", ($orig_node_keys_string eq $copy_node_keys_string)? 'YES' : 'NO', "\n";
+# print "XXXX: ", scalar $gene_tree->get_leaf_list(), "  ", scalar $gene_tree_copy->get_leaf_list(), "\n";
+#  #  print "$orig_node_keys_string \n";
+#  #  print "$copy_node_keys_string \n";
+
+# # exit;
+
+# my @post_rr_leaf_list = $minDL_rerooted_gene_tree->get_leaf_list();
+#     print "leaf node keys, after rerooting: \n";
+#   for(@post_rr_leaf_list){
+#       print $_->get_node_key(), "\n";
+#     }
+
+
     # the root of $minDL_rerooted_gene_tree should have 2 children
-    # and (at least) one hould have it's subtree also present in the pre-rerooting tree.
+    # and (at least) one should have it's subtree also present in the pre-rerooting tree.
     # identify the node at the root of this subtree (using implicit names) and reroot there.
     # Have to do this because some branch length info was lost in urec step.
 
     my @root_children = $minDL_rerooted_gene_tree->get_root()->get_children();
+#print STDERR "# root children for mindl rerooted tree: ", scalar @root_children, "\n";
     my ( $node_key, $rr_node );
     foreach (@root_children) {
         my $implicit_name_string = join( "\t", @{ $_->get_implicit_names() } );
+#print STDERR "impl string: $implicit_name_string \n";
         ( $node_key, $rr_node ) = $gene_tree_copy->node_from_implicit_name_string($implicit_name_string);
+
         if ( defined $rr_node ) {
+#	print STDERR "Node key: $node_key; ", $rr_node->get_name(), "\n";
             $minDL_rerooted_gene_tree->decircularize();
             $gene_tree_copy->decircularize();
             my $rr_node_in_orig_gene_tree = $gene_tree->get_node($node_key);
@@ -2658,6 +2840,7 @@ sub get_species_bithash {    #get a hash giving a bit pattern for each species i
     my $gene_tree = shift;
     my $spec_tree = shift;
     my $bithash   = {};
+ #   print "TOP OF get_species_bithash. XXXXXXXXXXXXX\n";
     my %genehash;
     my %spechash;
     $spec_tree->show_newick_attribute("species");
