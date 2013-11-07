@@ -248,7 +248,7 @@ sub new_by_name {
 	$template = $class->new($schema);                              ### Create an empty object;
     }
 
-    if (wantarray) { 
+    if (wantarray && (scalar(@templates)>0)) { 
 	return @templates;
     }
     else { 
