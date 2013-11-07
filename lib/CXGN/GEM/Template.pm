@@ -221,7 +221,7 @@ sub new_by_name {
     ### it will set the template_name for it
 
     my $template;
-
+    my @templates;
     if (defined $name) {
 	my @template_rows = $schema->resultset('GeTemplate')
 				    ->search({ template_name => $name });
@@ -236,12 +236,12 @@ sub new_by_name {
 	    $template->set_template_name($name);
 	}
 	else {
-	    my @templates;
+	   
 	    ## if exists it will take the template_id to create the object with the new constructor
 	    foreach my $t (@template_rows) { 
 		push @templates, $class->new( $schema, $t->get_column('template_id') );
 	    }
-	    $template = @templates[0];
+	    $template = $templates[0];
 	}
     }
     else {
