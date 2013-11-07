@@ -223,11 +223,11 @@ sub new_by_name {
     my $template;
 
     if (defined $name) {
-	my ($template_row) = $schema->resultset('GeTemplate')
+	my @template_rows = $schema->resultset('GeTemplate')
 				    ->search({ template_name => $name });
 
-	unless (defined $template_row) {
-	    warn("DATABASE OUTPUT WARNING: template_name ($name) for $class->new_by_name() DON'T EXISTS INTO THE DB.\n");
+	if (scalar(@template_rows) == 0) {
+	    warn("DATABASE OUTPUT WARNING: template_name ($name) for $class->new_by_name() DOES NOT EXIST IN THE DB.\n");
 
 	    ## If do not exists any template with this name, it will return a warning and it will create an empty
 	    ## object with the template name set in it.
@@ -236,16 +236,24 @@ sub new_by_name {
 	    $template->set_template_name($name);
 	}
 	else {
-
+	    my @templates;
 	    ## if exists it will take the template_id to create the object with the new constructor
-	    $template = $class->new( $schema, $template_row->get_column('template_id') );
+	    foreach my $t (@template_rows) { 
+		push @templates, $class->new( $schema, $t->get_column('template_id') );
+	    }
+	    $template = @templates[0];
 	}
     }
     else {
 	$template = $class->new($schema);                              ### Create an empty object;
     }
 
-    return $template;
+    if (wantarray) { 
+	return @templates;
+    }
+    else { 
+	return $template;
+    }
 }
 
 
