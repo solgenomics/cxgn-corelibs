@@ -97,6 +97,7 @@ sub parse {
   my $self = shift;
   my $the_tree = shift; # can give it an object (e.g. a  CXGN::Phylo::BasicTree ) as argument.
 # e.g. $the_parser->parse(CXGN::Phylo::Tree->new());
+# print STDERR "top of Parser::parse \n";
   if (! defined $the_tree) {
     warn "Parser::parse() called with no argument; Using default BasicTree. Can call with Tree object as arg.\n";
     $the_tree  = CXGN::Phylo::BasicTree->new(""); # default is BasicTree
@@ -119,21 +120,25 @@ $self->{tree} = $the_tree;
   my @tokens = $self->tokenize($string);
   #print join "\n", @tokens;
   for (my $i=0; $i<@tokens; $i++) { 
+
  #   print $self->{do_set_error}, "\n"; exit;
     $self->set_error(\@tokens, $i) if($self->{do_set_error});
     my $t = $tokens[$i];
+ #   print STDERR "token:  $t \n";
+    my $prev_token = ($i == 0)? '' : $tokens[$i-1]; 
     next unless ($t =~ /\S/);	# skip tokens with only whitespace
     if ($t eq "(") {
       #print STDERR "Encountered (. Creating a new child node [parent=".$current_node->get_name()."\n";
       my $child = $current_node->add_child();
       $current_node=$child;
-    } elsif ($t eq ")") { 
+    } elsif ($t eq ")") {
       #print STDERR  "encountered: ) Moving up to the parent node.\n";
       my $parent_node;
       eval { $parent_node=$current_node->get_parent();  };
       if ($@) {
 	print STDERR  "Illegal Expression Type 1 Error.\n";  return undef;
       }
+
       $current_node=$parent_node;
       #print STDERR "current node is now: ".$current_node->get_name()."\n";
     } elsif ($t eq ",") { 
@@ -152,18 +157,27 @@ $self->{tree} = $the_tree;
       }
       return $self->{tree};
     } else {
-      #print STDERR "encountered token $t\n";
+      # print STDERR "\n", "encountered token $t\n";
 
       #Strip out extended specification (see below) first, so that we
       #can use colons within the extended specs, such as for links.
-      my ($extended) = $t =~ /(\[.*\])/;
-      # print "in Parse_newick->parse. extended: [", $extended, "]\n";	
+      my ($extended) = $t =~ /(\[.*\])/; # $extended is stuff enclosed in [], and includes the []
+#      print STDERR "in Parse_newick->parse. extended: [", $extended, "]\n" if($extended);
       #	print STDERR "in Parser. token: [$t] \n";
-      $t =~ s/\Q$extended\E// if $extended;
+      $t =~ s/\Q$extended\E// if $extended;  # remove the [...] 
       #	print STDERR "in Parser::parse. t: [$t] \n";
-      my ($name, $distance) = split /\s*\:\s*/, $t;
-      #		print STDERR "in Parse_newick->parse. name,distance: [$name][$distance] \n";
-      $name =~ s/^\s*(.+)\s*$/$1/;
+      my ($name, $branch_support, $distance) = (undef, undef, undef);
+      if($prev_token eq ')'){
+	($branch_support, $distance) = split /\s*\:\s*/, $t;
+	  $branch_support =~ s/^\s*(.+)\s*$/$1/; # remove initial & final whitespace
+# print STDERR "in Parse_newick->parse. branch_support,distance: [$branch_support][$distance] \n";
+      }else{
+	($name, $distance) = split /\s*\:\s*/, $t;
+  $name =~ s/^\s*(.+)\s*$/$1/; # remove initial & final whitespace
+# print STDERR "in Parse_newick->parse. name,distance: [$name][$distance] \n";
+      }
+      		
+    
       #	$distance =~ s/^\s*(.+)\s*$/$1/; # eliminate initial and final whitespace - but doesn't work
       $distance =~ s/\s//g; # eliminate all whitespace from $distance.
       #print STDERR "name, distance: ", $name, "    ", $distance, "\n";
@@ -214,7 +228,7 @@ $self->{tree} = $the_tree;
 	  ##	$current_node->set_hidden($1);
 	  #   }
 	}
-	$name =~ s/\'//g;
+	$name =~ s/\'//g if(defined $name);
 	$current_node->set_name($name); 
       };  # end of eval block
       if ($@) { 
@@ -227,6 +241,7 @@ $self->{tree} = $the_tree;
       }
       # print("distance: ", $distance, "\n");
       $current_node->set_branch_length($distance);
+      $current_node->set_branch_support($branch_support);
       #print STDERR "current node is now: ".$current_node->get_name()."\n";
     }
   }
@@ -281,7 +296,11 @@ sub tokenize {
   # and returning the tokens as well as the delimiters in order. However, it produces some
   # empty elements in the process, which are cleaned up below.
   #
-  my @tokens = split /([^\(\)\,]+)?(\(|\)|\,)/, $string;
+  my @tokens = 
+    split /([^\(\)\,]+)?(\(|\)|\,)/, $string; #split on ( or ) or , optionally preceded by ...
+
+# print STDERR join("}}\n{{", @tokens), "\n\n";
+
   my @result = ();
   foreach my $t (@tokens) { 
     if ($t) {
