@@ -432,6 +432,7 @@ sub reset_root {
     my $new_root_node = shift;    # node object
 
     if (0) {                      #either of these branches should work.
+# except this branch doesn't do the branch_support
         my @parents = $new_root_node->get_all_parents();    # parent, grandparent, etc. up to & including root
         $new_root_node->set_parent(undef);                  # because it is to be the root
         my $pc_blen = $new_root_node->get_branch_length();  # branch length between $pc and $cp
@@ -451,10 +452,12 @@ sub reset_root {
 
         for ( my $cp = shift @parents_root_down ; defined $cp ; $cp = shift @parents_root_down ) {
             my $blen = $cp->get_branch_length();
+	    my $branch_support = $cp->get_branch_support();
             $pc->remove_child($cp);                         # remove $cp from children list of $pc
             $cp->set_parent(undef);
             $cp->add_child_node($pc);                       # now $cp is parent, $pc the child
             $pc->set_branch_length($blen);
+	    $pc->set_branch_support($branch_support);
             $pc = $cp;
 
             # at this point we still have a consistent tree, but with the root moved another step along the
@@ -2604,8 +2607,10 @@ my @clade_requirements_met = (0,0,0);
     }
     my $n_same = $implicit_species_hashx->{$leaf_species};
 #    print "nodes up: $nodes_up_from_leaf.  clade requirements met: ", join(", ", @clade_requirements_met), "   $n_same\n";
-    while(my($i, $cso) = each @clade_spec_objs){
 
+#    while(my($i, $cso) = each @clade_spec_objs){ # need perl 5.14, but some machines have 5.10, so avoid each with array
+    for my $i (0..scalar @clade_spec_objs){
+      my $cso = $clade_spec_objs[$i];
       if($clade_requirements_met[$i]  and  ($clade_info{$cso}->{nodes_up} < 0) ){ 
 	 $clade_info{$cso}->{nodes_up} = $nodes_up_from_leaf;
 	  $clade_info{$cso}->{clade_root_node} = $node;
@@ -2743,7 +2748,8 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
 
 # $minDL_rerooted_gene_tree is now rooted so as to minimize gene duplication and loss needed to reconcile with species tree,
 # but  branch lengths will be wrong for nodes whose parent has changed in the rerooting (they are just the branch lengths to the old parents).
-    $minDL_rerooted_gene_tree->get_root()->recursive_implicit_names();
+# and same problem for  
+   $minDL_rerooted_gene_tree->get_root()->recursive_implicit_names();
 
 #    my @orig_leaf_list = $gene_tree->get_leaf_list();
 # #    print "leaf node keys, orig tree: \n";
