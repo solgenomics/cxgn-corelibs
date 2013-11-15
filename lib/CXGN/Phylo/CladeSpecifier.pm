@@ -14,7 +14,7 @@ sub new {
   my $self = bless {}, $class;
 
   my $clade_spec_file_or_string = shift;
-  my $predefined_taxon_groups = shift || {}; 
+  my $predefined_taxon_groups = shift || {};
   my $clade_spec_string;
   if( -f $clade_spec_file_or_string ){
     open my $fh, "<", "$clade_spec_file_or_string";
@@ -23,6 +23,7 @@ sub new {
     $clade_spec_string = $clade_spec_file_or_string;
   }
   # something like:  'monocots,1;(Selaginella_moellendorfii, Physcomitrella_patens),1'
+# where 'monocots' is one of the keys of %$predefined_taxon_groups
   $clade_spec_string =~ s/\s+//g; # remove whitespace
   my @taxon_groups = split(";", $clade_spec_string);
   my %group_taxa = (); # keys are taxon group names, values are hashrefs of all taxon names in group
@@ -65,7 +66,7 @@ sub new {
 }				# end of constructor
 
 
-sub store{
+sub store{ # store a taxon, and return 1 if all requirements have been satisfied ( 0 otherwise ).
   my $self = shift;
   my $taxon = shift;
   my %group_required_count = %{$self->{group__required_taxon_count}}; # the number of taxa which are required in the group.
@@ -89,6 +90,7 @@ sub store{
   $self->{group__observed_taxa} = \%group_observed_taxa;
   $self->{group__observed_taxon_count} = \%group_observed_taxon_count;
   $self->{satisfied_groups} = \%satisfied_groups;
+#  print STDERR "AAA:  $taxon   ", scalar keys %satisfied_groups,  "  ", scalar keys %group_required_count, "\n";
   return (scalar keys %satisfied_groups >= scalar keys %group_required_count)? 1: 0; # 1 -> clade requirements all satisfied.
 }
 
