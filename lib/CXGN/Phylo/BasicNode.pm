@@ -48,6 +48,7 @@ sub new {
     $self->set_node_key(0);
     $self->set_parent(undef);
     $self->set_branch_length(0);
+    $self->set_branch_support(undef);
     $self->set_hilited(0);
     $self->set_hidden(0);
     $self->set_subtree_node_count(0);
@@ -820,6 +821,29 @@ sub get_branch_length {
 sub set_branch_length {
     my $self = shift;
     $self->{branch_length} = shift;
+}
+
+=head2 function get_branch_support()
+
+  Synopsis:	 $a_node->get_branch_support()
+  Returns:	The branch support (which may be undef )
+
+=cut
+sub get_branch_support {
+    my $self = shift;
+    return $self->{branch_support};
+}
+
+=head2 function set_branch_support()
+
+  Synopsis:	 $a_node->set_branch_support($bs)
+  Description:	 Sets the node's branch support to $bs.
+
+=cut
+
+sub set_branch_support {
+    my $self = shift;
+    $self->{branch_support} = shift;
 }
 
 =head2 function get_transformed_branch_length()
@@ -1839,7 +1863,9 @@ sub recursive_generate_newick {
 
             #   $s = $child->recursive_generate_newick($s); # , 1 ,$show_root);
             $s .= $child->get_name() if ( $child->is_leaf() );    # || $show_root ) ;
-            $s .= $child->make_newick_attributes() . ":" . $child->get_branch_length();
+	    my $branch_support = $child->get_branch_support();
+	    my $bs_bl_string = ((defined $branch_support)? $branch_support : '') . ":" . $child->get_branch_length();
+            $s .= $child->make_newick_attributes() . $bs_bl_string;  #  ":" . $child->get_branch_length();
             $s .= ",";
         }
         chop $s;
