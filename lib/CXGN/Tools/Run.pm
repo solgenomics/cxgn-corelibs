@@ -187,7 +187,7 @@ sub run {
   my ($class,@args) = @_;
   my $self = bless {},$class;
 
-  $ENV{MOD_PERL} and croak "CXGN::Tools::Run->run() not functional under mod_perl";
+  #$ENV{MOD_PERL} and croak "CXGN::Tools::Run->run() not functional under mod_perl";
 
   my $options = $self->_pop_options( \@args );
   $self->_process_common_options( $options );
@@ -207,7 +207,7 @@ sub run {
       #write die messages to a file for later retrieval by interested
       #parties, chiefly the parent process if this is a cluster job
       $self->_write_die( $@ );
-      croak $self->_format_error_message( $@ );
+    croak $self->_format_error_message( $@ );
     }
   }
   $self->_end_time(time);
@@ -259,7 +259,7 @@ sub run_async {
   my ($class,@args) = @_;
   my $self = bless {},$class;
 
-  $ENV{MOD_PERL} and croak "CXGN::Tools::Run->run_async() not functional under mod_perl";
+  #$ENV{MOD_PERL} and croak "CXGN::Tools::Run->run_async() not functional under mod_perl";
 
   my $options = $self->_pop_options( \@args );
   $self->_process_common_options( $options );
