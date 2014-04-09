@@ -133,7 +133,7 @@ sub set_marker_name
     {
         croak"You must extract marker subscripts yourself using clean_marker_name on '$name'. How smart do you think I am?";
     }
-    unless($clean_name=~/^(\w|\-|\?|\/|\.)+$/)
+    unless($clean_name=~/^(\:|\w|\-|\?|\/|\.)+$/)
     {
         croak"'$clean_name' is not a valid marker name";
     }
