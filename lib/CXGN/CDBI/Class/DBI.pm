@@ -7,6 +7,7 @@ use Carp;
 #use CXGN::Config;
 use CXGN::DB::Connection;
 use base qw/Class::DBI Class::Data::Inheritable/;
+use Data::Dumper;
 
 __PACKAGE__->mk_classdata('cxgn_db_connection');
 __PACKAGE__->mk_classdata('cxgn_nonconnected_db_connection');
@@ -61,7 +62,28 @@ sub _make_args {
   return if $class->cxgn_db_connection;
 
   #get any argument attributes
-  my %attrs = $class->_default_attributes;
+
+  #my %attrs = $class->_default_attributes;  #produces an error
+
+  #### the above statement produces an error (many times),
+  #### probably because a the function _default_attributes requires a connection.
+  #### so we need the default attributes to make a connection but can't get the attributes without a connection
+  #### a chicken or the egg sort of problem
+  #### thus setting the attributes directly here
+  my %attrs;
+  %attrs=(
+	  FetchHashKeyName => 'NAME_lc',
+    	  RaiseError => 1,
+    	  AutoCommit => 1,
+    	  PrintError => 0,
+   	  ShowErrorStatement => 1,
+    	  Taint      => 1,
+   	  ChopBlanks => 1,
+    	  RootClass  => "DBIx::ContextualFetch"
+    	 );
+  #print Dumper(%attrs); #this is where the above attrs were obtained
+
+
   #### EDIT THE ATTRIBUTES THAT WE SET ON CLASS::DBI OBJECTS HERE ####
   delete( $attrs{AutoCommit} ); #we will ignore whatever Class::DBI think we should do for AutoCommit
 
