@@ -263,12 +263,12 @@ sub ABI_Display {
 
     if ($ABIFile eq "") {
       print STDERR "You must specify an ABI chromatogram file with -a\n";
-      exit -1;
+      exit(-1);
     }
 
     if ( ! -f "$ABIFile") {
       print STDERR "ABI chromatogram file \"$ABIFile\" does not exist\n";
-      exit -1;
+      exit(-1);
     }
 
     CXGN::Chromatogram::is_abi_file($ABIFile) or die ("$ABIFile is not an ABI file.\n");
