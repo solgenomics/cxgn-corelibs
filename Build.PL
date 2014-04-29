@@ -4,6 +4,8 @@ my $build = Module::Build->new(
     module_name        => 'CXGN',
     dist_name          => 'CXGN-corelibs',
     license            => 'perl',
+    dist_author        => 'Sol Genomics Network',
+    dist_abstract      => 'CXGN corelibs',
     create_makefile_pl => 'passthrough',
 
     # current version of our core libraries distribution
