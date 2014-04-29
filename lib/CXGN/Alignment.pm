@@ -331,7 +331,7 @@ Returns:
 sub add_align_seq {
   my $self = shift;    
   my $member = shift;
-  if (!defined @{$self->{align_seqs}}){
+  if (! @{$self->{align_seqs}}){
 
     #if there is no members in @align_seqs, reset the end_value of overall alignment to the length of this sequence
     $self->set_end_value($member->get_end_value());
@@ -1122,7 +1122,7 @@ Returns: a hash reference whose key is the id of @align_seqs members and the val
 
 sub get_seqs {
   my $self = shift;
-  (!defined @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
+  (! @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
 
   my %member_seqs = ();
   foreach (@{$self->{align_seqs}}) {
@@ -1148,7 +1148,7 @@ Returns: a hash reference whose key is the id of @align_seqs members and the val
 
 sub get_nopad_seqs {
   my $self = shift;
-  (!defined @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
+  (! @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
 
   my %member_seqs = ();
   foreach (@{$self->{align_seqs}}) {
@@ -1174,7 +1174,7 @@ Returns: a hash reference whose jkey ois the id of @align_seqs member and the va
 
 sub get_overlap_seqs {
   my $self = shift;
-  (!defined @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
+  (! @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
   my %overlap_seqs;  
  
   foreach (my $i = $self->{start_value} - 1; $i < $self->{end_value} - 1; $i++){
@@ -1218,7 +1218,7 @@ Returns:  an integer
 sub get_overlap_num { 
   my $self = shift;
   my $overlap_count = 0;
-  (!defined @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
+  (! @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
 
   #look for the first non-hiden member in @align_seqs
   my $select;
@@ -1263,7 +1263,7 @@ sub get_ngap_pct {
   my $self = shift;
   my %value_hash = ();
 
-  (!defined @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
+  (! @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
   
   my $total_nhidden_member = 0;
   foreach (@{$self->{align_seqs}}) {
@@ -1327,7 +1327,7 @@ sub get_conserved_seq {
   my $self = shift;
   my $seq;
 
-  (!defined @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
+  (! @{$self->{align_seqs}}) and exit "No align_seqs member.\n";
   
   my $total_nhidden_member = 0;
   foreach (@{$self->{align_seqs}}) {

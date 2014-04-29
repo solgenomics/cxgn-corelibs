@@ -580,7 +580,7 @@ sub add_member {
     ref $member && $member->isa( __PACKAGE__ . '::Member' )
       or croak "invalid member '$member'";
 
-    if ( !defined @{ $self->{members} } ) {
+    if ( ! @{ $self->{members} } ) {
 
         #if there are no members in @members, reset the end_value of overall
         #alignment to the length of this sequence
@@ -1581,7 +1581,7 @@ Returns: a hash reference whose key is the id of each member and the value is th
 
 sub get_seqs {
     my $self = shift;
-    ( !defined @{ $self->{members} } ) and return;
+    ( ! @{ $self->{members} } ) and return;
 
     my %member_seqs = ();
     foreach ( @{ $self->{members} } ) {
@@ -1605,7 +1605,7 @@ sub get_seqs {
 
 sub get_nopad_seqs {
     my $self = shift;
-    ( !defined @{ $self->{members} } ) and return;
+    ( ! @{ $self->{members} } ) and return;
 
     my %member_seqs = ();
     foreach ( @{ $self->{members} } ) {
