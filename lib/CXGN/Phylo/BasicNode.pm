@@ -1443,7 +1443,7 @@ sub set_comp_leaf_species_count {
 
 =cut
 
-sub calculate_subtree_node_count {
+sub calculate_subtree_node_count { # count does not include subtree root, so 0 for leaves.
     my $self  = shift;
     my $count = 0;
     foreach my $c ( $self->get_children() ) {
