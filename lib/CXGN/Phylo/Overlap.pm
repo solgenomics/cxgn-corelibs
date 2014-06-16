@@ -168,6 +168,28 @@ sub overlap_fasta_string{
   return $overlap_fasta;
 }
 
+sub get_overlap_hashref{
+my $self = shift;
+return $self->{id_overlapseq};
+}
+
+sub interleaved_overlap_fasta_string{
+  my $self= shift;
+  my $max_length = shift || 1000;
+  my $overlap_fasta = '';
+  foreach my $id (@{$self->{ids}}) {
+   $overlap_fasta .= "$id \n";
+  }
+  foreach my $id (@{$self->{ids}}) {
+    my $sequence = $self->{id_overlapseq}->{$id};
+$sequence = substr($sequence, 0, 120);
+    $overlap_fasta .= "$sequence\n";
+  }
+  chomp $overlap_fasta;
+  return $overlap_fasta;
+}
+
+
 sub overlap_nexus_string{ # basic nexus format string for use by MrBayes.
   my $self = shift;
   my $n_leaves = scalar @{$self->{ids}}; 
