@@ -8,6 +8,17 @@ use CXGN::Phylo::Histograms;
 # generations list, and pre-burn-in gen range and post-burn-in range
 # array of gen/value hashrefs, one for each run
 
+#
+# max_gen     largest generation number so far
+# generations  not used ???
+# run_gen_value   $self->{run_gen_value}->[$run]->{$gen} is the value (numerical param, or topology, ...)
+# at generation $gen of run $run
+# n_runs
+# binnable
+# histograms
+#
+#
+
 sub  new {
   my $class = shift;
   my $arg = shift;
@@ -31,9 +42,10 @@ sub  new {
   }
   $self->{max_gen} = 0;
   $self->{generations} = [ ];	# ref to array of n_runs arrayrefs
+$self->{run_gen_value} = [ ];	# ref to array of n_runs hashrefs
   for (1..$self->{n_runs}) {
-    push @{$self->{generations}}, [];
-    push @{$self->{run_gen_value}}, {};
+    push @{$self->{generations}}, []; # so $self->{generations} is ref to an array of array refs.
+    push @{$self->{run_gen_value}}, {}; # so $self->{run_gen_value} is ref to array of hash refs.
   }
 
   if ($self->{binnable}) {
@@ -77,8 +89,10 @@ sub delete_low_gens{
   my $self = shift;
   my $max_pre_burn_in_gen = shift;
   my $delta_gen = $self->{gen_spacing};
+  print "ASDF\n";
   for (my $i_run=0; $i_run<$self->{n_runs}; $i_run++) {
     for (my $g = $max_pre_burn_in_gen; 1; $g -= $delta_gen) {
+      print "$i_run $g \n";
       if (exists $self->{run_gen_value}->[$i_run]->{$g}) {
 	my $value =  $self->{run_gen_value}->[$i_run]->{$g};
 	$self->delete_data_point($i_run, $g); # $i_run zero-based
@@ -87,13 +101,16 @@ sub delete_low_gens{
       }
     }
   }
+  print "returning from delete_low_gens \n";
 }
 
 sub delete_pre_burn_in{
   my $self = shift;
   my $max_pre_burn_in_gen = int($self->{max_gen}*$self->{burn_in_fraction}); 
   $max_pre_burn_in_gen = $self->{gen_spacing}*int($max_pre_burn_in_gen/$self->{gen_spacing});
+print "bef delete_low_gens \n";
   $self->delete_low_gens($max_pre_burn_in_gen);
+print "aft delete_low_gens \n";
 }
 
 sub get_run_data{ # returns hashref with generation/parameter value pairs
