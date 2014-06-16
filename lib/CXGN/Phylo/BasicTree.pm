@@ -2562,24 +2562,62 @@ my $n_gen_back = shift || 2; # having found the desired clade, also go up $n_gen
   }				# while(1) loop
 }				# end of min_clade
 
+sub get_n_parent_node{ # return the node which is the n-parent of node with name seq_id
+  # e.g. parent is 1-parent, grandparent is 2-parent, etc.
+  # or root of whole tree in case of 1) n > depth of tree, or 2) no mode with name equal to seq_id is present.
+  my $self = shift;
+  my $sequence_id = shift;
+  my $desired_nodes_up = shift;
+  my $leaf_node = undef; # this will be set to the node whose id is $sequence_id
+  my @leaves = $self->get_leaves();
+  foreach (@leaves) {
+    my $leaf_name = $_->get_name();
+    if ($sequence_id eq $leaf_name) {
+      $leaf_node = $_;
+      last;
+    }
+  }
+  if (!defined $leaf_node) {
+    warn "In find_clades. No leaf found with specified id: $sequence_id .\n";
+    return $self->get_root();
+  }
+  my $the_node = $leaf_node;
+  my $nodes_up = 0; 
+  while (1) {
+    if ($the_node->is_root()) {
+      last;
+    } else {
+      $the_node = $the_node->get_parent();
+      $nodes_up++;
+      last if($nodes_up >= $desired_nodes_up);
+    }
+  }
+  return $the_node;
+}
+
 #########################################################################################
 
 sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
   my $self = shift;
   my $sequence_id = shift;
   my @clade_spec_objs = @{ shift @_ };
-my @disallowed_species = @{ shift @_  || [] };
-my $nodes_up_from_leaf = 0; #
-my $n_same_species_as_leaf = 0; 
-my %clade_info = (); # hash of hashrefs, each holding 3 key:value pairs.
-  for(@clade_spec_objs){
+  my @disallowed_species = @{ shift @_  || [] };
+  my @sspecies = @{ shift @_ || [] };
+  my $nodes_up_from_leaf = 0;	#
+  my $n_same_species_as_leaf = 0;
+  my %clade_info = (); # hash of hashrefs, each holding 3 key:value pairs.
+  for (@clade_spec_objs) {
     $clade_info{$_} = {'clade_root_node' => undef, # root of clade (node object)
 		       'nodes_up' => -1, # root of clade is this many nodes above the leaf with sequence_id.
-		       'n_same' => 0,   # number of leaves in clade with same species as sequence_id.
-		       'n_disallowed_species' => 0  # number of species from the @disallowed_species list present in the clade.
+		       'n_same' => 0, # number of leaves in clade with same species as sequence_id.
+		       'n_disallowed_species' => 0, # number of species from the @disallowed_species list present in the clade.
+		       'n_leaves' => 0,
+		       'seq_ids' => '',
+		       'species_count_string' => '',
+		       'clade_species' => '',
 		      };
   }
-  my $node = undef;
+  my $node = undef; # this will be set to the node whose id is $sequence_id
   my @leaves = $self->get_leaves();
   foreach (@leaves) {
     my $leaf_name = $_->get_name();
@@ -2593,51 +2631,67 @@ my %clade_info = (); # hash of hashrefs, each holding 3 key:value pairs.
     return $self->get_root();
   }
   $self->calculate_implicit_species_hashes();
-my $leaf_species = $node->get_species();
-# print "leaf species: $leaf_species \n";
-# my $leaf_species_hash = $node->{implicit_species_hash};
-# print "leaf species: ", join(", ", keys %$leaf_species_hash), "\n";
-my @clade_requirements_met = (0,0,0);
-  while (1) {
+  my $leaf_species = $node->get_species();
+  # print "leaf species: $leaf_species \n";
+  # my $leaf_species_hash = $node->{implicit_species_hash};
+  # print "leaf species: ", join(", ", keys %$leaf_species_hash), "\n";
+  my @clade_requirements_met = (0,0,0);
+  while (1) { # loop over succesively larger clades containing the leaf specified by $sequence_id
     my $implicit_species_hashx = $node->{implicit_species_hash};
-    # print "implicit species: [", join("; ", keys %$implicit_species_hashx), "]\n";
+    #  print "implicit species: [", join("; ", keys %$implicit_species_hashx), "]\n";
 
     for my $the_species (keys %$implicit_species_hashx) { # loop over species in the clade
       @clade_requirements_met = map($_->store($the_species), @clade_spec_objs);
     }
     my $n_same = $implicit_species_hashx->{$leaf_species};
-#    print "nodes up: $nodes_up_from_leaf.  clade requirements met: ", join(", ", @clade_requirements_met), "   $n_same\n";
+    #    print "nodes up: $nodes_up_from_leaf.  clade requirements met: ", join(", ", @clade_requirements_met), "   $n_same\n";
 
-#    while(my($i, $cso) = each @clade_spec_objs){ # need perl 5.14, but some machines have 5.10, so avoid each with array
-    for my $i (0..scalar @clade_spec_objs){
+    #    while(my($i, $cso) = each @clade_spec_objs){ # need perl 5.14, but some machines have 5.10, so avoid each with array
+    for my $i (0..scalar @clade_spec_objs) {
       my $cso = $clade_spec_objs[$i];
-      if($clade_requirements_met[$i]  and  ($clade_info{$cso}->{nodes_up} < 0) ){ 
-	 $clade_info{$cso}->{nodes_up} = $nodes_up_from_leaf;
-	  $clade_info{$cso}->{clade_root_node} = $node;
- $clade_info{$cso}->{n_same} = $implicit_species_hashx->{$leaf_species}; # $n_same_species_as_leaf;
-#print "ref node: ", ref $node, "\n";
+      if ($clade_requirements_met[$i]  and  ($clade_info{$cso}->{nodes_up} < 0) ) {
+
+	my @leaf_nodes = $node->recursive_subtree_node_list();
+	$clade_info{$cso}->{nodes_up} = $nodes_up_from_leaf;
+	$clade_info{$cso}->{clade_root_node} = $node;
+ 
+	$clade_info{$cso}->{n_same} = $implicit_species_hashx->{$leaf_species}; # $n_same_species_as_leaf;
+	$clade_info{$cso}->{n_leaves} = int($node->calculate_subtree_node_count()/2) + 1;
+	$clade_info{$cso}->{leaves} = \@leaf_nodes;
+	my $clade_species_count_string = '';
+	for (@sspecies) {
+	  #    print "species::::::: [$_] \n";
+	  my $sp_count = (exists $implicit_species_hashx->{$_})? $implicit_species_hashx->{$_} : 0 ;
+	  $sp_count = n_to_char($sp_count); # $sp_count = 9 if ($sp_count > 9);
+    
+	  $clade_species_count_string .= "$sp_count";
+	}
+	#print "XXXXXXXXX: $clade_species_count_string \n";
+	#print join(", ", keys %$implicit_species_hashx), "\n";
+	$clade_info{$cso}->{clade_species} = $clade_species_count_string;
+	#print "ref node: ", ref $node, "\n";
 	my $count_disallowed_species = 0;
-for(@disallowed_species){
-  $count_disallowed_species++ if($implicit_species_hashx->{$_});
-}
- $clade_info{$cso}->{n_disallowed_species} = $count_disallowed_species;
+	for (@disallowed_species) {
+	  $count_disallowed_species++ if($implicit_species_hashx->{$_});
+	}
+	$clade_info{$cso}->{n_disallowed_species} = $count_disallowed_species;
       }
     }
-# print "sum: ", sum(@clade_requirements_met), "\n";
-# print "size: ", scalar @clade_requirements_met, "\n";
-# print "number of cso's: ", scalar @clade_spec_objs, "\n";
-      if((sum(@clade_requirements_met) == scalar @clade_requirements_met)  or  $node->is_root()){
-	my $count_disallowed_species = 0;
-for(@disallowed_species){
-  $count_disallowed_species++ if($implicit_species_hashx->{$_});
-}
-	for(@clade_spec_objs){
-	  $_->reset();
-	}
-#	print "RETURNING\n";
+    # print "sum: ", sum(@clade_requirements_met), "\n";
+    # print "size: ", scalar @clade_requirements_met, "\n";
+    # print "number of cso's: ", scalar @clade_spec_objs, "\n";
+    if ((sum(@clade_requirements_met) == scalar @clade_requirements_met)  or  $node->is_root()) {
+      my $count_disallowed_species = 0;
+      for (@disallowed_species) {
+	$count_disallowed_species++ if($implicit_species_hashx->{$_});
+      }
+      for (@clade_spec_objs) {
+	$_->reset();
+      }
+      #	print "RETURNING\n";
       return (\%clade_info); #, $whole_tree_other_count - $in_clade_other_species_sequence_count); #->recursive_generate_newick();
     } else {
- #     print "Go up to parent node \n";
+      #     print "Go up to parent node \n";
       $node = $node->get_parent();
       $nodes_up_from_leaf++;
     }
@@ -2812,7 +2866,7 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
 
     # the root of $minDL_rerooted_gene_tree should have 2 children
     # and (at least) one should have it's subtree also present in the pre-rerooting tree.
-    # identify the node at the root of this subtree (using implicit names) and reroot there.
+    # identify the node at the root of this subtree (usisub get_lea names) and reroot there.
     # Have to do this because some branch length info was lost in urec step.
 
     my @root_children = $minDL_rerooted_gene_tree->get_root()->get_children();
@@ -3074,6 +3128,41 @@ sub DESTROY {
 
     # now do your own thing before or after
 
+}
+
+sub n_to_char{			# maps positive integers to 1-9ABCDEF
+  my $n = shift;
+  if ($n < 0) { # negative -> '-'
+    return '-';
+  } elsif ($n <= 9) { # 0-9 -> 0-9
+    return $n;
+  } elsif ($n == 10) { # 10 -> A
+    return 'A';
+  } elsif ($n <= 15) { # 11-15 -> B
+    return 'B';
+  } elsif ($n <= 20) { # 16-20 -> C
+    return 'C';
+  } elsif ($n <= 40) { # 21-40 -> D
+    return 'D';
+  } elsif ($n <= 80) { # 41-80 -> E
+    return 'E';
+  } else { # > 80 -> F
+    return 'F';
+  }
+}
+
+sub binary_to_hexadecimal{ # 
+  my $bin = shift; # string like '1011110100101001011011100100'
+my @pvs = (8,4,2,1);
+my $sum = 0;
+  while(length $bin > 0){
+    my @bits = split('',substr($bin,0,4));
+    $bin = substr($bin,4);
+    my $place_value = 1;
+    for(1..scalar @bits){
+      $sum += $pvs[$_ - 1] if (shift @bits);
+    }
+  }
 }
 
 1;
