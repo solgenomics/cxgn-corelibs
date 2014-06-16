@@ -16,22 +16,24 @@ sub new {
   my $clade_spec_file_or_string = shift;
   my $predefined_taxon_groups = shift || {};
   my $clade_spec_string;
-  if( -f $clade_spec_file_or_string ){
+  if ( -f $clade_spec_file_or_string ) {
     open my $fh, "<", "$clade_spec_file_or_string";
     $clade_spec_string = join("", <$fh>); # does this work?
-  }else{
+  } else {
     $clade_spec_string = $clade_spec_file_or_string;
   }
   # something like:  'monocots,1;(Selaginella_moellendorfii, Physcomitrella_patens),1'
-# where 'monocots' is one of the keys of %$predefined_taxon_groups
+  # where 'monocots' is one of the keys of %$predefined_taxon_groups
   $clade_spec_string =~ s/\s+//g; # remove whitespace
-  my @taxon_groups = split(";", $clade_spec_string);
+  my @taxon_groups = split(/\s*;\s*/, $clade_spec_string); # e.g.: ( 'monocots,1',  '(Selaginella_moellendorffii, Physcometrella_patens),1' )
+#  print "TAXON Groups: ", join(";;;; ", @taxon_groups), "\n";
   my %group_taxa = (); # keys are taxon group names, values are hashrefs of all taxon names in group
   my %group_required_count = ();
   my $taxon_group_number = 1;
   for my $tgroup (@taxon_groups) { # $tgroup is something like  'monocots,1'  or (Selaginella_moellendorfii, Physcomitrella_patens),1
-#    print "tgroup $tgroup \n";
+    #    print "tgroup $tgroup \n";
     my $taxon_group_name = "taxon_group_$taxon_group_number";
+  #  print "YYY: $taxon_group_number $taxon_group_name \n";
     my @taxa = ();
     my $required_count;
     if ($tgroup =~ /\((.*)\),(\d+)/) { # parens around multi taxa or groups
@@ -39,7 +41,7 @@ sub new {
       $required_count = $2;
     } elsif ($tgroup =~ /([^,]+),(\d+)/) { # single taxon or taxon group (e.g. 'monocots')parens not needed.
       @taxa = ($1);
-  $required_count = $2;
+      $required_count = $2;
     } else {
       warn "problem parsing expression $clade_spec_string \n";
     }
@@ -52,16 +54,18 @@ sub new {
       } else {
 	$group_taxa{$taxon_group_name}->{$taxon_or_group}++;
       }
+ #     print "TGN, and RC: $taxon_group_name  $required_count \n";
       $group_required_count{$taxon_group_name} = $required_count;
     }
 
     $taxon_group_number++;
-  }
+#    print "TTTTTTTTTTTTTTTTTGN: $taxon_group_number \n";
+  } # loop over taxon groups
   $self->{group__taxa} = \%group_taxa; # key: taxon group id. value: hashref (keys are taxa, values > 0 (really just care whether key exists )
   $self->{group__required_taxon_count} = \%group_required_count; # 
 
   $self->reset();
-
+# print "returning from constructor. \n";
   return $self;
 }				# end of constructor
 
@@ -74,14 +78,16 @@ sub store{ # store a taxon, and return 1 if all requirements have been satisfied
   my %group_observed_taxa = %{$self->{group__observed_taxa}}; 
   my %group_observed_taxon_count = %{$self->{group__observed_taxon_count}}; # counts the number of distinct taxa which are present in the group.
   my %satisfied_groups = %{$self->{satisfied_groups}};
-
+  #  print "XXXXXXXXXXXXXXX: n satisfied groups (top): ", scalar keys %satisfied_groups, "\n";
   while ( my ($group, $taxa_hashref) = each %{$self->{group__taxa}}) {
+    #    print "Group: $group, taxa in group: ", join("; ", keys %$taxa_hashref), "\n";
     if (exists $taxa_hashref->{$taxon}) { # if it is one of the taxa in the group ...
+ #          print "TDFKDSDLFJKD  taxon: $taxon, [", $taxa_hashref->{$taxon}, "]\n";
       $group_observed_taxa{$group}->{$taxon}++; # count taxon observed in group 
       $group_observed_taxon_count{$group} = scalar keys %{$group_observed_taxa{$group}}; # increment count of distinct observed taxa in group.
-#      die "observed taxon count inconsistency.\n" if($group_observed_taxon_count{$group} != scalar keys %{$group_observed_taxa{$group}});
- #     my ($min_required_count, $max_required_count) = $group_required_count{$group}@{};
-      
+      #      die "observed taxon count inconsistency.\n" if($group_observed_taxon_count{$group} != scalar keys %{$group_observed_taxa{$group}});
+      #     my ($min_required_count, $max_required_count) = $group_required_count{$group}@{};
+      #     print "AAA: ", $group_observed_taxon_count{$group}, "  ", $group_required_count{$group}, "\n";
       if ($group_observed_taxon_count{$group} >= $group_required_count{$group}) {
 	$satisfied_groups{$group}++; # This group is satisfied now.
       }
@@ -90,7 +96,7 @@ sub store{ # store a taxon, and return 1 if all requirements have been satisfied
   $self->{group__observed_taxa} = \%group_observed_taxa;
   $self->{group__observed_taxon_count} = \%group_observed_taxon_count;
   $self->{satisfied_groups} = \%satisfied_groups;
-#  print STDERR "AAA:  $taxon   ", scalar keys %satisfied_groups,  "  ", scalar keys %group_required_count, "\n";
+#  print STDOUT "AAA:  $taxon   ", scalar keys %satisfied_groups,  "  ", scalar keys %group_required_count, "\n";
   return (scalar keys %satisfied_groups >= scalar keys %group_required_count)? 1: 0; # 1 -> clade requirements all satisfied.
 }
 
@@ -119,13 +125,14 @@ sub as_string{
   return $string;
 }
 
-sub reset{ # resets to state where no taxa have been stored.
+sub reset{	     # resets to state where no taxa have been stored.
   my $self= shift;
-  for (keys  %{$self->{group__required_taxon_count}}){
+  for (keys  %{$self->{group__required_taxon_count}}) {
     $self->{group__observed_taxon_count}->{$_} = 0;
     $self->{group__observed_taxa}->{$_} = {};
   }
   $self->{satisfied_groups} = {};
+#  print "YYYY n sat groups: [", scalar keys %{$self->{satisfied_groups}}, "]\n";
 }
 
 1;
