@@ -15,7 +15,7 @@ sub new {
     my $class             = shift;
     my $arg               = shift;    # a hashref for setting various options
     my $default_arguments = {
-        'alignment_nex_filename'    => undef,
+        'alignment_nex_filename'    => undef, # e.g. fam4436.nex ??
         'file_basename'             => undef,
         'seed'                      => undef,
         'swapseed'                  => undef,
@@ -110,7 +110,7 @@ sub new {
     my $fixed_pinvar = $self->{fixed_pinvar};
     my $prset_pinvarpr = ( defined $fixed_pinvar ) ? "prset pinvarpr=fixed($fixed_pinvar);\n" : '';
 
-    $self->{splits_min_hists} *= $n_runs;
+    $self->{splits_min_hits} *= $n_runs;
 
     my $begin_piece = "begin mrbayes;\n" . "set autoclose=yes nowarn=yes;\n";
     my $seed_piece  = '';
@@ -178,8 +178,10 @@ sub new {
       $middle_piece . "mcmc append=" . $self->{append} . " ngen=$chunk_size;\n" . $end_piece;
     $self->setup_id_species_map();
 
-    if ( $self->{use_mpi} ) {    # check whether can actually use mpi as requested
-        my $which_mpirun = `which_mpirun`;
+
+# no mpi for now ...
+    if (0 or $self->{use_mpi} ) {    # check whether can actually use mpi as requested
+        my $which_mpirun = `which mpirun`;
 
         #    print "which mpi: [$which_mpirun] \n";
         if (`which mpirun`) {    # mpirun is present
@@ -346,14 +348,14 @@ sub topo_analyze {
     close $fhhist;
 
     $histogram_filename = $self->{file_basename} . "." . "splits_histograms";
-    open my $fhhist, ">", "$histogram_filename";
+    open $fhhist, ">", "$histogram_filename";
     print $fhhist "# After $ngen generations. \n",
       $self->{splits_chain_data}->{histograms}->histogram_string('by_bin_weight');
     my @splits_L1_distances = $self->{splits_chain_data}->{histograms}->avg_L1_distance();
 
 # $max_diff /=  ($self->{splits_chain_data}->{histograms}->get_total_counts() / ($self->{n_runs} * ($self->{n_taxa} -3)));
-    printf $fhhist ( "# Avg L1 distance: %6.3f %6.3f %6.3f \n\n", @splits_L1_distances[ 0 .. 2 ] )
-      ;    #
+    printf $fhhist ( "# L1: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f   Linf: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f   %s %s \n\n", @splits_L1_distances[ 0 .. 6 ] );
+
 
     # $avg_L1, $avg_L1x, $max_diff); #$self->{min_binweight}));
     close $fhhist;
@@ -369,8 +371,10 @@ sub param_analyze {
           $self->{file_basename} . "." . $chain_data_obj->{parameter_name} . "_histograms";
         open my $fhhist, ">", "$histogram_filename";
         print $fhhist $chain_data_obj->{histograms}->histogram_string('by_bin_number');
-        my ( $L1_dist, $L1x_dist, $max_diff ) = $chain_data_obj->{histograms}->avg_L1_distance();
-        printf $fhhist ( "# Avg L1 distance: %6.3f %6.3f\n", $L1_dist, $L1x_dist );
+        my ($min_L1, $q1_L1, $median_L1, $q3_L1, $max_L1, $avg_interbip_L1 ) = 
+	  $chain_data_obj->{histograms}->avg_L1_distance();
+        printf $fhhist ( "# L1 quartiles: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n", 
+			 $min_L1, $q1_L1, $median_L1, $q3_L1, $max_L1, $avg_interbip_L1);
         print $fhhist "# Max Kolmogorov-Smirnov D for parameter ",
           $chain_data_obj->{parameter_name},
           " is: ", $chain_data_obj->{histograms}->binned_max_ksd(), "\n\n";
@@ -437,10 +441,10 @@ sub modelparam_convergence {    # look at numbers in *.pstat file
 
     foreach (@lines) {
         my @cols   = split( " ", $_ );
-        my $avgESS = @cols[7];              # col 6 is the min ESS among the runs, col 7 is avg.
+        my $avgESS = $cols[7];              # col 6 is the min ESS among the runs, col 7 is avg.
         next unless ( $avgESS =~ /^\d*[.]?\d+/ );    #and $PSRF =~ /^\d*[.]?\d+/ );
 
-        $string .= sprintf( "%4.1f ", $avgESS );     #$xxx; # "$avgESS $PSRF "; #without PSRF
+        $string .= sprintf( "%4.1f  ", $avgESS );     #$xxx; # "$avgESS $PSRF "; #without PSRF
 
         #  $string .= sprintf( "%3.0f %6.4f ", $avgESS, $PSRF ); #$xxx; # "$avgESS $PSRF ";
         # print "string $string   $KSDmax \n";
@@ -457,14 +461,14 @@ sub modelparam_convergence {    # look at numbers in *.pstat file
         my $KSDmx = $self->KSDmax($_);
         $n_bad++ if ( $KSDmx > $max_ok_KSD );
         push @KSDmaxes, $KSDmx;
-        my ( $avg_L1, $max_L1, $max_diff ) =
+        my @quartile_L1s = # i.e. min, 1st_quartile, median, 3rd_quartile, max
           $self->{chain_data}->{$_}->{histograms}->avg_L1_distance();
 
-        $n_bad++ if ( $avg_L1 > $self->{max_ok_L1} );
-        push @L1s, $avg_L1;
+        $n_bad++ if ( $quartile_L1s[2] > $self->{max_ok_L1} );
+        push @L1s, $quartile_L1s[2]; # median
     }
-    $string .= "  " . join( " ", map sprintf( "%5.3f", $_ ), @KSDmaxes );
-    $string .= "  " . join( " ", map sprintf( "%5.3f", $_ ), @L1s );
+    $string .= "   " . join( " ", map sprintf( "%5.3f", $_ ), @KSDmaxes );
+    $string .= "   " . join( " ", map sprintf( "%5.3f", $_ ), @L1s );
     return ( $n_bad, $string );
 }
 
@@ -477,25 +481,35 @@ sub test_convergence {
     my ( $modelparam_n_bad, $modelparam_string ) = $self->modelparam_convergence($file_basename);
     my $n_topos_each_run =
       $self->{splits_chain_data}->{histograms}->get_total_counts() /
+
       ( $self->{n_runs} * ( $self->{n_taxa} - 3 ) );
     my ( $topo_L1, $topo_L1x, $topo_max_diff ) =
       $self->{topo_chain_data}->{histograms}->avg_L1_distance();
     $topo_max_diff /= $n_topos_each_run;
     my $set_size = $self->{n_taxa} - 3;    # number of non-terminal edges in unrooted tree.
-    my ( $splits_L1, $splits_maxL1, $splits_max_diff, $above_threshold_string ) =
+  #  my ( $splits_avg_L1d, $splits_interclstr_L1d, $splits_q3_L1d, $splits_max_range, $splits_rms_range,
+#	 $above_threshold_string1, $above_threshold_string2 ) =
+my @xs = 
       $self->{splits_chain_data}->{histograms}->avg_L1_distance( undef, $set_size );
-
+my @quartile_L1s = @xs[0..4]; my $avg_intercluster_L1 = $xs[5];
+my $quartile_mbds = @xs[6..10]; my $avg_intercluster_mbd = $xs[11];
+my @above_threshold_strings = @xs[12..15];
     #  $splits_max_diff /= $n_topos_each_run; #  * ($self->{n_taxa} - 3) );
-
+my $fs7 = join("", ('%4.3f ' x 7));
     my $conv_string =
+sprintf("%6.3f  ", $splits_avg_stddev);  #,  @xs[0..11]);
+#      sprintf(
+#        "%5.3f %5.3f %5.3f %5.3f %5.3f %5.3f ",
+#        $splits_avg_stddev, $splits_avg_L1d, $splits_interclstr_L1d, $splits_q3_L1d, $splits_max_range, $splits_rms_range) . " $modelparam_string  $modelparam_n_bad   ";
+my ($L1stats, $L2stats, $Linfstats, $nbbdstats) =  $self->{splits_chain_data}->{histograms}->four_distance_stats( undef, $set_size );
+#    $conv_string .= join("  ", @above_threshold_strings) . "  " . $xs[16] . "  $modelparam_string  $modelparam_n_bad   ";
+$conv_string .= sprintf("$fs7 $fs7 $fs7 $fs7 ", @$L1stats, @$L2stats, @$Linfstats, @$nbbdstats) . 
+  " $modelparam_string  $modelparam_n_bad   ";
 
-      #    "$splits_count $splits_bad_count " .
-      sprintf(
-        "%5.3f %5.3f %5.3f %5.3f",         #$topo_L1, $topo_max_diff,
-        $splits_avg_stddev, $splits_L1, $splits_maxL1, $splits_max_diff
-      ) . " $modelparam_string  $modelparam_n_bad ";
-    $conv_string .= "$above_threshold_string ";
-
+# join(" ", @$L1stats) . "   " .
+# join(" ", @$L2stats) . "   " .
+# join(" ", @$Linfstats) . "   " .
+# join(" ", @$nbbdstats) . "  $modelparam_string  $modelparam_n_bad   ";
     my $converged = ( $splits_converged and $modelparam_n_bad == 0 );
 
     return ( $converged ? 1 : 0, $conv_string );
@@ -605,14 +619,14 @@ sub KSDmax {    # just gets the binned KSDmax for the parameter specified by the
 }
 
 sub retrieve_param_samples {
-
     # read data from  run?.p files
     # store each param data in separate array of gen/paramval hashrefs
     my $self               = shift;
-    my $prev_chunk_max_gen = shift || 0;                         # use only generation > to this.
+    my $prev_chunk_max_gen = shift || 0;                         # use only generation > this.
     my $pattern            = $self->{alignment_nex_filename};    # e.g. fam9877.nex
     my $n_runs             = $self->{n_runs};
 
+print "top of retrieve_param_samples. \n";
     # get parameter names from .p file.
     open my $fh1, "<", "$pattern.run1.p";
     <$fh1>;                                                      # discard first line.
@@ -645,7 +659,7 @@ sub retrieve_param_samples {
             );    # binnable = 1 -> continuous parameter values needing to be binned.
         }
     }
-
+    print "ZZZ\n";
     my $new_max_gen;
 
     # Read param values from .p file and store in ChainData objects.
@@ -675,17 +689,21 @@ sub retrieve_param_samples {
             }
         }
     }    # loop over runs.
-
+print "ZZZZZ\n";
     # get rid of pre-burn-in data points, and rebin as desired.
     while ( my ( $param, $chain_data_obj ) = each %{ $self->{chain_data} } ) {
+      print "PPP\n";
         $chain_data_obj->delete_pre_burn_in();
-        die if ( !defined $chain_data_obj->{histograms} );
+        die "chain_data_obj->{histograms} is not defined." if ( !defined $chain_data_obj->{histograms} );
+	print "BBB\n";
         if ( $new_max_gen >= $chain_data_obj->{next_bin_gen} ) {
-            $chain_data_obj->bin_the_data()
-              ;    # print "$new_max_gen; binning the data. \n"; #sleep(2);
+	  print "AAA\n";
+            $chain_data_obj->bin_the_data();   
+print "$new_max_gen; binning the data. \n"; #sleep(2);
             $chain_data_obj->{next_bin_gen} = 2 * $new_max_gen;
         }
     }
+    print "OOO\n";
 }
 
 # end of reading in parameter values
