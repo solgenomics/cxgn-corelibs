@@ -14,7 +14,7 @@ use File::Temp qw( tempfile );
 use File::Basename;
 use File::Spec;
 use Cwd;
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 use File::NFSLock qw/uncache/;
 
 use Storable qw/ nstore retrieve /;
@@ -398,7 +398,13 @@ sub _run_cluster {
     $path = File::Spec->rel2abs("$path");
 #    warn "abspath $path\n";
     return 1 if $path =~ m!(/net/[^/]+)?(/(data|export)/(shared|prod|trunk)|/(home|crypt))!;
+    if ($path =~ m!/tmp!) { 
+ # for testing purposes only
+	print STDERR "CLUSTER DIR IN /tmp ACCEPTABLE FOR TESTING ONLY.\n";
+	return 1;
+    }
     return 0;
+    
   }
 
   my $tempdir = $self->tempdir;
@@ -408,7 +414,7 @@ sub _run_cluster {
       my $file = $self->$acc;
       $file = $self->$acc("$file"); #< stringify the argument
 
-      croak "tempdir ".$self->tempdir." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n"
+      croak "tempdir ".$self->tempdir." is not on /export/shared or /export/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n"
 	unless cluster_accessible($tempdir);
 
       croak "filehandle or non-stringifying out_file, err_file, or in_file not supported by run_cluster"
