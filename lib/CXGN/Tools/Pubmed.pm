@@ -73,7 +73,8 @@ sub fetch {
 				    'Journal/Title'           => \&journal_name,
 				    'PublicationTypeList/PublicationType'  => \&pub_type,
 				    'Abstract/AbstractText'   => \&abstract,
-				    Author       => \&author, 
+				     Author                   => \&author, 
+				    'Article/ELocationID'     => \&e_id,
 				},
 				twig_handlers =>
 				{
@@ -347,6 +348,28 @@ sub get_pub_type {
 
 }
 
+
+=head2 accessors get_eid, set_eid
+
+ Usage:
+ Desc:
+ Property
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_eid {
+  my $self = shift;
+  return $self->{eid}; 
+}
+
+sub set_eid {
+  my $self = shift;
+  $self->{eid} = shift;
+}
+
+
 =head2 pub_type
 
  Usage:
@@ -405,7 +428,7 @@ sub abstract {
     my ($twig, $elt)= @_;
     $pub_object->set_abstract($elt->text) ;
 
-    $twig->purge
+    $twig->purge;
 }
 
 
@@ -434,8 +457,27 @@ sub author {
     
     $pub_object->add_author($author_data) ;
     #$rank ++;
-    $twig->purge
+    $twig->purge;
 }
+
+=head2 e_id
+
+ Usage:
+ Desc: Store DOI 
+ Ret:
+ Args:
+ Side Effects: sets eid for the publication object
+ Example:
+
+=cut
+
+sub e_id {
+    my ($twig, $elt)= @_;
+    $pub_object->set_eid($elt->text) ;
+
+    $twig->purge;
+}
+
 
 
 1;
