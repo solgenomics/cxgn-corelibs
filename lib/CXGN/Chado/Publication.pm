@@ -166,7 +166,23 @@ sub store {
 
     }
     elsif ( !$existing_pub_id ) {
-
+	#check if the cvterm for the publication type (journal, etc. ) exists in the database 
+	my $cvterm_name = $self->get_cvterm_name;
+	if ( $cvterm_name ) {
+	    require Bio::Chado::Schema;
+	    my $schema =  Bio::Chado::Schema->connect( sub { $self->get_dbh->clone },
+						       { on_connect_do => ['SET search_path TO public'] },
+		);
+	    my $cvterm = $schema->resultset("Cv::Cvterm")
+		->create_with({
+		    name   => $cvterm_name,
+		    cv     => 'publication',
+		    db     => 'SGN_ref',
+			      });
+	} else {
+	    warn "No cvterm_name was set for this publication! ";
+	}
+	    
         #store new publication
         my $pub_sth =
           $self->get_dbh()
