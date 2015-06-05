@@ -35,21 +35,17 @@ our $pub_object=undef;
 sub new {
     my $class = shift;
     $pub_object= shift;
- 
-    
+        
     my $args = {};  
     my $self = bless $args, $class;
     
       
     $self->set_pub_object($pub_object);  
    
-
-          
     my $accession= $pub_object->get_accession();
     if ($accession) {
 	$self->fetch($accession);
     }
-    
     return $self;
 }
 	
@@ -57,7 +53,6 @@ sub new {
 sub fetch {
     my $self=shift;
     my $accession=shift;
-    
     my $pub_xml = `wget "eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=$accession&rettype=xml&retmode=text"  -O -  `;
     
     eval {
@@ -74,7 +69,7 @@ sub fetch {
 				    'PublicationTypeList/PublicationType'  => \&pub_type,
 				    'Abstract/AbstractText'   => \&abstract,
 				     Author                   => \&author, 
-				    'Article/ELocationID'     => \&e_id,
+				     ELocationID     => \&e_id,
 				},
 				twig_handlers =>
 				{
@@ -349,27 +344,6 @@ sub get_pub_type {
 }
 
 
-=head2 accessors get_eid, set_eid
-
- Usage:
- Desc:
- Property
- Side Effects:
- Example:
-
-=cut
-
-sub get_eid {
-  my $self = shift;
-  return $self->{eid}; 
-}
-
-sub set_eid {
-  my $self = shift;
-  $self->{eid} = shift;
-}
-
-
 =head2 pub_type
 
  Usage:
@@ -474,7 +448,6 @@ sub author {
 sub e_id {
     my ($twig, $elt)= @_;
     $pub_object->set_eid($elt->text) ;
-
     $twig->purge;
 }
 

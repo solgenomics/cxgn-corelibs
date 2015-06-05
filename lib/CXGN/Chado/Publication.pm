@@ -1383,4 +1383,22 @@ sub set_sp_person_id {
     $self->{sp_person_id} = shift;
 }
 
+=head2 accessors get_eid, set_eid
+Usage: $self->set_eid()
+Desc:  eid should be the publication DOI
+Property
+Side Effects:
+Example:
+=cut 
+
+sub get_eid {
+    my $self = shift;
+    return $self->{eid};
+}
+
+sub set_eid {
+    my $self = shift;
+    $self->{eid} = shift;
+}
+
 1;
