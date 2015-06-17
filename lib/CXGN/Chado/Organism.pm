@@ -873,7 +873,7 @@ sub get_loci_count {
                  JOIN sgn.common_name using (common_name_id)
                  JOIN sgn.organismgroup  on (common_name.common_name = organismgroup.name )
                  JOIN sgn.organismgroup_member USING (organismgroup_id)
-                 JOIN public.organism USING (organism_id)
+                 JOIN public.organism ON public.organism.organism_id = sgn.organismgroup_member.organism_id
                  WHERE locus.obsolete = 'f' AND public.organism.organism_id=?";
 
     my $sth=$self->get_dbh()->prepare($query);
