@@ -512,6 +512,69 @@ sub associate_owner {
     return $id;
 }
 
+=head2 get_trait_list
+
+ Usage:
+ Desc:         gets the list of traits that have been measured
+               on this stock
+ Ret:          a list of lists  ( [ cvterm_id, cvterm_name] , ...)
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_trait_list { 
+    my $self = shift;
+
+    my $q = "select distinct(cvterm.cvterm_id), db.name || ':' || dbxref.accession, cvterm.name, avg(phenotype.value::Real), stddev(phenotype.value::Real) from stock as accession join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_phenotype USING(nd_experiment_id) JOIN phenotype USING (phenotype_id) JOIN cvterm ON (phenotype.cvalue_id = cvterm.cvterm_id) JOIN dbxref ON(cvterm.dbxref_id = dbxref.dbxref_id) JOIN db USING(db_id) where accession.stock_id=? group by cvterm.cvterm_id, db.name || ':' || dbxref.accession";
+    my $h = $self->get_schema()->storage->dbh()->prepare($q);
+    $h->execute($self->get_stock_id());
+    my @traits;
+    while (my ($cvterm_id, $cvterm_accession, $cvterm_name, $avg, $stddev) = $h->fetchrow_array()) { 
+	push @traits, [ $cvterm_id, $cvterm_accession, $cvterm_name, $avg, $stddev ];
+    }
+
+    # get directly associated traits
+    #
+    $q = "select distinct(cvterm.cvterm_id), db.name || ':' || dbxref.accession, cvterm.name, avg(phenotype.value::Real), stddev(phenotype.value::Real) from stock JOIN nd_experiment_stock ON (stock.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_phenotype USING(nd_experiment_id) JOIN phenotype USING (phenotype_id) JOIN cvterm ON (phenotype.cvalue_id = cvterm.cvterm_id) JOIN dbxref ON(cvterm.dbxref_id = dbxref.dbxref_id) JOIN db USING(db_id) where stock.stock_id=? group by cvterm.cvterm_id, db.name || ':' || dbxref.accession";
+    $h = $self->get_schema()->storage()->dbh()->prepare($q);
+    $h->execute($self->get_stock_id());
+    while (my ($cvterm_id, $cvterm_accession, $cvterm_name, $avg, $stddev) = $h->fetchrow_array()) { 
+	push @traits, [ $cvterm_id, $cvterm_accession, $cvterm_name, $avg, $stddev ];
+    }
+    
+    return @traits;
+
+}
+
+=head2 get_trials
+
+ Usage:        
+ Desc:          gets the list of trails this stock was used in
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_trials { 
+    my $self = shift;
+    my $q = "select distinct(project.project_id), project.name, nd_geolocation_id, nd_geolocation.description from stock as accession  join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) LEFT JOIN projectprop ON (project.project_id=projectprop.project_id) JOIN cvterm AS geolocation_type ON (projectprop.type_id=geolocation_type.cvterm_id) LEFT JOIN nd_geolocation ON (projectprop.value::INT = nd_geolocation_id) where accession.stock_id=? AND (geolocation_type.name='project location' OR geolocation_type.name IS NULL) ";
+    my $h = $self->get_schema()->storage()->dbh()->prepare($q);
+    $h->execute($self->get_stock_id());
+    my @trials;
+    while (my ($project_id, $project_name, $nd_geolocation_id, $nd_geolocation) = $h->fetchrow_array()) { 
+	push @trials, [ $project_id, $project_name, $nd_geolocation_id, $nd_geolocation ];
+    }
+    
+    return @trials;
+}
+
+
+
+
 =head2 _new_metadata_id
 
 Usage: my $md_id = $self->_new_metatada_id($sp_person_id)
