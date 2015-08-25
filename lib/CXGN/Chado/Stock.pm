@@ -20,6 +20,7 @@ package CXGN::Chado::Stock ;
 use strict;
 use warnings;
 use Carp;
+use Data::Dumper;
 use Bio::Chado::Schema;
 use CXGN::Metadata::Schema;
 
@@ -572,8 +573,95 @@ sub get_trials {
     return @trials;
 }
 
+sub get_direct_parents { 
+    my $self = shift;
+    my $stock_id = shift || $self->get_stock_id();
+    
+    my $female_parent_id;
+    my $male_parent_id;
+    eval { 
+	$female_parent_id = $self->get_schema()->resultset("Cv::Cvterm")->find( { name => 'female_parent' })->cvterm_id();
+	$male_parent_id = $self->get_schema()->resultset("Cv::Cvterm")->find( { name => 'male_parent' }) ->cvterm_id();
+    };
+    if ($@) { 
+	die "Cvterm for female_parent and/or male_parent seem to be missing in the database\n";
+    }
+    
+    my $rs = $self->get_schema()->resultset("Stock::StockRelationship")->search( { object_id => $stock_id, type_id => { -in => [ $female_parent_id, $male_parent_id ] } });
+    my @parents;
+    while (my $row = $rs->next()) { 
+	my $prs = $self->get_schema()->resultset("Stock::Stock")->find( { stock_id => $row->subject_id() });
+	my $parent_type = "";
+	if ($row->type_id() == $female_parent_id) { 
+	    $parent_type = "female";
+	}
+	if ($row->type_id() == $male_parent_id) { 
+	    $parent_type = "male";
+	}
+	push @parents, [ $prs->stock_id(), $prs->uniquename(), $parent_type ];
+    }
 
+    return @parents;
+}
 
+sub get_recursive_parents { 
+    my $self = shift;
+    my $stock_id = shift;
+    my $data = shift;
+
+    print STDERR Dumper($data);
+
+    my $max_level = $data->{max_level} || 1;
+    
+    if ($data->{current_level} > $max_level) { 
+	return;
+    }
+
+    
+    my @parents = $self->get_direct_parents($stock_id);
+
+    print STDERR Dumper(\@parents);
+
+    foreach my $p (@parents) { 
+	print STDERR "Parent for $stock_id is $p->[0], $p->[1] ...\n";
+	$self->get_recursive_parents($p->[0], $data);
+    }		
+    
+    $data->{pedigree}->{$data->{root_stock_name}} =  \@parents ;
+    #$data->{pedigree}->{$parents[0][1]} = [];
+    #$data->{pedigree}->{$parents[0][1]} = [];
+
+    $data->{current_level}++;
+
+}
+
+sub get_parents { 
+    my $self = shift;
+    my $max_level = shift || 1;
+
+    my $data = { 
+	    root_stock_id => $self->get_stock_id(),
+	    root_stock_name => $self->get_uniquename(),
+	    max_level => $max_level,
+	    current_level => 0,
+    };
+    $self->get_recursive_parents($self->get_stock_id, $data);
+	
+    return $data->{pedigree};
+}
+
+sub get_parents_string { 
+    my $self = shift;
+    my $max_level = shift || 1;
+    
+    my $pedigree = $self->get_parents($max_level);
+
+    my $s = "";
+    foreach my $k (keys %$pedigree) { 
+	$s .= join "/", map { $_->[1] } @{$pedigree->{$k}};
+    }
+    return $s;
+}
 
 =head2 _new_metadata_id
 
