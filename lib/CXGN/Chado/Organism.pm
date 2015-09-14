@@ -867,14 +867,22 @@ sub get_loci_count {
 
     my $self = shift;
 
-    my $query = "SELECT COUNT
-			(phenome.locus.locus_id)
-                 FROM phenome.locus
-                 JOIN sgn.common_name using (common_name_id)
-                 JOIN sgn.organismgroup  on (common_name.common_name = organismgroup.name )
-                 JOIN sgn.organismgroup_member USING (organismgroup_id)
-                 JOIN public.organism ON public.organism.organism_id = sgn.organismgroup_member.organism_id
-                 WHERE locus.obsolete = 'f' AND public.organism.organism_id=?";
+      #     my $query = "SELECT COUNT
+      # (phenome.locus.locus_id)
+      #                  FROM phenome.locus
+      #                  JOIN sgn.common_name using (common_name_id)
+      #                  JOIN sgn.organismgroup  on (common_name.common_name = organismgroup.name )
+      #                  JOIN sgn.organismgroup_member USING (organismgroup_id)
+      #                  JOIN public.organism ON public.organism.organism_id = sgn.organismgroup_member.organism_id
+      #                  WHERE locus.obsolete = 'f' AND public.organism.organism_id=?";
+
+      my $query = "SELECT COUNT
+       (phenome.locus.locus_id)
+       FROM phenome.locus
+       JOIN sgn.common_name using (common_name_id)
+       JOIN sgn.organismgroup  on (common_name.common_name = organismgroup.name )
+       JOIN sgn.organismgroup_member USING (organismgroup_id)
+       WHERE locus.obsolete = 'f' AND sgn.organismgroup_member.organism_id=?";
 
     my $sth=$self->get_dbh()->prepare($query);
     $sth->execute($self->get_organism_id() );
