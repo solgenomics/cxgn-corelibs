@@ -600,11 +600,19 @@ sub merge {
     my $self = shift;
     my $other_stock_id = shift;
 
+    if ($other_stock_id == $self->get_stock_id()) { 
+	print STDERR "Trying to merge stock into itself ($other_stock_id) Skipping...\n";
+	return;
+    }
+
+
     my $stockprop_count;
     my $subject_rel_count;
     my $object_rel_count;
+    my $stock_allele_count;
     my $image_count;
     my $experiment_stock_count;
+    my $stock_dbxref_count;
     my $stock_owner_count;
     my $parent_1_count;
     my $parent_2_count;
@@ -666,6 +674,7 @@ sub merge {
 	    $row->rank($rank);
 	    $row->subject_id($self->get_stock_id());
 	    $row->update();
+	    print STDERR "Moving subject relationships from stock $other_stock_id to stock ".$self->get_stock_id()."\n";
 	    $subject_rel_count++;
 	}
     }
@@ -680,12 +689,13 @@ sub merge {
 	    my $rank_rs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $self->get_stock_id(), type_id => $row->type_id() });
 	    my $rank = 0;
 	    if ($rank_rs->count() > 0) { 
-		$rank = $rank_rs->rank()->max();
+		$rank = $rank_rs->get_column("rank")->max();
 	    }
 	    $rank++;
 	    $row->rank($rank);
 	    $row->object_id($self->get_stock_id());
 	    $row->update();
+	    print STDERR "Moving object relationships from stock $other_stock_id to stock ".$self->get_stock_id()."\n";
 	    $object_rel_count++;
 	}
     }
@@ -696,6 +706,7 @@ sub merge {
     while (my $row = $esrs->next()) { 
 	$row->stock_id($self->get_stock_id());
 	$row->update();
+	print STDERR "Moving experiments for stock $other_stock_id to stock ".$self->get_stock_id()."\n";
 	$experiment_stock_count++;
     }
 	
@@ -705,7 +716,12 @@ sub merge {
 
     # move stock_dbxref
     #
-
+    my $sdrs = $schema->resultset("Stock::StockDbxref")->search( { stock_id => $other_stock_id });
+    while (my $row = $sdrs->next()) { 
+	$row->stock_id($self->get_stock_id());
+	$row->update();
+	$stock_dbxref_count++;
+    }
 
     # move sgn.pcr_exp_accession relationships
     #
@@ -715,20 +731,28 @@ sub merge {
     #
 
 
-    # move phenome.stock_allele relationships
-    #
-
 
     # move stock_genotype relationships
     #
 
 
-    # move image relationships
-    #
     my $phenome_schema = CXGN::Phenome::Schema->connect( 
-	sub { $self->get_schema->storage->dbh() },
+	sub { $self->get_schema->storage->dbh() }, { on_connect_do => [ 'SET search_path TO phenome, public, sgn'] }
 	);
 
+    # move phenome.stock_allele relationships
+    #
+    my $sars = $phenome_schema->resultset("StockAllele")->search( { stock_id => $other_stock_id });
+    while (my $row = $sars->next()) { 
+	$row->stock_id($self->get_stock_id());
+	$row->udate();
+	print STDERR "Moving stock alleles from stock $other_stock_id to stock ".$self->get_stock_id()."\n";
+	$stock_allele_count++;
+    }
+    
+# move image relationships
+    #
+    
     my $irs = $phenome_schema->resultset("StockImage")->search( { stock_id => $other_stock_id });
     while (my $row = $irs->next()) { 
 
@@ -736,9 +760,11 @@ sub merge {
 	if ($this_rs->count() == 0) { 
 	    $row->stock_id($self->get_stock_id());
 	    $row->update();
+	    print STDERR "Moving image ".$row->image_id()." from stock $other_stock_id to stock ".$self->get_stock_id()."\n";
 	    $image_count++;
 	}
 	else { 
+	    print STDERR "Removing stock_image entry...\n";
 	    $row->delete(); # there is no cascade delete on image relationships, so we need to remove dangling relationships.
 	}
     }
@@ -756,6 +782,7 @@ sub merge {
 	    $stock_owner_count++;
 	}
 	else { 
+	    print STDERR "(Deleting stock owner entry for stock $other_stock_id, owner ".$row->sp_person_id()."\n";
 	    $row->delete(); # see comment for move image relationships
 	}
     }
@@ -770,6 +797,7 @@ sub merge {
     while (my $row = $mrs1->next()) { 
 	$row->parent_1($self->get_stock_id());
 	$row->update();
+	print STDERR "Move map parent_1 $other_stock_id to ".$self->get_stock_id()."\n";
 	$parent_1_count++;
     }
 
@@ -777,10 +805,24 @@ sub merge {
     while (my $row = $mrs2->next()) { 
 	$row->parent_2($self->get_stock_id());
 	$row->update();
+	print STDERR "Move map parent_2 $other_stock_id to ".$self->get_stock_id()."\n";
 	$parent_2_count++;
     }
 
-	
+    print STDERR "Done with merge of stock_id $other_stock_id into ".$self->get_stock_id()."\n";
+    print STDERR "Relationships moved: \n";
+    print STDERR <<COUNTS;
+    Stock props: $stockprop_count
+    Subject rels: $subject_rel_count
+    Object rels: $object_rel_count
+    Alleles: $stock_allele_count
+    Images: $image_count
+    Experiments: $experiment_stock_count
+    Dbxrefs: $stock_dbxref_count
+    Stock owners: $stock_owner_count
+    Map parents: $parent_1_count
+    Map parents: $parent_2_count
+COUNTS
 
 }
 
