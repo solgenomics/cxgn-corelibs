@@ -611,12 +611,17 @@ sub get_recursive_parents {
 
     print STDERR Dumper($data);
 
+    my $stock_row = $self->get_schema()->resultset("Stock::Stock")->find({ stock_id => $stock_id });
+    my $stock_name = "";
+    if($stock_row) { 
+	$stock_name = $stock_row->uniquename();
+    }
+
     my $max_level = $data->{max_level} || 1;
-    
+
     if ($data->{current_level} > $max_level) { 
 	return;
     }
-
     
     my @parents = $self->get_direct_parents($stock_id);
 
@@ -624,13 +629,11 @@ sub get_recursive_parents {
 
     foreach my $p (@parents) { 
 	print STDERR "Parent for $stock_id is $p->[0], $p->[1] ...\n";
-	$self->get_recursive_parents($p->[0], $data);
+	my ($parent_id, $parent_name, $relationship) = @$p;
+	$self->get_recursive_parents($parent_id, $data);
+	$data->{pedigree}->{$stock_name}->{$parent_name};
     }		
     
-    $data->{pedigree}->{$data->{root_stock_name}} =  \@parents ;
-    #$data->{pedigree}->{$parents[0][1]} = [];
-    #$data->{pedigree}->{$parents[0][1]} = [];
-
     $data->{current_level}++;
 
 }
@@ -657,9 +660,11 @@ sub get_parents_string {
     my $pedigree = $self->get_parents($max_level);
 
     my $s = "";
-    foreach my $k (keys %$pedigree) { 
-	$s .= join "/", map { $_->[1] } @{$pedigree->{$k}};
-    }
+
+    print STDERR "PEDIGREE OF ".$self->get_uniquename()." ".Dumper($pedigree);
+    # foreach my $k (keys %$pedigree) { 
+    # 	$s .= join "/", map { $_->[1] } @{$pedigree->{$k}};
+    # }
     return $s;
 }
 
