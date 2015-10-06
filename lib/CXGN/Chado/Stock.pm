@@ -41,8 +41,8 @@ sub new {
     my $class = shift;
     my $schema = shift;
     my $id = shift;
-
-     ### First, bless the class to create the object and set the schema into the object.
+    
+    ### First, bless the class to create the object and set the schema into the object.
     #my $self = $class->SUPER::new($schema);
     my $self = bless {}, $class;
     $self->set_schema($schema);
@@ -217,10 +217,7 @@ sub get_type {
 	return  $bcs_stock->type;
     }
     return undef;
-
 }
-
-
 
 sub get_object_row {
     my $self = shift;
@@ -631,7 +628,7 @@ sub get_recursive_parents {
 	print STDERR "Parent for $stock_id is $p->[0], $p->[1] ...\n";
 	my ($parent_id, $parent_name, $relationship) = @$p;
 	$self->get_recursive_parents($parent_id, $data);
-	$data->{pedigree}->{$stock_name}->{$parent_name};
+	$data->{pedigree}->{$stock_name} = { $relationship => $parent_name}
     }		
     
     $data->{current_level}++;
@@ -650,6 +647,12 @@ sub get_parents {
     };
     $self->get_recursive_parents($self->get_stock_id, $data);
 	
+    my $pedigree_info = $data->{pedigree};
+    
+    foreach my $i (keys($pedigree_info)) { 
+	
+    }
+
     return $data->{pedigree};
 }
 
@@ -689,9 +692,22 @@ sub _new_metadata_id {
     return $metadata_id;
 }
 
+=head2 merge
+
+ Usage:         $s->merge(221, 1);
+ Desc:          merges stock $s with stock_id 221. Optional delete boolean
+                parameter indicates whether other stock should be deleted.
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
 sub merge { 
     my $self = shift;
     my $other_stock_id = shift;
+    my $delete_other_stock = shift;  
 
     if ($other_stock_id == $self->get_stock_id()) { 
 	print STDERR "Trying to merge stock into itself ($other_stock_id) Skipping...\n";
@@ -709,6 +725,7 @@ sub merge {
     my $stock_owner_count;
     my $parent_1_count;
     my $parent_2_count;
+    my $other_stock_deleted = 'NO';
 
     my $schema = $self->get_schema();
 
@@ -902,6 +919,13 @@ sub merge {
 	$parent_2_count++;
     }
 
+    if ($delete_other_stock) { 
+	my $row = $self->get_schema->resultset("Stock::Stock")->find( { stock_id => $other_stock_id });
+	$row->delete();
+	$other_stock_deleted = 'YES';
+    }
+
+
     print STDERR "Done with merge of stock_id $other_stock_id into ".$self->get_stock_id()."\n";
     print STDERR "Relationships moved: \n";
     print STDERR <<COUNTS;
@@ -915,6 +939,7 @@ sub merge {
     Stock owners: $stock_owner_count
     Map parents: $parent_1_count
     Map parents: $parent_2_count
+    Other stock deleted: $other_stock_deleted.
 COUNTS
 
 }
