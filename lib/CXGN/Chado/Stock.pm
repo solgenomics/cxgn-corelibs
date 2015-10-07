@@ -606,16 +606,16 @@ sub merge {
     }
 
 
-    my $stockprop_count;
-    my $subject_rel_count;
-    my $object_rel_count;
-    my $stock_allele_count;
-    my $image_count;
-    my $experiment_stock_count;
-    my $stock_dbxref_count;
-    my $stock_owner_count;
-    my $parent_1_count;
-    my $parent_2_count;
+    my $stockprop_count=0;
+    my $subject_rel_count=0;
+    my $object_rel_count=0;
+    my $stock_allele_count=0;
+    my $image_count=0;
+    my $experiment_stock_count=0;
+    my $stock_dbxref_count=0;
+    my $stock_owner_count=0;
+    my $parent_1_count=0;
+    my $parent_2_count=0;
 
     my $schema = $self->get_schema();
 
@@ -641,7 +641,7 @@ sub merge {
 	    
 	    my $rank;
 	    if ($rank_rs->count() > 0) { 
-		$rank = $rank_rs->rank->max();
+		$rank = $rank_rs->get_column("rank")->max();
 	    }
 	    
 	    $rank++; 
@@ -668,7 +668,7 @@ sub merge {
 	    my $rank_rs = $schema->resultset("Stock::StockRelationship")->search( { subject_id => $self->get_stock_id(), type_id => $row->type_id() });
 	    my $rank = 0;
 	    if ($rank_rs->count() > 0) { 
-		$rank = $rank_rs->rank()->max();
+		$rank = $rank_rs->get_column("rank")->max();
 	    }
 	    $rank++;
 	    $row->rank($rank);
@@ -737,7 +737,7 @@ sub merge {
 
 
     my $phenome_schema = CXGN::Phenome::Schema->connect( 
-	sub { $self->get_schema->storage->dbh() }, { on_connect_do => [ 'SET search_path TO phenome, public, sgn'] }
+	sub { $self->get_schema->storage->dbh() }, { on_connect_do => [ 'SET search_path TO phenome, public, sgn'], limit_dialect => 'LimitOffset' }
 	);
 
     # move phenome.stock_allele relationships
@@ -790,7 +790,7 @@ sub merge {
     # move map parents
     #
     my $sgn_schema = SGN::Schema->connect( 
-	sub { $self->get_schema->storage->dbh() },
+	sub { $self->get_schema->storage->dbh() }, { limit_dialect => 'LimitOffset' }
 	);
 
     my $mrs1 = $sgn_schema->resultset("Map")->search( { parent_1 => $other_stock_id });
