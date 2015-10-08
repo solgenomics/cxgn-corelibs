@@ -649,7 +649,7 @@ sub get_parents {
 	
     my $pedigree_info = $data->{pedigree};
     
-    foreach my $i (keys($pedigree_info)) { 
+    foreach my $i (keys(%$pedigree_info)) { 
 	
     }
 
