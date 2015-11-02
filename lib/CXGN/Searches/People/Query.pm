@@ -250,6 +250,71 @@ sub to_html
 	return <<EOHTML;
 This page allows you to search a user-managed database of researchers interested in Solanaceae biology. You can add yourself using the add/modify link below. Please search the database before adding your information, because you may already be in the database.
 <br /><br />
+
+<div class="row" >
+  <div class="col-sm-1">
+  </div>
+  <div class="col-sm-10 well">
+    <a href="/solpeople/login.pl">[Add/modify your information]</a>
+    <br /><br />
+    <b>Search criteria</b>
+    <br /><br />
+
+    <div class="form-horizontal">
+      <div class="form-group">
+        <label class="col-sm-3 control-label">First Name: </label>
+        <div class="col-sm-9" >
+          <input type="text" class="form-control" name="$first_name" value="$scalars{first_name}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Last Name: </label>
+        <div class="col-sm-9" >
+          <input type="text" class="form-control" name="$last_name" value="$scalars{last_name}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Organization: </label>
+        <div class="col-sm-9" >
+          <input type="text" class="form-control" name="$organization" value="$scalars{organization}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Interests: </label>
+        <div class="col-sm-9" >
+          <input type="text" class="form-control" name="$research_interests" value="$scalars{research_interests}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Keywords: </label>
+        <div class="col-sm-9" >
+          <input type="text" class="form-control" name="$research_keywords" value="$scalars{research_keywords}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label">Sort Results By: </label>
+        <div class="col-sm-9" >
+          <select class="form-control" name="$sortby">
+	    <option value="last_name" $selected{last_name}>last name</option>
+	    <option value="organization" $selected{organization}>organization</option>
+	    <option value="country" $selected{country}>country</option>
+	  </select>
+        </div>
+      </div>
+
+        <input class="btn btn-default" type="reset" value="Reset" />&nbsp; &nbsp; &nbsp;<input class="btn btn-primary" type="submit" value="Search" />
+ 
+    </div>
+   </div>
+
+
+    </div>
+  </div>
+  <div class="col-sm-1">
+  </div>
+</div>
+
+<!--
 <table width="600" border="0">
 	<tr>
 		<td>
@@ -298,6 +363,8 @@ This page allows you to search a user-managed database of researchers interested
 		</td>
 	</tr>
 </table>
+-->
+
 <br /><br />
 EOHTML
 }

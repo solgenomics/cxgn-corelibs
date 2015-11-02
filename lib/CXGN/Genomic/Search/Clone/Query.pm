@@ -506,28 +506,28 @@ EOSQL
   no warnings 'uninitialized';
   my $advanced_search =
     html_optional_show('advanced_search',
-		       'More criteria',
+		       'More Criteria',
 		       qq|<div class="minorbox">\n|
 		       .qq|<table width="100%"><tr><td>|
 		       .info_table_html(
-					'Seq. center reported status' => $seqstatus_html,
-					'Estimated length' => $estlen_input,
-					'GenBank accession (version insensitive)' =>
-					qq|<input type="text" name="$pname{genbank_accession}" value="$webvalue{genbank_accession}" size="15" />|
+					'Seq. Center Reported Status' => $seqstatus_html,
+					'Estimated Length' => $estlen_input,
+					'GenBank Accession (version insensitive)' =>
+					qq|<input class="form-control" type="text" name="$pname{genbank_accession}" value="$webvalue{genbank_accession}" size="15" />|
 					.qq| <span class="ghosted">e.g. AP009318.1 or AP009318</span>|,
 					__border => 0,
 				       )
 		       .qq|</td><td>|
 		       .info_table_html(
 					'Sequencing on Chromosome' => $chromonum_input,
-					'Show only clones with' => <<EOH,
-      <input type="checkbox" id="has_bad_clone_check" name="$pname{has_bad_clone}" $scalars{has_bad_clone} /><label for="has_bad_clone_check">known contamination</label><br />
-      <input type="checkbox" id="has_endseq_check" name="$pname{has_endseq}" $scalars{has_endseq} /><label for="has_bad_clone_check">end sequence(s)</label> <br />
-      <input type="checkbox" id="has_overgo_check" name="$pname{has_overgo}" $scalars{has_overgo} /><label for="has_overgo_check">overgo probe matches to markers</label> <br />
-      <input type="checkbox" id="has_comp_markers_check" name="$pname{has_comp_markers}" $scalars{has_comp_markers} /><label for="has_comp_markers_check">computational matches to markers</label> <br />
-      <input type="checkbox" id="has_manual_markers_check" name="$pname{has_manual_markers}" $scalars{has_manual_markers} /><label for="has_manual_markers_check">manual matches to markers</label> <br />
-      <input type="checkbox" id="has_gbrowse_check" name="$pname{has_gbrowse}" $scalars{has_gbrowse} /><label for="has_gbrowse_check">full sequence available</label> <br />
-      <input type="checkbox" id="has_fish_check" name="$pname{has_fish}" $scalars{has_fish} /><label for="has_fish_check">FISH results available</label><br />
+					'Show Only Clones With' => <<EOH,
+      <input type="checkbox" id="has_bad_clone_check" name="$pname{has_bad_clone}" $scalars{has_bad_clone} /><label for="has_bad_clone_check">&nbsp;&nbsp;Known contamination</label><br />
+      <input type="checkbox" id="has_endseq_check" name="$pname{has_endseq}" $scalars{has_endseq} /><label for="has_bad_clone_check">&nbsp;&nbsp;End sequence(s)</label> <br />
+      <input type="checkbox" id="has_overgo_check" name="$pname{has_overgo}" $scalars{has_overgo} /><label for="has_overgo_check">&nbsp;&nbsp;Overgo probe matches to markers</label> <br />
+      <input type="checkbox" id="has_comp_markers_check" name="$pname{has_comp_markers}" $scalars{has_comp_markers} /><label for="has_comp_markers_check">&nbsp;&nbsp;Computational matches to markers</label> <br />
+      <input type="checkbox" id="has_manual_markers_check" name="$pname{has_manual_markers}" $scalars{has_manual_markers} /><label for="has_manual_markers_check">&nbsp;&nbsp;Manual matches to markers</label> <br />
+      <input type="checkbox" id="has_gbrowse_check" name="$pname{has_gbrowse}" $scalars{has_gbrowse} /><label for="has_gbrowse_check">&nbsp;&nbsp;Full sequence available</label> <br />
+      <input type="checkbox" id="has_fish_check" name="$pname{has_fish}" $scalars{has_fish} /><label for="has_fish_check">&nbsp;&nbsp;FISH results available</label><br />
 EOH
 #currently disabled because of instability - searches for terms that match 
 #a lot of things can take basically forever
@@ -540,7 +540,7 @@ EOH
 # 							'Full Sequence (via Gbrowse)' =>
 # 							 qq|<input name="$pname{full_annotation}" value="$scalars{full_annotation}" size="30" /><br /><span class="ghosted">e.g.'E231589'</span>|,
 							 'End Sequences' =>
-							 qq|<input type="text" name="$pname{end_annotation}" value="$scalars{end_annotation}" size="30" /><br /><span class="ghosted">e.g. crystallin</span>|,
+							 qq|<input class="form-control" type="text" name="$pname{end_annotation}" value="$scalars{end_annotation}" size="30" /><br /><span class="ghosted">e.g. crystallin</span>|,
 							 __border     => 0,
 							 __sub        => 1,
 							 __multicol   => 2,
@@ -581,7 +581,7 @@ EOH
 							 __multicol   => 2,
 							 __sub        => 1,
 						       ),
-					'Verification' => qq|<input type="checkbox" id="ver_int_read_check" name="$pname{ver_int_read}" $scalars{ver_int_read} /><label for="ver_int_read_check">verified with internal read resequencing</label><br /><input type="checkbox" id="ver_bac_end_check" name="$pname{ver_bac_end}" $scalars{ver_bac_end} /><label for="ver_bac_end_check">verified by bac end resequencing</label>|,
+					'Verification' => qq|<input type="checkbox" id="ver_int_read_check" name="$pname{ver_int_read}" $scalars{ver_int_read} /><label for="ver_int_read_check">&nbsp;&nbsp;Verified with internal read resequencing</label><br /><input type="checkbox" id="ver_bac_end_check" name="$pname{ver_bac_end}" $scalars{ver_bac_end} /><label for="ver_bac_end_check">&nbsp;&nbsp;Verified by bac end resequencing</label>|,
 					__border     => 0,
 					__multicol   => 2,
 					__tableattrs => 'width="100%"',
@@ -590,10 +590,33 @@ EOH
 		       ,$show_advanced_search);
   my $rethtml = <<EOHTML;
      <input type="hidden" name="$pname{page}" value="0" />
-     <div align="center" style="margin-bottom: 2em">
-       <label style="font-weight: bold" for="bacsearchnameinput">Name contains</label> <span style="position: relative"><span style="position: absolute; left: 0.2em; top: 2em; font-size: 80%; white-space: nowrap; text-align: left; color: gray; width: 300px">full names, partial names, or lists of both</span><input id="bacsearchnameinput" type="text" size="50" name="$pname{id}" value="$webvalue{id}" /><input type="submit" value="Search" />
-</span>
+
+     <div class="row">
+       <div class="col-sm-2">
+       </div>
+       <div class="col-sm-8">
+         <div class="form-horizontal" >
+           <div class="form-group">
+             <label class="col-sm-3 control-label">Name contains: </label>
+      	     <div class="col-sm-9">
+	       <div class="row">
+	         <div class="col-sm-10">
+	           <input class="form-control" id="bacsearchnameinput" type="text" name="$pname{id}" value="$webvalue{id}" />
+	           <br/>
+	           <span style="left: 0.2em; top: 2em; font-size: 80%; white-space: nowrap; text-align: left; color: gray;">full names, partial names, or lists of both</span>
+	         </div>
+	         <div class="col-sm-2">
+	           <input class="btn btn-primary" type="submit" value="Search" />
+	         </div>
+	       </div>
+	     </div>
+           </div>
+         </div>
+       </div>
+       <div class="col-sm-2">
+       </div>
      </div>
+
        $advanced_search
 <script language="JavaScript" type="text/javascript">
 <!--

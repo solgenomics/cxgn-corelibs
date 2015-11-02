@@ -299,11 +299,109 @@ sub to_html
 	return <<EOHTML;
 This page allows you to search unigene families based on family parameters, including size, clustering strictness, and annotation.
 <br /><br />
+
+<!--
 <table width="600" border="0">
 	<tr>
-		<td>
+		<td>-->
 			<b>Criteria</b>
 			<br /><br />
+
+			<div class="form-horizontal">
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">Annotation Text: </label>
+			    <div class="col-sm-9">
+			      <input class="form-control" type="text" name="$family_annotation" value="$scalars{family_annotation}" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">Family Number: </label>
+			    <div class="col-sm-9">
+			      <input class="form-control" type="text" name="$family_nr" value="$scalars{family_nr}" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">Family ID: </label>
+			    <div class="col-sm-9">
+			      <input class="form-control" type="text" name="$family_id" value="$scalars{family_id}" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">Build Number: </label>
+			    <div class="col-sm-9">
+			      <input class="form-control" type="text" name="$build_nr" value="$scalars{build_nr}" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">Unigene ID: </label>
+			    <div class="col-sm-9">
+			      <input class="form-control" type="text" name="$unigene_id" value="$scalars{unigene_id}" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">I-Value: </label>
+			    <div class="col-sm-9">
+			      <select name="$status" class="form-control">
+					<option value="C" $status_selected{C}>Current</option>
+					<option value="D" $status_selected{D}>Old</option>
+					<option value="E" $status_selected{either}>Either</option>
+			       </select>
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">Unigene ID: </label>
+			    <div class="col-sm-9">
+			      <select name="$i_value" class="form-control">
+					<option value="">Select I-Value</option>
+					<option value="1.1" $ivalue_selected{1.1}>1.1</option>
+					<option value="2" $ivalue_selected{2}>2</option>
+					<option value="5" $ivalue_selected{5}>5</option>
+			      </select>
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">Family Size: </label>
+			    <div class="col-sm-9">
+			      <div class="row">
+			        <div class="col-sm-2">
+				  <select name="$mcc" class="form-control">
+					<option value="eq" $mcc_selected{eq}>=</option>
+					<option value="lt" $mcc_selected{lt}>&lt;</option>
+					<option value="gt" $mcc_selected{gt}>&gt;</option>
+				  </select>
+				</div>
+				<div class="col-sm-3">
+				  <input class="form-control" type="text" size="4" name="$member_count" value="$scalars{member_count}" />
+				</div>
+				<div class="col-sm-2">
+				  &nbsp;<b>and</b>&nbsp;
+                                </div>
+				<div class="col-sm-2">
+				  <select name="$mcc2" class="form-control">
+					<option value="eq" $mcc_selected2{eq}>=</option>
+					<option value="lt" $mcc_selected2{lt}>&lt;</option>
+					<option value="gt" $mcc_selected2{gt}>&gt;</option>
+				  </select>
+				</div>
+				<div class="col-sm-3">
+				  <input class="form-control" type="text" size="4" name="$member_count2" value="$scalars{member_count2}" />
+				</div>
+			      </div>
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-3 control-label">Sort Results By: </label>
+			    <div class="col-sm-9">
+			      <select name="$sortby" class="form-control">
+				<option value="family_build_id" $selected{family_build_id}>Family Build</option>
+				<option value="member_count" $selected{member_count}>Family Size</option>
+			      </select>
+			    </div>
+			  </div>
+			  <input class="btn btn-primary" type="submit" value="Search Families" />
+			</div>
+
+			<!--
 			<center>
 			<table border="0">
 				<tr>
@@ -373,9 +471,13 @@ This page allows you to search unigene families based on family parameters, incl
 			<input type="submit" value="Search Families" />
 			</center>
 			<br /><br />
+			
 		</td>
 	</tr>
 </table>
+-->
+
+
 <br /><br />
 EOHTML
 }

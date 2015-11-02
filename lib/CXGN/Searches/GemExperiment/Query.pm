@@ -199,13 +199,32 @@ sub to_html {
 	my $term = $this->uniqify_name('experiment_parameters');
 	
 	return <<EOHTML;
-  <br />
-  Find expression data associated with any expression experiment using experiment name
+     <div class="row">
+       <div class="col-sm-2">
+       </div>
+       <div class="col-sm-8">
+         Find expression data associated with any expression experiment using experiment name
   <br /><br />
-  <table summary="" cellpadding="0" cellspacing="2" border="0" width="65%" align="center">
-     <tr><td>Experiment name</td><td><input type="text" name="$term" size="20" value="$scalars{experiment_parameters}" /></td>
-	 <td><input type="submit" value="Search" /></td></tr>
-  </table>
+         <div class="form-horizontal" >
+           <div class="form-group">
+             <label class="col-sm-3 control-label">Experiment Name: </label>
+      	     <div class="col-sm-9">
+	       <div class="row">
+	         <div class="col-sm-10">
+	           <input class="form-control" type="text" name="$term" size="20" value="$scalars{experiment_parameters}" />
+	         </div>
+	         <div class="col-sm-2">
+	           <input class="btn btn-primary" type="submit" value="Search" />
+	         </div>
+	       </div>
+	     </div>
+           </div>
+         </div>
+       </div>
+       <div class="col-sm-2">
+       </div>
+     </div>
+
 EOHTML
 }
 

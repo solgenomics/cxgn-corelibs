@@ -229,18 +229,18 @@ sub to_html {
 
   no warnings 'uninitialized';
   my $table1 = info_table_html( 'Unigene Identifier'      =>
-				qq|<table><tr><td><input type="text" value="$webvalue{sequence_name}" name="$pnames{sequence_name}" size="18" /></td><td style="color: gray">SGN-U1234<br />or CGN-U124510</td></tr></table>|,
-				'Includes member'  =>
-				qq!<table><tr><td><input type="text" value="$webvalue{clone_name}" name="$pnames{clone_name}" size="18" /></td><td style="color: gray">cLED-10-L1<br />or SGN-E231384<br />or GI:399643<br />or gi|399643|L24060.1|<br />or L24060</td></tr></table>!,
-				'Annotation text contains'   => <<EOHTML,
-  <input value="$scalars{annotation}" type="text" size="45" name="$pnames{annotation}" /><br />
+				qq|<input class="form-control input-sm" type="text" value="$webvalue{sequence_name}" name="$pnames{sequence_name}" /><p style="color:gray">SGN-U1234 or CGN-U124510</p>|,
+				'Includes Member'  =>
+				qq!<input class="form-control input-sm" type="text" value="$webvalue{clone_name}" name="$pnames{clone_name}" size="18" /><p style="color:gray">cLED-10-L1 or SGN-E231384 or GI:399643 or gi|399643|L24060.1| or L24060</p>!,
+				'Annotation Text Contains'   => <<EOHTML,
+  <input class="form-control input-sm" value="$scalars{annotation}" type="text" size="45" name="$pnames{annotation}" /><br />
   <table cellpadding="0" cellspacing="0" summary="">
-    <tr><td><input type="radio" name="$pnames{annot_type}" value="blast" $blast_checked/>Automatic&nbsp;(BLAST)</td>
-        <td><input type="radio" name="$pnames{annot_type}" value="manual" $manual_checked/>Manual</td>
-        <td><input type="radio" name="$pnames{annot_type}" value="interpro" $interpro_checked/>Interpro</td>
+    <tr><td style="padding:5px 15px;"><input type="radio" name="$pnames{annot_type}" value="blast" $blast_checked/>Automatic&nbsp;(BLAST)</td>
+        <td style="padding:5px 15px;"><input type="radio" name="$pnames{annot_type}" value="manual" $manual_checked/>Manual</td>
+        <td style="padding:5px 15px;"><input type="radio" name="$pnames{annot_type}" value="interpro" $interpro_checked/>Interpro</td>
     </tr>
-    <tr><td><input type="radio" name="$pnames{annot_type}" value="domain" $domain_checked/>Protein&nbsp;Domain</td>
-        <td colspan="2"><input type="radio" name="$pnames{annot_type}" value="go" $go_checked/>Gene&nbsp;Ontology</td>
+    <tr><td style="padding:5px 15px;"><input type="radio" name="$pnames{annot_type}" value="domain" $domain_checked/>Protein&nbsp;Domain</td>
+        <td style="padding:5px 15px;" colspan="2"><input type="radio" name="$pnames{annot_type}" value="go" $go_checked/>Gene&nbsp;Ontology</td>
     </tr>
   </table>
 EOHTML
@@ -249,13 +249,13 @@ EOHTML
 				__tableattrs => 'width="100%"',
 				__border        => 0,
 				'&nbsp;'      => '',
-				'Number of members' =>
+				'Number of Members' =>
 				numerical_range_input_html( compare => [$pnames{membersrange}, $scalars{membersrange} ],
 							    value1  => [$pnames{members1},     commify_number($scalars{members1}) ],
 							    value2  => [$pnames{members2},     commify_number($scalars{members2}) ],
 							    units   => '',
 							  ),
-				Length              =>
+				'Length'              =>
 				numerical_range_input_html( compare => [$pnames{lenrange}, $scalars{lenrange} ],
 							    value1  => [$pnames{len1},     commify_number($scalars{len1}) ],
 							    value2  => [$pnames{len2},     commify_number($scalars{len2}) ],
@@ -272,7 +272,7 @@ EOHTML
 							  name     => $pnames{unigene_build_id},
 							  selected => $scalars{unigene_build_id},
 							),
-				   '&nbsp;'        => qq|<input type="submit" value="Search" />|,
+				   '&nbsp;'        => qq|<input class="btn btn-primary" type="submit" value="Search" />|,
 				   __multicol      => 2,
  				   __border        => 0,
 				   __tableattrs    => 'width="100%"',

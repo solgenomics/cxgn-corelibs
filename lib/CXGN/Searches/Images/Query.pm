@@ -272,38 +272,49 @@ sub to_html {
 	my $submitter= $this->uniqify_name('submitter');
 	my %scalars = $this->_to_scalars();
 	return <<EOHTML;
-This page allows you to search images contained in the SGN databases.
-<br />
-All images may not have names or explicit descriptions associated with them.
-<br /><br />
-<table width="600" border="0">
-	<tr>
-		<td>
-			<b>Search criteria</b>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-1">
+    </div>
+    <div class="col-sm-10">
+      This page allows you to search images contained in the SGN databases.
+      <br />
+      All images may not have names or explicit descriptions associated with them.
+      <br /><br />
+      <div class="well">
+			<b>Search Criteria</b>
 			<br /><br />
-			<center>
-			<table border="0">
-			       
-				<tr>
-					<td>Image descriptors (name, description, or filename):</td>
-					<td><input type="text" name="$composite" value="$scalars{description_filename_composite}" /></td>
-				</tr>
-				<tr>
-					<td>Submitter (name or ID):</td>
-					<td><input type="text" name="$submitter" value="$scalars{submitter}" /></td>
-				</tr>
-				<tr>
-					<td>Image tag:</td>
-					<td><input type="text" name="$image_tag" value="$scalars{image_tag}" /></td>
-				</tr>
-			</table>
-			</center>
-			<br /><br />
-			<input type="reset" value="Reset" />
-			&nbsp; &nbsp; &nbsp;<input type="submit" value="Search" />
-		</td>
-	</tr>
-</table>
+
+			<div class="form-horizontal" >
+			  <div class="form-group">
+			    <label class="col-sm-6 control-label">Image descriptors (name, description, or filename): </label>
+			    <div class="col-sm-6" >
+			      <input class="form-control" type="text" name="$composite" value="$scalars{description_filename_composite}" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-6 control-label">Submitter (name or ID): </label>
+			    <div class="col-sm-6" >
+			      <input class="form-control" type="text" name="$submitter" value="$scalars{submitter}" />
+			    </div>
+			  </div>
+			  <div class="form-group">
+			    <label class="col-sm-6 control-label">Image tag: </label>
+			    <div class="col-sm-6" >
+			      <input class="form-control" type="text" name="$image_tag" value="$scalars{image_tag}" />
+			    </div>
+			  </div>
+			</div>
+			<br />
+			<input class="btn btn-default" type="reset" value="Reset" />
+			&nbsp; &nbsp; &nbsp;<input class="btn btn-primary" type="submit" value="Search" />
+      </div>
+    </div>
+    <div class="col-sm-1">
+    </div>
+  </div>
+</div>
 <br /><br />
 EOHTML
 }
