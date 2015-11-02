@@ -23,7 +23,8 @@ use Carp;
 use Data::Dumper;
 use Bio::Chado::Schema;
 use CXGN::Metadata::Schema;
-
+use Bio::GeneticRelationships::Pedigree;
+use Bio::GeneticRelationships::Individual;
 use base qw / CXGN::DB::Object / ;
 
 =head2 new
@@ -574,6 +575,8 @@ sub get_direct_parents {
     my $self = shift;
     my $stock_id = shift || $self->get_stock_id();
     
+    print STDERR "get_direct_parents with $stock_id...\n";
+
     my $female_parent_id;
     my $male_parent_id;
     eval { 
@@ -586,7 +589,8 @@ sub get_direct_parents {
     
     my $rs = $self->get_schema()->resultset("Stock::StockRelationship")->search( { object_id => $stock_id, type_id => { -in => [ $female_parent_id, $male_parent_id ] } });
     my @parents;
-    while (my $row = $rs->next()) { 
+    while (my $row = $rs->next()) {
+	print STDERR "Found parent...\n";
 	my $prs = $self->get_schema()->resultset("Stock::Stock")->find( { stock_id => $row->subject_id() });
 	my $parent_type = "";
 	if ($row->type_id() == $female_parent_id) { 
@@ -597,79 +601,146 @@ sub get_direct_parents {
 	}
 	push @parents, [ $prs->stock_id(), $prs->uniquename(), $parent_type ];
     }
-
+    
     return @parents;
 }
 
 sub get_recursive_parents { 
     my $self = shift;
-    my $stock_id = shift;
-    my $data = shift;
+    my $individual = shift;
+    my $max_level = shift || 1;
+    my $current_level = shift;
 
-    print STDERR Dumper($data);
+    if (!defined($individual)) { return; }
 
-    my $stock_row = $self->get_schema()->resultset("Stock::Stock")->find({ stock_id => $stock_id });
-    my $stock_name = "";
-    if($stock_row) { 
-	$stock_name = $stock_row->uniquename();
-    }
-
-    my $max_level = $data->{max_level} || 1;
-
-    if ($data->{current_level} > $max_level) { 
+    if ($current_level > $max_level) { 
+	print STDERR "Reached level $current_level of $max_level... we are done!\n";
 	return;
     }
     
-    my @parents = $self->get_direct_parents($stock_id);
+    my @parents = $self->get_direct_parents($individual->get_id());
 
     print STDERR Dumper(\@parents);
+    
+    my $pedigree = Bio::GeneticRelationships::Pedigree->new( { name => $individual->get_name()."_pedigree", cross_type=>"unknown"} );
 
     foreach my $p (@parents) { 
-	print STDERR "Parent for $stock_id is $p->[0], $p->[1] ...\n";
 	my ($parent_id, $parent_name, $relationship) = @$p;
-	$self->get_recursive_parents($parent_id, $data);
-	$data->{pedigree}->{$stock_name} = { $relationship => $parent_name}
-    }		
-    
-    $data->{current_level}++;
-
+	
+	my ($female_parent, $male_parent, $attributes);
+	my $parent = Bio::GeneticRelationships::Individual->new( { name => $parent_name, id=> $parent_id });
+	if ($relationship eq "female") { 
+	    $pedigree->set_female_parent($parent);
+	}
+	
+	if ($relationship eq "male") { 
+	    print STDERR "Adding male parent...\n";
+	    $pedigree->set_male_parent($parent);
+	}
+	
+	
+	$self->get_recursive_parents($parent, $max_level, $current_level);
+    }	
+    $individual->set_pedigree($pedigree);
+    $current_level++;    
 }
 
 sub get_parents { 
     my $self = shift;
     my $max_level = shift || 1;
 
-    my $data = { 
-	    root_stock_id => $self->get_stock_id(),
-	    root_stock_name => $self->get_uniquename(),
-	    max_level => $max_level,
-	    current_level => 0,
-    };
-    $self->get_recursive_parents($self->get_stock_id, $data);
-	
-    my $pedigree_info = $data->{pedigree};
+    my $root = Bio::GeneticRelationships::Individual->new( 
+	{ 
+	    name => $self->get_uniquename(),
+	    id => $self->get_stock_id(),
+	});
     
-    foreach my $i (keys($pedigree_info)) { 
-	
-    }
+    $self->get_recursive_parents($root, $max_level, 0);
 
-    return $data->{pedigree};
+    return $root;
 }
 
-sub get_parents_string { 
-    my $self = shift;
-    my $max_level = shift || 1;
+# subsequent 2 calls moved to Bio::GeneticRelationships::Individual
+# sub recursive_parent_levels { 
+#     my $self = shift;
+#     my $individual = shift;
+#     my $max_level = shift;
+#     my $current_level = shift;
+
+#     my @levels;
+#     if ($current_level > $max_level) { 
+# 	print STDERR "Exceeded max_level $max_level, returning.\n";
+# 	return;
+#     }
+
+#     if (!defined($individual)) { 
+# 	print STDERR "no more individuals defined...\n";
+# 	return;
+#     }
+
+#     my $p = $individual->get_pedigree();
+
+#     if (!defined($p->get_female_parent())) { return; }
+
+#     my $cross_type = $p->get_cross_type() || 'unknown';
+
+#     if ($cross_type eq "open") { 
+# 	print STDERR "Open cross type not supported. Skipping.\n";
+# 	return;
+#     }
     
-    my $pedigree = $self->get_parents($max_level);
+#     if (defined($p->get_female_parent()) && defined($p->get_male_parent())) { 
+# 	if ($p->get_female_parent()->get_name() eq $p->get_male_parent->get_name()) { 
+# 	    $cross_type = "self";
+# 	}
+#     }
+    
+#     $levels[0] = { female_parent => $p->get_female_parent()->get_name(), 
+# 		    male_parent =>  $p->get_male_parent()->get_name(),
+# 		    level => $current_level, 
+# 		    cross_type => $cross_type,
+#     };
 
-    my $s = "";
+#     if ($p->get_female_parent()) { 
+# 	my @maternal_levels =  $self->recursive_parent_levels($p->get_female_parent(), $max_level, $current_level+1);
+# 	push @levels, $maternal_levels[0];
+#     }
 
-    print STDERR "PEDIGREE OF ".$self->get_uniquename()." ".Dumper($pedigree);
-    # foreach my $k (keys %$pedigree) { 
-    # 	$s .= join "/", map { $_->[1] } @{$pedigree->{$k}};
-    # }
-    return $s;
-}
+#     if ($p->get_male_parent()) { 
+# 	my @paternal_levels = $self->recursive_parent_levels($p->get_male_parent(), $max_level, $current_level+1);
+# 	push @levels, $paternal_levels[0];
+#     }
+
+#     return @levels;
+# }
+
+    
+# sub get_parents_string { 
+#     my $self = shift;
+#     my $max_level = shift || 1;
+    
+#     my $pedigree_root = $self->get_parents($max_level);
+    
+#     print "getting string for: ".Dumper($pedigree_root);
+    
+#     my @levels = $self->recursive_parent_levels($pedigree_root, $max_level, 0);
+#     my $s = "";
+#     my @s = ();
+#     my $repeat = 0;
+#     for (my $i=0; $i < @levels; $i++) { 
+# 	print STDERR "level $i\n";
+# 	$repeat =  ($levels[$i]->{level});
+# 	if ($levels[$i]->{level} == $max_level) {
+# 	    print STDERR "REPEAT: $repeat\n";
+# 	    push @s, $levels[$i]->{female_parent}.('/' x $repeat).$levels[$i]->{male_parent};
+
+# 	}
+	
+#     }
+#     my $s = join ('/' x ($repeat+1), , @s);
+#     print STDERR "S: $s\n";
+#     return @levels;
+# }
 
 =head2 _new_metadata_id
 
