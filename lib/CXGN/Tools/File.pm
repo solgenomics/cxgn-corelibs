@@ -4,7 +4,7 @@ use warnings;
 use POSIX;
 use Carp;
 
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 
 use CXGN::Tools::Text;
 use HTML::TreeBuilder;
@@ -61,8 +61,7 @@ sub read_commented_file {
 }
 
 #function to get sections of text from a file. sections are separated by single empty lines. used by index.pl.
-sub get_sections
-{
+sub get_sections {
     my($filename,$number_of_sections_to_get)=@_;
     my $content='';
     my $FILE;
@@ -463,7 +462,7 @@ sub size_changing {
 
 sub is_filehandle {
   my ($thing) = @_;
-  return isa($thing,'IO::Handle') || isa($thing,'Apache::Upload') || ref($thing) eq 'GLOB';
+  return ref($thing) eq 'IO::Handle' || ref($thing) eq 'Apache::Upload' || ref($thing) eq 'GLOB';
 }
 
 

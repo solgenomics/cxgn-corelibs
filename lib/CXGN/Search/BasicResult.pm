@@ -1,7 +1,7 @@
 package CXGN::Search::BasicResult;
 use strict;
 use Carp;
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 use base qw/CXGN::Search::ResultI/;
 
 =head1 NAME
@@ -145,20 +145,20 @@ sub autopage {
   my ($this,$query,$search) = @_;
 
   if($query || $search) {     #IF SETTING
-    isa($query,'CXGN::Search::QueryI')
+      $query->isa('CXGN::Search::QueryI')
 	or croak "Passed query must be a subclass of CXGN::Search::QueryI (you passed a '".ref($query)."')";
-    isa($search,'CXGN::Search::SearchI')
+    $search->isa('CXGN::Search::SearchI')
 	or croak "Passed search must be a subclass of CXGN::Search::SearchI (you passed a '".ref($search)."')";
     return (@{$this->{_autopage}}{qw/query search/} = ($query,$search));
 
 
   } else {     #IF GETTING
     if(exists($this->{_autopage}->{query})) {
-      isa($this->{_autopage}->{query},'CXGN::Search::QueryI')
+      $this->{_autopage}->{query}->isa('CXGN::Search::QueryI')
 	  or die "Internally stored autopage query is not a CXGN::Search::QueryI (it is a a '".ref($query)."')";
     }
     if(exists($this->{_autopage}->{search})) {
-      isa($this->{_autopage}->{search},'CXGN::Search::SearchI')
+      $this->{_autopage}->{search}->isa('CXGN::Search::SearchI')
 	  or die "Internally stored autopage search is not a CXGN::Search::SearchI (it is a a '".ref($search)."')";
     }
     return @{$this->{_autopage}}{qw/query search/};

@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 no strict 'refs';
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 
 BEGIN {
   our %tests = ( clone_name_with_chromosome => [
@@ -132,7 +132,7 @@ use Test::More qw/no_plan/;
 use_ok('CXGN::Genomic::CloneNameParser');
 
 my $parser = CXGN::Genomic::CloneNameParser->new;
-ok(isa($parser,'CXGN::Genomic::CloneNameParser'),'CloneNameParser constructor works');
+isa_ok($parser,'CXGN::Genomic::CloneNameParser' ,'CloneNameParser constructor works');
 
 #test each clone name parser function jimmy
 foreach my $funcname (keys our %tests) {

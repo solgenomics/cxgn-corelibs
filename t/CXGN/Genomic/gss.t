@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 
 
 use CXGN::CDBI::Class::DBI::TestSampler;
@@ -23,7 +23,7 @@ sub test {
 
   ###test that we can retrieve it
   my $gss = $config{packagename}->retrieve($id);
-  ok( isa( $gss, $config{packagename} ) );
+  isa_ok( $gss, $config{packagename} );
 
   ### check basic data integrity
   my @fields = qw/ status flags seq qual call_positions version chromat_id gss_id /;
@@ -40,15 +40,15 @@ EOSQL
   }
 
   ###test chromat_id
-  ok( isa($gss->chromat_id, 'CXGN::Genomic::Chromat') );
-  ok( isa($gss->chromat_object, 'CXGN::Genomic::Chromat') );
+  isa_ok($gss->chromat_id, 'CXGN::Genomic::Chromat' );
+  isa_ok($gss->chromat_object, 'CXGN::Genomic::Chromat' );
   ok( $gss->chromat_object->chromat_id == $gss->chromat_id->chromat_id );
   ok( $gss->chromat_object->chromat_id == $gss2->{chromat_id} );
 
   ###test gss_submitted_to_genbank
   my ($good1,$good2) = (1,1);
   foreach my $sub ($gss->gss_submitted_to_genbank_objects) {
-    $good1 &&= isa($sub,'CXGN::Genomic::GSSSubmittedToGenbank')
+    $good1 &&= ref($sub) eq 'CXGN::Genomic::GSSSubmittedToGenbank'
       or diag 'improper type for gss_submitted_to_genbank object';
     $good2 &&= ($sub->gss_id == $gss->gss_id)
       or diag $sub->gss_id.'!='.$gss->gss_id;

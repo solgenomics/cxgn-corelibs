@@ -117,7 +117,7 @@ use strict;
 use warnings;
 use English;
 use Carp;
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 
 use Data::Dumper;
 
@@ -723,7 +723,7 @@ sub _now_string {
 #otherwise, make a new publish object and prepend it to the arguments.
 #return the new list of arguments
 sub _objectify {
-  if(ref($_[0]) && isa($_[0],'CXGN::Publish')) {
+  if(ref($_[0]) && (ref($_[0]) eq 'CXGN::Publish')) {
 #    warn "$_[0] isa.\n";
     return @_;
   } else {

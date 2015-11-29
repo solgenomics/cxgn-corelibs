@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 
 use CXGN::CDBI::Class::DBI::TestSampler;
 
@@ -54,7 +54,7 @@ sub test {
   #for each of the blast db accessors
   foreach my $methodname (qw/annotation_blast_dbs contamination_blast_dbs all_blast_dbs/) {
     no strict 'refs'; #these are symbolic refs
-    is(scalar(grep {! isa($_,'CXGN::BlastDB')} $lib->$methodname),0,'all blastdb objects are ok');
+    is(scalar(grep {! ref($_) eq 'CXGN::BlastDB'} $lib->$methodname),0,'all blastdb objects are ok');
   }
 
   #clone_count

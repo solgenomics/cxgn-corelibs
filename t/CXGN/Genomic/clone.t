@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 
 use Bio::SeqUtils;
 
@@ -56,10 +56,10 @@ sub test_random_clone {
   ok($clone->clone_name_with_chromosome || 'does not die','clone_name_with_chromosome method does not die');
 
   #check has_a relations
-  ok( isa($clone->library_id,'CXGN::Genomic::Library') );
-  ok( isa($clone->clone_type_id,'CXGN::Genomic::CloneType') );
+  isa_ok($clone->library_id,'CXGN::Genomic::Library');
+  isa_ok($clone->clone_type_id,'CXGN::Genomic::CloneType');
   #check has_many relations
-  my $bad_chromats = grep {! isa($_,'CXGN::Genomic::Chromat')} $clone->chromat_objects;
+  my $bad_chromats = grep {! ref($_) eq 'CXGN::Genomic::Chromat'} $clone->chromat_objects;
   ok($bad_chromats == 0);
 
   #cursory checks of sql

@@ -4,7 +4,7 @@ use strict;
 use POSIX;
 use CXGN::Tools::List qw/distinct/;
 use CXGN::Page::FormattingHelpers qw/commify_number simple_selectbox_html/;
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 use Carp;
 
 use base qw/ CXGN::Search::WWWSearchI /;
@@ -50,9 +50,9 @@ sub pagination_buttons_html {
   my ($this,$query,$result,$linkpage) = @_;
   $linkpage ||= ''; #a blank link page is OK, will go to current page
 
-  isa($this,__PACKAGE__)
-    and isa($query,'CXGN::Search::WWWQuery')
-      and isa($result,'CXGN::Search::ResultI')
+  $this->isa( __PACKAGE__ )
+    and $query->isa('CXGN::Search::WWWQuery')
+      and $result->isa('CXGN::Search::ResultI')
 	or croak "arguments to pagination_buttons_html must be the query object, then the result object, then an optional page URI to link to";
 
   my $pagesize = $this->page_size; #number of results in a page
