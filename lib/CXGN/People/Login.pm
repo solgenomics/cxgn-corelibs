@@ -524,10 +524,10 @@ sub get_first_name {
     return $self->{first_name};
 }
 
-=head2 get_first_name
+=head2 get_last_name
 
  Usage:
- Desc:         returns the user's first name.
+ Desc:         returns the user's last name.
  Ret:
  Args:
  Side Effects:
