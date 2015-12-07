@@ -508,6 +508,38 @@ sub get_roles {
 }
 
 
+=head2 get_first_name
+
+ Usage:
+ Desc:         returns the user's first name.
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_first_name {
+    my $self = shift;
+    return $self->{first_name};
+}
+
+=head2 get_first_name
+
+ Usage:
+ Desc:         returns the user's first name.
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_last_name {
+    my $self = shift;
+    return $self->{last_name};
+}
+
 =head2 get_user_type
 
  Usage:
@@ -596,7 +628,7 @@ sub set_sql {
           "
 			SELECT 
 				sp_person_id, username, private_email, pending_email, 
-				password, confirm_code, disabled 
+				password, confirm_code, disabled, first_name, last_name
 			FROM sgn_people.sp_person 
 			WHERE sp_person_id=?
 		",
