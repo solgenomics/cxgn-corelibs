@@ -155,16 +155,16 @@ sub map_version_id {
 sub position {
     my $self = shift;
     my ($position) = @_;
+    if ( $self->{position} ) {
+	if ( $self->{position} =~ /\-/ )
+	{    # if position describes a range, such as a QTL
 
-    if ( $self->{position} =~ /\-/ )
-    {    # if position describes a range, such as a QTL
-
-        ( $self->{position_north}, $self->{position_south} ) = split "-",
-          $self->{position};
-        $self->{position} =
-          ( $self->{position_south} + $self->{position_north} ) / 2;
+	    ( $self->{position_north}, $self->{position_south} ) = split "-",
+	    $self->{position};
+	    $self->{position} =
+		( $self->{position_south} + $self->{position_north} ) / 2;
+	}
     }
-
     if ( defined($position) ) {
         unless ( CXGN::Tools::Text::is_number($position) ) {
             print STDERR
