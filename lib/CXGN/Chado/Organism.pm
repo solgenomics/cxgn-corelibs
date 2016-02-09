@@ -221,7 +221,7 @@ sub add_synonym {
     my $self=shift;
     my $synonym=shift;
 
-    my $cvterm= $self->get_resultset("Cv::Cvterm")->search( {name => 'synonym' } )->single();;
+    my $cvterm= $self->get_resultset("Cv::Cvterm")->search( {name => 'organism_synonym' } )->single();;
     my $type_id;
     if ($cvterm) {
 	$type_id= $cvterm->get_column('cvterm_id');
@@ -253,7 +253,7 @@ sub add_synonym {
 	    return $organismprop;
 	}
     }
-    $self->d("add_synonym ERROR: 'synonym' is not a cvterm! Please update your cvterm table. a cvterm with name='synonym' is required  for storing organismprop for synonyms\n");
+    $self->d("add_synonym ERROR: 'organism_synonym' is not a cvterm! Please update your cvterm table. a cvterm with name='organism_synonym' is required  for storing organismprop for synonyms\n");
     return undef;
 }
 
@@ -273,7 +273,7 @@ sub get_synonyms {
     my $self=shift;
     my @props= $self->get_resultset("Organism::Organismprop")->search(
 	{ organism_id => $self->get_organism_id(),
-	  type_id  => $self->get_resultset("Cv::Cvterm")->search( { name => 'synonym'} )->first()->get_column('cvterm_id')
+	  type_id  => $self->get_resultset("Cv::Cvterm")->search( { name => 'organism_synonym'} )->first()->get_column('cvterm_id')
 	});
     my @synonyms;
     foreach my $prop (@props) {
