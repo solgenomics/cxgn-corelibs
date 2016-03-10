@@ -14,7 +14,7 @@ use File::Temp qw( tempfile );
 use File::Basename;
 use File::Spec;
 use Cwd;
-use UNIVERSAL qw/isa/;
+#use UNIVERSAL qw/isa/;
 use File::NFSLock qw/uncache/;
 
 use Storable qw/ nstore retrieve /;
