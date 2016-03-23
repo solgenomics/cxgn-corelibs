@@ -280,9 +280,9 @@ sub run_async {
     my $curdir = cwd();
     eval {
 #       #handle setting reader/writer on IO::Pipe objects if any were passed in
-      $self->in_file->reader  if isa($self->in_file,'IO::Pipe');
-      $self->out_file->writer if isa($self->out_file,'IO::Pipe');
-      $self->err_file->writer if isa($self->out_file,'IO::Pipe');
+      $self->in_file->reader  if eval { $self->in_file->isa('IO::Pipe') };
+      $self->out_file->writer if eval { $self->out_file->isa('IO::Pipe') };
+      $self->err_file->writer if eval { $self->err_file->isa('IO::Pipe') };
 
       chdir $self->working_dir
 	or die "Could not cd to new working directory '".$self->working_dir."': $!";
@@ -296,12 +296,12 @@ sub run_async {
       $self->_write_die( $@ );
     }
     #explicitly close all our filehandles, cause the hard exit doesn't do it
-    foreach ($self->in_file,$self->out_file,$self->err_file) {
-      if(isa($_,'IO::Handle')) {
-#	warn "closing $_\n";
-	close $_;
-      }
-    }
+    
+     foreach ($self->in_file,$self->out_file,$self->err_file) {
+       close $_ if eval { $_->isa('IO::Handle') }; 
+       #  warn "closing $_\n";
+     }
+
     POSIX::_exit(0); #call a HARD exit to avoid running any weird END blocks
                      #or DESTROYs from our parent thread
   }
