@@ -1,7 +1,5 @@
 package CXGN::Tools::Run;
 
-use Module::Pluggable require => 1;
-
 use strict;
 use warnings;
 
@@ -143,7 +141,7 @@ use Class::MethodMaker
 	  '_vmem',            #bytes of memory the process is
 	  #estimated to require
 	  'backend',          # either slurm (default) or torque
-	  {-default => 1},
+	  #{-default => 'torque'},
 	  '_raise_error',     #holds whether we throw errors or just store
 	  #them in _error. defaults to undef
 	  '_procs_per_node',  #holds the number of processors to use for cluster
@@ -292,6 +290,7 @@ sub run_async {
 		or die "Could not cd to new working directory '".$self->working_dir."': $!";
 #      setpgrp; #run this perl and its exec'd child as their own process group
 	    my $cmd = @args > 1 ? \@args : $args[0];
+	    print STDERR "COMMAND: $cmd\n";
 	    CXGN::Tools::Run::Run3::run3($cmd, $self->in_file, $self->out_file, $self->err_file, $self->tempdir );
 	    chdir $curdir or die "Could not cd back to parent working dir '$curdir': $!";
 	    
@@ -315,6 +314,21 @@ sub run_async {
   $self->_die_if_error;              #check if it's died
     return $self;
 }
+
+
+=head2 job_id
+
+  Usage: my $jobid = $runner->job_id;
+  Ret  : the job ID of our cluster job if this was a cluster job, undef otherwise
+  Args : none
+  Side Effects: none
+
+=cut
+
+sub job_id {
+    shift->_jobid;
+}
+
 
 =head2 run_cluster
 
@@ -363,20 +377,41 @@ sub run_async {
 sub run_cluster {
     my ($class,@args) = @_;
     
+
+    require CXGN::Tools::Run::Torque;
+    require CXGN::Tools::Run::Slurm;
+    
+    print STDERR "CLASS = $class\n";
+
     my $self = bless {},$class;
     
     print STDERR "NOT CLEANING UP FOR DEBUGGING PURPOSES...\n";
-    $self->do_not_cleanup(); # DEBUGGING ONLY!!!!!
+    #$self->do_not_cleanup(); # DEBUGGING ONLY!!!!!
     
     my $options = $self->_pop_options( \@args );
     $self->_process_common_options( $options );
-    
-    $self->is_cluster(1);
-    foreach my $plugin ($self->plugins()) {
-	if ($self->backend() eq $plugin->name()) { 
-	    return $plugin->run_job( \@args, $options);
-	}
+
+    my $cluster;
+
+    if (!$options->{backend}) { $options->{backend} = "torque" }
+    if ($options->{backend} eq "torque") { 
+	$cluster = CXGN::Tools::Run::Torque->new();
     }
+    elsif ($options->{backend} eq "slurm") { 
+	$cluster = CXGN::Tools::Run::Slurm->new();
+    }
+    else { 
+	die "$options->{backend} not a known backend.\n";
+    }
+    $cluster->_pop_options(\@args);
+    $cluster->_process_common_options($options);
+    
+    $cluster->is_cluster(1);
+
+    my $job_id = $cluster->run_job( \@args, $options);
+    print STDERR "TYPE OF JOB: ".ref($cluster)." JOB ID: $job_id\n\n";
+    #$cluster->_jobid($job_id);
+    return $cluster;
 }
 
 sub run_cluster_perl {
@@ -425,6 +460,7 @@ sub run_cluster_perl {
 sub _pop_options {
     my ( $self, $args ) = @_;
     
+    print STDERR "Args: ".Dumper($args);
     #make sure all of our args are defined
     defined || croak "undefined argument passed to run method" foreach @$args;
     
@@ -638,14 +674,17 @@ sub _write_die {
 # croak()s if our subprocess terminated abnormally
 sub _die_if_error {
     my $self = shift;
+
     if( ($self->is_async || $self->is_cluster)
 	&& $self->_diefile_exists) {
+	print STDERR "cluster job dying!!!!\n";
 	my $error_string = $self->_file_contents( $self->_diefile_name );
 	if( $self->is_cluster ) {
 	    # if it's a cluster job, look for warnings from the resource
 	    # manager in the error file and include those in the error output
 	    my $pbs_warnings = '';
 	    if( -f $self->err_file ) {
+		print STDERR "ERROR FILE = ".$self->err_file()."\n";
 		eval {
 		    open my $e, $self->err_file or die "WARNING: $! opening err file ".$self->err_file;
 		    while( <$e> ) {
@@ -656,6 +695,7 @@ sub _die_if_error {
 		};
 		$pbs_warnings .= $@ if $@;
 	    }
+	    print STDERR "ERROR: $pbs_warnings\n";
 	    # and also prepend the cluster job ID to aid troubleshooting
 	    my $jobid = $self->job_id;
 	    $error_string =  __PACKAGE__.": cluster job id: $jobid\n"
@@ -665,6 +705,8 @@ sub _die_if_error {
 		. `qstat -f '$jobid'`
 		. '==== '.__PACKAGE__." end qstat output =======================\n"
 	}
+
+
     #kill our child process's whole group if it's still running for some reason
 	kill SIGKILL => -($self->pid) if $self->is_async;
 	$self->_error_string($error_string);
@@ -672,6 +714,7 @@ sub _die_if_error {
 	    croak($error_string || 'subprocess died, but returned no error string');
 	}
     }
+    print STDERR "Done with dying.\n";
 }
 
 # runs the completion hook(s) if present
@@ -935,12 +978,12 @@ sub alive {
 	    return;
 	}
     } elsif( $self->is_cluster ) {
-	foreach my $plugin ($self->plugins()) { 
-	    if ($plugin->name() eq $self->backend()) { 
-		$plugin->alive();
-	    }
-	}
+	my %m = qw| e ending r running q queued |;
+	my $state = $m{ $self->_qstat->{'job_state'} || '' };
+	$self->_run_completion_hooks unless $state || $self->_told_to_die;
+	return $state;
     }
+
     $self->_die_if_error; #if our child died, we should die too
     return;
 }
@@ -1048,9 +1091,9 @@ sub pid { #just a read-only wrapper for _pid setter/getter
 
 =cut
 
-sub job_id {
-    shift->_jobid;
-}
+# sub job_id {
+#     shift->_jobid;
+# }
 
 
 =head2 host
@@ -1223,6 +1266,24 @@ sub do_not_cleanup {
     return $self->{do_not_cleanup};
 }
 
+
+  #check that our out_file, err_file, and in_file are accessible from the cluster nodes
+sub cluster_accessible {
+    my $self = shift;
+    my $path = shift;
+#    warn "relpath $path\n";
+    $path = File::Spec->rel2abs("$path");
+#    warn "abspath $path\n";
+    return 1 if $path =~ m!(/net/[^/]+)?(/(data|export)/(shared|prod|trunk)|/(home|crypt))!;
+    if ($path =~ m!/tmp!) { 
+ # for testing purposes only
+	print STDERR "CLUSTER DIR IN /tmp ACCEPTABLE FOR TESTING ONLY.\n";
+	return 1;
+    }
+    return 0;
+    
+}
+
 =head2 property()
 
  Used to set key => values in the $self->{properties} namespace,
@@ -1254,7 +1315,9 @@ sub DESTROY {
 	uncache($self->out_file) unless ref $self->out_file;
 	uncache($self->err_file) unless ref $self->out_file;
     }
-    $self->cleanup unless $self->_existing_temp || $self->is_async || $self->is_cluster || $self->do_not_cleanup || DEBUG;
+    $self->cleanup unless $self->_existing_temp || $self->is_async || $self->is_cluster 
+	#|| $self->do_not_cleanup 
+	|| DEBUG;
 }
 
 sub _reap {
