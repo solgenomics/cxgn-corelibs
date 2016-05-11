@@ -375,22 +375,29 @@ sub job_id {
 =cut
 
 sub run_cluster {
-    my ($class,@args) = @_;
+  my ($class,@args) = @_;
+
+  my $self = bless {},$class;
+
+  my $options = $self->_pop_options( \@args );
+  $self->_process_common_options( $options );
+
+  return $self->_run_cluster( \@args, $options );
+}
+
+
+sub _run_cluster {
+    my ($self, $args, $options) = @_;
     
 
     require CXGN::Tools::Run::Torque;
     require CXGN::Tools::Run::Slurm;
     
-    print STDERR "CLASS = $class\n";
-
-    my $self = bless {},$class;
+    #my $self = bless {},$class;
     
-    print STDERR "NOT CLEANING UP FOR DEBUGGING PURPOSES...\n";
+    #print STDERR "NOT CLEANING UP FOR DEBUGGING PURPOSES...\n";
     #$self->do_not_cleanup(); # DEBUGGING ONLY!!!!!
     
-    my $options = $self->_pop_options( \@args );
-    $self->_process_common_options( $options );
-
     my $cluster;
 
     if (!$options->{backend}) { $options->{backend} = "torque" }
@@ -403,12 +410,12 @@ sub run_cluster {
     else { 
 	die "$options->{backend} not a known backend.\n";
     }
-    $cluster->_pop_options(\@args);
+    $cluster->_pop_options($args);
     $cluster->_process_common_options($options);
     
     $cluster->is_cluster(1);
 
-    my $job_id = $cluster->run_job( \@args, $options);
+    my $job_id = $cluster->run_job( $args, $options);
     print STDERR "TYPE OF JOB: ".ref($cluster)." JOB ID: $job_id\n\n";
     #$cluster->_jobid($job_id);
     return $cluster;
@@ -460,7 +467,6 @@ sub run_cluster_perl {
 sub _pop_options {
     my ( $self, $args ) = @_;
     
-    print STDERR "Args: ".Dumper($args);
     #make sure all of our args are defined
     defined || croak "undefined argument passed to run method" foreach @$args;
     
@@ -677,14 +683,14 @@ sub _die_if_error {
 
     if( ($self->is_async || $self->is_cluster)
 	&& $self->_diefile_exists) {
-	print STDERR "cluster job dying!!!!\n";
+	
 	my $error_string = $self->_file_contents( $self->_diefile_name );
 	if( $self->is_cluster ) {
 	    # if it's a cluster job, look for warnings from the resource
 	    # manager in the error file and include those in the error output
 	    my $pbs_warnings = '';
 	    if( -f $self->err_file ) {
-		print STDERR "ERROR FILE = ".$self->err_file()."\n";
+
 		eval {
 		    open my $e, $self->err_file or die "WARNING: $! opening err file ".$self->err_file;
 		    while( <$e> ) {
@@ -695,7 +701,7 @@ sub _die_if_error {
 		};
 		$pbs_warnings .= $@ if $@;
 	    }
-	    print STDERR "ERROR: $pbs_warnings\n";
+
 	    # and also prepend the cluster job ID to aid troubleshooting
 	    my $jobid = $self->job_id;
 	    $error_string =  __PACKAGE__.": cluster job id: $jobid\n"
@@ -714,7 +720,6 @@ sub _die_if_error {
 	    croak($error_string || 'subprocess died, but returned no error string');
 	}
     }
-    print STDERR "Done with dying.\n";
 }
 
 # runs the completion hook(s) if present
@@ -961,7 +966,6 @@ sub is_cluster {
 sub alive {
     my ($self) = @_;
     
-    print STDERR "Alive function\n";
     $self->_die_if_error; #if our child died, we should die too
     
     if( $self->is_async) {
@@ -977,11 +981,11 @@ sub alive {
 	    $self->_run_completion_hooks unless $self->_told_to_die;
 	    return;
 	}
-    } elsif( $self->is_cluster ) {
-	my %m = qw| e ending r running q queued |;
-	my $state = $m{ $self->_qstat->{'job_state'} || '' };
-	$self->_run_completion_hooks unless $state || $self->_told_to_die;
-	return $state;
+    # } elsif( $self->is_cluster ) {    #### CLUSTER RELATED STUFF MOVED TO SUBCLASS
+    # 	my %m = qw| e ending r running q queued |;
+    # 	my $state = $m{ $self->_qstat->{'job_state'} || '' };
+    # 	$self->_run_completion_hooks unless $state || $self->_told_to_die;
+    # 	return $state;
     }
 
     $self->_die_if_error; #if our child died, we should die too

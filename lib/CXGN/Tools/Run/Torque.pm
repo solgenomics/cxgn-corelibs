@@ -477,5 +477,12 @@ sub out {
 #    return undef;
 }
 
+sub cancel { 
+    my $self = shift;
+    
+    print STDERR "Cancelling cluster job using qdel ".$self->_jobid()."... ";
+    system("qdel", $self->_jobid());
+    print STDERR "Done. \n";
 
+}
 1;

@@ -420,6 +420,12 @@ sub out {
 #    return undef;
 }
 
+sub cancel { 
+    my $self = shift;
 
+    print STDERR "Cancelling job using scancel ".$self->_jobid()."...";
+    system('scancel', $self->_jobid());
+    print STDERR "Done.\n";
+}
 
 1;

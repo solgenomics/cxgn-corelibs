@@ -4,7 +4,7 @@ use Test::More;
 use CXGN::Tools::Run;
 
 my $ctr = CXGN::Tools::Run->run_cluster(
-    '/bin/hostname',
+    'sleep 20',
 
     { 
 	backend => 'slurm',
@@ -14,21 +14,35 @@ my $ctr = CXGN::Tools::Run->run_cluster(
 print STDERR "Checking if it is alive...\n";
 while (my $alive = $ctr->alive()) { 
     print STDERR "it is alive ($alive)...\n";
+    $ctr->cancel();
+
+    sleep(1);
 }
 
-print STDERR "Generating output...\n";
-print STDERR $ctr->out()."\n";
-print STDERR "ERROR OUTPUT:\n";
-print STDERR $ctr->err()."\n";
-# my $ctr2 = CXGN::Tools::Run->run_cluster(
-#     'sleep',
-#     60,
-#     { backend => 'slurm'}
-#     );
-    
-# while (my $alive = $ctr->alive()) { 
-#     print "it is alive ($alive)...\n";
-#     sleep(10);
-# }
+eval { 
+    print STDERR "Generating output...\n";
+    print STDERR $ctr->out()."\n";
+    print STDERR "ERROR OUTPUT:\n";
+    print STDERR $ctr->err()."\n";
+};
+if ($@) { 
+    print STDERR "An error occurred: $@\n";
+}
 
-print STDERR "Done.\n";
+#  my $ctr2 = CXGN::Tools::Run->run_cluster(
+#      '/bin/hostname',
+#      { backend => 'torque'}
+#      );
+   
+#  while (my $alive = $ctr2->alive()) { 
+#      print "it is alive ($alive)...\n";
+#      sleep(2);
+#  }
+
+# print STDERR "Generating output...\n";
+# print STDERR $ctr2->out()."\n";
+# print STDERR "ERROR OUTPUT:\n";
+# print STDERR $ctr2->err()."\n";
+
+
+# print STDERR "Done.\n";
