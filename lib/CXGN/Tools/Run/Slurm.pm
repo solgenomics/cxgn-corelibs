@@ -159,11 +159,9 @@ sub _submit_cluster_job {
 			      ,
 			     $cmd_temp_file->filename(),
 	);
-    print STDERR "running '$cluster_cmd'\n";
-    print STDERR "COMMAND FILE: ".$cmd_temp_file->filename()."\n";
 
     my $jobid = `$cluster_cmd 2>&1`; #< string to hold the job ID of this job submission
-    print STDERR "Received JOB ID of $jobid\n";
+
     # test hook for testing a qsub failure, makes the test fail the first time
     if( $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE} ) {
         $jobid = $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE};
@@ -182,9 +180,6 @@ sub _submit_cluster_job {
     if ($jobid =~ /Submitted batch job (\d+)/) { 
 	$jobid = $1;
     }
-
-    print STDERR "got jobid $jobid\n";
-
 
     $self->_jobid($jobid);      #< remember our job id
 
@@ -250,9 +245,9 @@ sub _qstat {
     my ($self) = @_;
     
     my $jobs = $self->_global_qstat;
-    #print STDERR "_QSTAT JOB ID: ".($self->_jobid())."\n";
+
     my $status = $jobs->{$self->_jobid};
-    print STDERR "_QSTAT STATUS: ".Dumper($status)."\n";
+
     return $status || {};
 }
 
@@ -282,10 +277,9 @@ use constant MIN_QSTAT_WAIT => 3;
 	    
 	    my $header = <$qstat>;
 	    while (my $qs = <$qstat>) {
-		print STDERR "got qstat record:\n$qs";
+
 		my ($undef, $job_id, $partition, $name, $user, $st, $time, $nodes, $nodelist) = split /\s+/, $qs;
 
-		print STDERR "JOB ID: $job_id STATUS: $st\n";
 		if ($job_id) { 
 		    $job_id =~ s/\s+(.*)/$1/;
 		    $jobstate->{$job_id} =  { 
@@ -302,17 +296,14 @@ use constant MIN_QSTAT_WAIT => 3;
 	    }
 	    $last_qstat_time = time();
 	    #      use Data::Dumper;
-      warn "qstat hash is now: ".Dumper($jobstate);
+	    #warn "qstat hash is now: ".Dumper($jobstate);
 	}
-
-	#print STDERR "GLOBAL JOB STATE: ".Dumper($jobstate);
 
 	return $jobstate;
     }
 }
 
 sub _die_if_error {
-    #print STDERR "Checking if it has to die...\n";
     my $self = shift;
     if($self->_diefile_exists) {
 	my $error_string = $self->_file_contents( $self->_diefile_name );
@@ -423,9 +414,7 @@ sub out {
 sub cancel { 
     my $self = shift;
 
-    print STDERR "Cancelling job using scancel ".$self->_jobid()."...";
     system('scancel', $self->_jobid());
-    print STDERR "Done.\n";
 }
 
 1;

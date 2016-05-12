@@ -60,7 +60,6 @@ sub run_job {
 
       croak "filehandle or non-stringifying out_file, err_file, or in_file not supported by run_cluster"
 	  if $file =~ /^([\w:]+=)?[A-Z]+\(0x[\da-f]+\)$/;
-      #print "file was $file\n";
 
     unless($self->cluster_accessible($file)) {
       if(index($file,$tempdir) != -1) {
@@ -123,37 +122,32 @@ EOSCRIPT
 
 
 
-  # also, include a copy of this very module!
+    # also, include a copy of this very module!
     $cmd_string .= read_file( "../cxgn-corelibs/lib/CXGN/Tools/Run.pm" );
-  # disguise the ending EOF so that it passes through the file inclusion
-
-    #print STDERR "running cmd_string:\n$cmd_string\n";
-  #$self->dbp("cluster running command '$cmd_string'");
-  my $cmd_temp_file = File::Temp->new( TEMPLATE =>
-                                       File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX'), UNLINK => 0
-                                     );
-  $cmd_temp_file->print( $cmd_string );
-  $cmd_temp_file->close;
-
-  my $retry_count;
-  my $qsub_retry_limit = 3; #< try 3 times to submit the job
-  my $submit_success;
-  until( ($submit_success = $self->_submit_cluster_job( $cmd_temp_file )) || ++$retry_count > $qsub_retry_limit ) {
-      sleep 1;
-      warn "CXGN::Tools::Run retrying cluster job submission.\n";
-  }
-  $submit_success or die "CXGN::Tools::Run: failed to submit cluster job, after $retry_count tries\n";
-
-  $self->_die_if_error;
-
-  return $self->_jobid();
+    # disguise the ending EOF so that it passes through the file inclusion
+    my $cmd_temp_file = File::Temp->new( TEMPLATE =>
+					 File::Spec->catfile( File::Spec->tmpdir, 'cxgn-tools-run-cmd-temp-XXXXXX'), UNLINK => 0
+	);
+    $cmd_temp_file->print( $cmd_string );
+    $cmd_temp_file->close;
+    
+    my $retry_count;
+    my $qsub_retry_limit = 3; #< try 3 times to submit the job
+    my $submit_success;
+    until( ($submit_success = $self->_submit_cluster_job( $cmd_temp_file )) || ++$retry_count > $qsub_retry_limit ) {
+	sleep 1;
+	warn "CXGN::Tools::Run retrying cluster job submission.\n";
+    }
+    $submit_success or die "CXGN::Tools::Run: failed to submit cluster job, after $retry_count tries\n";
+    
+    $self->_die_if_error;
+    
+    return $self->_jobid();
 }
 
 sub _submit_cluster_job {
     my ($self, $cmd_temp_file) = @_;
-
-    print STDERR "Submitting cluster job to torque...\n";
-
+    
     my %resources = (
         ppn => $self->_procs_per_node || undef,
         nodes => $self->_nodes        || 1,
@@ -163,7 +157,6 @@ sub _submit_cluster_job {
 
     #note that you can use a reference to a string as a filehandle, which is done here:
 
-    print STDERR "COMMAND TEMP FILE = ".$cmd_temp_file."\n";
     my $qsub_cmd = join( ' ',
                          #my $qsub = CXGN::Tools::Run->run(
                          #dprinta(
@@ -186,11 +179,9 @@ sub _submit_cluster_job {
 			     #}
 	                    #)
 	);
-    print STDERR "running '$qsub_cmd'\n";
-    print STDERR "COMMAND FILE: ".$cmd_temp_file->filename()."\n";
-    #print STDERR read_file($cmd_temp_file->filename());
+
     my $jobid = `$qsub_cmd 2>&1`; #< string to hold the job ID of this job submission
-    print STDERR "Received JOB ID of $jobid\n";
+
     # test hook for testing a qsub failure, makes the test fail the first time
     if( $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE} ) {
         $jobid = $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE};
@@ -209,9 +200,6 @@ sub _submit_cluster_job {
     if ($jobid =~ /Submitted batch job (\d+)/) { 
 	$jobid = $1;
     }
-
-    print STDERR "got jobid $jobid\n";
-
 
     $self->_jobid($jobid);      #< remember our job id
 
@@ -300,9 +288,9 @@ sub _qstat {
     my ($self) = @_;
     
     my $jobs = $self->_global_qstat;
-    #print STDERR "_QSTAT JOB ID: ".($self->_jobid())."\n";
+
     my $status = $jobs->{$self->_jobid};
-    print STDERR "_QSTAT STATUS: ".Dumper($status)."\n";
+
     return $status || {};
 }
 
@@ -330,9 +318,7 @@ use constant MIN_QSTAT_WAIT => 3;
 	    open my $qstat, "qstat -f $servername 2>&1 |";
 	    my $current_jobid;
 	    while (my $qs = <$qstat>) {
-		#print STDERR "got qstat record:\n$qs";
 		if ($qs =~ /\s*Job\s+Id\s*:\s*(\S+)/i) {
-		    print STDERR "CURRENT JOB ID = $1\n";
 		    $current_jobid = $1;
 		} elsif ( my ($key,$val) = $qs =~ /^\s*([^=\s]+)\s*=\s*(\S+)/ ) {
 		    next if $key =~ /[=:]/;
@@ -352,15 +338,11 @@ use constant MIN_QSTAT_WAIT => 3;
 	    #      use Data::Dumper;
 	    #      warn "qstat hash is now: ".Dumper($jobstate);
 	}
-
-	#print STDERR "GLOBAL JOB STATE: ".Dumper($jobstate);
-
 	return $jobstate;
     }
 }
 
 sub _die_if_error {
-    print STDERR "Checking if it has to die...\n";
     my $self = shift;
     if($self->_diefile_exists) {
 	my $error_string = $self->_file_contents( $self->_diefile_name );
@@ -395,7 +377,6 @@ sub _die_if_error {
 	    croak($error_string || 'subprocess died, but returned no error string');
 	}
     }
-    print STDERR "All seems good!\n";
 }
 
 sub _diefile_exists {
@@ -431,21 +412,15 @@ sub alive {
     #use qstat to see if the job is still alive
     my %m = qw| e ending r running q queued u unknown c complete|;
 
-    #print STDERR "qstat output: ".Dumper($self->_qstat);
-
     my $state = $m{ $self->_qstat->{job_state}} || '';
-
-    print STDERR "Detected job ".$self->_jobid().", state $state... (from ".$self->_qstat->{job_state}.")\n";
 
     $self->_run_completion_hooks if ($state eq 'complete') || $self->_told_to_die;
     
     if ($state ne 'complete') { 
-	print STDERR "JOB IN PROGRESS! ($state)\n";
 	return $state; 
     }
     
     $self->_die_if_error; #if our child died, we should die too
-    print STDERR "JOB COMPLETION DETECTED! ($state)\n";
     return;
 }
 
@@ -454,8 +429,6 @@ sub _run_completion_hooks {
     my $self = shift;
 
     $self->_die_if_error; #if our child died, we should die too, not run the completion hooks
-
-    print STDERR "running job completion hook\n";
 
     #skip if we have no completion hooks or we have already run them
     return unless $self->_on_completion && ! $self->_already_ran_completion_hooks;
@@ -469,20 +442,17 @@ sub _run_completion_hooks {
 
 sub out {
     my ($self) = @_;
-	print STDERR "Outfile is ",$self->out_file,"\n";
     unless(ref($self->out_file)) {
-
+	
 	return read_file($self->out_file);
     }
-#    return undef;
 }
 
 sub cancel { 
     my $self = shift;
     
-    print STDERR "Cancelling cluster job using qdel ".$self->_jobid()."... ";
     system("qdel", $self->_jobid());
-    print STDERR "Done. \n";
-
 }
+
+
 1;

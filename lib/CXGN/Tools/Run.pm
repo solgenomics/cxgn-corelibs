@@ -291,7 +291,7 @@ sub run_async {
 		or die "Could not cd to new working directory '".$self->working_dir."': $!";
 #      setpgrp; #run this perl and its exec'd child as their own process group
 	    my $cmd = @args > 1 ? \@args : $args[0];
-	    print STDERR "COMMAND: $cmd\n";
+	    #print STDERR "COMMAND: $cmd\n";
 	    CXGN::Tools::Run::Run3::run3($cmd, $self->in_file, $self->out_file, $self->err_file, $self->tempdir );
 	    chdir $curdir or die "Could not cd back to parent working dir '$curdir': $!";
 	    
@@ -391,14 +391,8 @@ sub run_cluster {
 sub _run_cluster {
     my ($self, $args, $options) = @_;
     
-
     require CXGN::Tools::Run::Torque;
     require CXGN::Tools::Run::Slurm;
-    
-    #my $self = bless {},$class;
-    
-    #print STDERR "NOT CLEANING UP FOR DEBUGGING PURPOSES...\n";
-    #$self->do_not_cleanup(); # DEBUGGING ONLY!!!!!
     
     my $cluster;
 
@@ -416,10 +410,9 @@ sub _run_cluster {
     $cluster->_process_common_options($options);
     
     $cluster->is_cluster(1);
-
+    
     my $job_id = $cluster->run_job( $args, $options);
-    print STDERR "TYPE OF JOB: ".ref($cluster)." JOB ID: $job_id\n\n";
-    #$cluster->_jobid($job_id);
+    
     return $cluster;
 }
 
@@ -473,10 +466,10 @@ sub _pop_options {
     defined || croak "undefined argument passed to run method" foreach @$args;
     
     my $options = ref($args->[-1]) eq 'HASH' ?  pop( @$args ) : {};
-
+    
     #store our command array for later use in error messages and such
     $self->_command($args);
-
+    
     unless( $self->_job_name ) {
         my ($executable) = $self->_command->[0] =~ /^([^'\s]+)/;
         $executable ||= '';
@@ -485,7 +478,7 @@ sub _pop_options {
         }
         $self->_job_name($executable)
     }
-
+    
     return $options;
 }
 
@@ -521,25 +514,26 @@ sub _process_common_options {
 	my $name = shift
 	    or return;
 	ref($name) ? $name : File::Spec->rel2abs($name);
+    }
+			
+    # set our temp_base, if given
+			$self->_temp_base( $options->{temp_base} ) if defined $options->{temp_base};
+			
+			#if an existing temp dir has been passed, verify that it exists, and
+			#use it
+			if(defined $options->{existing_temp}) {
+			    $self->{tempdir} = $options->{existing_temp};
+			    -d $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' does not exist";
+			    -w $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' is not writable";
+			    $self->_existing_temp(1);
+			    
 			}
 			
-        #set our temp_base, if given
-        $self->_temp_base( $options->{temp_base} ) if defined $options->{temp_base};
-			
-        #if an existing temp dir has been passed, verify that it exists, and
-        #use it
-	if(defined $options->{existing_temp}) {
-	    $self->{tempdir} = $options->{existing_temp};
-	    -d $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' does not exist";
-	    -w $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' is not writable";
-	    $self->_existing_temp(1);
-			
-        }
-			
-	$self->backend( $options->{backend} ) if $options->{backend};
+			$self->backend( $options->{backend} ) if $options->{backend};
 	# figure out where to put the files for the stdin and stderr
-	# outputs of the program.  Make sure to use absolute file names
+			# outputs of the program.  Make sure to use absolute file names
 	# in case the working dir gets changed
+			#
 	$self->out_file( abs_if_filename( $options->{out_file}
 					  || File::Spec->catfile($self->tempdir, 'out')
 				  )
