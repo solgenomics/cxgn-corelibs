@@ -282,6 +282,7 @@ sub run_async {
 	my $curdir = cwd();
 	eval {
 #       #handle setting reader/writer on IO::Pipe objects if any were passed in
+
 	    $self->in_file->reader  if isa($self->in_file,'IO::Pipe');
 	    $self->out_file->writer if isa($self->out_file,'IO::Pipe');
 	    $self->err_file->writer if isa($self->out_file,'IO::Pipe');
@@ -296,6 +297,7 @@ sub run_async {
 	    
 	}; if( $@ ) {
       #write die messages to a file for later retrieval by parent process
+
 	    $self->_write_die( $@ );
 	}
 	#explicitly close all our filehandles, cause the hard exit doesn't do it
@@ -311,7 +313,7 @@ sub run_async {
     #CODE FOR THE PARENT
     $self->_pid($pid);
     
-  $self->_die_if_error;              #check if it's died
+    $self->_die_if_error;              #check if it's died
     return $self;
 }
 

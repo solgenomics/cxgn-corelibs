@@ -144,6 +144,27 @@ sub set_marker_name
     $self->{marker_names}->[0]=$clean_name;
 }
 
+=head2 set_marker_name_noclean
+
+    $marker->set_marker_name_noclean('anymarkername');
+
+Sets the markers preferred name without doing the smart clean. Caution, markers will be entered exactly as typed and this may lead to near duplicates in the database. 
+
+=cut
+
+
+sub set_marker_name_noclean
+{
+    my $self=shift;
+    my($name)=@_;
+    unless($name)
+    {
+        croak"You did not send in a name";
+    }
+    $self->{marker_names}->[0]=$name;
+}
+
+
 =head2 add_collection
 
     $marker->add_collection('COSII');

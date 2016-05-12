@@ -617,7 +617,8 @@ sub get_recursive_parents {
 	print STDERR "Reached level $current_level of $max_level... we are done!\n";
 	return;
     }
-    
+
+    $current_level++;
     my @parents = $self->get_direct_parents($individual->get_id());
 
     print STDERR Dumper(\@parents);
@@ -641,8 +642,7 @@ sub get_recursive_parents {
 	
 	$self->get_recursive_parents($parent, $max_level, $current_level);
     }	
-    $individual->set_pedigree($pedigree);
-    $current_level++;    
+    $individual->set_pedigree($pedigree);        
 }
 
 sub get_parents { 
