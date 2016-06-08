@@ -6,6 +6,7 @@ use base 'CXGN::Tools::Run';
 use Carp qw/ carp confess croak /;
 use Data::Dumper;
 use File::Slurp;
+use Slurm;
 
 sub new { 
     my $class = shift;
@@ -368,22 +369,67 @@ sub _diefile_exists {
 sub alive {
     my ($self) = @_;
 
-    $self->_die_if_error; #if our child died, we should die too
+    my ($self) = @_;
     
-    #use qstat to see if the job is still alive
-    my %m = qw| e ending R running Q queued U unknown C complete|;
+    print STDERR "Slurm alive() ".$self->_jobid."\n";
 
-    my $state = $m{ $self->_qstat->{job_state}} || '';
-
-    $self->_run_completion_hooks if ($state eq 'complete') || $self->_told_to_die;
+    my $slurm = Slurm::new();
+    my $job_info = $slurm->load_job($self->_jobid);
     
-    if ($state ne 'complete') { 
-	return $state; 
+    my $job_state = $job_info->{job_array}->[0];
+    
+    if (IS_JOB_RUNNING($job_state)) {
+        print STDERR "Slurm job is running...\n";
+        return 1;
+    }
+    if (IS_JOB_COMPLETE($job_state)) {
+        print STDERR "slurm job is complete...\n";
+        return;
+    }
+    if (IS_JOB_FINISHED($job_state)) {
+        print STDERR "Slurm job is finished...\n";
+        return;
+    }
+    if (IS_JOB_COMPLETED($job_state)) {
+        print STDERR "Slurm job is completed...\n";
+        return;
+    }
+    if (IS_JOB_PENDING($job_state)) {
+        print STDERR "Slurm job is pending...\n";
+        return 1;
+    }
+    if (IS_JOB_COMPLETING($job_state)) {
+        print STDERR "Slurm job is completing...\n";
+        return 1;
+    }
+    if (IS_JOB_CONFIGURING($job_state)) {
+        print STDERR "Slurm job is configuring...\n";
+        return 1;
+    }
+    if (IS_JOB_STARTED($job_state)) {
+        print STDERR "Slurm job is started...\n";
+        return 1;
+    }
+    if (IS_JOB_RESIZING($job_state)) {
+        print STDERR "Slurm job is resizing...\n";
+        return 1;
     }
     
-    $self->_die_if_error; #if our child died, we should die too
-
-    return;
+    else {
+        if (IS_JOB_SUSPENDED($job_state)) {
+            die "Slurm job is suspended...";
+        }
+        if (IS_JOB_CANCELLED($job_state)) {
+            die "Slurm job is canceled...";
+        }
+        if (IS_JOB_FAILED($job_state)) {
+            die "Slurm job is failed...";
+        }
+        if (IS_JOB_TIMEOUT($job_state)) {
+            die "Slurm job is timed out...";
+        }
+        die "Slurm job is in a bad state...";
+    }
 }
 
 
