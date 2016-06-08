@@ -376,68 +376,133 @@ sub _diefile_exists {
 
 sub alive {
     my ($self) = @_;
-    
-    $self->_die_if_error; #if our child died, we should die too
 
-    print STDERR "Slurm alive() ".$self->_jobid."\n";
+    print STDERR "Slurm alive()... JobID: ".$self->_jobid."\n";
 
     my $slurm = Slurm::new();
     my $job_info = $slurm->load_job($self->_jobid);
-    
-    my $job_state = $job_info->{job_array}->[0];
-    
-    if (IS_JOB_RUNNING($job_state)) {
+
+    my $current_job = $job_info->{job_array}->[0];
+
+    $self->_check_nodes_states();
+
+    if (IS_JOB_RUNNING($current_job)) {
         print STDERR "Slurm job is running...\n";
         return 1;
     }
-    if (IS_JOB_COMPLETE($job_state)) {
+    if (IS_JOB_COMPLETE($current_job)) {
         print STDERR "slurm job is complete...\n";
         return;
     }
-    if (IS_JOB_FINISHED($job_state)) {
+    if (IS_JOB_FINISHED($current_job)) {
         print STDERR "Slurm job is finished...\n";
         return;
     }
-    if (IS_JOB_COMPLETED($job_state)) {
+    if (IS_JOB_COMPLETED($current_job)) {
         print STDERR "Slurm job is completed...\n";
         return;
     }
-    if (IS_JOB_PENDING($job_state)) {
+    if (IS_JOB_PENDING($current_job)) {
         print STDERR "Slurm job is pending...\n";
         return 1;
     }
-    if (IS_JOB_COMPLETING($job_state)) {
+    if (IS_JOB_COMPLETING($current_job)) {
         print STDERR "Slurm job is completing...\n";
         return 1;
     }
-    if (IS_JOB_CONFIGURING($job_state)) {
+    if (IS_JOB_CONFIGURING($current_job)) {
         print STDERR "Slurm job is configuring...\n";
         return 1;
     }
-    if (IS_JOB_STARTED($job_state)) {
+    if (IS_JOB_STARTED($current_job)) {
         print STDERR "Slurm job is started...\n";
         return 1;
     }
-    if (IS_JOB_RESIZING($job_state)) {
+    if (IS_JOB_RESIZING($current_job)) {
         print STDERR "Slurm job is resizing...\n";
         return 1;
     }
-    
-    else {
-        if (IS_JOB_SUSPENDED($job_state)) {
-            die "Slurm job is suspended...";
-        }
-        if (IS_JOB_CANCELLED($job_state)) {
-            die "Slurm job is canceled...";
-        }
-        if (IS_JOB_FAILED($job_state)) {
-            die "Slurm job is failed...";
-        }
-        if (IS_JOB_TIMEOUT($job_state)) {
-            die "Slurm job is timed out...";
-        }
-        die "Slurm job is in an unknown state...";
+    if (IS_JOB_SUSPENDED($current_job)) {
+        die "Slurm job is suspended...\n";
     }
+    if (IS_JOB_CANCELLED($current_job)) {
+        die "Slurm job is canceled...\n";
+    }
+    if (IS_JOB_FAILED($current_job)) {
+        die "Slurm job is failed...\n";
+    }
+    if (IS_JOB_TIMEOUT($current_job)) {
+        die "Slurm job is timed out...\n";
+    }
+    if (IS_JOB_NODE_FAILED($current_job)) {
+        die "Slurm job node failed...\n";
+    }
+
+    $self->_die_if_error;
+
+    die "Slurm job is in an unknown state...\n";
+
+}
+
+sub _check_nodes_states {
+    my $self = shift;
+
+    my $slurm = Slurm::new();
+    my $nodes_info = $slurm->load_node();
+    my $node_array = $nodes_info->{node_array};
+
+    foreach (@$node_array) {
+        if (IS_NODE_UNKNOWN($_)) {
+            die "Slurm node is unknown... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_DOWN($_)) {
+            die "Slurm node is down... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_IDLE($_)) {
+            print STDERR "Slurm node is idle... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_ALLOCATED($_)) {
+            print STDERR "Slurm node is allocated... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_ERROR($_)) {
+            die "Slurm node is in error... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_NO_RESPOND($_)) {
+            die "Slurm node is not responding... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_FAIL($_)) {
+            die "Slurm node is failed... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_COMPLETING($_)) {
+            print STDERR "Slurm node is completing... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_MIXED($_)) {
+            print STDERR "Slurm node is mixed (some CPUs are allocated some are not)... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_FUTURE($_)) {
+            die "Slurm node is in future state (not fully configured)... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_DRAIN($_)) {
+            die "Slurm node is in drain... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_DRAINING($_)) {
+            print STDERR "Slurm node is draining... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_DRAINED($_)) {
+            print STDERR "Slurm node is drained... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_MAINT($_)) {
+            die "Slurm node is in maintenance... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_POWER_UP($_)) {
+            print STDERR "Slurm node is powered up... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_POWER_SAVE($_)) {
+            print STDERR "Slurm node is in power save... Node: ".$_->{name}."\n";
+        }
+    }
+
+    return;
 }
 
 

@@ -394,33 +394,33 @@ sub run_cluster {
 
 sub _run_cluster {
     my ($self, $args, $options) = @_;
-    
+
     print STDERR "Start _run_cluster\n";
-    
+
     require CXGN::Tools::Run::Torque;
     require CXGN::Tools::Run::Slurm;
-    
+
     my $cluster;
 
     if (!$options->{backend}) { $options->{backend} = "torque" }
     if ($options->{backend} eq "torque") { 
-	$cluster = CXGN::Tools::Run::Torque->new();
+        $cluster = CXGN::Tools::Run::Torque->new();
     }
     elsif ($options->{backend} eq "slurm") { 
-	$cluster = CXGN::Tools::Run::Slurm->new();
+        $cluster = CXGN::Tools::Run::Slurm->new();
     }
     else { 
-	die "$options->{backend} not a known backend.\n";
+        die "$options->{backend} not a known backend.\n";
     }
     $cluster->_pop_options($args);
     $cluster->_process_common_options($options);
-    
+
     $cluster->is_cluster(1);
-    
+
     my $job_id = $cluster->run_job( $args, $options);
-    
+
     print STDERR "End _run_cluster\n";
-    
+
     return $cluster;
 }
 
