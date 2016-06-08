@@ -376,9 +376,9 @@ sub _diefile_exists {
 
 sub alive {
     my ($self) = @_;
-
-    my ($self) = @_;
     
+    $self->_die_if_error; #if our child died, we should die too
+
     print STDERR "Slurm alive() ".$self->_jobid."\n";
 
     my $slurm = Slurm::new();
@@ -436,7 +436,7 @@ sub alive {
         if (IS_JOB_TIMEOUT($job_state)) {
             die "Slurm job is timed out...";
         }
-        die "Slurm job is in a bad state...";
+        die "Slurm job is in an unknown state...";
     }
 }
 
