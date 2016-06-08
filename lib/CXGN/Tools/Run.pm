@@ -378,11 +378,15 @@ sub job_id {
 
 sub run_cluster {
   my ($class,@args) = @_;
+  
+  print STDERR "Start run_cluster\n";
 
   my $self = bless {},$class;
 
   my $options = $self->_pop_options( \@args );
   $self->_process_common_options( $options );
+  
+  print STDERR "End run_cluster\n";
 
   return $self->_run_cluster( \@args, $options );
 }
@@ -390,6 +394,8 @@ sub run_cluster {
 
 sub _run_cluster {
     my ($self, $args, $options) = @_;
+    
+    print STDERR "Start _run_cluster\n";
     
     require CXGN::Tools::Run::Torque;
     require CXGN::Tools::Run::Slurm;
@@ -412,6 +418,8 @@ sub _run_cluster {
     $cluster->is_cluster(1);
     
     my $job_id = $cluster->run_job( $args, $options);
+    
+    print STDERR "End _run_cluster\n";
     
     return $cluster;
 }

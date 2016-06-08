@@ -25,6 +25,8 @@ sub _cluster_queue_jobs_count {
 
 sub run_job {
     my ( $self, $cmd, $options ) = @_;
+    
+    print STDERR "Start run_job\n";
 
     $self->_command( $cmd ); #< store the command for use in error messages
 
@@ -40,7 +42,7 @@ sub run_job {
     #check that qsub is actually in the path
     IPC::Cmd::can_run('sbatch')
 	or croak "sbatch command not in path, cannot submit jobs to the cluster.  "
-	."Maybe you need to install the torque package?";
+	."Maybe you need to install the slurm package?";
     
 
   my $tempdir = $self->tempdir;
@@ -138,12 +140,16 @@ EOSCRIPT
   $submit_success or die "CXGN::Tools::Run: failed to submit cluster job, after $retry_count tries\n";
 
   $self->_die_if_error;
+  
+  print STDERR "End run_job\n";
 
   return $self->_jobid();
 }
 
 sub _submit_cluster_job {
     my ($self, $cmd_temp_file) = @_;
+    
+    print STDERR "Start _submit_cluster_job\n";
 
     # note that you can use a reference to a string as a filehandle, which is done here:
 
@@ -174,7 +180,7 @@ sub _submit_cluster_job {
     #check that we got a sane job id
     chomp $jobid;
     unless( $jobid =~ /^\d+(\.[a-zA-Z0-9-]+)+$/ || $jobid =~ /Submitted batch job (\d+)/ ) {
-        warn "CXGN::Tools::Run error running `qsub`: $jobid\n";
+        warn "CXGN::Tools::Run error running `sbatch`: $jobid\n";
         return;
     }
 
@@ -183,6 +189,8 @@ sub _submit_cluster_job {
     }
 
     $self->_jobid($jobid);      #< remember our job id
+    
+    print STDERR "End _submit_cluster_job\n";
 
     return 1;
 }
