@@ -1333,42 +1333,39 @@ sub get_slim_counts {
 }
 
 
-# sub get_slim_counts { 
-#     my $self = shift;
-#     my $slim_counts = shift;
+
+=head2 has_loci
+
+ Usage: $self->has_loci();
+ Desc:  find the number of loci associated with the cvterm or with any of its children
+ Ret:   loci count or undef 
+ Args:  none
+ Side Effects: none
+ Example:
+
+=cut
+
+sub has_loci {
+    my $self=shift;
     
-#     foreach my $p ($self->get_parents()) { 
-# 	my $id = $p->[0]->identifier();
-# 	$self->d("Checking $id\n");
-# 	if (exists($slim_counts->{$id}) && defined($slim_counts->{$id})) { 
-# 	    $slim_counts->{$id}++; 
-# 	}
-# 	else { 
-# 	    $p->[0]->get_slim_counts($slim_counts); 
-# 	}
-	
-
-#     }
-#     return $slim_counts;
-# }
+    my $q = "SELECT count(locus_id)
+             FROM cvtermpath
+              JOIN cvterm ON (cvtermpath.object_id = cvterm.cvterm_id 
+                           OR cvtermpath.subject_id = cvterm.cvterm_id)
+             JOIN phenome.locus_dbxref USING (dbxref_id )
+             JOIN phenome.locus USING (locus_id)
+             WHERE (cvtermpath.object_id = ?) 
+                   AND locus_dbxref.obsolete = 'f' 
+                   AND locus.obsolete = 'f' 
+                   AND pathdistance > 0";
     
-# # sub get_slim_term { 
-#     my $self = shift;
-#     my $slim_counts = shift;
-    
-#     my $slim = "";
-#     foreach my $p ($self->get_parents()) { 
-# 	my $id = $p->[0]->identifier();
-# 	if (exists($slim_counts->{$id}) && defined($slim_counts->{$id})) { 
-# 	    $slim = $id; 
-# 	    last();
-# 	}
-#     }
-#     return $slim;
-# }
+    my $sth = $self->get_dbh->prepare($q);
+    $sth->execute($self->get_cvterm_id);
 
+    my ($locus_count) = $sth->fetchrow_array ;
+    return $locus_count || undef;
 
-
+}
 
 ###
 1;#do not remove
