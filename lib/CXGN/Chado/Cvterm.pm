@@ -1367,6 +1367,108 @@ sub has_loci {
 
 }
 
+=head2 has_stocks
+
+ Usage: $self->has_stocks();
+ Desc:  find the number of stocks associated with the cvterm or with any of its children
+ Ret:   stock count or undef 
+ Args:  none
+ Side Effects: none
+ Example:
+
+=cut
+
+sub has_stocks {
+    my $self=shift;
+    my $q = "SELECT count(stock_id)
+             FROM cvtermpath
+             JOIN cvterm on (cvtermpath.object_id = cvterm.cvterm_id 
+                         OR cvtermpath.subject_id = cvterm.cvterm_id )
+             JOIN stock_cvterm on (stock_cvterm.cvterm_id = cvterm.cvterm_id)
+             JOIN stock USING (stock_id)
+             WHERE cvtermpath.object_id = ?
+             AND stock.is_obsolete = ?
+             AND pathdistance > 0
+            AND 0 = ( SELECT COUNT(*)
+                      FROM stock_cvtermprop p
+                      WHERE type_id IN ( SELECT cvterm_id FROM cvterm WHERE name = 'obsolete' )
+                           AND p.stock_cvterm_id = stock_cvterm.stock_cvterm_id
+                           AND value = '1')";
+    
+    my $sth = $self->get_dbh->prepare($q);
+    $sth->execute($self->get_cvterm_id, "f");
+
+    my ($stock_count) = $sth->fetchrow_array ;
+    return $stock_count || undef;
+
+}
+
+=head2 has_phenotypes
+
+ Usage: $self->has_phenotypes();
+ Desc:  find the number of phenotyped stocks associated with the cvterm or with any of its children
+ Ret:   stock count or undef 
+ Args:  none
+ Side Effects: none
+ Example:
+
+=cut
+
+sub has_phenotypes {
+    my $self=shift;
+    my $q = "SELECT count(distinct stock_id)
+             FROM cvtermpath
+               JOIN cvterm ON (cvtermpath.object_id = cvterm.cvterm_id
+                            OR cvtermpath.subject_id = cvterm.cvterm_id )
+               JOIN phenotype on cvterm.cvterm_id = phenotype.observable_id
+               JOIN nd_experiment_phenotype USING (phenotype_id)
+               JOIN nd_experiment_stock USING (nd_experiment_id)
+             WHERE pathdistance > 0 
+             AND cvtermpath.object_id = ?";
+    
+    my $sth = $self->get_dbh->prepare($q);
+    $sth->execute($self->get_cvterm_id);
+    
+    my ($stock_count) = $sth->fetchrow_array ;
+    return $stock_count || undef;
+
+}
+
+
+
+=head2 has_phenotyping_trials
+
+ Usage: $self->has_phenotyping_trials();
+ Desc:  find the number of phenotyping trials associated with the cvterm or with any of its children
+ Ret:   trial count or undef 
+ Args:  none
+ Side Effects: none
+ Example:
+
+=cut
+
+sub has_phenotyping_trials {
+    my $self=shift;
+   
+    my $q = "SELECT count(project_id)
+             FROM public.project
+              JOIN nd_experiment_project USING (project_id)  
+              JOIN nd_experiment_stock USING (nd_experiment_id)
+              JOIN nd_experiment_phenotype USING (nd_experiment_id)
+              JOIN phenotype USING (phenotype_id) 
+              JOIN cvterm on cvterm.cvterm_id = phenotype.observable_id
+             WHERE observable_id = ?  ";
+
+    
+    my $sth = $self->get_dbh->prepare($q);
+    $sth->execute($self->get_cvterm_id);
+    
+    my ($trial_count) = $sth->fetchrow_array ;
+    return $trial_count || undef;
+
+}
+
+
 ###
 1;#do not remove
 ###
