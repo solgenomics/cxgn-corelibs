@@ -1348,7 +1348,7 @@ sub get_slim_counts {
 sub has_loci {
     my $self=shift;
     
-    my $q = "SELECT count(locus_id)
+    my $q = "SELECT count(distinct locus_id)
              FROM cvtermpath
               JOIN cvterm ON (cvtermpath.object_id = cvterm.cvterm_id 
                            OR cvtermpath.subject_id = cvterm.cvterm_id)
@@ -1380,7 +1380,7 @@ sub has_loci {
 
 sub has_stocks {
     my $self=shift;
-    my $q = "SELECT count(stock_id)
+    my $q = "SELECT count(distinct stock_id)
              FROM cvtermpath
              JOIN cvterm on (cvtermpath.object_id = cvterm.cvterm_id 
                          OR cvtermpath.subject_id = cvterm.cvterm_id )
@@ -1467,6 +1467,32 @@ sub has_phenotyping_trials {
     return $trial_count || undef;
 
 }
+
+=head2 get_image_ids
+
+ Usage: $self->get_image_ids
+ Desc:  find image IDs associated with a cvterm
+ Ret:   list of md_image_ids
+ Args:  none
+ Side Effects: none
+ Example:
+
+=cut
+
+sub get_image_ids {
+    my $self = shift;
+    my $q = "SELECT image_id FROM metadata.md_image_cvterm
+             WHERE obsolete = 'f' AND cvterm_id = ? " ;
+
+    my $sth = $self->get_dbh()->prepare($q);
+    $sth->execute($self->get_cvterm_id());
+    my @image_ids = ();
+    while (my ($image_id) = $sth->fetchrow_array()) { 
+ 	push @image_ids, $image_id;
+    }
+    return @image_ids;
+}
+
 
 
 ###
