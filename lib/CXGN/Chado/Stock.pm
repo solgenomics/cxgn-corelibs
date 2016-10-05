@@ -568,12 +568,23 @@ sub get_trait_list {
 
 sub get_trials {
     my $self = shift;
-    my $q = "select distinct(project.project_id), project.name, nd_geolocation_id, nd_geolocation.description from stock as accession  join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) LEFT JOIN projectprop ON (project.project_id=projectprop.project_id) JOIN cvterm AS geolocation_type ON (projectprop.type_id=geolocation_type.cvterm_id) LEFT JOIN nd_geolocation ON (projectprop.value::INT = nd_geolocation_id) where accession.stock_id=? AND (geolocation_type.name='project location' OR geolocation_type.name IS NULL) ";
-    my $h = $self->get_schema()->storage()->dbh()->prepare($q);
+    my $dbh = $self->get_schema()->storage()->dbh();
+
+    my $geolocation_q = "SELECT nd_geolocation_id, description FROM nd_geolocation;";
+    my $geolocation_h = $dbh->prepare($geolocation_q);
+    $geolocation_h->execute();
+    my %geolocations;
+    while (my ($nd_geolocation_id, $description) = $geolocation_h->fetchrow_array()) {
+        $geolocations{$nd_geolocation_id} = $description;
+    }
+
+    my $geolocation_type_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema(), 'project location', 'project_property')->cvterm_id();
+    my $q = "select distinct(project.project_id), project.name, projectprop.value from stock as accession join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) LEFT JOIN projectprop ON (project.project_id=projectprop.project_id) where projectprop.type_id=$geolocation_type_id AND accession.stock_id=?;";
+    my $h = $dbh->prepare($q);
     $h->execute($self->get_stock_id());
     my @trials;
-    while (my ($project_id, $project_name, $nd_geolocation_id, $nd_geolocation) = $h->fetchrow_array()) {
-	push @trials, [ $project_id, $project_name, $nd_geolocation_id, $nd_geolocation ];
+    while (my ($project_id, $project_name, $nd_geolocation_id) = $h->fetchrow_array()) {
+        push @trials, [ $project_id, $project_name, $nd_geolocation_id, $geolocations{$nd_geolocation_id} ];
     }
 
     return @trials;
