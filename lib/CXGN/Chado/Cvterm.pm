@@ -802,7 +802,7 @@ sub get_synonyms {
 
 =head2 get_uppercase_synonym
 
- Usage: $self->get_simple_synonym;
+ Usage: my $uppercase_synonym = $self->get_uppercase_synonym;
  Desc: a method for fetching the simplest,uppercase synonym
  Ret:  a single uppercase synonym
  Args: none
