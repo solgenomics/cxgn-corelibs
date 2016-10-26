@@ -640,7 +640,7 @@ sub get_recursive_parents {
     $current_level++;
     my @parents = $self->get_direct_parents($individual->get_id());
 
-    print STDERR Dumper(\@parents);
+    #print STDERR Dumper(\@parents);
 
     my $pedigree = Bio::GeneticRelationships::Pedigree->new( { name => $individual->get_name()."_pedigree", cross_type=>"unknown"} );
 
