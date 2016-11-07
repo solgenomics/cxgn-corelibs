@@ -1,3 +1,4 @@
+
 package CXGN::BlastDB;
 
 =head1 NAME
@@ -74,6 +75,8 @@ the value of the 'blast_db_path' configuration variable (see L<CXGN::Config>).
 
 =cut
 
+use Moose;
+
 use strict;
 use Carp;
 use File::Spec;
@@ -86,59 +89,159 @@ use List::MoreUtils qw/ uniq /;
 
 use Memoize;
 
-use CXGN::BlastDB::Config;
 use CXGN::Tools::List qw/any min all max/;
 use CXGN::Tools::Run;
 
 use Bio::BLAST::Database;
 
-use base qw/CXGN::CDBI::Class::DBI Class::Data::Inheritable/;
-__PACKAGE__->table('blast_db');
+has 'sgn_schema' => ( isa => 'SGN::Schema',
+		      is => 'ro',
+		      required => 1,
+    );
 
-#define our database columns with class::dbi
-our @primary_key_names = ('blast_db_id');
+has 'blast_db_id' => ( isa => 'Int',
+		       is => 'ro',
+		       default => 0,
+    );
 
-our @column_names =
-  ('blast_db_id',  #-database serial number
-   'file_base',    #-basename of the database files, with a path prepended,
-                   # e.g. 'genbank/nr'
-   'title',        #-title of the database, e.g. 'NCBI Non-redundant proteins'
-   'type',         #-type, either 'protein' or 'nucleotide'
-   'source_url',   #-the URL new copies of this database can be fetched from
-   'lookup_url',   #-printf-style format string that can be used to generate
-                   # a URL where a user can get more info on a sequence in
-                   # this blast db
-   'info_url',     #-URL that gives information about the contents of this DB
-   'update_freq',  #-frequency of updating this blast database
-   'index_seqs',   #- corresponds to formatdb's -o option.  Set true if formatdb
-                   #  should be given a '-o T'.  This is used if you later want to
-                   #  fetch specific sequences out of this blast db
-   'web_interface_visible', #whether the blast web interface should display this DB
-   'blast_db_group_id', #ID of the blast DB group this db belondgs to,
-                        #if any.  used for displaying them in the web
-                        #interface
-   'description',  # text description of the database, display on the database details page
-  );
-__PACKAGE__->columns(  Primary   => @primary_key_names, );
-__PACKAGE__->columns(  All       => @column_names,      );
-__PACKAGE__->columns(  Essential => @column_names,      );
-__PACKAGE__->sequence( 'blast_db_blast_db_id_seq' );
+has 'dbpath' => ( isa => 'Maybe[Str]',
+		  is => 'rw',
+		  required => 1,
+   );
+		  
+has 'file_base' => ( isa => 'Maybe[Str]',
+		     is => 'rw',
+    );
 
-__PACKAGE__->has_a( blast_db_group_id => 'CXGN::BlastDB::Group');
+has 'title' => ( isa => 'Str',
+		 is => 'rw',
+		 default => '',
+    );
 
-=head2 from_id
+has 'type' => ( isa => 'Maybe[Str]',
+		is => 'rw',
+    );
 
-  Usage: my $bdb = CXGN::BlastDB->from_id(12);
-  Desc : retrieve a BlastDB object using its ID number
-  Ret  : a BlastDB object for that id number, or undef if none found
-  Args : the id number of the object to retrieve
-  Side Effects: accesses the database
+has 'source_url' => ( isa => 'Maybe[Str]',
+		      is => 'rw',
+		      default => '',
+    );
 
-=cut
+has 'lookup_url' => (isa => 'Maybe[Str]',
+		     is => 'rw',
+		     default => '',
+    );
 
-sub from_id {  shift->retrieve(@_); }
+has 'info_url' => ( isa => 'Maybe[Str]', 
+		    is => 'rw',
+    );
 
-#only document title and type for external users of this module,
+has 'update_freq' => ( isa => 'Maybe[Str]',
+		       is => 'rw',
+    );
+
+has 'index_seqs' => ( isa => 'Bool',
+		      is => 'rw',
+    );
+
+has 'web_interface_visible' => ( isa => 'Bool',
+				 is => 'rw',
+    );
+
+has 'description' => (isa => 'Maybe[Str]',
+		      is => 'rw',
+    );
+
+###our @column_names =
+  # ('blast_db_id',  #-database serial number
+  #  'file_base',    #-basename of the database files, with a path prepended,
+  #                  # e.g. 'genbank/nr'
+  #  'title',        #-title of the database, e.g. 'NCBI Non-redundant proteins'
+  #  'type',         #-type, either 'protein' or 'nucleotide'
+  #  'source_url',   #-the URL new copies of this database can be fetched from
+  #  'lookup_url',   #-printf-style format string that can be used to generate
+  #                  # a URL where a user can get more info on a sequence in
+  #                  # this blast db
+  #  'info_url',     #-URL that gives information about the contents of this DB
+  #  'update_freq',  #-frequency of updating this blast database
+  #  'index_seqs',   #- corresponds to formatdb's -o option.  Set true if formatdb
+  #                  #  should be given a '-o T'.  This is used if you later want to
+  #                  #  fetch specific sequences out of this blast db
+  #  'web_interface_visible', #whether the blast web interface should display this DB
+  #  'blast_db_group_id', #ID of the blast DB group this db belondgs to,
+  #                       #if any.  used for displaying them in the web
+  #                       #interface
+  #  'description',  # text description of the database, display on the database details page
+ ### );
+
+sub BUILD { 
+    my $self = shift;    
+
+    if ($self->blast_db_id) { 
+	my $row = $self->sgn_schema()->resultset("BlastDb")->find( { blast_db_id => $self->blast_db_id() } );
+	if (!$row) { die "The blast_db_id with the id ".$self->blast_db_id()." does not exist in this database\n"; }
+	$self->file_base($row->file_base());
+	$self->title($row->title());
+	$self->type($row->type());
+	$self->source_url($row->source_url());
+	$self->lookup_url($row->lookup_url());
+	$self->info_url($row->info_url());
+	$self->update_freq($row->update_freq());
+	$self->index_seqs($row->index_seqs());
+	$self->web_interface_visible($row->web_interface_visible());
+	$self->description($row->description());
+    }
+    else { 
+	print STDERR "No blast_db_id provided. Creating empty object...\n";
+    }
+}
+
+# class function
+
+sub retrieve_all { 
+    my $class = shift;
+    my $sgn_schema = shift;
+    my $dbpath = shift;
+
+    my @dbs = $class->search($sgn_schema, $dbpath);
+    
+    return @dbs;
+}
+
+sub search { 
+    my $class = shift;
+    my $sgn_schema = shift;
+    my $dbpath = shift;
+    my %search = @_;
+
+    my $rs = $sgn_schema->resultset("BlastDb")->search( { %search } );
+
+    my @dbs = ();
+    
+    while (my $db = $rs->next()) { 
+	my $bdbo = CXGN::BlastDB->new( sgn_schema => $sgn_schema, dbpath => $dbpath, blast_db_id => $db->blast_db_id() ); 
+	push @dbs, $bdbo;
+    }
+    return @dbs;
+}
+
+# =head2 from_id
+
+## Note: replaced by standard moose constructor and blast_db_id arg
+
+#   Usage: my $bdb = CXGN::BlastDB->from_id(12);
+#   Desc : retrieve a BlastDB object using its ID number
+#   Ret  : a BlastDB object for that id number, or undef if none found
+#   Args : the id number of the object to retrieve
+#   Side Effects: accesses the database
+
+# =cut
+
+# sub from_id {  
+#     shift->retrieve(@_);
+#    }
+
+#Only document title and type for external users of this module,
 #some nicer wrappers will be provided for using the other information
 
 =head2 title
@@ -184,10 +287,6 @@ sub from_id {  shift->retrieve(@_); }
 
 =cut
 
-__PACKAGE__->has_many( genomic_libraries_annotated =>
-		       [ 'CXGN::Genomic::LibraryAnnotationDB' => 'library_id' ],
-		     );
-
 =head2 file_modtime
 
   Desc: get the earliest unix modification time of the database files
@@ -199,9 +298,9 @@ __PACKAGE__->has_many( genomic_libraries_annotated =>
 =cut
 
 sub file_modtime {
-  my $self = shift;
-  return unless $self->_fileset;
-  return $self->_fileset->file_modtime;
+    my $self = shift;
+    return unless $self->_fileset;
+    return $self->_fileset->file_modtime;
 }
 
 =head2 format_time
@@ -223,9 +322,9 @@ sub file_modtime {
 =cut
 
 sub format_time {
-  my ($self) = @_;
-  return unless $self->_fileset;
-  return $self->_fileset->format_time;
+    my ($self) = @_;
+    return unless $self->_fileset;
+    return $self->_fileset->format_time;
 }
 
 =head2 full_file_basename
@@ -242,13 +341,12 @@ sub format_time {
 =cut
 
 sub full_file_basename {
-  my $this = shift;
-  my $class = ref $this;
-
-  return scalar File::Spec->catfile( $class->dbpath,
-				     $this->file_base,
-				   );
-
+    my $self = shift;
+    
+    return scalar File::Spec->catfile( $self->dbpath,
+				       $self->file_base,
+	);
+    
 }
 
 =head2 list_files
@@ -262,9 +360,9 @@ sub full_file_basename {
 =cut
 
 sub list_files {
-  my $self = shift;
-  return unless $self->_fileset;
-  $self->_fileset->list_files();
+    my $self = shift;
+    return unless $self->_fileset;
+    $self->_fileset->list_files();
 }
 
 =head2 files_are_complete
@@ -279,9 +377,9 @@ sub list_files {
 =cut
 
 sub files_are_complete {
-  my ($self) = @_;
-  return unless $self->_fileset;
-  return $self->_fileset->files_are_complete;
+    my ($self) = @_;
+    return unless $self->_fileset;
+    return $self->_fileset->files_are_complete;
 }
 
 =head2 is_split
@@ -296,9 +394,9 @@ sub files_are_complete {
 =cut
 
 sub is_split {
-  my ($self) = @_;
-  return unless $self->_fileset;
-  return $self->_fileset->is_split;
+    my ($self) = @_;
+    return unless $self->_fileset;
+    return $self->_fileset->is_split;
 }
 
 =head2 is_indexed
@@ -314,9 +412,9 @@ sub is_split {
 =cut
 
 sub is_indexed {
-  my ( $self ) = @_;
-  return unless $self->_fileset;
-  return $self->_fileset->files_are_complete && $self->_fileset->indexed_seqs;
+    my ( $self ) = @_;
+    return unless $self->_fileset;
+    return $self->_fileset->files_are_complete && $self->_fileset->indexed_seqs;
 }
 
 
@@ -331,9 +429,9 @@ sub is_indexed {
 =cut
 
 sub sequences_count {
-  my $self = shift;
-  return unless $self->_fileset;
-  return $self->_fileset->sequences_count;
+    my $self = shift;
+    return unless $self->_fileset;
+    return $self->_fileset->sequences_count;
 }
 
 =head2 is_contaminant_for
@@ -349,12 +447,12 @@ sub sequences_count {
 
 =cut
 
-__PACKAGE__->has_many( _lib_annots => 'CXGN::Genomic::LibraryAnnotationDB' );
+#__PACKAGE__->has_many( _lib_annots => 'CXGN::Genomic::LibraryAnnotationDB' );
 sub is_contaminant_for {
-  my ($this,$lib) = @_;
-
-  #return true if any arguments are true
-  return any( map { $_->is_contaminant && $_->library_id == $lib } $this->_lib_annots);
+    my ($this,$lib) = @_;
+    
+    #return true if any arguments are true
+    return any( map { $_->is_contaminant && $_->library_id == $lib } $this->_lib_annots);
 }
 
 =head2 needs_update
@@ -369,36 +467,36 @@ sub is_contaminant_for {
 =cut
 
 sub needs_update {
-  my ($self) = @_;
-
-  #it of course needs an update if it is not complete
-  return 1 unless $self->files_are_complete;
-
-  my $modtime = $self->format_time();
-
-  #if no modtime, files must not even be there
-  return 1 unless $modtime;
-
-  #manually updated DBs never _need_ updates if their
-  #files are there
-  return 0 if $self->update_freq eq 'manual';
-
-  #also need update if it is set to be indexed but is not indexed
-  return 1 if $self->index_seqs && ! $self->is_indexed;
-
-  #figure out the maximum number of seconds we'll tolerate
-  #the files being out of date
-  my $max_time_offset = 60 * 60 * 24 * do { #figure out number of days
-    if(    $self->update_freq eq 'daily'   ) {   1   }
-    elsif( $self->update_freq eq 'weekly'  ) {   7   }
-    elsif( $self->update_freq eq 'monthly' ) {   31  }
-    else {
-      confess "invalid update_freq ".$self->update_freq;
-    }
-  };
-
-  #subtract from modtime and make a decision
-  return time-$modtime > $max_time_offset ? 1 : 0;
+    my ($self) = @_;
+    
+    #it of course needs an update if it is not complete
+    return 1 unless $self->files_are_complete;
+    
+    my $modtime = $self->format_time();
+    
+    #if no modtime, files must not even be there
+    return 1 unless $modtime;
+    
+    #manually updated DBs never _need_ updates if their
+    #files are there
+    return 0 if $self->update_freq eq 'manual';
+    
+    #also need update if it is set to be indexed but is not indexed
+    return 1 if $self->index_seqs && ! $self->is_indexed;
+    
+    #figure out the maximum number of seconds we'll tolerate
+    #the files being out of date
+    my $max_time_offset = 60 * 60 * 24 * do { #figure out number of days
+	if(    $self->update_freq eq 'daily'   ) {   1   }
+	elsif( $self->update_freq eq 'weekly'  ) {   7   }
+	elsif( $self->update_freq eq 'monthly' ) {   31  }
+	else {
+	    confess "invalid update_freq ".$self->update_freq;
+	}
+    };
+    
+    #subtract from modtime and make a decision
+    return time-$modtime > $max_time_offset ? 1 : 0;
 }
 
 
@@ -420,10 +518,10 @@ sub needs_update {
 =cut
 
 sub check_format_permissions {
-  my ($self,$ffbn) = @_;
-  croak "ffbn arg is no longer supported, maybe you should just use a new Bio::BLAST::Database object" if $ffbn;
-  return unless $self->_fileset('write');
-  return $self->_fileset('write')->check_format_permissions;
+    my ($self,$ffbn) = @_;
+    croak "ffbn arg is no longer supported, maybe you should just use a new Bio::BLAST::Database object" if $ffbn;
+    return unless $self->_fileset('write');
+    return $self->_fileset('write')->check_format_permissions;
 }
 
 =head2 format_from_file
@@ -440,11 +538,11 @@ sub check_format_permissions {
 =cut
 
 sub format_from_file {
-  my ($self,$seqfile,$ffbn) = @_;
-  $ffbn and croak "ffbn arg no longer supported.  maybe you should make a new Bio::BLAST::Database object";
-
-  $self->_fileset('write')
-      ->format_from_file( seqfile => $seqfile, indexed_seqs => $self->index_seqs, title => $self->title );
+    my ($self,$seqfile,$ffbn) = @_;
+    $ffbn and croak "ffbn arg no longer supported.  maybe you should make a new Bio::BLAST::Database object";
+    
+    $self->_fileset('write')
+	->format_from_file( seqfile => $seqfile, indexed_seqs => $self->index_seqs, title => $self->title );
 }
 
 =head2 to_fasta
@@ -459,9 +557,9 @@ sub format_from_file {
 =cut
 
 sub to_fasta {
-  my ($self) = @_;
-  return unless $self->_fileset;
-  return $self->_fileset->to_fasta;
+    my ($self) = @_;
+    return unless $self->_fileset;
+    return $self->_fileset->to_fasta;
 }
 
 =head2 get_sequence
@@ -495,7 +593,7 @@ sub get_sequence {
 
 #mk_classdata is from Class::Data::Inheritable.  good little module,
 #you should look at it
-__PACKAGE__->mk_classdata( dbpath => CXGN::BlastDB::Config->load->{'blast_db_path'} );
+#__PACKAGE__->mk_classdata( dbpath => CXGN::BlastDB::Config->load->{'blast_db_path'} );
 
 =head2 identifier_url
 
@@ -512,32 +610,32 @@ __PACKAGE__->mk_classdata( dbpath => CXGN::BlastDB::Config->load->{'blast_db_pat
 =cut
 
 sub identifier_url {
-  my ($self,$ident) = @_;
-  $ident or croak 'must pass an identifier to link';
-
-  return $self->lookup_url
-    ? sprintf($self->lookup_url,$ident)
-      : do { require CXGN::Tools::Identifiers; CXGN::Tools::Identifiers::identifier_url($ident) };
+    my ($self,$ident) = @_;
+    $ident or croak 'must pass an identifier to link';
+    
+    return $self->lookup_url
+	? sprintf($self->lookup_url,$ident)
+	: do { require CXGN::Tools::Identifiers; CXGN::Tools::Identifiers::identifier_url($ident) };
 }
 
 # accessor that holds our encapsulated Bio::BLAST::Database
 memoize '_fileset',
-  NORMALIZER => sub { #< need to take the full_file_basename (really the dbpath) into account for the memoization
-    my $s = shift; join ',',$s,@_,$s->full_file_basename
-  };
-sub _fileset {
-  my ($self,$write) = @_;
-  my $ffbn = $self->full_file_basename;
-  return Bio::BLAST::Database->open( full_file_basename => $ffbn,
-				       type => $self->type,
-                                       ($write ? ( write => 1,
-						   create_dirs => 1,
-                                                 )
-                                        :        (),
-                                       )
-                                     );
-}
+    NORMALIZER => sub { #< need to take the full_file_basename (really the dbpath) into account for the memoization
+	my $s = shift; join ',',$s,@_,$s->full_file_basename
+};
 
+sub _fileset { 
+my ($self,$write) = @_;
+my $ffbn = $self->full_file_basename;
+return Bio::BLAST::Database->open( full_file_basename => $ffbn,
+				   type => $self->type,
+				   ($write ? ( write => 1,
+					       create_dirs => 1,
+				    )
+				    :        (),
+				   )
+    );
+}
 =head1 MAINTAINER
 
 Robert Buels
@@ -555,28 +653,28 @@ it under the same terms as Perl itself.
 
 =cut
 
-package CXGN::BlastDB::Group;
-use strict;
-use English;
-use Carp;
+# package CXGN::BlastDB::Group;
+# use strict;
+# use English;
+# use Carp;
 
-use base qw/CXGN::CDBI::Class::DBI Class::Data::Inheritable/;
-__PACKAGE__->table(__PACKAGE__->qualify_schema('sgn') . '.blast_db_group');
+# use base qw/CXGN::CDBI::Class::DBI Class::Data::Inheritable/;
+# __PACKAGE__->table(__PACKAGE__->qualify_schema('sgn') . '.blast_db_group');
 
-#define our database columns with class::dbi
-our @primary_key_names = ('blast_db_group_id');
+# #define our database columns with class::dbi
+# our @primary_key_names = ('blast_db_group_id');
 
-our @column_names =
-  ('blast_db_group_id',
-   'name',
-   'ordinal'
-  );
-__PACKAGE__->columns(  Primary   => @primary_key_names, );
-__PACKAGE__->columns(  All       => @column_names,      );
-__PACKAGE__->columns(  Essential => @column_names,      );
-__PACKAGE__->sequence( __PACKAGE__->base_schema('sgn'). '.blast_db_group_blast_db_group_id_seq' );
+# our @column_names =
+#   ('blast_db_group_id',
+#    'name',
+#    'ordinal'
+#   );
+# __PACKAGE__->columns(  Primary   => @primary_key_names, );
+# __PACKAGE__->columns(  All       => @column_names,      );
+# __PACKAGE__->columns(  Essential => @column_names,      );
+# __PACKAGE__->sequence( __PACKAGE__->base_schema('sgn'). '.blast_db_group_blast_db_group_id_seq' );
 
-__PACKAGE__->has_many( blast_dbs => 'CXGN::BlastDB', {order_by => 'title'} );
+# __PACKAGE__->has_many( blast_dbs => 'CXGN::BlastDB', {order_by => 'title'} );
 
 
 ####
