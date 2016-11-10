@@ -4,6 +4,10 @@ package CXGN::BlastDB;
 
 CXGN::BlastDB - a BLAST database that we keep in stock and updated.
 
+NOTE!!! This object is deprecated and used only in conjunction with 
+cgi-bin scripts. An equivalent object based on DBIx::Class and Moose
+can be found in the sgn/ repo, called CXGN::Blast.
+
 =head1 SYNOPSIS
 
   ### SIMPLE MECHANICS
