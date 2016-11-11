@@ -1,4 +1,10 @@
 #!/usr/bin/env perl
+
+# NOTE: This script is deprecated. 
+# The current version has bin moved to the sgn/ repo
+# as bin/bdb_update_blast_dbs.pl
+
+
 use strict;
 use warnings;
 use English;
@@ -24,6 +30,10 @@ sub usage {
   die <<EOU;
 $message
 Usage:
+
+    Do not use this script. It is deprecated.
+    Use cxgn/sgn/bin/bdb_update_blast_dbs.pl instead.
+
   $FindBin::Script [ options ] -d <path>
 
   Go over all the BLAST databases we keep in stock and update them if
