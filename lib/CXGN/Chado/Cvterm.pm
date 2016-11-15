@@ -824,7 +824,7 @@ sub get_uppercase_synonym {
     if ($uppercase_synonym) {
       $uppercase_synonym =~ s/"//g;  # $synonym.replace(/"/g, "");
       my @syn_parts = split " ", $uppercase_synonym;
-      $uppercase_synonym = @syn_parts[0];
+      $uppercase_synonym = $syn_parts[0];
     } else {
       $uppercase_synonym = 'None';
     }
