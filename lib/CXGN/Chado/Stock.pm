@@ -569,6 +569,7 @@ sub get_trait_list {
 sub get_trials {
     my $self = shift;
     my $dbh = $self->get_schema()->storage()->dbh();
+    my $stock_type = $self->get_type->name();
 
     my $geolocation_q = "SELECT nd_geolocation_id, description FROM nd_geolocation;";
     my $geolocation_h = $dbh->prepare($geolocation_q);
@@ -579,7 +580,12 @@ sub get_trials {
     }
 
     my $geolocation_type_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema(), 'project location', 'project_property')->cvterm_id();
-    my $q = "select distinct(project.project_id), project.name, projectprop.value from stock as accession join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) FULL OUTER JOIN projectprop ON (project.project_id=projectprop.project_id AND projectprop.type_id=$geolocation_type_id) WHERE accession.stock_id=?;";
+    my $q;
+    if ($stock_type eq 'accession'){
+        $q = "select distinct(project.project_id), project.name, projectprop.value from stock as accession join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) FULL OUTER JOIN projectprop ON (project.project_id=projectprop.project_id AND projectprop.type_id=$geolocation_type_id) WHERE accession.stock_id=?;";
+    } else {
+        $q = "select distinct(project.project_id), project.name, projectprop.value from stock JOIN nd_experiment_stock USING(stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) FULL OUTER JOIN projectprop ON (project.project_id=projectprop.project_id AND projectprop.type_id=$geolocation_type_id) WHERE stock.stock_id=?;";
+    }
     my $h = $dbh->prepare($q);
     $h->execute($self->get_stock_id());
     my @trials;
