@@ -220,6 +220,27 @@ sub add_synonym {
     $stock->create_stockprops({$synonym_cvterm->name() => $synonym});
 }
 
+=head2 remove_synonym
+
+Usage: $self->remove_synonym
+ Desc:  removes a synonym for this stock
+ Ret:   nothing
+ Args:  name
+ Side Effects: removes an entry from stockprop table
+ Example:
+
+=cut
+
+sub remove_synonym {
+    my $self = shift;
+    my $synonym = shift;
+    my $synonym_cvterm_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_synonym', 'stock_property')->cvterm_id();
+    my $synonym_rs = $self->get_schema->resultset("Stock::Stockprop")->search({'stock_id'=>$self->get_stock_id, 'type_id'=>$synonym_cvterm_id, 'value'=>$synonym});
+    while(my $s = $synonym_rs->next()){
+        $s->delete();
+    }
+}
+
 =head2 get_type
 
  Usage: $self->get_type
