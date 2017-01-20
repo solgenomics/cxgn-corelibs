@@ -25,6 +25,7 @@ use Bio::Chado::Schema;
 use CXGN::Metadata::Schema;
 use Bio::GeneticRelationships::Pedigree;
 use Bio::GeneticRelationships::Individual;
+use SGN::Model::Cvterm;
 use base qw / CXGN::DB::Object / ;
 
 =head2 new
@@ -198,6 +199,25 @@ sub set_species {
     else {
         warn "NO organism found for species name $species_name!!\n";
     }
+}
+
+=head2 add_synonym
+
+Usage: $self->add_synonym
+ Desc:  add a synonym for this stock. a stock can have many synonyms
+ Ret:   nothing
+ Args:  name
+ Side Effects:
+ Example:
+
+=cut
+
+sub add_synonym {
+    my $self = shift;
+    my $synonym = shift;
+    my $synonym_cvterm = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_synonym', 'stock_property');
+    my $stock = $self->get_object_row();
+    $stock->create_stockprops({$synonym_cvterm->name() => $synonym});
 }
 
 =head2 get_type
