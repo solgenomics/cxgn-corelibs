@@ -641,7 +641,7 @@ sub get_direct_parents {
     my $self = shift;
     my $stock_id = shift || $self->get_stock_id();
 
-    print STDERR "get_direct_parents with $stock_id...\n";
+    #print STDERR "get_direct_parents with $stock_id...\n";
 
     my $female_parent_id;
     my $male_parent_id;
@@ -715,15 +715,40 @@ sub get_parents {
     my $self = shift;
     my $max_level = shift || 1;
 
-    my $root = Bio::GeneticRelationships::Individual->new(
+	my $root;
+	if ($self->get_stock_id){
+    $root = Bio::GeneticRelationships::Individual->new(
 	{
 	    name => $self->get_uniquename(),
 	    id => $self->get_stock_id(),
 	});
 
     $self->get_recursive_parents($root, $max_level, 0);
-
+	}
     return $root;
+}
+
+=head2 get_stockprop_hash
+
+ Usage:
+ Desc:  Returns a hash of all stockprops and values for this stock
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_stockprop_hash {
+	my $self = shift;
+	my $stock_id = $self->get_stock_id;
+	my $stockprop_rs = $self->get_schema->resultset('Stock::Stockprop')->search({stock_id => $stock_id}, {join=>['type'], +select=>['type.name', 'me.value'], +as=>['name', 'value']});
+	my $stockprop_hash;
+	while (my $r = $stockprop_rs->next()){
+		push @{ $stockprop_hash->{$r->get_column('name')} }, $r->get_column('value');
+	}
+	#print STDERR Dumper $stockprop_hash;
+	return $stockprop_hash;
 }
 
 # subsequent 2 calls moved to Bio::GeneticRelationships::Individual
