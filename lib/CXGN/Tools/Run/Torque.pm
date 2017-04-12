@@ -497,4 +497,14 @@ sub alive {
     return;
 }
 
+# debug print function
+sub dbp(@) {
+    # get rid of first arg if it's one of these objects
+    return 1 unless DEBUG;
+    shift if( ref($_[0]) && ref($_[0]) =~ /::/ and $_[0]->isa(__PACKAGE__));
+    print STDERR '# dbg '.__PACKAGE__.': ',@_;
+    print STDERR "\n" unless $_[-1] =~ /\n$/;
+    return 1;
+}
+
 1;
