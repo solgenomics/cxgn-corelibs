@@ -455,4 +455,46 @@ sub cancel {
 }
 
 
+=head2 alive
+
+  Usage: print "It's still there" if $runner->alive;
+  Desc : check whether our background process is still alive
+  Ret  : false if it's not still running or was synchronous,
+         true if it's async or cluster and is still running.
+         Additionally, if it's a cluster job, the true value
+         returned will be either 'ending', 'running' or 'queued'.
+  Args : none
+  Side Effects: dies if our background process terminated abnormally
+
+=cut
+
+sub alive {
+    my ($self) = @_;
+    
+    $self->_die_if_error; #if our child died, we should die too
+    
+    if( $self->is_async) {
+	#use a kill with signal zero to see if that pid is still running
+	$self->_reap;
+	if( kill 0 => $self->pid ) {
+	    system("pstree -p | egrep '$$|".$self->pid."'") if DEBUG;
+	    dbp 'background job '.$self->pid." is alive.\n";
+	    return 1;
+	} else {
+	    system("pstree -p | egrep '$$|".$self->pid."'") if DEBUG;
+	    dbp 'background job ',$self->pid," is dead.\n";
+	    $self->_run_completion_hooks unless $self->_told_to_die;
+	    return;
+	}
+    # } elsif( $self->is_cluster ) {    #### CLUSTER RELATED STUFF MOVED TO SUBCLASS
+    # 	my %m = qw| e ending r running q queued |;
+    # 	my $state = $m{ $self->_qstat->{'job_state'} || '' };
+    # 	$self->_run_completion_hooks unless $state || $self->_told_to_die;
+    # 	return $state;
+    }
+
+    $self->_die_if_error; #if our child died, we should die too
+    return;
+}
+
 1;
