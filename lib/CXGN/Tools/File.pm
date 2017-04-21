@@ -51,7 +51,7 @@ use base qw/Exporter/;
 
 sub read_commented_file {
     my ($filename) = @_;
-    open(my $FILE,'<', $filename) or croak ("Could not open file $filename: $!");
+    open(my $FILE,'<', $filename) or return("Could not open file $filename: $!");
     my $file_contents = "";
     while (<$FILE>) {
       next if /^\#/;
