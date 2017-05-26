@@ -7,6 +7,8 @@ use CXGN::Phylo::ChainData;
 use CXGN::Phylo::Histograms;
 use lib '/usr/share/perl/5.14.2/';
 
+my $MAX_TREE_DEPTH = 400;
+
 # this is an object to facilitate running MrBayes (Bayesian phylogeny
 # inference program). The main functionality it adds is a relatively
 # easy way to control the criteria for deciding when to end a run.
@@ -20,7 +22,8 @@ sub new {
         'seed'                      => undef,
         'swapseed'                  => undef,
         'n_runs'                    => 2,
-        'n_temperatures'            => 4,
+        'n_temperatures'            => 3,
+        'n_temperatures_out'        => 3,
         'delta_temperature'         => 0.1,
         'n_swaps'                   => 1,
         'chunk_size'                => 2000,     # $default_chunk_size,
@@ -52,6 +55,11 @@ sub new {
         'use_mpi'        => 1,       # will by default use mpi
                                      #(if mpi installed and parallel version of mrbayes installed)
         'max_processors' => undef,
+	'verbosity' => 'quiet',
+
+			     'n_taxa' => undef,
+			     'n_alignment_columns' => undef,
+#	'newick_order' => 'low_to_high', # e.g. (1,((2,5),(3,4)))  of two children, the one with the least leaf id is put on left
     };
 
     my $self = bless $default_arguments, $class;
@@ -79,6 +87,7 @@ sub new {
         $self->{file_basename} = $file_basename;
     }
 
+    if(-f $alignment_nex_filename){
     open my $fh_align, "<", "$alignment_nex_filename";
 
     #   dimensions ntax=21 nchar=251;
@@ -93,13 +102,19 @@ sub new {
         }
     }
     close $fh_align;
+  }else{ # n_taxa, n_alignment_cols must be supplied as arguments
+die if(!defined $self->{n_taxa} or !defined $self->{n_alignment_columns});
+  }
 
     my %split_count = ();
+    my %topo_count = ();
     $self->{split_count} = \%split_count;
+$self->{topology_count} = \%topo_count;
 
     my $n_runs            = $self->{n_runs};
     my $burnin_fraction   = $self->{burnin_fraction};
     my $n_temperatures    = $self->{n_temperatures};
+    my $n_temperatures_out = $self->{n_temperatures_out};
     my $delta_temperature = $self->{delta_temperature};
     my $n_swaps           = $self->{n_swaps};
     my $sample_freq       = $self->{sample_freq};
@@ -145,7 +160,8 @@ sub new {
 
     $self->{newick_number_map} = {};
     $self->{number_newick_map} = {};
-    $self->{toponumber_count}  = {};    # total counts (i.e. summed over runs) of topologies
+    $self->{topology_count}  = {};    # total counts (i.e. summed over runs) of topologies
+$self->{chain_data} = {}; # keys are param names, values ChainData objects
 
     print "# Delta temperature: $delta_temperature.\n";
     my $middle_piece =
@@ -162,6 +178,7 @@ sub new {
       "mcmcp allchains=yes;\n"
       . "mcmcp burninfrac=$burnin_fraction;\n"
       . "mcmcp nchains=$n_temperatures;\n"
+      . "mcmcp nchainsout=$n_temperatures_out;\n"
       . "mcmcp nswaps=$n_swaps;\n"
       . "mcmcp nruns=$n_runs;\n"
       . "mcmcp temp=$delta_temperature;\n"
@@ -174,7 +191,7 @@ sub new {
     my $end_piece = "sump;\n" . "sumt;\n" . "end;\n";
     $self->{mrbayes_block1} =
       $begin_piece . $seed_piece . $middle_piece . "mcmc ngen=$chunk_size;\n" . $end_piece;
-    $self->{mrbayes_block2} = $begin_piece . $seed_piece2 .    # only for debugging!!!
+    $self->{mrbayes_block2} = $begin_piece . $seed_piece2 .    
       $middle_piece . "mcmc append=" . $self->{append} . " ngen=$chunk_size;\n" . $end_piece;
     $self->setup_id_species_map();
 
@@ -203,7 +220,7 @@ sub new {
 
         # leave use_mpi false.
     }
-    print "use mpi: [", $self->{use_mpi}, "]\n";
+    print "# use mpi: [", $self->{use_mpi}, "]\n";
 
     return $self;
 }
@@ -226,14 +243,14 @@ sub run {
 
     my $command = $self->{mb_name} . ' mb_chunk_control.nex';
 
-    #  print "mb command: $command \n";
     if ( $self->{use_mpi} ) {
         $command = "mpirun -np $np " . $command;
     }
-    print "Command:  $command \n";
+  print "mb command: $command \n"; # exit;
 
 ###### First chunk. ######
     # Run:
+
     my $mb_output_string = $self->run_chunk( $self->{mrbayes_block1}, $command );
     open my $fh, ">", "first_chunk.stdout";
     print $fh "$mb_output_string \n";
@@ -248,11 +265,10 @@ sub run {
     open my $fhc, ">", "$converge_filename";
     print $fhc "$ngen    $conv_string   $converge_count \n";
 
-    print "$ngen    $conv_string   $converge_count \n";
+  #  print "$ngen    $conv_string   $converge_count \n";
 
 ###### Later chunks: ######
-
-    foreach (
+    for(
         my $prev_chunk_ngen = $ngen, $ngen += $chunk_size ;
         $ngen <= $self->{max_gens} ;
         $prev_chunk_ngen = $ngen, $ngen += $chunk_size
@@ -262,26 +278,31 @@ sub run {
 
         # Run the chunk:
         $mrbayes_block2 =~ s/ngen=\d+;/ngen=$ngen;/;    # subst in the new ngen
+
         $mb_output_string = $self->run_chunk( $mrbayes_block2, $command );
         open $fh, ">", "later_chunk.stdout";
         print $fh "$mb_output_string \n";
         close $fh;
 
+	# print "Analyze the chunk: \n";
         # Analyze the chunk:
-
         $self->mc3swap($mb_output_string);              # mcmcmc swap
-        $self->topo_analyze($prev_chunk_ngen);          # topologies
-        $self->param_analyze($prev_chunk_ngen);
 
+        $self->topo_analyze($prev_chunk_ngen);          # topologies
+
+        $self->param_analyze($prev_chunk_ngen);
         #****************************************************************
 
         ( $converged, $conv_string ) = $self->test_convergence($file_basename);
         $converge_count += $converged;
         print $fhc "$ngen  $conv_string  $converge_count\n";
-        printf( "%5i  %s  %3i\n", $ngen, $conv_string, $converge_count );
+        printf( "%5i  %3i\n", $ngen, 
+              #  $conv_string, 
+                $converge_count );
 
         #    print "\n" if ( ( $ngen % $stdout_newline_interval ) == 0 );
-        last if ( $converge_count >= $self->{converged_chunks_required} );
+#	print "converge count: $converge_count \n";
+        last if ( ( $self->{n_runs} > 1) and ($converge_count >= $self->{converged_chunks_required} ) );
     }    # end of loop over chunks
     close $fhc;
     return;
@@ -294,7 +315,7 @@ sub run_chunk {
     open my $fh, ">", "mb_chunk_control.nex";    # run params for first chunk
     print $fh "$mb_block";
     close $fh;
-
+#exit;
     #print "In run_chunk. before mb.\n";
     my $mb_output_string = `$command`;           # run the chunk
                                                  #print "In run_chunk. after mb.\n";
@@ -336,16 +357,27 @@ sub topo_analyze {
     my $self            = shift;
     my $prev_chunk_ngen = shift || $self->{ngens_run} - $self->{chunk_size};    #
     my $ngen            = $self->{ngens_run};
+#print "before retrieve topology samples $ngen \n";
     $self->retrieve_topology_samples( undef, $prev_chunk_ngen );    #read in from * .run?.t file
-
-    #    print "\n *******************\n", "N generations so far: $ngen \n";
+#print "after retrieve topology samples $ngen \n";
+#        print "N generations so far: $ngen \n";
     my $histogram_filename = $self->{file_basename} . "." . "topology_histograms";
     open my $fhhist, ">", "$histogram_filename";
     print $fhhist "# After $ngen generations. \n",
       $self->{topo_chain_data}->{histograms}->histogram_string('by_bin_weight');
     my @topo_L1_distances = $self->{topo_chain_data}->{histograms}->avg_L1_distance();
-    printf $fhhist ( "# Avg L1 distance: %6.3f %6.3f %6.3f \n\n", @topo_L1_distances[ 0 .. 2 ] );
-    close $fhhist;
+ printf $fhhist ( "# L1:   %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f \n# Linf: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f  \n\n", @topo_L1_distances[ 0 .. 11 ] );
+    my $number_newick = $self->{number_newick_map};
+    for my $topo_number (1..10000){
+      if(exists $number_newick->{$topo_number}){
+	my $newick = $number_newick->{$topo_number};
+	printf $fhhist ("# %4i  %s \n", $topo_number, $newick);
+      }else{
+	last;
+      }
+    }
+  
+ close $fhhist;
 
     $histogram_filename = $self->{file_basename} . "." . "splits_histograms";
     open $fhhist, ">", "$histogram_filename";
@@ -354,19 +386,26 @@ sub topo_analyze {
     my @splits_L1_distances = $self->{splits_chain_data}->{histograms}->avg_L1_distance();
 
 # $max_diff /=  ($self->{splits_chain_data}->{histograms}->get_total_counts() / ($self->{n_runs} * ($self->{n_taxa} -3)));
-    printf $fhhist ( "# L1: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f   Linf: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f   %s %s \n\n", @splits_L1_distances[ 0 .. 6 ] );
+    printf $fhhist ( "# L1:   %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f \n# Linf: %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f  \n\n", @splits_L1_distances[ 0 .. 11 ] );
 
 
     # $avg_L1, $avg_L1x, $max_diff); #$self->{min_binweight}));
     close $fhhist;
+    return (\@topo_L1_distances, \@splits_L1_distances);
 }
 
 sub param_analyze {
     my $self = shift;
     my $prev_chunk_ngen = shift || $self->{ngens_run} - $self->{chunk_size};    #
+#print "before retrieve param samples. \n";
     $self->retrieve_param_samples($prev_chunk_ngen);    # read in from *.run?.p file
-
-    for my $chain_data_obj ( values %{ $self->{chain_data} } ) {
+#print "after retrieve param samples. \n";
+  my @prams = sort keys %{ $self->{chain_data}};
+  #  print join(" ", @prams), "\n";
+   # for my $chain_data_obj ( values %{ $self->{chain_data} } ) {
+       for my $the_param (@prams){
+      #    print "Parameter: $the_param\n";
+       my $chain_data_obj = $self->{chain_data}->{$the_param};
         my $histogram_filename =
           $self->{file_basename} . "." . $chain_data_obj->{parameter_name} . "_histograms";
         open my $fhhist, ">", "$histogram_filename";
@@ -479,10 +518,14 @@ sub test_convergence {
     my ( $splits_converged, $splits_count, $splits_bad_count, $splits_avg_stddev ) =
       $self->splits_convergence($file_basename);
     my ( $modelparam_n_bad, $modelparam_string ) = $self->modelparam_convergence($file_basename);
+#print "A: ", $self->{splits_chain_data}->{histograms}->get_total_counts(), "\n";
+#print "B: ", $self->{n_runs}, "  ", $self->{n_taxa}, "\n";
     my $n_topos_each_run =
       $self->{splits_chain_data}->{histograms}->get_total_counts() /
-
       ( $self->{n_runs} * ( $self->{n_taxa} - 3 ) );
+#print $self->{splits_chain_data}->{histograms}->get_total_counts(), "\n";
+#print "n topos each run: $n_topos_each_run \n";
+
     my ( $topo_L1, $topo_L1x, $topo_max_diff ) =
       $self->{topo_chain_data}->{histograms}->avg_L1_distance();
     $topo_max_diff /= $n_topos_each_run;
@@ -625,13 +668,18 @@ sub retrieve_param_samples {
     my $prev_chunk_max_gen = shift || 0;                         # use only generation > this.
     my $pattern            = $self->{alignment_nex_filename};    # e.g. fam9877.nex
     my $n_runs             = $self->{n_runs};
-
-print "top of retrieve_param_samples. \n";
+    my $n_temperatures = $self->{n_temperatures};
+    my $n_temperatures_out = $self->{n_temperatures_out};
     # get parameter names from .p file.
-    open my $fh1, "<", "$pattern.run1.p";
+    my $dot_p_filename = ($n_runs > 1)? "$pattern.run1.p" : "$pattern.p";
+
+#print "in retrieve param .... prev_chunk_max_gen: $prev_chunk_max_gen \n";
+    # print "dotpfilename: $dot_p_filename \n";
+    open my $fh1, "<", "$dot_p_filename";
     <$fh1>;                                                      # discard first line.
     my @param_names = split( " ", <$fh1> );
-    close $fh1;
+close $fh1;
+
     if ( shift @param_names ne 'Gen' ) {
         warn "In retrieve_param_samples. Unexpected parameter name line: ",
           join( " ", @param_names ), "\n";
@@ -640,31 +688,36 @@ print "top of retrieve_param_samples. \n";
     my %col_param = ();
 
     #  while ( my ( $i, $param_name ) = each @param_names ) {
+#print "Parameter names: ", join(" ", @param_names), "\n";
     for my $i ( 0 .. $#param_names ) {
         my $param_name = $param_names[$i];
         $col_param{$i} = $param_name;    # 0 -> LnL_chain_data, 1 -> TL_chain_data, etc.
     }
 
     while ( my ( $i, $param_name ) = each %col_param ) {    # @param_names ) {
+#      print "in retrieve_param... i, param_name: $i $param_name \n";
         if ( !exists $self->{chain_data}->{$param_name} ) {
-
-         #     print STDERR "about to construct ChainData obj, parameter name: ", $param_name, "\n";
+#              print STDERR "in retrieve_param_samples. about to construct ChainData obj, parameter name: ", $param_name, "\n";
+#	      print STDERR "gen_spacing: ", $self->{sample_freq}, "\n";
             $self->{chain_data}->{$param_name} = CXGN::Phylo::ChainData->new(
                 {
                     'parameter_name' => $param_name,
                     'n_runs'         => $n_runs,
+            'n_temperatures' => $self->{n_temperatures},
+                 'n_temperatures_out' => $self->{n_temperatures_out},
                     'gen_spacing'    => $self->{sample_freq},
                     'binnable'       => 1
                 }
             );    # binnable = 1 -> continuous parameter values needing to be binned.
         }
     }
-    print "ZZZ\n";
     my $new_max_gen;
 
     # Read param values from .p file and store in ChainData objects.
+#print "NRUNS: $n_runs.\n";
     foreach my $i_run ( 1 .. $n_runs ) {    #loop over runs
-        my $param_file = "$pattern.run$i_run.p";
+       my $param_count = {};
+        my $param_file = ($n_runs > 1) ? "$pattern.run$i_run.p" : "$pattern.p";
         open my $fhp, "<", "$param_file";
         my @all_lines = <$fhp>;
         my @x = split( " ", $all_lines[-1] );
@@ -678,32 +731,48 @@ print "top of retrieve_param_samples. \n";
             my $generation = shift @cols;            # now @cols just has the parameters
 
             last if ( $generation <= $prev_chunk_max_gen );
-            my $param_string = join( "  ", @cols );
+      #      my $param_string = join( "  ", @cols );
 
-            #      while ( my ( $i, $param_value ) = each @cols ) {
             for my $i ( 0 .. $#cols ) {
                 my $param_value = $cols[$i];
                 my $param_name  = $col_param{$i};
+           #     print "storing $param_name value: $param_value   generation: $generation, run: $i_run\n";
+                $param_count->{$param_name}++;
+#print "WWW: ", join("; ", keys %{$self->{chain_data}->{$param_name}->{setid_gen_value}}), "\n";
                 $self->{chain_data}->{$param_name}
                   ->store_data_point( $i_run - 1, $generation, $param_value );
+#print "YYY: ", join("; ", keys %{$self->{chain_data}->{$param_name}->{setid_gen_value}}), "\n";
             }
         }
+   #    print "run $i_run.\n";
+       # while(my($p,$c) = each %$param_count){
+       #    print "   $p  $c \n";
+       # }
     }    # loop over runs.
-print "ZZZZZ\n";
     # get rid of pre-burn-in data points, and rebin as desired.
+ #   print "number of params stored: ", scalar keys %{ $self->{chain_data} }, "\n";
     while ( my ( $param, $chain_data_obj ) = each %{ $self->{chain_data} } ) {
-      print "PPP\n";
+
+       # while(my($s,$gv) = each  %{$chain_data_obj->{setid_gen_value}}){
+       #    print "before binning. ABCDEF:   $param  $s  ", scalar keys %$gv, "\n";
+       # }
+
+   #    print "new_max_gen, next_bin_gen:  $new_max_gen   ", $chain_data_obj->{next_bin_gen}, "\n";
         $chain_data_obj->delete_pre_burn_in();
+ while(my($s,$gv) = each  %{$chain_data_obj->{setid_gen_value}}){
+    #      print "after delete_pre_burn_in. ABCDEF:   $param  $s  ", scalar keys %$gv, "\n";
+       }
         die "chain_data_obj->{histograms} is not defined." if ( !defined $chain_data_obj->{histograms} );
-	print "BBB\n";
         if ( $new_max_gen >= $chain_data_obj->{next_bin_gen} ) {
-	  print "AAA\n";
-            $chain_data_obj->bin_the_data();   
-print "$new_max_gen; binning the data. \n"; #sleep(2);
+            $chain_data_obj->bin_the_data();
+      #      print "$new_max_gen; binning the data. \n"; #sleep(2);
             $chain_data_obj->{next_bin_gen} = 2 * $new_max_gen;
         }
+
+       # while(my($s,$gv) = each  %{$chain_data_obj->{setid_gen_value}}){
+       #    print "after binning. ABCDEF:   $param  $s  ", scalar keys %$gv, "\n";
+       # }
     }
-    print "OOO\n";
 }
 
 # end of reading in parameter values
@@ -715,20 +784,29 @@ sub retrieve_topology_samples {
     my $self = shift;
     my $pattern = shift || $self->{alignment_nex_filename};    # e.g. fam9877.nex
     my $prev_chunk_max_gen = shift || 0;                        # use only generation > to this.
+    # print STDERR "AAA: $prev_chunk_max_gen \n";
     my $n_runs             = $self->{n_runs};
+  my $n_temperatures = $self->{n_temperatures};
+    my $n_temperatures_out = $self->{n_temperatures_out};
     my %newick_number_map  = %{ $self->{newick_number_map} };
     my %number_newick_map  = %{ $self->{number_newick_map} };
     my $topology_number    = $self->{n_distinct_topologies};
     my $generation;
+    my $newick;
     my @generations = ();
+#my %newick_count = ();
+
+#print "in retrieve topo .... prev_chunk_max_gen: $prev_chunk_max_gen \n";
 
     # Read param values from .t file and store in ChainData objects.
-
+#    print STDERR "In retrieve_topology_samples. gen_spacing: ", $self->{sample_freq}, "\n";
     if ( !defined $self->{topo_chain_data} ) {
         $self->{topo_chain_data} = CXGN::Phylo::ChainData->new(  # \@generation_toponumber_hashrefs,
             {
                 'parameter_name' => 'topology',
                 'n_runs'         => $n_runs,
+               'n_temperatures' => $self->{n_temperatures},
+                 'n_temperatures_out' => $self->{n_temperatures_out},
                 'gen_spacing'    => $self->{sample_freq},
                 'binnable'       => 0
             }
@@ -739,33 +817,39 @@ sub retrieve_topology_samples {
             {
                 'parameter_name' => 'splits',
                 'n_runs'         => $n_runs,
+            'n_temperatures' => $self->{n_temperatures},
+                 'n_temperatures_out' => $self->{n_temperatures_out},
                 'gen_spacing'    => $self->{sample_freq},
                 'binnable'       => 0,
-                'set_size'       => $self->{n_taxa} - 3          # n interior edges
+                'set_size'       => $self->{n_taxa} - 3          # n interior edges, i.e. number of splits for each topology
             }
         );                                                       #
     }
-
     foreach my $i_run ( 1 .. $n_runs ) {                         #loop over runs
-                                                                 # read in chunk:
-        my $topo_file = "$pattern.run$i_run.t";
+
+        my $topo_file = ($n_runs > 1)? "$pattern.run$i_run.t" : "$pattern.t";
+#	print "topo file to read from: $topo_file \n";
         open my $fht, "<", "$topo_file";
         my @all_lines = <$fht>;                                  # read chunk
-
+	#print "all_lines, number of lines: ", scalar @all_lines, "\n";
         # analyze the chunk.
         #my $index = -1;
         my @chunk_lines = ();
         while (@all_lines) {
             my $line = pop @all_lines;                           # take the last line
             chomp $line;
-            if ( $line =~ s/tree gen[.](\d+) = .{4}\s+// ) {
-                my $newick = $line;
-                $generation = $1;
+            if ( $line =~ s/^\s*tree gen[.](\d+)\s*=\s*.{4}\s+// ) {
 
+         #   if($line =~ s/^\s*tree gen[.](\d+)\s*//){
+               $generation = $1;
+           #    $newick = $line;
+               # my @columns = split(" ", $line);
+               #  my ($newick, $iT, $iW, $lnISW) = @columns[2,4,5,6];
                 #		print "generation, prev chunk max gen:  $generation  $prev_chunk_max_gen\n";
                 # skip data for generations which are already stored:
                 if ( $generation > $prev_chunk_max_gen ) {
-                    unshift @chunk_lines, "$generation  $newick";
+                #   print "Unshifting generation $generation into chunk_lines array\n";
+                    unshift @chunk_lines, "$generation  $line";
                 }
                 else {
                     last;
@@ -773,16 +857,25 @@ sub retrieve_topology_samples {
 
                 # if ( $generation <= $prev_chunk_max_gen );
             }
-        }
-
-        for (@chunk_lines) {
-            my ( $generation, $newick );
-            if (/^(\d+)\s+(.+)\s*$/) {
-                ( $generation, $newick ) = ( $1, $2 );
-            }
-            else {
-                warn "string has unexpected format: $_.\n";
-            }
+	  }
+	#print "In retrieve_topo... n chunk lines: ", scalar @chunk_lines, "\n";
+        for my $line (@chunk_lines) {
+        #   my @columns = split(" ", $line);
+            #    my ($generation, $newick, $iT, $iW, $lnISW) = @columns[0, 1, 3, 4, 5];
+         #  my $RTWindex = $iW + $self->{n_temperatures}*($iT + $self->{n_temperatures_out}*($i_run-1));
+           if($line =~ /^\s*(\d+)\s+(\S+)/){
+              ($generation, $newick) = ($1, $2);
+           } else {
+              die "line has unexpected format: $line \n";
+           }
+            # my ( $generation, $newick );
+            # if (/^(\d+)\s+(.+)\s*$/) {
+            #     ( $generation, $newick ) = ( $1, $2 );
+            #     print "$generation  $newick \n";
+            # }
+            # else {
+            #     warn "string has unexpected format: $_.\n";
+            # }
 
             # reroot each tree using the same sequence as outgroup
             #print "\n\n", "newick: $newick \n";
@@ -794,23 +887,30 @@ sub retrieve_topology_samples {
             #     # $newick = $rerooted_newick;
             # }
             $newick =~ s/;\s*$//; # remove final semi-colon.
-
+	    $newick =~ s/^\s+//; # remove init whitespace.
             #    my $gen_run_newick = "$generation  $i_run  $newick \n";
             # open my $fhxxx, ">>", "newicks";
             #       print $fhxxx "$generation  $i_run  $newick \n";
             # close $fhxxx;
+#	    print STDERR "In retrieve_topos (bef): [$newick] \n";
             $newick =~ s/:[0-9]+[.][0-9]+(e[-+][0-9]{2,3})?(,|[)])/$2/g;    # remove branch lengths
+ # print STDERR "In retrieve_topos (bef1): [$newick] \n";
             $newick =~ s/^\s+//;
-            $newick =~ s/;\s*//;
+ # print STDERR "In retrieve_topos (bef2): [$newick] \n";
+            $newick =~ s/;\s*$//;
+ # print STDERR "In retrieve_topos (bef3): [$newick] \n";
+
+#	    print STDERR "In retrieve_topos (aft): [$newick] \n";
             my $mask = ( 1 << $self->{n_taxa} ) - 1;                        # n_taxa 1's
             my $split_count =
               {};    # $self->{split_count}; # keys are split bit patterns, values: counts
 
+#print STDERR "In ret topo. bef order_newick. newick: $newick  $split_count, $mask.\n";
             my ( $minlabel, $ordered_newick, $tree_labels, $split_bp ) =
               order_newick( $newick, $split_count, $mask, 0 );
             $newick = $ordered_newick;
-
-            if ( $newick =~ s/^\s*[(]1,/'(1,(/ ) {
+#	    print STDERR "ordered newick: $newick\n";
+            if ( $newick =~ s/^\s*[(]1,/'(1,(/ ) { # go from form (1,(...),(...)) with trifurcation, to (1,((...),(...))) with only bifurcations
                 $newick .= ")'";
             }
             else {
@@ -824,17 +924,19 @@ sub retrieve_topology_samples {
                 $newick_number_map{$newick}          = $topology_number;    # 1,2,3,...
                 $number_newick_map{$topology_number} = $newick;
             }
-            $self->{toponumber_count}->{$topology_number}++;
+         #   $self->{toponumber_count}->{$topology_number}++;
             push @generations, $generation;
             $self->{topo_chain_data}
               ->store_data_point( $i_run - 1, $generation, $newick_number_map{$newick} );
-
+	    $self->{topology_count}->{$newick}++;
  #       $generation_toponumber_hashrefs[ $i_run - 1 ]->{$generation} = $newick_number_map{$newick};
 
             my $the_split = join( ";", keys %$split_count );
-            $self->{splits_chain_data}->store_data_point( $i_run - 1, $generation, $the_split );
-        }
+	    # print "the split: $the_split \n";
+            $self->{splits_chain_data}->store_data_point($i_run-1, $generation, $the_split );
+	  }
     }    # loop over runs.
+
     $self->{topo_chain_data}->delete_pre_burn_in();
     $self->{splits_chain_data}->delete_pre_burn_in();
 
@@ -845,6 +947,15 @@ sub retrieve_topology_samples {
 }
 
 # end of reading in topologies
+sub get_topology_count{
+my $self = shift;
+return $self->{topology_count};
+}
+
+sub clear_topology_count{
+my $self = shift;
+$self->{topology_count} = {};
+}
 
 sub retrieve_number_id_map {
     my $self = shift;
@@ -913,14 +1024,18 @@ sub restore_ids_to_newick {
 sub setup_id_species_map {
     my $self = shift;
     my $file = $self->{alignment_nex_filename};
+    if(defined $file and -f $file){
     open my $fh, "<", "$file";
     while ( my $line = <$fh> ) {
+
         next unless ( $line =~ /^(\S+)\[species=(\S+)\]/ );
+	# print "$line \n";
         my $id      = $1;
         my $species = $2;
         $self->{id_species_map}->{$id} = $species;
     }
-
+    # print "number of keys in id_species_map: [", scalar keys %{$self->{id_species_map}}, "]\n";
+  }
     return;
 }
 
@@ -1002,6 +1117,7 @@ sub Kolmogorov_Smirnov_D {
 
 # new version
 sub order_newick {
+ # print "XXX: ", join("; ", @_), "\n";
     my $newick      = shift;
     my $split_count = shift;
     my $mask        = shift;
@@ -1015,13 +1131,12 @@ sub order_newick {
     #print STDERR "$depth $newick \n";
     exit if ( $depth > 100000 );
 
-    #  print "   newick: $newick \n";
+ #   print "   newick: {$newick} \n"; #exit;
     if
-
       # ( $newick =~ /^([^,]+)$/ ) { # no commas -> this is a leaf!
       ( $newick =~ /^(\d+)(:\d*[.]?\d+)?$/ ) {    # this subtree is leaf!
 
-        #    print "leaf branch. newick: $newick \n";
+#        print "leaf branch. newick: $newick \n";
         my $split_bp = 1 << ( $1 - 1 );
         return ( $1, $newick, $1, $split_bp );
     }
@@ -1032,13 +1147,15 @@ sub order_newick {
         my %label_newick            = ();
         my %cladeleaflabelset_count = ();
         $newick =~
-          /^[(](.*)[)](:\d+[.]\d+)?$/;    # remove outer (), and final branch length: e.g. ':0.15'
+          /^[(](.*)[)](:\d+[.]\d+-\d*)?$/;    # remove outer (), and final branch length: e.g. ':0.15'
 
+# print "branch length: $newick  $1  $2 \n";
         my @newick_chars = split( '', $1 );    # without surrounding ()
         my $lmr_paren_count = 0;               # count of left parens - right parens
         my ( $il, $ir ) = ( 0, 0 );
         my $n_chars   = scalar @newick_chars;
         my $min_label = 10000000;
+my $max_label = -1;
         foreach (@newick_chars) {
             die "$_ ", $newick_chars[$ir], " not same!\n"
               if ( $_ ne $newick_chars[$ir] );
@@ -1055,16 +1172,20 @@ sub order_newick {
                 my $ilast = ( $ir == $n_chars - 1 ) ? $ir : $ir - 1;
                 my $sub_newick = join( '', @newick_chars[ $il .. $ilast ] );
 
-                #	       print "subnewick [$sub_newick] il, ilast: $il $ir \n";
+               #	       print "subnewick [$sub_newick] il, ilast: $il $ir \n";
+		die "In order_newick. depth is $depth; exceeds allowed max. of $MAX_TREE_DEPTH.\n" 
+		  if($depth > $MAX_TREE_DEPTH); # (! ($sub_newick =~ /\(.*\)/));
                 my ( $label, $ordered_subnewick, $clade_leaf_labels, $subtree_split_bp ) =
                   order_newick( $sub_newick, $split_count, $mask, $depth + 1 );
-
+#		print "ordered subnewick: [$ordered_subnewick] \n";
+# exit;
       #	print "CCC:  $depth $label; [$ordered_subnewick]; $clade_leaf_labels; $subtree_split_bp \n";
                 $label_newick{$label} = $ordered_subnewick;
                 $cladeleaflabelset_count{$clade_leaf_labels}++;
 
                 $split_bp |= $subtree_split_bp;    # bitwise OR of all subtree bitpatterns
                 $min_label = min( $min_label, $label );
+		$max_label = max( $max_label, $label );
                 $il        = $ir + 1;
                 $ir        = $il;                         # skip the ','
 
@@ -1076,7 +1197,9 @@ sub order_newick {
 
         }    # loop over chars in @newick_chars
         my $ordered_newick = '';
-        foreach ( sort { $a <=> $b } keys %label_newick ) {
+        foreach ( sort { $a <=> $b } keys %label_newick ) { # for low_to_high
+#   foreach ( sort { $b <=> $a } keys %label_newick ) {
+
             $ordered_newick .= $label_newick{$_} . ",";
         }
         $ordered_newick =~ s/,$//;
@@ -1089,7 +1212,8 @@ sub order_newick {
           ? $split_bp
           : ~$split_bp & $mask;    ##_complement;
         $split_count->{$std_split_bp}++ if ( $std_split_bp != $mask );
-        return ( $min_label, $ordered_newick, $clade_leaf_labels, $split_bp );
+       return ( $min_label, $ordered_newick, $clade_leaf_labels, $split_bp ); # for low_to_high
+#  return ( $max_label, $ordered_newick, $clade_leaf_labels, $split_bp );
     }
     die "shouldnt get here, in order_newick\n";
 }

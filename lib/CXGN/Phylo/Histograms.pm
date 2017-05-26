@@ -9,16 +9,17 @@ use CXGN::Phylo::Cluster;
 # how similar or different they are: avg L1 distance,
 # Kolmogorov-Smirnov D statistic, etc.
 sub new {
-    my $class             = shift;
-    my $arg               = shift;
-    my $default_arguments = {
-        'title'          => 'untitled',
-        'min_gen'        => 0,
-        'n_bins'         => undef,
-        'binning_lo_val' => undef,
-        'bin_width'      => undef,
-	'set_size' => 1
-    };
+  my $class             = shift;
+  my $arg               = shift;
+  my $default_arguments = {
+			   'title'          => 'untitled',
+			   'min_gen'        => 0,
+			   'n_bins'         => undef,
+			   'binning_lo_val' => undef,
+			   'bin_width'      => undef,
+			   'n_histograms' => 1,
+			   'set_size' => 1
+			  };
     my $self = bless $default_arguments, $class;
 
     foreach my $option ( keys %$arg ) {
@@ -30,11 +31,17 @@ sub new {
         }
     }
 
-    $self->{histograms} = []
-      ; # indices 0,1,2...; values are bin:count hashrefs representing histograms
+  my %histograms = ();
+#   for(1..$self->{n_histograms}){
+# push @histograms, {};
+# }
+    $self->{histograms} = \%histograms;
+      ; # keys are dataset ids; values are bin:count hashrefs representing histograms
     $self->{sum_histogram} = {};
     $self->{rearr_histograms} =
-      {}; # same info as histograms, but hashref with keys: bins; values array refs of counts for the various histograms.
+      {}; # same info as histograms, but hashref with keys: bins; values hash refs of setid:counts pairs. 
+#    print $self->n_histograms(), "\n";
+  # print "Histograms object with title: ", $self->{title}, " constructed with ", $self->{n_histograms}, " histograms.\n";
     return $self;
 }
 
@@ -64,11 +71,12 @@ sub set_min_max_bins {
 
 sub adjust_cat_count {
     my $self        = shift;
-    my $hist_number = shift;    # 0,1,2,...
+    my $hist_id = shift;    # 0,1,2,...
     my $category    = shift;
     my $increment   = shift;
     $increment = 1 if ( !defined $increment );
-    $self->{histograms}->[$hist_number]->{$category} += $increment;
+    $self->{histograms}->{$hist_id} = {} if(!exists $self->{histograms}->{$hist_id});
+    $self->{histograms}->{$hist_id}->{$category} += $increment;
     $self->{sum_histogram}->{$category}              += $increment;
     $self->{total_in_histograms}                     += $increment;
 }
@@ -80,7 +88,7 @@ sub adjust_val_count {
 
 sub n_histograms {
     my $self = shift;
-    return scalar @{ $self->{histograms} };
+    return scalar keys %{ $self->{histograms} };
 }
 
 sub title {
@@ -118,8 +126,8 @@ sub histogram_string {
         @sorted_categories =
           sort { $sum_cat_weight->{$b} <=> $sum_cat_weight->{$a} }
           @sorted_categories;                       # keys %$sum_cat_weight;
-        while ( scalar @sorted_categories > 10 )
-        {    # remove low-count categories, but leave min of 10 categories
+        while ( scalar @sorted_categories > 15 )
+        {    # remove low-count categories, but leave min of 15 categories
             my $the_cat = $sorted_categories[-1];
             if ( exists $sum_cat_weight->{ $sorted_categories[-1] } ) {
                 my $last_bin_count =
@@ -137,12 +145,17 @@ sub histogram_string {
         }
     }
     my $total_categories = scalar @sorted_categories;
-    print STDERR "title: ", $self->title(), "\n";
-print STDERR "n_bins: ", $self->{n_bins}, "\n";
-    my $string =
-      "# " . $self->title() . " histogram. n_bins: " . $self->{n_bins} . "  ";
+    my $number_of_bins = ($self->{n_bins})? $self->{n_bins} : $total_categories;
+#    print  "title: ", $self->title(), "\n";
+ my $string = "# " . $self->title() . " histogram. ";
+#print STDERR "n_bins: ", $self->{n_bins}, "\n";
+    if(defined $self->{n_bins}){
+    $string .= " n_bins: " . $number_of_bins. "  ";
     $string .= "binning_lo_val: " . $self->{binning_lo_val} . "  ";
     $string .= "bin_width: " . $self->{bin_width} . ".\n";
+  }else{
+    $string .= " categories: $total_categories.\n";
+  }
 
     my ( $total, $shown_total ) = ( 0, 0 );
     my $count = 0;
@@ -153,8 +166,13 @@ print STDERR "n_bins: ", $self->{n_bins}, "\n";
         my $line_string = '';
         my $cat_string  = $self->category_string($cat);
         $line_string .= $cat_string;
-        for my $c_w (@$histogram_cat_weight) {
-            $line_string .= sprintf( "%6i  ", $c_w->{$cat} );
+my $iii = 0;
+#	print STDERR 'scalar @$histogram... ', scalar @$histogram_cat_weight, "\n";
+        for my $c_w (values %$histogram_cat_weight) {
+#	  print STDERR "category weight: $iii [", $c_w->{$cat}, "]\n";
+	  my $the_weight = (exists $c_w->{$cat})? $c_w->{$cat} : 0; 
+            $line_string .= sprintf( "%6i  ", $the_weight );
+$iii++;
         }
         $line_string .= sprintf( "%6i \n", $sum_weight );
         $count++;
@@ -182,19 +200,22 @@ sub category_string {
 sub rearrange_histograms
 {    # go from an array of bin:count hashes to hash of bin:(count array).
     my $self = shift;
-    my @histograms =
-      @{ $self->{histograms} };    # array ref of bin:count hashrefs.
-    my $n_histograms     = scalar @histograms;
+    my $histograms =
+      $self->{histograms};    # hash ref of bin:count hashrefs.
+    my $n_histograms     = scalar keys %$histograms;
     my $rearr_histograms = {};
 
 # while (my ($i_hist, $histogram) = each @histograms) { # can use if per 5.12 or later
-    for my $i_hist ( 0 .. $#histograms ) {
-        my $histogram = $histograms[$i_hist];
+    for my $i_hist ( keys %$histograms ) {
+        while(my($bin, $count) = each %{$self->{sum_histogram}}){
+           $rearr_histograms->{$bin}->{$i_hist} = 0;
+        }
+        my $histogram = $histograms->{$i_hist};
         while ( my ( $bin, $count ) = each %$histogram ) {
             if ( !exists $rearr_histograms->{$bin} ) {
-                $rearr_histograms->{$bin} = [ (0) x $n_histograms ];
+                $rearr_histograms->{$bin} = {};
             }
-            $rearr_histograms->{$bin}->[$i_hist] = $histogram->{$bin};
+            $rearr_histograms->{$bin}->{$i_hist} = $histogram->{$bin};
         }
     }
     $self->{rearr_histograms} = $rearr_histograms;
@@ -205,6 +226,14 @@ my $self = shift;
 my $bins = shift; # array ref to bins in sum_histograms
 my $histogram1 = shift; # hashref. bin-count pairs
 my $histogram2 = shift; # hashref. bin-count pairs
+# print "hist1:\n";
+# while(my($k,$v) = each %$histogram1){
+#    print "$k $v,  ";
+# }print "\n";
+# print "hist2:\n";
+# while(my($k,$v) = each %$histogram2){
+#    print "$k $v,  ";
+# }print "\n";
 my ($sum1, $sum2, $sum_abs_diff) = (0, 0, 0);
 for my $bin (@$bins){
   my $count1 = $histogram1->{$bin} || 0;
@@ -212,7 +241,7 @@ for my $bin (@$bins){
   $sum1 += $count1; $sum2 += $count2;
   $sum_abs_diff += abs($count1 - $count2);
 }
-warn "sum1 sum2 should be same in _total_variation_distance: $sum1 $sum2 \n" if($sum1 != $sum2);
+warn "_total_variation_distance. sum1 sum2 should be same in _total_variation_distance: $sum1 $sum2 \n" if($sum1 != $sum2);
 return $sum_abs_diff/(2*$sum1);
 }
 
@@ -224,7 +253,7 @@ my $histogram2 = shift; # hashref. bin-count pairs
 
 my $n = shift || 2;
 my $n_set = $self->{set_size};
-my $n_histograms = scalar @{$self->{histograms}};
+my $n_histograms = scalar keys %{$self->{histograms}};
 my $n_sample = $self->get_total_counts() / ($n_set * $n_histograms);
 my ($sum1, $sum2, $sum_abs_freq_diff_to_n) = (0, 0, 0);
 for my $bin (@$bins){
@@ -233,7 +262,7 @@ for my $bin (@$bins){
   $sum1 += $count1; $sum2 += $count2;
   $sum_abs_freq_diff_to_n += (abs($count1 - $count2) / $n_sample)**$n;
 }
-warn "sum1 sum2 should be same in Ln_distance: $sum1 $sum2 $n_sample \n" if($sum1 != $n_sample*$n_set  or $sum2 != $n_sample*$n_set);
+warn "_Ln_distance. sum1 sum2 should be same in Ln_distance: $sum1 $sum2 $n_sample \n" if($sum1 != $n_sample*$n_set  or $sum2 != $n_sample*$n_set);
 
 my $result = 0.5*(($sum_abs_freq_diff_to_n)/$n_set)**(1.0/$n);
 return $result;
@@ -245,7 +274,7 @@ my $bins = shift; # array ref to bins in sum_histograms
 my $histogram1 = shift; # hashref. bin-count pairs
 my $histogram2 = shift; # hashref. bin-count pairs
 my $n_set = $self->{set_size};
-my $n_histograms = scalar @{$self->{histograms}};
+my $n_histograms = scalar keys %{$self->{histograms}};
 my $n_sample = $self->get_total_counts() / ($n_set * $n_histograms);
 my ($sum1, $sum2, $max_abs_weight_diff) = (0, 0, 0);
 for my $bin (@$bins){
@@ -254,7 +283,7 @@ for my $bin (@$bins){
   $sum1 += $count1; $sum2 += $count2;
   $max_abs_weight_diff = max( abs($count1 - $count2), $max_abs_weight_diff );
 }
-warn "sum1 sum2 should be same in Ln_distance: $sum1 $sum2 $n_sample \n" if($sum1 != $n_sample*$n_set  or $sum2 != $n_sample*$n_set);
+warn "_Linfinity_distance. sum1 sum2 should be same in Ln_distance: $sum1 $sum2 $n_sample \n" if($sum1 != $n_sample*$n_set  or $sum2 != $n_sample*$n_set);
 
 my $result = 0.5*$max_abs_weight_diff/$n_sample;
 return $result;
@@ -262,15 +291,19 @@ return $result;
 
 sub tv_distances{
   my $self = shift;
-  my @histograms = @{$self->{histograms}};
-  my @bins = sort {$a <=> $b} keys %{$self->{sum_histogram}};
+  my $histograms = $self->{histograms};
+my @setids = keys %{$self->{histograms}}; 
+  my @labels = sort {$a <=> $b} keys %{$self->{sum_histogram}}; # bin labels
+#print "top of tv_distances.\n";
   my @tvds = ();
-  my @labels = ();
   my %ij_dist = ();
-  my $n_histograms = scalar @histograms;
-  for (my $i = 0; $i < $n_histograms; $i++) {
+  my $n_histograms = scalar keys %$histograms;
+  die "n_histograms: $n_histograms " . scalar @setids . " not equal.\n" if($n_histograms != scalar @setids);
+ for (my $i = 0; $i < $n_histograms; $i++) {
     for (my $j = $i+1; $j < $n_histograms; $j++) {
-      my $tv_dist = $self->_total_variation_distance(\@bins, $histograms[$i], $histograms[$j]);
+       my ($setid1, $setid2) = ($setids[$i], $setids[$j]);
+     #  print "ZZZ: $i  $j    $setid1  $setid2 \n";
+      my $tv_dist = $self->_total_variation_distance(\@labels, $histograms->{$setid1}, $histograms->{$setid2});
       push @tvds, $tv_dist;
       $ij_dist{"$i,$j"} = $tv_dist;
     }
@@ -288,7 +321,7 @@ return ($min, $q1, $median, $q3, $max);
 
 sub max_avg_intercluster_distance{
 my $self = shift;
-my $n_hists = scalar @{$self->{histograms}};
+my $n_hists = scalar keys %{$self->{histograms}};
 my @labels = (0..$n_hists-1);
 my $ij_dist = shift;
 my $cluster_obj = CXGN::Phylo::Cluster->new(\@labels, $ij_dist);
@@ -299,7 +332,7 @@ return $max_avg_intercluster_dist;
 sub dist_stats{
 my $self = shift;
 my $ij_dist = shift;
-my $n_histograms = scalar @{$self->{histograms}};
+my $n_histograms = scalar keys %{$self->{histograms}};
 my @dists = sort {$a <=> $b} values %$ij_dist;
 my @quartiles = quartiles(\@dists);
 
@@ -308,7 +341,7 @@ my $max_avg_interclstr_dist =  $self->max_avg_intercluster_distance($ij_dist);
 return (@quartiles, $max_avg_interclstr_dist, $dists[-($n_histograms-1)]);
 }
 
-sub tvd_stats{
+sub tvd_stats{ # statistics summarizing the pairwise total variation distances between chains
 my $self = shift;
 my ($tvds, $ij_dist) = $self->tv_distances();
 # for(keys %$ij_dist){
@@ -316,7 +349,7 @@ my ($tvds, $ij_dist) = $self->tv_distances();
 # }
 my @tvd_quartiles = quartiles($tvds);
 my $max_avg_interclstr_dist =  $self->max_avg_intercluster_distance($ij_dist);
-return (@tvd_quartiles, $max_avg_interclstr_dist);
+return (@tvd_quartiles, $max_avg_interclstr_dist); # min, q1, median, q3, max, intercluster_dist
 }
 
 sub maxbindiff_stats{
@@ -347,16 +380,16 @@ sub tvd_statsx{
   my $sum_tvd = 0;
   my $sum_tvdsqrd = 0;
   my $max_tvd = -1;
-  my @histograms = @{$self->{histograms}};
+  my $histograms = $self->{histograms};
   my @bins = sort {$a <=> $b} keys %{$self->{sum_histogram}};
   my @tvds = ();
 my @labels = ();
 my %ij_dist = ();
-  my $n_histograms = scalar @histograms;
+  my $n_histograms = scalar keys %$histograms;
   for (my $i = 0; $i < $n_histograms; $i++) {
  push @labels, $i;
     for (my $j = $i+1; $j < $n_histograms; $j++) {
-      my $tv_dist = $self->_total_variation_distance(\@bins, $histograms[$i], $histograms[$j]);
+      my $tv_dist = $self->_total_variation_distance(\@bins, $histograms->{$i}, $histograms->{$j});
       push @tvds, $tv_dist;
       $sum_tvd += $tv_dist;
       $sum_tvdsqrd += $tv_dist**2;
@@ -408,30 +441,26 @@ sub Ln_distances{
 my $n = shift || 2;
 my $avg = 0;
 my $max = -1;
-my @histograms = @{$self->{histograms}};
+my $histograms = $self->{histograms};
 my @bins = sort {$a <=> $b} keys %{$self->{sum_histogram}};
 my @distances = ();
 my %ij_dist = ();
-my $n_histograms = scalar @histograms;
+my $n_histograms = scalar keys %$histograms;
   for(my $i = 0; $i < $n_histograms; $i++){
     for(my $j = $i+1; $j < $n_histograms; $j++){
       my $Ln_dist = ($n eq 'infinity')?
-$self->_Linfinity_distance(\@bins, $histograms[$i], $histograms[$j]) :
-$self->_Ln_distance(\@bins, $histograms[$i], $histograms[$j], $n);
+$self->_Linfinity_distance(\@bins, $histograms->{$i}, $histograms->{$j}) :
+$self->_Ln_distance(\@bins, $histograms->{$i}, $histograms->{$j}, $n);
       push @distances, $Ln_dist;
       $ij_dist{"$i,$j"} = $Ln_dist;
       $avg += $Ln_dist;
       $max = max($max, $Ln_dist);
 }
   }
-$avg /= $n_histograms*($n_histograms-1)/2;
-
-my $factor = 0.5 * $n_histograms / $self->get_total_counts();
-#my $factor = 2 * $self->{set_size} / (($n_histograms -1 ) * $self->get_total_counts());
-#print STDERR $self->{set_size}, "  ", $n_histograms, "  ", $self->get_total_counts(), "\n";
-#print STDERR "XXX: $avg  $max   $factor\n";
-$avg *= $factor;
-$max *= $factor;
+# $avg = ($n_histograms > 1)? $avg/$n_histograms*($n_histograms-1)/2 : undef;
+# my $factor = 0.5 * $n_histograms / $self->get_total_counts();
+# $avg *= $factor;
+# $max *= $factor;
 
   return \%ij_dist; # @distances;
 }
@@ -443,7 +472,7 @@ sub max_bin_diffs{ # for each pair of chains, the max over bins of the abs diff 
   if ( !defined $label_weightslist ) {
     $self->rearrange_histograms();
     $label_weightslist = $self
-      ->{rearr_histograms}; # hashref. keys are category labels; values are refs to arrays of weights
+      ->{rearr_histograms}; # hashref. keys are category labels; values are refs to hashes of setid:weight pairs
   }
 
   # because each topology has N-3 non-terminal splits, all distinct.
@@ -452,7 +481,7 @@ sub max_bin_diffs{ # for each pair of chains, the max over bins of the abs diff 
   # then total_counts = n_chain * n_topo * set_size, and the max possible counts in each bin
   # for the histogram of one chain is n_topo, or total_counts/( n_chain *set_size)
 
-  my $n_histograms           = scalar @{ $self->{histograms} };
+  my $n_histograms           = scalar keys %{$self->{histograms}};
   my $total_counts      = $self->get_total_counts();
   my $max_in_category = $total_counts / ( $n_histograms * $set_size );
 
@@ -464,13 +493,17 @@ sub max_bin_diffs{ # for each pair of chains, the max over bins of the abs diff 
     }
   }
   my @labels = keys %$label_weightslist; #
-  foreach my $label (@labels) {		 # loop over categories
-    my @weights = @{ $label_weightslist->{$label} };
-    next if(sum(@weights) <= 0);
+  foreach my $label (@labels) {		 # loop over categories (bins)
+  #  my @weights = values %{$label_weightslist->{$label}};
+    my $setid_weight = $label_weightslist->{$label};
+    next if(sum(values %$setid_weight) <= 0);
+    my @setids = sort keys %{$setid_weight};
+    die "n_histograms: $n_histograms and number of setids " . scalar @setids, " not equal.\n" if($n_histograms != scalar @setids);
     for (my $i=0; $i<$n_histograms; $i++) {
       for (my $j=$i+1; $j<$n_histograms; $j++) {
-	my $ij = "$i,$j";
-	my $ijdiff = abs($weights[$i] - $weights[$j]) / $max_in_category;
+         my ($setid1, $setid2) = ($setids[$i], $setids[$j]);
+	my $ij = "$setid1,$setid2";
+	my $ijdiff = abs($setid_weight->{$setid1} - $setid_weight->{$setid2}) / $max_in_category;
 	if ($ijdiff > $ij_maxbindiff{$ij}) {
 	  $ij_maxbindiff{$ij} = $ijdiff;
 	}
@@ -498,7 +531,7 @@ sub n_bad_bin_diffs{ # for each pair of chains, the number of bins with frequenc
   # then total_counts = n_chain * n_topo * set_size, and the max possible counts in each bin
   # for the histogram of one chain is n_topo, or total_counts/( n_chain *set_size)
 
-  my $n_histograms           = scalar @{ $self->{histograms} };
+  my $n_histograms           = scalar keys %{$self->{histograms}};
   my $total_counts      = $self->get_total_counts();
   my $max_in_category = $total_counts / ( $n_histograms * $set_size );
 
@@ -511,12 +544,15 @@ sub n_bad_bin_diffs{ # for each pair of chains, the number of bins with frequenc
   }
   my @labels = keys %$label_weightslist; #
   foreach my $label (@labels) {		 # loop over categories
-    my @weights = @{ $label_weightslist->{$label} };
-    next if(sum(@weights) <= 0);
+  #  my @weights = @{ $label_weightslist->{$label} };
+ my $setid_weight = $label_weightslist->{$label};
+    next if(sum(values %$setid_weight) <= 0);
+    my @setids = sort keys %{$setid_weight};
     for (my $i=0; $i<$n_histograms; $i++) {
       for (my $j=$i+1; $j<$n_histograms; $j++) {
-	my $ij = "$i,$j";
-	my $ijdiff = abs($weights[$i] - $weights[$j]) / $max_in_category;
+  my ($setid1, $setid2) = ($setids[$i], $setids[$j]);
+	my $ij = "$setid1,$setid2";
+	my $ijdiff = abs($setid_weight->{$setid1} - $setid_weight->{$setid2}) / $max_in_category;
 	if ($ijdiff > $threshold) {
 	  $ij_nbadbins{$ij}++;
 	}
@@ -529,6 +565,7 @@ sub n_bad_bin_diffs{ # for each pair of chains, the number of bins with frequenc
 sub avg_L1_distance { # just find for histograms as given, no rebinning.
   my $self              = shift;
   my $label_weightslist = shift;
+#print "Top of avg_L1_distance.\n";
   if ( !defined $label_weightslist ) {
     $self->rearrange_histograms();
     $label_weightslist = $self
@@ -541,7 +578,9 @@ sub avg_L1_distance { # just find for histograms as given, no rebinning.
   # then total_counts = n_chain * N * set_size, and the max possible counts in each bin
   # for the histogram of one chain is N, or total_counts/( n_chain *set_size)
 
-  my $n_histograms           = scalar @{ $self->{histograms} };
+  my $n_histograms           = scalar keys %{$self->{histograms}};
+
+# print "N histogram: $n_histograms ; set_size:  $set_size \n";
   my $total_counts      = $self->get_total_counts();
   my ($above_threshold_string1, $above_threshold_string2, $above_threshold_string3) = ('', '', '');
   my $max_in_category = $total_counts / ( $n_histograms * $set_size );
@@ -565,7 +604,7 @@ my ($sum_ranges, $sumsq_ranges, $src) = (0, 0, 0);
     my $counts_each_run = $total_counts / $n_histograms;
     my %label_range   = ();
     foreach my $label (@labels) { # loop over categories
-      my @weights = sort { $b <=> $a } @{ $label_weightslist->{$label} };
+      my @weights = sort { $b <=> $a } values %{ $label_weightslist->{$label} };
 next if(sum(@weights) <= 0);
 
       my ($mean, $variance) = mean_variance(\@weights);
@@ -575,6 +614,7 @@ next if(sum(@weights) <= 0);
       $sumsq_ranges += $this_label_range**2;
       $src++;
       $label_range{$label} = $this_label_range;
+
       my ($obs_bin_stddev, $binomial_bin_stddev) = (sqrt($variance)/$max_in_category, sqrt($binomial_bin_variance/$max_in_category));
 # $sumw_bsos{sum(@weights)} = [$binomial_bin_stddev, $obs_bin_stddev];
       for ( @thresholds ) {
@@ -607,12 +647,15 @@ next if(sum(@weights) <= 0);
  join( " ", map( $threshold_count3{$_}, @thresholds ) );
     $avg_L1_distance = $sum_absdiffs / ( $total_counts * ( $n_histograms - 1 ) );
   } # loop over histograms
-my @tvd_sstats = $self->tvd_stats();
-my @mbd_sstats = $self->maxbindiff_stats();
-my @nbb_sstats = $self->nbadbin_stats();
+my @tvd_sstats = $self->tvd_stats(); # 6 numbers
+# print "A\n";
+my @mbd_sstats = $self->maxbindiff_stats(); # 6 numbers
+my @nbb_sstats = $self->nbadbin_stats(); # 7 numbers
 my ($xtvds, $xij_dist) = $self->tv_distances();
+#  print "Aa\n";
 my $ij_L1d = $self->Ln_distances(1);
 my $ij_L2d = $self->Ln_distances(2);
+# print "B\n";
 my $ij_Linfd = $self->Ln_distances('infinity');
 my $ij_nbbd = $self->n_bad_bin_diffs();
 # my @L1_stats = $self->dist_stats($ij_L1d);
@@ -652,26 +695,28 @@ sub four_distance_stats{
 
 sub binned_max_ksd {
     my $self         = shift;
-    my $n_histograms = scalar @{ $self->{histograms} };
+    my $n_histograms = scalar keys %{$self->{histograms}};
     my $max_ksd      = 0;
-    my @cume_probs   = ( (0) x $n_histograms );
-    my $total_counts = sum( values %{ $self->{histograms}->[0] } ); # counts in each histogram
+    my %cume_probs  = (); #  = ( (0) x $n_histograms );
+
+    my @setids = keys %{$self->{histograms}};
+    for(@setids){ $cume_probs{$_} = 0; }
+    my $total_counts = sum( values %{ $self->{histograms}->{$setids[0]}} ); # counts in one representative histogram
 
     for my $bin ( $self->{min_bin} .. $self->{max_bin} ) {
-        my @histograms = @{ $self->{histograms} };
+        my $histograms = $self->{histograms};
 
 #    while (my ($i_hist, $b_c) = each @{$self->{histograms}}) { # can use this if perl 5.12 or later
-        for my $i_hist ( 0 .. $#histograms ) {
-            my $b_c = $histograms[$i_hist];
-            $cume_probs[$i_hist] += $b_c->{$bin};
+        for my $a_setid (keys %$histograms ) {
+            my $b_c = $histograms->{$a_setid};
+            $cume_probs{$a_setid} += $b_c->{$bin};
         }
-        my $cdf_range = max(@cume_probs) - min(@cume_probs);
+        my $cdf_range = max(values %cume_probs) - min(values %cume_probs);
         if ( $cdf_range > $max_ksd ) {
             $max_ksd = $cdf_range;
         }
     }
-    $max_ksd /= $total_counts;
-    return $max_ksd;
+    return ($total_counts > 0)? $max_ksd/$total_counts : '---';
 }
 
 sub mean_variance{
@@ -789,13 +834,13 @@ sub new {
 
 sub adjust_val_count {
     my $self        = shift;
-    my $hist_number = shift;    # 0,1,2,...
+    my $set_id = shift;    # 0,1,2,...
     my $value       = shift;
     my $increment   = shift;
     $increment = 1 if ( !defined $increment );
     my $category = $self->bin_the_point($value);
 
-    $self->{histograms}->[$hist_number]->{$category} += $increment;
+    $self->{histograms}->{$set_id}->{$category} += $increment;
     $self->{sum_histogram}->{$category}              += $increment;
     $self->{total_in_histograms}                     += $increment;
 }
