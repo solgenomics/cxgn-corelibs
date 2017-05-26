@@ -96,6 +96,7 @@ sub new {
 sub parse {
   my $self = shift;
   my $the_tree = shift; # can give it an object (e.g. a  CXGN::Phylo::BasicTree ) as argument.
+
 # e.g. $the_parser->parse(CXGN::Phylo::Tree->new());
 # print STDERR "top of Parser::parse \n";
   if (! defined $the_tree) {
@@ -157,8 +158,11 @@ $self->{tree} = $the_tree;
       }
       return $self->{tree};
     } else {
-      # print STDERR "\n", "encountered token $t\n";
-
+   #    print STDERR "\n", "encountered token $t\n";
+# not sure about following line. I added it, but do we really want it? or only in some cases?
+$t =~ s/\]\d*[.]?\d*:/]:/; # if branch support present after extended spec [], delete it.
+# e.g. Medtr5g075130.1[species=Medicago_truncatula]0.847:0.333   -> Medtr5g075130.1[species=Medicago_truncatula]:0.333
+# print STDERR "modified token: $t \n";
       #Strip out extended specification (see below) first, so that we
       #can use colons within the extended specs, such as for links.
       my ($extended) = $t =~ /(\[.*\])/; # $extended is stuff enclosed in [], and includes the []
@@ -170,6 +174,8 @@ $self->{tree} = $the_tree;
       if($prev_token eq ')'){
 	($branch_support, $distance) = split /\s*\:\s*/, $t;
 	  $branch_support =~ s/^\s*(.+)\s*$/$1/; # remove initial & final whitespace
+	$branch_support = undef if($branch_support eq '');
+#	print STDERR "TOKEN, BRANCH SUPP, DIST: $t,  $branch_support, $distance \n";
 # print STDERR "in Parse_newick->parse. branch_support,distance: [$branch_support][$distance] \n";
       }else{
 	($name, $distance) = split /\s*\:\s*/, $t;
@@ -249,6 +255,25 @@ $self->{tree} = $the_tree;
     print STDERR "Illegal Expression Error Type 2.\n"; return undef;
   }
 
+  # if one of the branches from root to child has undefined branch-support,
+# set it equal to branch-support of other root-child branch.
+my @children = $self->{tree}->get_root()->get_children();
+my $cbs = 0.0;
+  for(@children){ # get max of branch_supports of root-child branches
+    if(defined $_->{branch_support}){
+      my $bs = $_->{branch_support}; #  * 1;
+#      print "bs, cbs [$bs] [$cbs] \n";
+      $cbs = $bs if($bs > $cbs);
+    }
+  }
+#  print  "cbs [$cbs] \n";
+  for(@children){
+  #  print STDERR $_->{branch_length}, "  ", $_->{branch_support}, "\n";
+    if(!defined $_->{branch_support} or ($_->{branch_support} =~ /^\s*$/)){
+    $_->{branch_support} = $cbs;
+  }
+#    print STDERR $_->{branch_length}, "  ", $_->{branch_support}, "\n";
+}
   #Post-process tree.  
   #If none of the nodes have a branch_length property, then we are looking 
   #at a relational tree, so we set all distances to unit length of 1.
