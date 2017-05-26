@@ -99,7 +99,9 @@ sub  new {
   my $overlap_length = 0;
   my %id_overlapnongapcount = ();
   my $overlap_n_invariant = 0;
-  foreach my $id (@ids){ $id_overlapseq{$id} = ''; $id_overlapnongapcount{$id} = 0; }
+  foreach my $id (@ids) {
+    $id_overlapseq{$id} = ''; $id_overlapnongapcount{$id} = 0;
+  }
   foreach my $position (0..@position_counts-1) {
     my $count = $position_counts[$position];
     #   print "XXXX: $count $n_required [", ($count >= $n_required)? '1': '0', "]\n";
@@ -119,7 +121,14 @@ sub  new {
 
   $self->{id_overlapseq} = \%id_overlapseq;
   $self->{id_overlapnongapcount} = \%id_overlapnongapcount;
-  die "overlap length inconsistency??? $overlap_length \n" if($overlap_length > 0 and $overlap_length != length $id_overlapseq{$ids[0]});
+  # die "overlap length inconsistency??? $overlap_length \n" if($overlap_length > 0 and $overlap_length != length $id_overlapseq{$ids[0]});
+
+  if ($overlap_length > 0 and $overlap_length != length $id_overlapseq{$ids[0]}) {
+    for (@ids) {
+      print $_, "  ", length $id_overlapseq{$_}, "\n";
+    }
+    die "$overlap_length  ", length $id_overlapseq{$ids[0]}, "\n";
+  }
   $self->{overlap_length} = $overlap_length;
   #	$self->{ids} = \@ids;
 
@@ -164,13 +173,13 @@ sub overlap_fasta_string{
     my $sequence = $self->{id_overlapseq}->{$id};
     $overlap_fasta .= ">$spacer$id\n$sequence\n";
   }
-  chomp $overlap_fasta;
+  # chomp $overlap_fasta; # Do we want this here?
   return $overlap_fasta;
 }
 
 sub get_overlap_hashref{
-my $self = shift;
-return $self->{id_overlapseq};
+  my $self = shift;
+  return $self->{id_overlapseq};
 }
 
 sub interleaved_overlap_fasta_string{
@@ -178,11 +187,11 @@ sub interleaved_overlap_fasta_string{
   my $max_length = shift || 1000;
   my $overlap_fasta = '';
   foreach my $id (@{$self->{ids}}) {
-   $overlap_fasta .= "$id \n";
+    $overlap_fasta .= "$id \n";
   }
   foreach my $id (@{$self->{ids}}) {
     my $sequence = $self->{id_overlapseq}->{$id};
-$sequence = substr($sequence, 0, 120);
+    $sequence = substr($sequence, 0, 120);
     $overlap_fasta .= "$sequence\n";
   }
   chomp $overlap_fasta;
@@ -205,7 +214,9 @@ sub overlap_nexus_string{ # basic nexus format string for use by MrBayes.
     my $id_padded =  $id . "                                                  ";
     my $target_l = 50;
     my $l = length $id;
-    while($target_l < $l+5){ $target_l += 10; }
+    while ($target_l < $l+5) {
+      $target_l += 10;
+    }
     $id_padded = substr($id_padded, 0, $target_l);
     $nexus_string .= "$id_padded$sequence\n";
   }
@@ -243,6 +254,11 @@ sub bootstrap_overlap_fasta_string{
   }
   chomp $bofstring;
   return $bofstring;
+}
+
+sub get_n_sequences{
+  my $self = shift;
+  return scalar @{$self->{ids}};
 }
 
 sub get_overlap_length{
