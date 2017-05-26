@@ -431,6 +431,7 @@ sub reset_root {
     my $self          = shift;    # tree object
     my $new_root_node = shift;    # node object
 
+#    print "In reset_root. new root node is ", (defined $new_root_node)? 'def' : 'undef', "\n";
     if (0) {                      #either of these branches should work.
 # except this branch doesn't do the branch_support
         my @parents = $new_root_node->get_all_parents();    # parent, grandparent, etc. up to & including root
@@ -952,7 +953,7 @@ sub subtree_newick {
 
  Args: (optional) node, defaults to root node
         (optional) $show_root - boolean, will show the root node in the newick string  
- Returns: Newick expression from the given nodes subtree, or for the whole
+ Returns: Newick expression for the given node's subtree, or for the whole
           tree if no argument is provided
 
 =cut
@@ -1951,6 +1952,7 @@ sub impose_branch_length_minimum {
     my $self       = shift;
     my $minimum_bl = shift;
     $minimum_bl ||= $self->get_min_branch_length();
+
     foreach my $n ( $self->get_all_nodes() ) {
         unless ( defined $n->get_branch_length() and $n->get_branch_length() > $minimum_bl ) {
             $n->set_branch_length($minimum_bl);
@@ -2182,11 +2184,12 @@ sub quasiRF_distance {
 sub RF_distance {
     my $self          = shift;
     my $other_tree    = shift;
-    my $compare_field = shift;               # to control comparison of names (default) or species ("species")
-                                             # copy the trees into temporary trees, so that the trees can
+    my $compare_field = shift || 'name';               # to control comparison of names (default) or species ("species")
+    my $no_copy = shift || 0;
+    # copy the trees into temporary trees, so that the trees can
                                              # be manipulated (rerooted, collapsed) without changing the original trees.
                                              #
-                                             # print STDOUT "in compare_unrooted. compare_field: $compare_feld \n";
+                                           # print STDOUT "in compare_unrooted. compare_field: $compare_feld \n";
     my $tree1         = $self->copy();
     my $tree2         = $other_tree->copy();
 
@@ -2205,8 +2208,15 @@ sub RF_distance {
     $tree1->reset_root($leaf1);
     $tree2->reset_root($corresponding_leaf);
 
-    return $tree1->RF_distance_inner( $tree2, $compare_field );
+    
+    my ($distance, $sym_diff, $branch_score, $TL1, $TL2 ) = $tree1->RF_distance_inner( $tree2, $compare_field );
+    $tree1->decircularize(); # decircularize the working copies of the trees, so the memory can be deallocating
+    $tree2->decircularize(); # and a memory leak avoided!
+    return  ($distance, $sym_diff, $branch_score, $TL1, $TL2 );
 }
+
+
+
 
 =head2 function RF_distance_inner
 
@@ -2235,7 +2245,7 @@ sub RF_distance_inner {
     my $self          = shift;
     my $tree1         = $self;
     my $tree2         = shift;
-    my $compare_field = shift;
+    my $compare_field = shift || 'name';
 
     my $root1 = $tree1->get_root();
     my $root2 = $tree2->get_root();
@@ -2245,7 +2255,7 @@ sub RF_distance_inner {
     my $in_both_sum     = 0.0;
     my $in_one_only_sum = 0.0;
     my $branch_score    = 0.0;
-
+    my ($TL1, $TL2) = (0, 0);
     # get the implicit names or species for each node in both trees
     #
     if ( lc $compare_field eq "species" ) {
@@ -2331,8 +2341,11 @@ sub RF_distance_inner {
         my $diff = 0.0;
 
         # foreach my $n1 (@nhr1) {
+	
         foreach my $name1 ( keys %n_bl_1 ) {
             my $n1 = $n_bl_1{$name1};
+	    my $bl1 = $n1->get_branch_length();
+	    $TL1 += $bl1;
             if ( exists $n_bl_2{ $n1->get_name() } ) {    # there are subtrees with this set of leaves in both trees
                 my $n2 = $n_bl_2{ $n1->get_name() };
                 $diff = $n1->get_branch_length() - $n2->get_branch_length();
@@ -2353,6 +2366,8 @@ sub RF_distance_inner {
         #	foreach my $n2 (@nhr2) {
         foreach my $name2 ( keys %n_bl_2 ) {
             my $n2 = $n_bl_2{$name2};
+	    my $bl2 = $n2->get_branch_length();
+	    $TL2 += $bl2;
             if ( exists $n_bl_1{ $n2->get_name() } ) {    # there are subtrees with this set of leaves in both trees
                     #	my $n1 = $n_bl_1{$n2->get_name()};
                     #				$in_both_sum2 += abs($n1->get_branch_length() - $n2->get_branch_length());
@@ -2366,9 +2381,85 @@ sub RF_distance_inner {
     }
 
     $distance = $in_both_sum + $in_one_only_sum;
-
+# $sym_diff = number of splits in one or other but not in both, i.e. RF distance. (will be even)
+# $distance = sum of abs value of differences of corresponding branch lengths. (bl counted as zero when the split is absent).
+# $branch_score = sum of squares of difference of corresponding branch lengths.
 #	print ("in_both_sum: ", $in_both_sum, "   in_one_only_sum: ", $in_one_only_sum,  "       RFdistance: ", $distance, "\n");
-    return ( $distance, $sym_diff, $branch_score );
+#    $tree1->decircularize();
+#    $tree2->decircularize();
+
+    return ( $distance, $sym_diff, $branch_score, $TL1, $TL2 );
+}
+
+# RF_distance_quick assumes trees already properly rooted (i.e. with the same outgroup)
+# and that recursive_implicit_species
+# sub quick rf distance inner
+sub RF_distance_quick {
+  my $self          = shift;
+  my $tree1         = $self;
+  my $tree2         = shift;
+  my $compare_field = shift || 'name';
+
+  my $root1 = $tree1->get_root();
+  my $root2 = $tree2->get_root();
+
+  my ($sym_diff1, $sym_diff2) = (0, 0); #symmetric difference, just one for each partition in only one tree
+  my $distance        = 0.0;
+  my $in_both_sum     = 0.0;
+  my $in_tree1_only_sum = 0.0;
+  my $in_tree2_only_sum = 0.0;
+  my $branch_score    = 0.0;
+ # my $w_distance = 0.0; # sum over branches of abs(bl1-bl2)/sqrt(bl1+bl2) (1 
+  my ($TL1, $TL2) = (0, 0);
+ 
+  if ( lc $compare_field eq "species" ) {
+    die "RF_distance_quick with compare_field set to species is not implemented. \n";
+  } else {			# compare field is "name"
+    unless ( join( "\t", $root1->get_name() ) eq join( "\t", $root2->get_name() ) ) {
+      warn "In RFdistance; trees do not have same set of leaves (by name).\n";
+      return undef;
+    }
+
+    my $diff = 0.0;
+    my ($name_node1, $name_node2) = ($tree1->{name_node}, $tree2->{name_node});
+    foreach my $name1 ( keys %$name_node1 ) {
+      my $n1 = $name_node1->{$name1};
+      my $bl1 = $n1->get_branch_length();
+      $TL1 += $bl1;
+      if ( exists $name_node2->{ $n1->get_name() } ) { # there are subtrees with this set of leaves in both trees
+	my $n2 = $name_node2->{ $n1->get_name() };
+	$diff = $n1->get_branch_length() - $n2->get_branch_length();
+	$in_both_sum += abs($diff);
+      } else { # no node with this implicit name in tree2, so add branch length to total
+	$diff = $n1->get_branch_length();
+	$in_tree1_only_sum += $diff;
+	$sym_diff1++;
+      }
+      $branch_score += $diff * $diff;
+    }
+    foreach my $name2 ( keys %$name_node2 ) {
+      my $n2 = $name_node2->{$name2};
+      my $bl2 = $n2->get_branch_length();
+      $TL2 += $bl2;
+      if ( exists $name_node1->{ $n2->get_name() } ) { # there are subtrees with this set of leaves in both trees
+      } else { # no node with this implicit name in tree2, so add branch length to total
+	$diff = $n2->get_branch_length();
+	$in_tree2_only_sum += $diff;
+	$sym_diff2++;
+      }
+      $branch_score += $diff*$diff;
+    }
+  }
+
+if($sym_diff1 != $sym_diff2){
+  warn "In RFdistance_quick; Inconsistency in RF calculation.\n";
+      return undef;
+}
+  $distance = $in_both_sum + $in_tree1_only_sum + $in_tree2_only_sum;
+  # $sym_diff = number of splits in one or other but not in both, i.e. RF distance. (will be even)
+  # $distance = sum of abs value of differences of corresponding branch lengths. (bl counted as zero when the split is absent).
+  # $branch_score = sum of squares of differences of corresponding branch lengths.
+  return ( $distance, $sym_diff1, $branch_score, $TL1, $TL2 );
 }
 
 sub get_branch_length_sum {
@@ -2578,7 +2669,7 @@ sub get_n_parent_node{ # return the node which is the n-parent of node with name
     }
   }
   if (!defined $leaf_node) {
-    warn "In find_clades. No leaf found with specified id: $sequence_id .\n";
+    warn "In get_n_parent_node. No leaf found with specified id: $sequence_id .\n";
     return $self->get_root();
   }
   my $the_node = $leaf_node;
@@ -2595,6 +2686,9 @@ sub get_n_parent_node{ # return the node which is the n-parent of node with name
   return $the_node;
 }
 
+
+
+
 #########################################################################################
 
 sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
@@ -2604,11 +2698,15 @@ sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
   my @disallowed_species = @{ shift @_  || [] };
   my @sspecies = @{ shift @_ || [] };
   my $nodes_up_from_leaf = 0;	#
+my $branch_length_up_from_leaf = 0;
   my $n_same_species_as_leaf = 0;
   my %clade_info = (); # hash of hashrefs, each holding 3 key:value pairs.
   for (@clade_spec_objs) {
     $clade_info{$_} = {'clade_root_node' => undef, # root of clade (node object)
-		       'nodes_up' => -1, # root of clade is this many nodes above the leaf with sequence_id.
+                       'nodes_up' => -1, # root of clade is this many nodes above the leaf with sequence_id.
+                       'branch_length_up' => 0,
+
+		       'epsilon_product' => -1, 
 		       'n_same' => 0, # number of leaves in clade with same species as sequence_id.
 		       'n_disallowed_species' => 0, # number of species from the @disallowed_species list present in the clade.
 		       'n_leaves' => 0,
@@ -2621,6 +2719,9 @@ sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
   my @leaves = $self->get_leaves();
   foreach (@leaves) {
     my $leaf_name = $_->get_name();
+#my $slngth = length $sequence_id; # just compare 
+#$leaf_name = substr($leaf_name, 0, $slngth);
+#    print STDERR "$leaf_name   $sequence_id  [", $leaf_name eq $sequence_id, "]\n";
     if ($sequence_id eq $leaf_name) {
       $node = $_;
       last;
@@ -2628,7 +2729,7 @@ sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
   }
   if (!defined $node) {
     warn "In find_clades. No leaf found with specified id: $sequence_id .\n";
-    return $self->get_root();
+    return undef; # $self->get_root();
   }
   $self->calculate_implicit_species_hashes();
   my $leaf_species = $node->get_species();
@@ -2636,10 +2737,11 @@ sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
   # my $leaf_species_hash = $node->{implicit_species_hash};
   # print "leaf species: ", join(", ", keys %$leaf_species_hash), "\n";
   my @clade_requirements_met = (0,0,0);
+my $branch_epsilon_product = 1;
   while (1) { # loop over succesively larger clades containing the leaf specified by $sequence_id
     my $implicit_species_hashx = $node->{implicit_species_hash};
     #  print "implicit species: [", join("; ", keys %$implicit_species_hashx), "]\n";
-
+ 
     for my $the_species (keys %$implicit_species_hashx) { # loop over species in the clade
       @clade_requirements_met = map($_->store($the_species), @clade_spec_objs);
     }
@@ -2653,6 +2755,8 @@ sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
 
 	my @leaf_nodes = $node->recursive_subtree_node_list();
 	$clade_info{$cso}->{nodes_up} = $nodes_up_from_leaf;
+        $clade_info{$cso}->{branch_length_up} = $branch_length_up_from_leaf;
+	$clade_info{$cso}->{epsilon_product} = $branch_epsilon_product;
 	$clade_info{$cso}->{clade_root_node} = $node;
  
 	$clade_info{$cso}->{n_same} = $implicit_species_hashx->{$leaf_species}; # $n_same_species_as_leaf;
@@ -2692,6 +2796,26 @@ sub find_clades{ # give it a seq id, and a arrayref of clade_spec objects
       return (\%clade_info); #, $whole_tree_other_count - $in_clade_other_species_sequence_count); #->recursive_generate_newick();
     } else {
       #     print "Go up to parent node \n";
+###
+      my $branch_support = $node->get_branch_support();
+#print STDERR "brl, brs: ", $node->get_branch_length(), "  [", (defined $branch_support)? "def" : "undef"  , "]\n";
+      $branch_support = 1 if($node->is_leaf());
+      $branch_support = 1 if($node->is_root());
+#      $branch_support = 0.001 if($branch_support =~ /^\s*$/); 
+      if (!defined $branch_support) {
+	$branch_support = 0.001;
+      }elsif($branch_support =~ /^\s*$/){
+	$branch_support = 0.001;
+      }
+ #     print STDERR "branch support: [$branch_support] \n\n";
+
+      #print STDERR "leaves in subtree: ", scalar $node->recursive_leaf_list(), "\n";
+      $branch_support *= 0.975; # why do we need/want this?
+      my $branch_epsilon = 1.0 - $branch_support;
+      $branch_epsilon_product *= $branch_epsilon;
+#     print STDERR "Nodes up from leaf:  $nodes_up_from_leaf;  branch supp, eps:  $branch_support  $branch_epsilon  beprod: [$branch_epsilon_product]   branchlength:  ", $node->get_branch_length(), " \n";
+###
+      $branch_length_up_from_leaf += $node->get_branch_length();
       $node = $node->get_parent();
       $nodes_up_from_leaf++;
     }
@@ -2710,8 +2834,12 @@ sub find_mindl_node {
 #    	print STDERR "gtnewick: ", $gene_tree->generate_newick(), "\n";
 #print STDERR "YYYYYY ref(gene_tree): ", ref($gene_tree), "\n";
     my $gene_tree_copy = $gene_tree->copy();
+# print STDERR "after tree->copy() \n";
+# print STDERR $gene_tree_copy->generate_newick(), "\n";
+# print STDERR "sjsjs \n";
 $gene_tree_copy->impose_branch_length_minimum(0.5);
-# print "gtc newick: \n", $gene_tree_copy->generate_newick(), "\n\n";
+
+# print STDERR "gtc newick: \n", $gene_tree_copy->generate_newick(), "\n\n";
 warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_tree_copy), "\n" if(ref($gene_tree) ne ref($gene_tree_copy));
 
 # print "orig tree number of node keys: ", scalar $gene_tree->get_all_node_keys(), "\n";
@@ -2732,7 +2860,7 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
     # print "copy n leaves: ", scalar $gene_tree_copy->get_leaf_list(), "\n";
 
     $gene_tree_copy->prune_leaves(@non_speciestree_leafnodes);
-
+#print STDERR "after prune_leaves \n";
  #  print "copy n leaves, after pruning: ", scalar $gene_tree_copy->get_leaf_list(), "\n";
 
     my $n_leaves_after_pruning = scalar $gene_tree_copy->get_leaf_list();
@@ -2741,7 +2869,7 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
           $gene_tree_copy->generate_newick(), "\n";
         return ( undef, undef );
     }
- #   print STDERR "gt newick after pruning: ", $gene_tree_copy->generate_newick(), "\n";
+# print STDERR "gt newick after pruning: ", $gene_tree_copy->generate_newick(), "\n";
     # urec requires binary tree - make sure the tree is binary
     # if polytomy at root, reroot a bit down one branch, to get binary root (if was tritomy)
     my @new_root_point;
@@ -2767,7 +2895,7 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
     $gene_tree_copy->set_show_standard_species(1);
 
     # make sure node names start with alphabetic char to make urec happy.
-#print "bef makenamesurecok. n nodes: ", scalar $gene_tree_copy->get_all_nodes(), "\n";
+#print STDERR "bef makenamesurecok. n nodes: ", scalar $gene_tree_copy->get_all_nodes(), "\n";
     $gene_tree_copy->make_names_urec_ok();
 # exit;
 
@@ -2780,8 +2908,9 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
 
     my $species_newick_string = $species_tree->generate_newick();
     $species_newick_string =~ s/\s//g;    # remove whitespace
+$species_newick_string =~ s/\)[0-9]*[.]?[0-9]*:/):/g; # remove branch-supports
 
-  #  print STDERR "gene tree: $gene_newick_string \n";
+   # print STDERR "BEF UREC gene tree: $gene_newick_string \n";
   #  print STDERR "species tree: $species_newick_string \n";
 
 #	my $rerooted_newick = `/home/tomfy/cxgn/cxgn-corelibs/lib/CXGN/Phylo/Urec/urec -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
@@ -2789,9 +2918,9 @@ warn 'ref($gene_tree), ref($gene_tree_copy): ', ref($gene_tree), ",", ref($gene_
     my $urec_cmd = '/data/prod/bin/urec';
     $urec_cmd = 'urec' if ( !-x $urec_cmd );
 
-    #	print STDERR `which $urec_cmd`;
+  #   	print STDERR `which $urec_cmd`;
     my $rerooted_newick = `$urec_cmd -s "$species_newick_string"  -g "$gene_newick_string" -b -O`;
-#    print STDERR "in mindl rerooted newick: [$rerooted_newick] \n";
+ #  print STDERR "in mindl rerooted newick: [$rerooted_newick] \n";
     my $minDL_rerooted_gene_tree = ( CXGN::Phylo::Parse_newick->new( $rerooted_newick, $do_parse_set_error ) )->parse(ref($gene_tree_copy)->new(""));
 
 #    print "rerooted tree, node keys: \n", join(" ", $minDL_rerooted_gene_tree->get_all_node_keys()), "\n";
@@ -2937,7 +3066,6 @@ sub get_species_bithash {    #get a hash giving a bit pattern for each species i
 
     return $bithash;
 }
-
 
 # returns 1 if can't delete one of the leaf nodes in arg list, 0 if OK.
 sub prune_leaves {                     # prune leaves from tree 1 if their species does not occur in tree2
