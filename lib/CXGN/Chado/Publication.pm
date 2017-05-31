@@ -170,9 +170,18 @@ sub store {
 	my $cvterm_name = $self->get_cvterm_name;
 	if ( $cvterm_name ) {
 	    require Bio::Chado::Schema;
-	    my $schema =  Bio::Chado::Schema->connect( sub { $self->get_dbh->get_actual_dbh->clone },
+	    my $dbh = $self->get_dbh;
+	
+	    my $schema;
+	    if ($dbh->isa('DBI::db' ) ) { 
+		$schema =  Bio::Chado::Schema->connect( sub { $dbh->clone },
+							{ on_connect_do => ['SET search_path TO public'] },
+		    );
+	    } elsif ( $dbh->isa('CXGN::DB::Connection' )) { 
+	    $schema =  Bio::Chado::Schema->connect( sub { $dbh->get_actual_dbh->clone },
 						       { on_connect_do => ['SET search_path TO public'] },
 		);
+	    }
 	    my $cvterm = $schema->resultset("Cv::Cvterm")
 		->create_with({
 		    name   => $cvterm_name,
