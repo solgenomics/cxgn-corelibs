@@ -170,7 +170,7 @@ sub store {
 	my $cvterm_name = $self->get_cvterm_name;
 	if ( $cvterm_name ) {
 	    require Bio::Chado::Schema;
-	    my $schema =  Bio::Chado::Schema->connect( sub { $self->get_dbh->clone },
+	    my $schema =  Bio::Chado::Schema->connect( sub { $self->get_dbh->get_actual_dbh->clone },
 						       { on_connect_do => ['SET search_path TO public'] },
 		);
 	    my $cvterm = $schema->resultset("Cv::Cvterm")
