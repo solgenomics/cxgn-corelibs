@@ -155,31 +155,50 @@ sub _submit_cluster_job {
 
     my $cluster_cmd = join( ' ',
 			     "sbatch",
-			     -o => '/dev/null',
-			     -e => $self->err_file,
+			    -o => '/dev/null',
+			    -e => $self->err_file,
+			     '--export=PERL5LIB',
 			     -N => 1, ### the number of nodes, not the name (that's in torque)
-			     $self->_working_dir_isset ? ('--workdir' => $self->working_dir)
+			    $self->_working_dir_isset ? ('--workdir' => $self->working_dir)
 			           : ()
 			      ,
-			     $self->_jobdest_isset ? ('--export-file' => $self->_jobdest)
-			        : ()
-			      ,
+			    #$self->_jobdest_isset ? ('--export-file' => $self->_jobdest)
+			     #   : ()
+			     # ,
 			     $cmd_temp_file->filename(),
 	);
 
-    my $jobid = `$cluster_cmd 2>&1`; #< string to hold the job ID of this job submission
 
+    print STDERR "JOB RUN CREATED: $cluster_cmd\n";
+
+    my $jobid;
+    eval{
+	print STDERR "Running it...\n";
+	$jobid = `$cluster_cmd 2>&1`; #< string to hold the job ID of this job submission
+	print STDERR "Done...\n";
+    };
+
+    if ($@) {
+	print STDERR "JOB SUBMISSION ERROR... RETURNED $jobid. \n";
+	die "Job submission error. $jobid";
+    }
+    
+    print STDERR "JOBID = $jobid\n";
+    
     # test hook for testing a qsub failure, makes the test fail the first time
     if( $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE} ) {
         $jobid = $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE};
         delete $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE};
     }
 
+
+    print STDERR "COMMAND: $cluster_cmd  $jobid\n";
+    
     $self->_flush_qstat_cache;  #< force a qstat update
 
     #check that we got a sane job id
     chomp $jobid;
-    unless( $jobid =~ /^\d+(\.[a-zA-Z0-9-]+)+$/ || $jobid =~ /Submitted batch job (\d+)/ ) {
+    unless( $jobid =~ /^\d+|^\d+(\.[a-zA-Z0-9-]+)+$/ || $jobid =~ /Submitted batch job (\d+)/ ) {
         warn "CXGN::Tools::Run error running `sbatch`: $jobid\n";
         return;
     }
