@@ -642,9 +642,10 @@ sub get_direct_parents {
     my $stock_id = shift || $self->get_stock_id();
 
     #print STDERR "get_direct_parents with $stock_id...\n";
-
+    
     my $female_parent_id;
     my $male_parent_id;
+    
     eval {
 	$female_parent_id = $self->get_schema()->resultset("Cv::Cvterm")->find( { name => 'female_parent' })->cvterm_id();
 	$male_parent_id = $self->get_schema()->resultset("Cv::Cvterm")->find( { name => 'male_parent' }) ->cvterm_id();
@@ -955,6 +956,25 @@ sub merge {
 
     # move object relationships
     #
+
+    ## TO DO: check parents, because these will need special checks 
+    ## (if already two parents are present for the merge target, don't transfer the parents)
+    ##
+    my $female_parent_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_type', 'female_parent')->cvterm_id();
+    my $male_parent_id   = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_type', 'male_parent')->cvterm_id();
+
+    my $female_parent_rs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $female_parent_id });
+    my $male_parent_rs   = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $male_parent_id });
+    
+    if ($female_parent_rs->count() > 0) { 
+	
+    }
+    if ($male_parent_rs ->count() > 0) { 
+
+    }
+
+    
+
     my $osrs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id });
     while (my $row = $osrs->next()) {
 	my $this_object_rel_rs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $self->get_stock_id, subject_id => $row->subject_id(), type_id => $row->type_id() });
