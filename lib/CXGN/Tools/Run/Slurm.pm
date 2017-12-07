@@ -6,6 +6,7 @@ use base 'CXGN::Tools::Run';
 use Carp qw/ carp confess croak /;
 use Data::Dumper;
 use File::Slurp;
+use Slurm;
 
 sub new { 
     my $class = shift;
@@ -24,6 +25,8 @@ sub _cluster_queue_jobs_count {
 
 sub run_job {
     my ( $self, $cmd, $options ) = @_;
+    
+    print STDERR "Start run_job\n";
 
     $self->_command( $cmd ); #< store the command for use in error messages
 
@@ -39,7 +42,7 @@ sub run_job {
     #check that qsub is actually in the path
     IPC::Cmd::can_run('sbatch')
 	or croak "sbatch command not in path, cannot submit jobs to the cluster.  "
-	."Maybe you need to install the torque package?";
+	."Maybe you need to install the slurm package?";
     
 
   my $tempdir = $self->tempdir;
@@ -119,6 +122,7 @@ EOSCRIPT
 
   # also, include a copy of this very module!
     $cmd_string .= read_file( "../cxgn-corelibs/lib/CXGN/Tools/Run.pm" );
+    #$cmd_string .= read_file( "../cxgn-corelibs/lib/CXGN/Tools/Run/Slurm.pm");
   # disguise the ending EOF so that it passes through the file inclusion
 
   my $cmd_temp_file = File::Temp->new( TEMPLATE =>
@@ -137,43 +141,66 @@ EOSCRIPT
   $submit_success or die "CXGN::Tools::Run: failed to submit cluster job, after $retry_count tries\n";
 
   $self->_die_if_error;
+  
+  print STDERR "End run_job\n";
 
   return $self->_jobid();
 }
 
 sub _submit_cluster_job {
     my ($self, $cmd_temp_file) = @_;
+    
+    print STDERR "Start _submit_cluster_job\n";
 
     # note that you can use a reference to a string as a filehandle, which is done here:
 
     my $cluster_cmd = join( ' ',
 			     "sbatch",
-			     -o => '/dev/null',
-			     -e => $self->err_file,
+			    -o => '/dev/null',
+			    -e => $self->err_file,
+			     '--export=PATH,PERL5LIB',
 			     -N => 1, ### the number of nodes, not the name (that's in torque)
-			     $self->_working_dir_isset ? ('--workdir' => $self->working_dir)
+			    $self->_working_dir_isset ? ('--workdir' => $self->working_dir)
 			           : ()
 			      ,
-			     $self->_jobdest_isset ? ('--export-file' => $self->_jobdest)
-			        : ()
-			      ,
+			    #$self->_jobdest_isset ? ('--export-file' => $self->_jobdest)
+			    #   : ()
+			    # ,
 			     $cmd_temp_file->filename(),
 	);
 
-    my $jobid = `$cluster_cmd 2>&1`; #< string to hold the job ID of this job submission
 
+    print STDERR "JOB RUN CREATED: $cluster_cmd\n";
+
+    my $jobid;
+    eval{
+	print STDERR "Running it...\n";
+	$jobid = `$cluster_cmd 2>&1`; #< string to hold the job ID of this job submission
+	print STDERR "Done...\n";
+    };
+
+    if ($@) {
+	print STDERR "JOB SUBMISSION ERROR... RETURNED $jobid. \n";
+	die "Job submission error. $jobid";
+    }
+    
+    print STDERR "JOBID = $jobid\n";
+    
     # test hook for testing a qsub failure, makes the test fail the first time
     if( $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE} ) {
         $jobid = $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE};
         delete $ENV{CXGN_TOOLS_RUN_FORCE_QSUB_FAILURE};
     }
 
+
+    print STDERR "COMMAND: $cluster_cmd  $jobid\n";
+    
     $self->_flush_qstat_cache;  #< force a qstat update
 
     #check that we got a sane job id
     chomp $jobid;
-    unless( $jobid =~ /^\d+(\.[a-zA-Z0-9-]+)+$/ || $jobid =~ /Submitted batch job (\d+)/ ) {
-        warn "CXGN::Tools::Run error running `qsub`: $jobid\n";
+    unless( $jobid =~ /^\d+|^\d+(\.[a-zA-Z0-9-]+)+$/ || $jobid =~ /Submitted batch job (\d+)/ ) {
+        warn "CXGN::Tools::Run error running `sbatch`: $jobid\n";
         return;
     }
 
@@ -182,6 +209,8 @@ sub _submit_cluster_job {
     }
 
     $self->_jobid($jobid);      #< remember our job id
+    
+    print STDERR "End _submit_cluster_job\n";
 
     return 1;
 }
@@ -368,20 +397,130 @@ sub _diefile_exists {
 sub alive {
     my ($self) = @_;
 
-    $self->_die_if_error; #if our child died, we should die too
-    
-    #use qstat to see if the job is still alive
-    my %m = qw| e ending R running Q queued U unknown C complete|;
+    print STDERR "Slurm alive()... JobID: ".$self->_jobid."\n";
 
-    my $state = $m{ $self->_qstat->{job_state}} || '';
+    my $slurm = Slurm::new();
+    my $job_info = $slurm->load_job($self->_jobid);
 
-    $self->_run_completion_hooks if ($state eq 'complete') || $self->_told_to_die;
-    
-    if ($state ne 'complete') { 
-	return $state; 
+    my $current_job = $job_info->{job_array}->[0];
+
+    $self->_check_nodes_states();
+
+    if (IS_JOB_RUNNING($current_job)) {
+        print STDERR "Slurm job is running...\n";
+        return 1;
     }
-    
-    $self->_die_if_error; #if our child died, we should die too
+    if (IS_JOB_COMPLETE($current_job)) {
+        print STDERR "slurm job is complete...\n";
+        return;
+    }
+    if (IS_JOB_FINISHED($current_job)) {
+        print STDERR "Slurm job is finished...\n";
+        return;
+    }
+    if (IS_JOB_COMPLETED($current_job)) {
+        print STDERR "Slurm job is completed...\n";
+        return;
+    }
+    if (IS_JOB_PENDING($current_job)) {
+        print STDERR "Slurm job is pending...\n";
+        return 1;
+    }
+    if (IS_JOB_COMPLETING($current_job)) {
+        print STDERR "Slurm job is completing...\n";
+        return 1;
+    }
+    if (IS_JOB_CONFIGURING($current_job)) {
+        print STDERR "Slurm job is configuring...\n";
+        return 1;
+    }
+    if (IS_JOB_STARTED($current_job)) {
+        print STDERR "Slurm job is started...\n";
+        return 1;
+    }
+    if (IS_JOB_RESIZING($current_job)) {
+        print STDERR "Slurm job is resizing...\n";
+        return 1;
+    }
+    if (IS_JOB_SUSPENDED($current_job)) {
+        die "Slurm job is suspended...\n";
+    }
+    if (IS_JOB_CANCELLED($current_job)) {
+        die "Slurm job is canceled...\n";
+    }
+    if (IS_JOB_FAILED($current_job)) {
+        die "Slurm job is failed...\n";
+    }
+    if (IS_JOB_TIMEOUT($current_job)) {
+        die "Slurm job is timed out...\n";
+    }
+    if (IS_JOB_NODE_FAILED($current_job)) {
+        die "Slurm job node failed...\n";
+    }
+
+    $self->_die_if_error;
+
+    die "Slurm job is in an unknown state...\n";
+
+}
+
+sub _check_nodes_states {
+    my $self = shift;
+
+    my $slurm = Slurm::new();
+    my $nodes_info = $slurm->load_node();
+    my $node_array = $nodes_info->{node_array};
+
+    foreach (@$node_array) {
+        if (IS_NODE_UNKNOWN($_)) {
+            die "Slurm node is unknown... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_DOWN($_)) {
+            die "Slurm node is down... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_IDLE($_)) {
+            print STDERR "Slurm node is idle... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_ALLOCATED($_)) {
+            print STDERR "Slurm node is allocated... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_ERROR($_)) {
+            die "Slurm node is in error... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_NO_RESPOND($_)) {
+            die "Slurm node is not responding... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_FAIL($_)) {
+            die "Slurm node is failed... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_COMPLETING($_)) {
+            print STDERR "Slurm node is completing... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_MIXED($_)) {
+            print STDERR "Slurm node is mixed (some CPUs are allocated some are not)... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_FUTURE($_)) {
+            die "Slurm node is in future state (not fully configured)... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_DRAIN($_)) {
+            die "Slurm node is in drain... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_DRAINING($_)) {
+            print STDERR "Slurm node is draining... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_DRAINED($_)) {
+            print STDERR "Slurm node is drained... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_MAINT($_)) {
+            die "Slurm node is in maintenance... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_POWER_UP($_)) {
+            print STDERR "Slurm node is powered up... Node: ".$_->{name}."\n";
+        }
+        if (IS_NODE_POWER_SAVE($_)) {
+            print STDERR "Slurm node is in power save... Node: ".$_->{name}."\n";
+        }
+    }
 
     return;
 }
