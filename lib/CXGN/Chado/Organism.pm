@@ -1074,6 +1074,30 @@ sub get_organism_by_tax {
     return;
 }
 
+=head2 get_organismprop_hash
+
+ Usage:
+ Desc:  Returns a hash of all organismprops and values for this organism
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_organismprop_hash {
+	my $self = shift;
+	my $organism_id = $self->get_organism_id;
+	my $prop_rs = $self->get_schema->resultset('Organism::Organismprop')->search({organism_id => $organism_id}, {join=>['type'], +select=>['type.name', 'me.value'], +as=>['name', 'value']});
+	my $prop_hash;
+	while (my $r = $prop_rs->next()){
+		push @{ $prop_hash->{$r->get_column('name')} }, $r->get_column('value');
+	}
+	#print STDERR Dumper $prop_hash;
+	return $prop_hash;
+}
+
+
 =head2 new_with_species
 
  Usage: my $o=CXGN::Chado::Organism->new_with_species($schema, 'my node name')

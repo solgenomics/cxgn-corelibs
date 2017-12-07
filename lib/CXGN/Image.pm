@@ -429,6 +429,7 @@ sub process_image {
 
     my $dest_name = $self->get_processing_dir() . "/" . $basename.$file_ext;
 
+    print STDERR "Destination: ".$dest_name."\n";
     File::Copy::copy( $file_name, $dest_name )
       || die "Can't copy file $file_name to $dest_name";
     my $chmod = "chmod 664 '$dest_name'";
@@ -690,6 +691,7 @@ sub copy_image_resize {
     my $self = shift;
     my ( $original_image, $new_image, $width ) = @_;
 
+    print STDERR "Resizing: Destination: $new_image\n";
     File::Copy::copy( $original_image, $new_image );
     my $chmod = "chmod 664 '$new_image'";
 
