@@ -4,24 +4,25 @@ use CXGN::Tools::Run;
 
 my @job_array;
 
-#submit 100 jobs to cluster
-for (1..100) {
+#submit 10 jobs to cluster
+for (1..10) {
     my $outfile = '/tmp/test'.$_;
-    my $job = CXGN::Tools::Run->run_cluster(
-        '/bin/hostname',
-
+    
+    my $job = CXGN::Tools::Run->new(
         {
-            backend => 'slurm',
+            backend => 'Slurm',
+	    temp_base => '/tmp',
             out_file => $outfile,
         }
     );
+    $job->run_cluster('sleep', '10');
     push @job_array, $job;
 }
 
 #wait for all jobs to finish
 foreach (@job_array) {
     while (my $alive = $_->alive()) {
-        #print STDERR "it is alive ($alive)...\n";
+        print STDERR "it is alive ($alive)...\n";
         sleep(1);
     }
 }

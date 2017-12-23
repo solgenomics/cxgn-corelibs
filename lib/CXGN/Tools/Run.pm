@@ -1,18 +1,20 @@
 package CXGN::Tools::Run;
 
-use strict;
-use warnings;
+use Moose;
 
-use Carp qw/ carp confess croak /;
-use POSIX qw( :sys_wait_h strftime );
-use Time::HiRes qw/time/;
+with 'MooseX::Object::Pluggable';
+
+use Carp qw | carp confess croak |;
+use POSIX qw |  :sys_wait_h strftime |;
+use Time::HiRes qw | time |;
 use IPC::Cmd ();
 use Data::Dumper;
 
 use File::Path;
-use File::Temp qw( tempfile );
+use File::Temp qw | tempfile |;
 use File::Basename;
 use File::Spec;
+use File::Slurp qw | read_file |;
 use Cwd;
 #use UNIVERSAL qw/isa/;
 use File::NFSLock qw/uncache/;
@@ -37,7 +39,6 @@ sub dprinta(@) {
     }
     @_
 }
-
 
 =head1 NAME
     
@@ -111,58 +112,91 @@ _always_ true".
 
 =cut
 
-#make some private accessors
 
-use Class::MethodMaker
-    [ scalar => [
-	  'in_file',          #holds filename or filehandle used to provide stdin
-	  'out_file',         #holds filename or filehandle used to capture stdout
-	  'err_file',         #holds filename or filehandle used to capture stderr
-	  '_temp_base',       #holds the object-specific temp_base, if set
-	  '_max_cluster_jobs',#holds the object-specific max_cluster_jobs, if set
-	  '_existing_temp',   #holds whether we're using someone else's tempdir
-	  '_told_to_die',     #holds whether this job has been told to die
-	  '_working_dir',     #holds name of the process's working directory
-	  '_die_on_destroy',  #set to true if we should kill our subprocess
+has 'jobid' => (isa => 'Str', is => 'rw'); # the job id for CXGN::Tools::Run (is a filename)
+
+has 'cluster_job_id' => (isa => 'Str', is => 'rw'); # the job_id on the cluster
+
+has 'in_file' => ( isa => 'Maybe[Str]', is => 'rw'); #holds filename or filehandle used to provide stdin
+
+has 'out_file' => ( isa => 'Maybe[Str]', is => 'rw' ); #holds filename or filehandle used to capture stdout
+
+has 'err_file' => ( isa => 'Maybe[Str]', is => 'rw'); #holds filename or filehandle used to capture stderr
+
+has 'temp_base' => (isa => 'Maybe[Str]', is => 'rw' ); #holds the object-specific temp_base, if set
+
+has '_max_cluster_jobs' => ( isa => 'Maybe[Int]', is => 'rw');#holds the object-specific max_cluster_jobs, if set
+
+has '_existing_temp' => (isa => 'Maybe[Str]', is => 'rw');   #holds whether we're using someone else's tempdir 
+has '_told_to_die' => (isa => 'Maybe[Bool]', is=>'rw');     #holds whether this job has been told to die
+
+has '_working_dir' => (isa => 'Str', is => 'rw', predicate => '_working_dir_isset');     #holds name of the process's working directory
+has '_die_on_destroy' => (isa => 'Maybe[Bool]', is=>'rw');  #set to true if we should kill our subprocess
 	  #when this object is destroyed
-	  '_pid',             #holds the pid of our background process, if any
-	  '_jobid',           #holds the jobid of our cluster process, if any
-	  '_jobdest',         #holds the server/queue destination
+has '_pid' => (isa => 'Maybe[Int]', is => 'rw');             #holds the pid of our background process, if any
+has '_jobid' => (isa => 'Maybe[Str]', is => 'rw');           #holds the jobid of our cluster process, if any
+
+has  '_jobdest' => (isa => 'Maybe[Str]', is => 'rw', predicate=>'_jobdest_isset');         #holds the server/queue destination
 	  #where we submitted a cluster job
-	  '_error_string',    #holds our die error, if any
-	  '_command',         #holds the command string that was executed
-	  '_job_name',        #small name to use in tempdir names and job submission
-	  '_host',            #hostname where the command ran
-	  '_start_time',      #holds the time() from when we started the job
-	  '_end_time',        #holds the approximate time from when the job finished
-	  '_exit_status',     #holds the exit status ($?) from our job
-	  '_on_completion',   #subref to be run when job completes
-	  '_already_ran_completion_hooks',   #flag, set when completion hooks have been run
-	  '_vmem',            #bytes of memory the process is
+
+has '_error_string' => (isa => 'Maybe[Str]', is => 'rw');    #holds our die error, if any
+
+has 'command' => (isa => 'Str|Maybe[Ref]', is => 'rw');         #holds the command string that was executed
+
+has '_command_ref' => (isa => 'Maybe[Ref]', is => 'rw');   # holds the command as a listref [?]
+
+has '_job_name' => (isa => 'Maybe[Str]', is => 'rw');        #small name to use in tempdir names and job submission
+
+has '_host' => (isa => 'Str', is => 'rw');            #hostname where the command ran
+
+has '_start_time' => (isa => 'Str', is => 'rw', predicate => 'start_time_isset');      #holds the time() from when we started the job
+
+has  '_end_time' => (isa => 'Maybe[Str]', is => 'rw');        #holds the approximate time from when the job finished
+
+has '_exit_status' => (isa => 'Maybe[Str]', is => 'rw');     #holds the exit status ($?) from our job
+
+has 'on_completion' => (isa => 'Maybe[Ref]', is => 'rw');   #subref to be run when job completes
+
+has '_already_ran_completion_hooks' => (isa => 'Maybe[Bool]', is=>'rw'); #flag, set when completion hooks have been run
+
+has '_vmem' => (isa => 'Maybe[Int]', is => 'rw');            #bytes of memory the process is
 	  #estimated to require
-	  'backend',          # either slurm (default) or torque
+has 'backend' => (isa => 'Str', is => 'rw');          # either slurm (default) or torque
 	  #{-default => 'torque'},
-	  '_raise_error',     #holds whether we throw errors or just store
+has '_raise_error' => (isa => 'Str', is => 'rw');     #holds whether we throw errors or just store
 	  #them in _error. defaults to undef
-	  '_procs_per_node',  #holds the number of processors to use for cluster
+has '_procs_per_node' => (isa => 'Maybe[Int]', is => 'rw');  #holds the number of processors to use for cluster
 	  #and other parallel calls
-	  '_nodes',           #holds a torque-compliant nodelist, default of '1'
+has '_nodes' => (isa => 'Maybe[Int]', is => 'rw');           #holds a torque-compliant nodelist, default of '1'
 	  #not used for regular and _async runs
-	  
-      ],
-    ];
+
+has 'job_file' => (isa => 'Str', is =>'rw');	  
 
 
-=head2 run
+sub BUILD { 
+    my $self = shift;
     
-  Usage: my $slept = CXGN::Tools::Run->run('sleep',3);
-         #would sleep 3 seconds, then return the object
-  Desc : run the program and wait for it to finish
-  Ret  : a new CXGN::Tools::Run object
-  Args : executable to run (absolute or relative path, will also search $ENV{PATH}),
-         argument,
-         argument,
-         ...,
+    if ($self->job_file()) { 
+	my $h = retrieve($self->job_file);
+	foreach my $k (keys %$h) { 
+	    print STDERR "Setting option $k with value $h->{$k}.\n";
+	    $self->$k($h->{$k});
+
+	}
+    }
+
+    $self->load_plugin($self->backend());
+
+    
+
+}
+
+
+
+=head2 new
+
+use configuration hash with the following keys:
+
          { in_file        => filename or filehandle to put on job's STDIN,
            out_file       => filename or filehandle to capture job's STDOUT,
            err_file       => filename or filehandle to capture job's STDERR,
@@ -180,45 +214,63 @@ use Class::MethodMaker
                              parent process that spawned the job,
                              usually called from inside $job->alive() or wait().
                              passed one arg: the $job_object
+
+
+
+=head2 run
+    
+  Usage: my $slept = CXGN::Tools::Run->run('sleep',3);
+         #would sleep 3 seconds, then return the object
+  Desc : run the program and wait for it to finish
+  Ret  : a new CXGN::Tools::Run object
+  Args : executable to run (absolute or relative path, will also search $ENV{PATH}),
+         argument,
+         argument,
+         ...,
          }
   Side Effects: runs the program, waiting for it to finish
 
 =cut
 
 sub run {
-    my ($class,@args) = @_;
-    my $self = bless {},$class;
-    
-    #$ENV{MOD_PERL} and croak "CXGN::Tools::Run->run() not functional under mod_perl";
-    
-    my $options = $self->_pop_options( \@args );
-    $self->_process_common_options( $options );
-    
-    #now start the process and die informatively if it errors
-    $self->_start_time(time);
-    
-    my $curdir = cwd();
-    eval {
-	chdir $self->working_dir or die "Could not change directory into '".$self->working_dir."': $!";
-	my $cmd = @args > 1 ? \@args : $args[0];
-	CXGN::Tools::Run::Run3::run3( $cmd, $self->in_file, $self->out_file, $self->err_file, $self->tempdir );
-	chdir $curdir or die "Could not cd back to parent working directory '$curdir': $!";
-    }; if( $@ ) {
-	$self->_error_string( $@ );
-	if($self->_raise_error) {
-	    #write die messages to a file for later retrieval by interested
-	    #parties, chiefly the parent process if this is a cluster job
-	    $self->_write_die( $@ );
-	    croak $self->_format_error_message( $@ );
-	}
+  my ($self, @args) = @_;
+
+  #$ENV{MOD_PERL} and croak "CXGN::Tools::Run->run() not functional under mod_perl";
+
+#  my $options = $self->_pop_options( \@args );
+#  $self->_process_common_options( $options );
+  print STDERR "Now running the job using run()...\n";
+  #now start the process and die informatively if it errors
+  $self->_start_time(time);
+
+  my $curdir = cwd();
+  eval {
+    chdir $self->working_dir or die "Could not change directory into '".$self->working_dir."': $!";
+    my $cmd = @args > 1 ? \@args : $args[0];
+    print STDERR "Run3... $cmd\n";
+    CXGN::Tools::Run::Run3::run3( $cmd, $self->in_file, $self->out_file, $self->err_file, $self->tempdir );
+    chdir $curdir or die "Could not cd back to parent working directory '$curdir': $!";
+    print STDERR "Done...\n";
+  }; 
+  
+  if( $@ ) {
+    $self->_error_string( $@ );
+    if($self->_raise_error) {
+      #write die messages to a file for later retrieval by interested
+      #parties, chiefly the parent process if this is a cluster job
+	print STDERR "An error occurred running run(), $@\n";
+      $self->_write_die( $@ );
+      croak $self->_format_error_message( $@ );
     }
-    $self->_end_time(time);
-    $self->_exit_status($?); #save the exit status of what we ran
-    
-    $self->_run_completion_hooks; #< run any on_completion hooks we have
-    
-    return $self;
+  }
+  $self->_end_time(time);
+  $self->_exit_status($?); #save the exit status of what we ran
+
+  $self->_run_completion_hooks; #< run any on_completion hooks we have
+
+  return $self;
 }
+
 
 =head2 run_async
     
@@ -258,19 +310,19 @@ sub run {
 =cut
 
 sub run_async {
-    my ($class,@args) = @_;
-    my $self = bless {},$class;
+    my ($self,@args) = @_;
+
     
     #$ENV{MOD_PERL} and croak "CXGN::Tools::Run->run_async() not functional under mod_perl";
     
-    my $options = $self->_pop_options( \@args );
-    $self->_process_common_options( $options );
+    #my $options = $self->_pop_options( \@args );
+    #$self->_process_common_options( $options );
     $self->is_async(1);
     
     #make sure we have a temp directory made already before we fork
     #calling tempdir() makes this directory and returns its name.
     #dbp is debug print, which only prints if $ENV{CXGNTOOLSRUNDEBUG} is set
-    $self->dbp('starting background process with tempdir ',$self->tempdir);
+    $self->dbp('starting background process with tempdir ',$self->temp_base());
     
     #make a subroutine that wraps the run3() call in order to save any
     #error messages into a file named 'died' in the process's temp dir.
@@ -292,7 +344,7 @@ sub run_async {
 #      setpgrp; #run this perl and its exec'd child as their own process group
 	    my $cmd = @args > 1 ? \@args : $args[0];
 	    #print STDERR "COMMAND: $cmd\n";
-	    CXGN::Tools::Run::Run3::run3($cmd, $self->in_file, $self->out_file, $self->err_file, $self->tempdir );
+	    CXGN::Tools::Run::Run3::run3($cmd, $self->in_file, $self->out_file, $self->err_file, $self->temp_base );
 	    chdir $curdir or die "Could not cd back to parent working dir '$curdir': $!";
 	    
 	}; if( $@ ) {
@@ -327,21 +379,13 @@ sub run_async {
 
 =cut
 
-sub job_id {
-    shift->_jobid;
-}
+#sub job_id {
+#    shift->_jobid;
+#}
 
+=head2 new
 
-=head2 run_cluster
-
-  Usage: my $sleeper = CXGN::Tools::Run->run_cluster('sleep',30);
-  Desc : run a command on a cluster using the 'qsub' command
-  Ret  : a new L<CXGN::Tools::Run> object, which is a handle
-         for your running cluster job
-  Args : executable to run (absolute or relative path, will also search $ENV{PATH}),
-         argument,
-         argument,
-         ...,
+  Usage: my $ctr = CXGN::Tools::Run->new($config);
          { die_on_destroy => 1, #default is 0
            in_file        => do not use, not yet supported for cluster jobs
            out_file       => filename, defaults to a new one created internally,
@@ -368,61 +412,72 @@ sub job_id {
                              'web_cluster_queue' conf key, otherwise, defaults to blank, which will
                              use the default queue that the 'qsub' command is configured to use.
          }
+  If you set die_on_destroy in the options hash, the job will be killed with `qdel`
+  if this object goes out of scope.
+
+
+
+=head2 run_cluster
+
+  Usage: my $sleeper = $ctr->run_cluster('sleep',30);
+  Desc : run a command on a cluster using the 'qsub' command
+  Ret  : 
+         for your running cluster job
+  Args : executable to run (absolute or relative path, will also search $ENV{PATH}),
+         argument,
+         argument,
+         ...,
   Side Effects: runs the given command in the background, dies if the program
                 terminated abnormally
 
-  If you set die_on_destroy in the options hash, the job will be killed with `qdel`
-  if this object goes out of scope.
 
 =cut
 
 sub run_cluster {
-  my ($class,@args) = @_;
-  
+  my ($self,@args) = @_;
+
   print STDERR "Start run_cluster\n";
 
-  my $self = bless {},$class;
-
-  my $options = $self->_pop_options( \@args );
-  $self->_process_common_options( $options );
+  #my $options = $self->_pop_options( \@args );
+  #$self->_process_common_options( $options );
   
   print STDERR "End run_cluster\n";
-
-  return $self->_run_cluster( \@args, $options );
+  
+  # will run on plugin...
+  return $self->run_job(@args);
 }
 
 
-sub _run_cluster {
-    my ($self, $args, $options) = @_;
+# sub _run_cluster {
+#     my ($self, $args, $options) = @_;
 
-    print STDERR "Start _run_cluster\n";
+#     print STDERR "Start _run_cluster\n";
 
-    require CXGN::Tools::Run::Torque;
-    require CXGN::Tools::Run::Slurm;
+#     require CXGN::Tools::Run::Torque;
+#  #   require CXGN::Tools::Run::Slurm;
 
-    my $cluster;
+#     my $cluster;
 
-    if (!$options->{backend}) { $options->{backend} = "torque" }
-    if ($options->{backend} eq "torque") { 
-        $cluster = CXGN::Tools::Run::Torque->new();
-    }
-    elsif ($options->{backend} eq "slurm") { 
-        $cluster = CXGN::Tools::Run::Slurm->new();
-    }
-    else { 
-        die "$options->{backend} not a known backend.\n";
-    }
-    $cluster->_pop_options($args);
-    $cluster->_process_common_options($options);
+#     if ($options->{backend} eq "torque") { 
+#         $cluster = CXGN::Tools::Run::Torque->new();
+#     }
+#     elsif ($options->{backend} eq "slurm") { 
+#         $cluster = CXGN::Tools::Run::Slurm->new();
+#     }
+#     else { 
+#         die "$options->{backend} not a known backend.\n";
+#     }
+#     $cluster->_pop_options($args);
+#     $cluster->_process_common_options($options);
 
-    $cluster->is_cluster(1);
+#     $cluster->is_cluster(1);
 
-    my $job_id = $cluster->run_job( $args, $options);
+#     my $job_id = $cluster->run_job( $args, $options);
 
-    print STDERR "End _run_cluster\n";
+#     print STDERR "End _run_cluster\n";
 
-    return $cluster;
-}
+#     return $cluster;
+# }
 
 sub run_cluster_perl {
     my ( $class, $args ) = @_;
@@ -438,14 +493,14 @@ sub run_cluster_perl {
     
     my $self = bless {},$class;
     $self->_job_name( $method_name );
-    $self->_process_common_options( $run_args );
+    #$self->_process_common_options( $run_args );
     
     $packages ||= [];
     $packages = [$packages] unless ref $packages;
     $packages = join '', map "require $_; ", @$packages;
     
     if ( @$method_args ) {
-	my $args_file = File::Spec->catfile( $self->tempdir, 'args.dat' );
+	my $args_file = File::Spec->catfile( $self->temp_base(), 'args.dat' );
 	nstore( $method_args => $args_file ) or croak "run_cluster_perl: $! serializing args to '$args_file'";
 	return $self->_run_cluster(
 	    [ @perl,
@@ -476,10 +531,10 @@ sub _pop_options {
     my $options = ref($args->[-1]) eq 'HASH' ?  pop( @$args ) : {};
     
     #store our command array for later use in error messages and such
-    $self->_command($args);
+    $self->command($args);
     
     unless( $self->_job_name ) {
-        my ($executable) = $self->_command->[0] =~ /^([^'\s]+)/;
+        my ($executable) = $self->command->[0] =~ /^([^'\s]+)/;
         $executable ||= '';
         if($executable) {
             $executable = basename($executable);
@@ -492,95 +547,99 @@ sub _pop_options {
 
 #process the options hash and set the correct parameters in our object
 #use for input and output
-sub _process_common_options {
-    my ( $self, $options ) = @_;
+# sub _process_common_options {
+#     my ( $self, $options ) = @_;
     
-    my @allowed_options = qw(
-			   in_file
-			   out_file
-			   err_file
-			   working_dir
-			   temp_base
-			   max_cluster_jobs
-			   existing_temp
-			   raise_error
-			   die_on_destroy
-			   procs_per_node
-                           on_completion
-			   nodes
-			   vmem
-			   queue
-                           backend
-			  );
-    foreach my $optname (keys %$options) {
-	grep {$optname eq $_} @allowed_options
-	    or croak "'$optname' is not a valid option for run_*() methods\n";
-    }
+#     my @allowed_options = qw(
+# 			   in_file
+# 			   out_file
+# 			   err_file
+# 			   working_dir
+# 			   temp_base
+# 			   max_cluster_jobs
+# 			   existing_temp
+# 			   raise_error
+# 			   die_on_destroy
+# 			   procs_per_node
+#                            on_completion
+# 			   nodes
+# 			   vmem
+# 			   queue
+#                            backend
+#                            jobid
+# 			  );
+#     foreach my $optname (keys %$options) {
+# 	grep {$optname eq $_} @allowed_options
+# 	    or croak "'$optname' is not a valid option for run_*() methods\n";
+#     }
     
-    #given a filehandle or filename, absolutify it if it is a filename
-    sub abs_if_filename($) {
-	my $name = shift
-	    or return;
-	ref($name) ? $name : File::Spec->rel2abs($name);
-    }
+#     #given a filehandle or filename, absolutify it if it is a filename
+#     sub abs_if_filename($) {
+# 	my $name = shift
+# 	    or return;
+# 	ref($name) ? $name : File::Spec->rel2abs($name);
+#     }
 			
-    # set our temp_base, if given
-			$self->_temp_base( $options->{temp_base} ) if defined $options->{temp_base};
+
+#     # set our temp_base, if given
+# 			$self->_temp_base( $options->{temp_base} ) if defined $options->{temp_base};
 			
-			#if an existing temp dir has been passed, verify that it exists, and
-			#use it
-			if(defined $options->{existing_temp}) {
-			    $self->{tempdir} = $options->{existing_temp};
-			    -d $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' does not exist";
-			    -w $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' is not writable";
-			    $self->_existing_temp(1);
+# 			#if an existing temp dir has been passed, verify that it exists, and
+# 			#use it
+# 			if(defined $options->{existing_temp}) {
+# 			    $self->{tempdir} = $options->{existing_temp};
+# 			    -d $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' does not exist";
+# 			    -w $self->{tempdir} or croak "existing_temp '$options->{existing_temp}' is not writable";
+# 			    $self->_existing_temp(1);
 			    
-			}
+# 			}
 			
-			$self->backend( $options->{backend} ) if $options->{backend};
-	# figure out where to put the files for the stdin and stderr
-			# outputs of the program.  Make sure to use absolute file names
-	# in case the working dir gets changed
-			#
-	$self->out_file( abs_if_filename( $options->{out_file}
-					  || File::Spec->catfile($self->tempdir, 'out')
-				  )
-			);
-	$self->err_file( abs_if_filename( $options->{err_file}
-					  || File::Spec->catfile($self->tempdir, 'err')
-				  )
-		 );
-        $self->in_file( abs_if_filename $options->{in_file} );
+# 			$self->backend( $options->{backend} ) if $options->{backend};
+# 			$self->jobid($options->{jobid}) if $options->{jobid};
+# 	# figure out where to put the files for the stdin and stderr
+# 			# outputs of the program.  Make sure to use absolute file names
+# 	# in case the working dir gets changed
+# 			#
+# 	$self->out_file( abs_if_filename( $options->{out_file}
+# 					  || File::Spec->catfile($self->tempdir, 'out')
+# 				  )
+# 			);
+# 	$self->err_file( abs_if_filename( $options->{err_file}
+# 					  || File::Spec->catfile($self->tempdir, 'err')
+# 				  )
+# 		 );
+#         $self->in_file( abs_if_filename $options->{in_file} );
 
-        $self->working_dir( $options->{working_dir} );
+#         $self->working_dir( $options->{working_dir} );
 
-        dbp "Got dirs and files ",map {$_||=''; "'$_' "} $self->out_file, $self->err_file, $self->in_file, $self->working_dir;
+#         dbp "Got dirs and files ",map {$_||=''; "'$_' "} $self->out_file, $self->err_file, $self->in_file, $self->working_dir;
 
-        $self->_die_on_destroy(1) if $options->{die_on_destroy};
-        $self->_raise_error(0) if defined($options->{raise_error}) && !$options->{raise_error};
+#         $self->_die_on_destroy(1) if $options->{die_on_destroy};
+#         $self->_raise_error(0) if defined($options->{raise_error}) && !$options->{raise_error};
 
-        $self->_procs_per_node($options->{procs_per_node}) if defined $options->{procs_per_node};
-        $self->_nodes($options->{nodes}) if defined $options->{nodes};
-  $self->_vmem($options->{vmem}) if defined $options->{vmem};
+#         $self->_procs_per_node($options->{procs_per_node}) if defined $options->{procs_per_node};
+#         $self->_nodes($options->{nodes}) if defined $options->{nodes};
+#   $self->_vmem($options->{vmem}) if defined $options->{vmem};
 
-  $self->_max_cluster_jobs( $options->{max_cluster_jobs} || 2000 );
+#   $self->_max_cluster_jobs( $options->{max_cluster_jobs} || 2000 );
 
-  if (defined $options->{on_completion}) {
-      my $c = $options->{on_completion};
-      $c = [$c] unless ref $c eq 'ARRAY';
-      foreach (@$c) {
-          ref eq 'CODE'
-              or croak 'on_completion hooks must each be a CODE reference';
-      }
-      $self->_on_completion( $c );
-			}
+#   if (defined $options->{on_completion}) {
+#       my $c = $options->{on_completion};
+#       $c = [$c] unless ref $c eq 'ARRAY';
+#       foreach (@$c) {
+#           ref eq 'CODE'
+#               or croak 'on_completion hooks must each be a CODE reference';
+#       }
+#       $self->_on_completion( $c );
+# 			}
 			
-      # set is_cluster and is_async defaults
-      $self->is_cluster(0);
-      $self->is_async(0);
+#       # set is_cluster and is_async defaults
+#       $self->is_cluster(0);
+#       $self->is_async(0);
 			
-      return $options;
-  }
+			
+#       return $options;
+#   }
 
 # NOTE: temp_base class method is deprecated, do not use in new code.
 #  pass temp_base to each Run invocation instead
@@ -599,13 +658,13 @@ sub _process_common_options {
 
 # return the base path where CXGN::Tools::Run classes
 # should stick their temp dirs, indexes, whatever
-    { my %tb = ( __PACKAGE__ , File::Spec->tmpdir );
-      sub temp_base {
-	  my ( $class, $val ) = @_;
-	  $tb{$class} = $val if @_ > 1;
-	  return $tb{$class};
-      }
-    }
+    # { my %tb = ( __PACKAGE__ , File::Spec->tmpdir );
+    #   sub temp_base {
+    # 	  my ( $class, $val ) = @_;
+    # 	  $tb{$class} = $val if @_ > 1;
+    # 	  return $tb{$class};
+    #   }
+    # }
     
 =head1 OBJECT METHODS
 
@@ -629,47 +688,50 @@ my @CHARS = (qw/ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 	         0 1 2 3 4 5 6 7 8 9 _
 	     /); #< list of characters that can be used in tempfile names
 
-sub tempdir {
-    my ($self) = @_;
+# sub tempdir {
+#     my ($self) = @_;
     
-    #return our current temp dir if we have one
-    return $self->{tempdir} if $self->{tempdir};
+#     #return our current temp dir if we have one
+#     return $self->{tempdir} if $self->{tempdir};
     
-    #otherwise make a new temp dir
+#     #otherwise make a new temp dir
     
-    #TODO: do tempdir stem-and-leafing
-    #number of dirs in one dir = $#CHARS ^ $numchars
-    #number of possible combinations = $#CHARS ^ ($numchars+$numlevels)
-    my $numlevels = 5;
-    my $numchars  = 2;
-    my $username = getpwuid $>;
-    my $temp_stem = File::Spec->catdir( ( $self->_temp_base() || __PACKAGE__->temp_base() ),
-					$username.'-cxgn-tools-run-tempfiles',
-					( map {$CHARS[int rand $#CHARS].$CHARS[int rand $#CHARS]} 1..$numlevels ),
-	);
-    mkpath($temp_stem);
-    -d $temp_stem or die "could not make temp stem '$temp_stem'\n";
+#     #TODO: do tempdir stem-and-leafing
+#     #number of dirs in one dir = $#CHARS ^ $numchars
+#     #number of possible combinations = $#CHARS ^ ($numchars+$numlevels)
+#     my $numlevels = 5;
+#     my $numchars  = 2;
+#     my $username = getpwuid $>;
+#     my $temp_stem = File::Spec->catdir( ( $self->temp_base() || __PACKAGE__->temp_base() ),
+# 					$username.'-cxgn-tools-run-tempfiles',
+# 					( map {$CHARS[int rand $#CHARS].$CHARS[int rand $#CHARS]} 1..$numlevels ),
+# 	);
+#     mkpath($temp_stem);
+#     -d $temp_stem or die "could not make temp stem '$temp_stem'\n";
     
-    my $job_name = $self->_job_name || 'cxgn-tools-run';
+#     my $job_name = $self->_job_name || 'cxgn-tools-run';
     
-    my $newtemp = File::Temp::tempdir($job_name.'-XXXXXX',
-				      DIR     => $temp_stem,
-				      CLEANUP => 0, #don't delete our kids' tempfiles
-	);
-    -d $newtemp or die __PACKAGE__.": Could not make temp dir $newtemp : $!";
-    -w $newtemp or die __PACKAGE__.": Temp dir $newtemp is not writable: $!";
+#     my $newtemp = File::Temp::tempdir($job_name.'-XXXXXX',
+# 				      DIR     => $temp_stem,
+# 				      CLEANUP => 0, #don't delete our kids' tempfiles
+# 	);
+#     -d $newtemp or die __PACKAGE__.": Could not make temp dir $newtemp : $!";
+#     -w $newtemp or die __PACKAGE__.": Temp dir $newtemp is not writable: $!";
     
-    $self->{tempdir} = $newtemp;
-    dbp "Made new temp dir $newtemp\n";
+#     $self->{tempdir} = $newtemp;
+#     dbp "Made new temp dir $newtemp\n";
     
-    return $self->{tempdir};
-}
+#     my $job_name = basename($newtemp);
+#     $self->jobid($newtemp);
+
+#     return $self->{tempdir};
+# }
 
 
 #returns the name of the file to use for recording the die message from background jobs
 sub _diefile_name {
     my $self = shift;
-    return File::Spec->catfile( $self->tempdir, 'died');
+    return File::Spec->catfile( $self->temp_base(), 'died');
 }
 
 #write a properly formatted error message to our diefile
@@ -782,7 +844,7 @@ sub _format_error_message {
     return join '', map {chomp; __PACKAGE__.": $_\n"} (
 	"start time: ".( $self->start_time ? strftime('%Y-%m-%d %H:%M:%S %Z', localtime($self->start_time) ) : 'NOT RECORDED' ),
 	"error time: ".strftime('%Y-%m-%d %H:%M:%S %Z',localtime),
-	"command failed: '" . join(' ',@{$self->_command}) . "'",
+	"command failed: '" . join(' ',@{$self->command}) . "'",
 	$error,
 	@out_tail,
 	@err_tail,
@@ -914,7 +976,7 @@ sub error_string {
 sub working_dir {
     my ($self,$newdir) = @_;
     
-    if($newdir) {
+    if ($newdir) {
 	-d $newdir or croak "'$newdir' is not a directory";
 	$self->alive and croak "cannot set the working dir on a running process";
 	$self->_working_dir($newdir);
@@ -1171,7 +1233,7 @@ sub _read_status_file {
     return unless $self->is_async || $self->is_cluster; #this only applies to async and cluster jobs
     return if $self->_end_time_isset;
     
-    my $statname = File::Spec->catfile( $self->tempdir, 'status');
+    my $statname = File::Spec->catfile( $self->temp_base(), 'status');
     uncache($statname) if $self->is_cluster;
     dbp "attempting to open status file $statname\n";
     open my $statfile, $statname
@@ -1234,20 +1296,23 @@ sub cleanup {
     my ($self) = @_;
     $self->_reap if $self->is_async;
     
+    return; # for now, we don't want cleanup
+
+
     # assemble list of stem directories to try to delete (if they are
     # not empty)
     # WARNING THIS WORKS ONLY ON UNIX-STYLE PATHS RIGHT NOW
 
     my @delete_dirs;
-    if( my $t = $self->{tempdir} ) {
+    if( my $t = $self->temp_base() ) {
 	$t =~ s!/$!!; #< remove any trailing slash
 	while(  $t =~ s!/[^/]+$!! && $t !~ /cxgn-tools-run-tempfiles$/ ) {
 	    push @delete_dirs, $t;
 	}
     }
     
-    if( $self->{tempdir} && -d $self->{tempdir} ) {
-	rmtree($self->{tempdir}, DEBUG ? 1 : 0);
+    if( $self->temp_base() && -d $self->temp_base() ) {
+	rmtree($self->temp_base(), DEBUG ? 1 : 0);
     }
     
     rmdir $_ foreach @delete_dirs;
@@ -1591,14 +1656,15 @@ my $sys_exit_time;
 
 sub run3 {
 
+    print STDERR "now starting run3...\n";
     my $options = @_ && ref $_[-1] eq "HASH" ? pop : {};
 
     my ( $cmd, $stdin, $stdout, $stderr, $tempdir ) = @_;
 
     print STDERR "run3(): running ", 
        join( " ", map "'$_'", ref $cmd ? @$cmd : $cmd ), 
-       "\n"
-       if debugging;
+    "\n";
+#       if debugging;
 
     if($tempdir) {
         open(my $statfile,">","$tempdir/status");
