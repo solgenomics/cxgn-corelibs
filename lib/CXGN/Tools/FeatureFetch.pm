@@ -74,8 +74,8 @@ sub fetch {
 #http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=protein&id=8&rettype=gp&retmode=xml
 
 
-    my $feature_xml = `wget "eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$GBaccession&rettype=xml&retmode=text"  -O -  `;
-    
+    my $feature_xml = `wget "eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$GBaccession&rettype=text&retmode=xml"  -O -  `;
+  
     eval{ 
 	my $twig=XML::Twig->new(
 			    twig_roots   => 
