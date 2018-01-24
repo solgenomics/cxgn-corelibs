@@ -1051,7 +1051,7 @@ sub has_secondary_dbxref {
  Usage: $self->get_secondary_dbxrefs()
  Desc:  find all secondary accessions associated with the cvterm
          These are stored in cvterm_dbxref table as dbxref_ids
- Ret:    an array of accessions (PO:0001234)
+ Ret:    a list of CXGN::Chado::Dbxref objects
  Args:   none
  Side Effects: none
  Example:
@@ -1066,11 +1066,12 @@ sub get_secondary_dbxrefs {
     my @secondary;
     while (my ($dbxref_id) = $sth->fetchrow_array() ) {
 	my $dbxref= CXGN::Chado::Dbxref->new($self->get_dbh(),$dbxref_id);
-	my $accession = $dbxref->get_db_name() . ":" . $dbxref->get_accession();
-	push  @secondary, $accession;
+	#my $accession = $dbxref->get_db_name() . ":" . $dbxref->get_accession();
+	push  @secondary, $dbxref;
     }
     return @secondary;
 }
+
 
 =head2 delete_secondary_dbxref
 
