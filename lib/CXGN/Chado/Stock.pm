@@ -10,6 +10,11 @@ Created to work with  CXGN::Page::Form::AjaxFormPage
 for eliminating the need to refactor the  AjaxFormPage and Editable  to work with DBIC objects.
 Functions such as 'get_obsolete' , 'store' , and 'exists_in_database' are required , and do not use standard DBIC syntax.
 
+
+=head1 DEPRECATED
+
+This module is needs to be deprecated.  Do not use in new code.  Build new code with Moose instead in sgn/lib/CXGN/Stock.pm
+
 =head1 AUTHOR
 
 Naama Menda <nm249@cornell.edu>

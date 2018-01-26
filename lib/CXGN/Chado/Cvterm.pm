@@ -12,6 +12,11 @@ CXGN::Chado::Cvterm - a class to handle controlled vocabulary terms.
  Lukas Mueller <lam87@cornell.edu> (added implementation of Bio::Ontology::TermI)
                                    (added map_to_slim function [March 3, 2008])
 
+=head1 DEPRECATED
+
+This module is needs to be deprecated.  Do not use in new code.  Build new code with Moose instead in sgn/lib/CXGN/Cvterm.pm
+
+
 =cut
 
 
