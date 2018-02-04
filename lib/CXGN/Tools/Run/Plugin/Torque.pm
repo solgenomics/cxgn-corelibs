@@ -1,49 +1,14 @@
 
-package CXGN::Tools::Run::Torque;
+package CXGN::Tools::Run::Plugin::Torque;
+
+use Moose::Role;
+
+use base 'CXGN::Tools::Run';
 
 use Carp qw/ carp confess croak /;
 use Data::Dumper;
 use File::Slurp;
 
-use Class::MethodMaker
-    [ scalar => [
-	  'in_file',          #holds filename or filehandle used to provide stdin
-	  'out_file',         #holds filename or filehandle used to capture stdout
-	  'err_file',         #holds filename or filehandle used to capture stderr
-	  '_temp_base',       #holds the object-specific temp_base, if set
-	  '_max_cluster_jobs',#holds the object-specific max_cluster_jobs, if set
-	  '_existing_temp',   #holds whether we're using someone else's tempdir
-	  '_told_to_die',     #holds whether this job has been told to die
-	  '_working_dir',     #holds name of the process's working directory
-	  '_die_on_destroy',  #set to true if we should kill our subprocess
-	  #when this object is destroyed
-	  '_pid',             #holds the pid of our background process, if any
-	  '_jobid',           #holds the jobid of our cluster process, if any
-	  '_jobdest',         #holds the server/queue destination
-	  #where we submitted a cluster job
-	  '_error_string',    #holds our die error, if any
-	  '_command',         #holds the command string that was executed
-	  '_job_name',        #small name to use in tempdir names and job submission
-	  '_host',            #hostname where the command ran
-	  '_start_time',      #holds the time() from when we started the job
-	  '_end_time',        #holds the approximate time from when the job finished
-	  '_exit_status',     #holds the exit status ($?) from our job
-	  '_on_completion',   #subref to be run when job completes
-	  '_already_ran_completion_hooks',   #flag, set when completion hooks have been run
-	  '_vmem',            #bytes of memory the process is
-	  #estimated to require
-	  'backend',          # either slurm (default) or torque
-	  {-default => 1},
-	  '_raise_error',     #holds whether we throw errors or just store
-	  #them in _error. defaults to undef
-	  '_procs_per_node',  #holds the number of processors to use for cluster
-	  #and other parallel calls
-	  '_nodes',           #holds a torque-compliant nodelist, default of '1'
-	  #not used for regular and _async runs
-	  'tempdir',          # tempdir
-	  
-      ],
-    ];
 
 sub name { 
     return "torque";
@@ -53,7 +18,7 @@ sub name {
 sub run_job {
     my ( $self, $cmd, $options ) = @_;
 
-    $self->_command( $cmd ); #< store the command for use in error messages
+    $self->command( $cmd ); #< store the command for use in error messages
 
     # set our job destination from configuration if running under the website
     if( defined $options->{queue} ) {
@@ -93,7 +58,7 @@ sub run_job {
     
   }
 
-  my $tempdir = $self->tempdir;
+  my $tempdir = $self->temp_base();
   $self->in_file
       and croak "in_file not supported by run_cluster";
   foreach my $acc ('out_file','err_file') {
@@ -143,20 +108,7 @@ sub run_job {
     $cmd_string = <<EOSCRIPT;
 #!/usr/bin/env perl
 
-  # take PBS_O_* environment variables as our own, overriding local
-  # node settings
-  %ENV = ( %ENV,
-	   map {
-	       my $orig = $_;
-	       if(s/PBS_O_//) {
-		   $_ => $ENV{$orig}
-	       } else {
-		   ()
-	       }
-	   }
-	   keys %ENV
-          );
-
+  
   CXGN::Tools::Run->run($cmd_string,
                         { out_file => '$outfile',
                           err_file => '$errfile',
@@ -480,7 +432,7 @@ sub _die_if_error {
 sub _diefile_exists {
   my ($self) = @_;
     #have to do the opendir dance instead of caching, because NFS caches the stats
-    opendir my $tempdir, $self->tempdir
+    opendir my $tempdir, $self->temp_base()
         or return 0;
     while(my $f = readdir $tempdir) {
       #dbp "is '$f' my diefile?\n";
