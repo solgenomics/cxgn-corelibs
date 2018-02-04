@@ -185,7 +185,7 @@ sub BUILD {
 	}
     }
 
-    $self->load_plugin($self->backend());
+    $self->load_plugin($self->backend()) if $self->backend();
 
     
 
@@ -335,9 +335,9 @@ sub run_async {
 	eval {
 #       #handle setting reader/writer on IO::Pipe objects if any were passed in
 
-	    $self->in_file->reader  if isa($self->in_file,'IO::Pipe');
-	    $self->out_file->writer if isa($self->out_file,'IO::Pipe');
-	    $self->err_file->writer if isa($self->out_file,'IO::Pipe');
+	    $self->in_file->reader  if ref($self->in_file()) && $self->in_file()->isa('IO::Pipe');#isa($self->in_file,'IO::Pipe');
+	    $self->out_file->writer if (ref($self->out_file) && $self->out_file->isa('IO::Pipe'));
+	    $self->err_file->writer if (ref($self->out_file) && $self->out_file()->isa('IO::Pipe'));
 	    
 	    chdir $self->working_dir
 		or die "Could not cd to new working directory '".$self->working_dir."': $!";
@@ -354,7 +354,7 @@ sub run_async {
 	}
 	#explicitly close all our filehandles, cause the hard exit doesn't do it
 	foreach ($self->in_file,$self->out_file,$self->err_file) {
-	    if(isa($_,'IO::Handle')) {
+	    if(ref($_) && $_->isa('IO::Handle')) {
 #	warn "closing $_\n";
 		close $_;
 	    }
@@ -737,6 +737,7 @@ sub _diefile_name {
 #write a properly formatted error message to our diefile
 sub _write_die {
     my ($self,$error) = @_;
+    print STDERR "ERROR: $error\n";
     open my $diefile, ">".$self->_diefile_name
 	or die "Could not open file ".$self->_diefile_name.": $error: $!";
     print $diefile $self->_format_error_message($error);
@@ -797,10 +798,10 @@ sub _run_completion_hooks {
     dbp 'running job completion hook';
 
     #skip if we have no completion hooks or we have already run them
-    return unless $self->_on_completion && ! $self->_already_ran_completion_hooks;
+    return unless $self->on_completion && ! $self->_already_ran_completion_hooks;
 
     #run the hooks
-    $_->($self,@_) for @{ $self->_on_completion };
+    $_->($self,@_) for @{ $self->on_completion };
 
     #set flag saying we have run them
     $self->_already_ran_completion_hooks(1);
