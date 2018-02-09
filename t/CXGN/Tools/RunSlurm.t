@@ -29,6 +29,7 @@ foreach (@job_array) {
 
 #check all job outputs and remove the temp files
 my $hostname = `/bin/hostname`;
+chomp($hostname);
 foreach (@job_array) {
     is($_->out(), $hostname, "Check output from clusterjob (slurm)");
     unlink $_->out_file;

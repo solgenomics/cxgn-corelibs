@@ -12,7 +12,6 @@ use File::Spec qw | catfile |;
 use File::Basename qw | basename dirname |;
 use Slurm;
 use Storable qw | store nstore retrieve |;
-#BEGIN { extends CXGN::Tools::Run };
 
 sub _cluster_queue_jobs_count {
     my $cnt = scalar keys %{ shift->_global_qstat || {} };
@@ -28,24 +27,24 @@ sub check_job {
 	."Maybe you need to install the slurm package?";
     
     
-    my $temp_base = $self->temp_base();
+    my $tempdir = $self->tempdir();
     $self->in_file()
 	and croak "in_file not supported by run_cluster";
     foreach my $acc ('out_file','err_file') {
 	my $file = $self->$acc;
 	$file = $self->$acc("$file"); #< stringify the argument
 	
-	print STDERR "TEMPDIR IS: $temp_base...\n";
-	croak "temp_base ".$self->temp_base()." is not on /export/shared or /export/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n"
-	    unless $self->cluster_accessible($temp_base);
+	print STDERR "TEMPDIR IS: $tempdir...\n";
+	croak "tempdir ".$self->tempdir()." is not on /export/shared or /export/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n"
+	    unless $self->cluster_accessible($tempdir);
 	
 	croak "filehandle or non-stringifying out_file, err_file, or in_file not supported by run_cluster"
 	    if $file =~ /^([\w:]+=)?[A-Z]+\(0x[\da-f]+\)$/;
 	#print "file was $file\n";
 	
 	unless($self->cluster_accessible($file)) {
-	    if(index($file,$temp_base) != -1) {
-		croak "temp_base ".$self->temp_base." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n";
+	    if(index($file,$tempdir) != -1) {
+		croak "tempdir ".$self->tempdir()." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n";
 	    } else {
 		croak "'$file' must be in a subdirectory of /data/shared or /data/prod in order to be accessible to all cluster nodes";
 	    }
@@ -80,22 +79,14 @@ sub run_job {
 
     $self->command(\@cmd ); #< store the command for use in error messages
 
-    my $temp_base = $self->temp_base();
+    my $tempdir = $self->tempdir();
     my $working_dir = $self->working_dir();   # NOT USED
 
-    # generate the jobid
-    my $job_temp_dir_obj = File::Temp->new(); 
-    my $job_temp_dir = $job_temp_dir_obj->tempdir(
-	TEMPLATE => File::Spec->catfile( $self->temp_base(), 'job-XXXXXX'), 
-	UNLINK => 0 
-	);
-    
-    if (! $self->out_file()) { $self->out_file(File::Spec->catfile($job_temp_dir, 'out')); }
-    if (! $self->err_file()) { $self->err_file(File::Spec->catfile($job_temp_dir, 'err')); }
+    if (! $self->out_file()) { $self->out_file(File::Spec->catfile($self->tempdir(), 'out')); }
+    if (! $self->err_file()) { $self->err_file(File::Spec->catfile($self->tempdir(), 'err')); }
 
-    #$self->working_dir($job_temp_dir);
+    $self->working_dir($job_temp_dir);
 
-#    my $cmd_string = "\#!/usr/bin/env perl\n\n";
     my $cmd_string = "\#!/bin/bash\n\n";
     # my $cmd_string .= do {
     #   local $Data::Dumper::Terse  = 1;
@@ -153,7 +144,7 @@ sub run_job {
     
     
 
-    my $cmd_temp_file = File::Spec->catfile($job_temp_dir, 'cmd');
+    my $cmd_temp_file = File::Spec->catfile($self->tempdir(), 'cmd');
     open(my $CTF, ">", $cmd_temp_file) || die "Can't open cmd temp file $cmd_temp_file for writing...\n";
     
     print $CTF $cmd_string;
@@ -168,11 +159,7 @@ sub run_job {
 
 #    close($BCF);
 
-
-    my $jobid = basename($job_temp_dir);
-    $self->jobid($jobid);
-    
-    print STDERR "JOBID = $jobid\n";
+    print STDERR "JOBID = ".$self->jobid()."\n";
 
   my $retry_count;
   my $qsub_retry_limit = 3; #< try 3 times to submit the job
@@ -185,32 +172,7 @@ sub run_job {
 
     $self->_die_if_error;
     
-    my $job_data = {
-	jobid => $self->jobid(), 
-	cluster_job_id => $self->cluster_job_id(),
-	command => join(" ", @{$self->command()}),
-	out_file => $self->out_file(),
-	err_file => $self->err_file(),
-	on_completion => $self->on_completion(),
-	#err => $job->err(),
-	#out => $job->out(),
-	working_dir => $self->working_dir(),
-	do_not_cleanup => $self->do_not_cleanup(),
-	backend => $self->backend(),
-	#tempdir => $self->tempdir(),
-    };
-
-    print STDERR "JOBID = ".$self->jobid()." TEMP_BASE = ".$self->temp_base()."\n";
-    
-    my $job_file = File::Spec->catfile($self->temp_base(), $self->jobid, 'job');
-    print STDERR "Storing job data at $job_file.\n";
-    mkdir(dirname($job_file));
-
-    print STDERR "Saving job data: ".Dumper($job_data);
-
-    nstore( $job_data, $job_file ) or die 'could not serialize job object';
-
-    if (! -e $job_file) { print STDERR "JOB FILE NOT CREATED...???\n"; }
+    $self->store_job_data();
 
   print STDERR "End run_job\n";
 
