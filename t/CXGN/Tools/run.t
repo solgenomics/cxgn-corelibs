@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+
 use strict;
 use warnings;
 use Data::Dumper;
@@ -63,13 +64,20 @@ my $tempdir = tempdir(catdir(tmpdir(),'cxgn-tools-run-t-XXXXXXXX'),CLEANUP=>0);
 
 my $complete_hook = 0;
 my $ctr3 = CXGN::Tools::Run->new({ temp_base => $tempdir,
-				   on_completion => [ " $complete_hook += 42 " ],
+				   on_completion => " \$complete_hook += 42 ",
 				 });
+
+print STDERR "OC: ".$ctr3->on_completion()."\n";
+my $string = $ctr3->on_completion();
+eval($string);
+if ($@) { print "ERROR: $@\n"; }
+print STDERR "COMPLETE HOOK: $complete_hook\n";
+
 
 $ctr3->run('echo monkeys on the top of the mountain > foo.out');
 my @files = glob "$tempdir/*";
 
-is(slurp(File::Spec->catfile($ctr3->tempdir(),'foo.out')),
+is(slurp(File::Spec->catfile($ctr3->job_tempdir(),'foo.out')),
    "monkeys on the top of the mountain\n",
    'passing a shell command works',
   );
@@ -115,7 +123,7 @@ print STDERR "Running test 6...\n";
   my $completion_hook = 42;
   print STDERR "Check async process that dies...\n";
   eval {
-      my $ctr6 = CXGN::Tools::Run->new({ on_completion => [ "sub { $completion_hook += 3 }"] });
+      my $ctr6 = CXGN::Tools::Run->new({ on_completion => "sub { \$completion_hook += 3 }" });
       print STDERR "Created CXGN::Tools::Run...\n";
       $failer = $ctr6->run_async(qq|perl -e 'die "oh crap I died."'|);
       print STDERR "Wait...\n";
@@ -216,14 +224,13 @@ is($cder->err,'bleh','err() function');
 my $testtemp = tempdir(CLEANUP=>1);
 system("echo foo foo foo > $testtemp/foo");
 my $completion_hook = 0;
-my $ctr11 = CXGN::Tools::Run->new({ tempdir => $testtemp, on_completion => [ "$completion_hook += 42" ] });
+my $ctr11 = CXGN::Tools::Run->new({ tempdir => $testtemp, on_completion => "\$completion_hook += 42" });
 my $tempy = $ctr11->run_async('cat',file($testtemp,'foo'));
 $tempy->wait;
 $tempy->alive for 1..10;
 is($tempy->out,"foo foo foo\n",'tempdir out 1');
 is($completion_hook, 42, 'completion hook ran once');
-
-$tempdir = $tempy->tempdir;
+$tempdir = $tempy->job_tempdir;
 ok($tempy->cleanup,'cleaned up first tempy');
 ok(! -d $tempdir,'temp dir is gone');
 
@@ -232,7 +239,7 @@ my $ctr12 = CXGN::Tools::Run->new();
 my $tempy2 = $ctr12->run_async('cat',"$testtemp/foo");
 $tempy2->wait;
 is($tempy2->out,"foo foo foo\n",'tempdir out 2');
-$tempdir = $tempy2->tempdir;
+$tempdir = $tempy2->job_tempdir();
 ok($tempy2->cleanup,'cleaned up second tempy');
 ok(! -d $tempdir,'temp dir is gone');
 
@@ -307,7 +314,7 @@ print STDERR "Last test...\n";
 
 {
   my $comp = 42;
-  my $ctr16 = CXGN::Tools::Run->new({ on_completion => [ "sub { $comp += 3 }" ] });
+  my $ctr16 = CXGN::Tools::Run->new({ on_completion => "sub { \$comp += 3 }" });
   my $sleeper3 = $ctr16->run_async('sleep', 10);
   ok( $sleeper3->alive, 'long-running async process is alive');
   ok( $sleeper3->pid, 'got a pid for it' );
@@ -317,7 +324,6 @@ print STDERR "Last test...\n";
   is( $comp, 42, 'completion function does not run for a killed async process' );
 }
 
-sleep(30);
 done_testing();
-sleep(30);
+
 print STDERR "Testing Done!!!\n";

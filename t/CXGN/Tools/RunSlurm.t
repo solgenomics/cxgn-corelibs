@@ -1,11 +1,12 @@
 use strict;
-use Test::More tests=>100;
+use Test::More qw | no_plan |;
 use CXGN::Tools::Run;
 
 my @job_array;
 
-#submit 10 jobs to cluster
-for (1..10) {
+# submit some jobs to cluster
+#
+for (1..4) {
     my $outfile = '/tmp/test'.$_;
     
     my $job = CXGN::Tools::Run->new(
@@ -15,22 +16,26 @@ for (1..10) {
             out_file => $outfile,
         }
     );
-    $job->run_cluster('sleep', '10');
+    $job->run_cluster('/bin/hostname');
     push @job_array, $job;
 }
 
-#wait for all jobs to finish
+# wait for all jobs to finish
+#
 foreach (@job_array) {
     while (my $alive = $_->alive()) {
-        print STDERR "it is alive ($alive)...\n";
+        print STDERR "it is alive ($alive)... TO: ".$_->out_file()."\n";
         sleep(1);
     }
 }
 
-#check all job outputs and remove the temp files
+# check all job outputs and remove the temp files
+#
 my $hostname = `/bin/hostname`;
-chomp($hostname);
-foreach (@job_array) {
-    is($_->out(), $hostname, "Check output from clusterjob (slurm)");
-    unlink $_->out_file;
+
+foreach my $job (@job_array) {
+    is($job->out(), $hostname, "Check output from clusterjob (slurm)");
+    #unlink $job->out_file;
 }
+
+done_testing();

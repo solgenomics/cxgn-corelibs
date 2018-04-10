@@ -3,7 +3,7 @@ package CXGN::Tools::Run::Plugin::Slurm;
 
 use Moose::Role;
 
-use base 'CXGN::Tools::Run';
+#use base 'CXGN::Tools::Run';
 
 use Carp qw | carp confess croak |;
 use Data::Dumper;
@@ -27,7 +27,7 @@ sub check_job {
 	."Maybe you need to install the slurm package?";
     
     
-    my $tempdir = $self->tempdir();
+    my $tempdir = $self->job_tempdir();
     $self->in_file()
 	and croak "in_file not supported by run_cluster";
     foreach my $acc ('out_file','err_file') {
@@ -35,7 +35,7 @@ sub check_job {
 	$file = $self->$acc("$file"); #< stringify the argument
 	
 	print STDERR "TEMPDIR IS: $tempdir...\n";
-	croak "tempdir ".$self->tempdir()." is not on /export/shared or /export/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n"
+	croak "tempdir ".$self->job_tempdir()." is not on /export/shared or /export/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n"
 	    unless $self->cluster_accessible($tempdir);
 	
 	croak "filehandle or non-stringifying out_file, err_file, or in_file not supported by run_cluster"
@@ -44,7 +44,7 @@ sub check_job {
 	
 	unless($self->cluster_accessible($file)) {
 	    if(index($file,$tempdir) != -1) {
-		croak "tempdir ".$self->tempdir()." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n";
+		croak "tempdir ".$self->job_tempdir()." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n";
 	    } else {
 		croak "'$file' must be in a subdirectory of /data/shared or /data/prod in order to be accessible to all cluster nodes";
 	    }
@@ -79,13 +79,14 @@ sub run_job {
 
     $self->command(\@cmd ); #< store the command for use in error messages
 
-    my $tempdir = $self->tempdir();
+    my $tempdir = $self->job_tempdir();
     my $working_dir = $self->working_dir();   # NOT USED
 
-    if (! $self->out_file()) { $self->out_file(File::Spec->catfile($self->tempdir(), 'out')); }
-    if (! $self->err_file()) { $self->err_file(File::Spec->catfile($self->tempdir(), 'err')); }
-
-    $self->working_dir($job_temp_dir);
+    if (! $self->out_file()) { $self->out_file(File::Spec->catfile($self->job_tempdir(), 'out')); }
+    if (! $self->err_file()) { $self->err_file(File::Spec->catfile($self->job_tempdir(), 'err')); }
+    
+    print STDERR "OUTFILE IS ".$self->out_file().". Thanks.\n";
+    #$self->working_dir($tempdir);
 
     my $cmd_string = "\#!/bin/bash\n\n";
     # my $cmd_string .= do {
@@ -144,7 +145,7 @@ sub run_job {
     
     
 
-    my $cmd_temp_file = File::Spec->catfile($self->tempdir(), 'cmd');
+    my $cmd_temp_file = File::Spec->catfile($self->job_tempdir(), 'cmd');
     open(my $CTF, ">", $cmd_temp_file) || die "Can't open cmd temp file $cmd_temp_file for writing...\n";
     
     print $CTF $cmd_string;
@@ -188,13 +189,13 @@ sub _submit_cluster_job {
 
     my $cluster_cmd = join( ' ',
 			     "sbatch",
-			    -o => '/dev/null',
-			    -e => $self->err_file,
+			    -o => '/dev/null', #$self->out_file(),
+			    -e => '/dev/null', #$self->err_file(),
 			     '--export=PATH',
 			     -N => 1, ### the number of nodes, not the name (that's in torque)
-			    $self->_working_dir_isset ? ('--workdir' => $self->working_dir)
-			           : ()
-			      ,
+			    #$self->_working_dir_isset ? ('--workdir' => $self->working_dir)
+			     #      : ()
+			     # ,
 			    #$self->_jobdest_isset ? ('--export-file' => $self->_jobdest)
 
 			     #   : ()
@@ -208,9 +209,10 @@ sub _submit_cluster_job {
 
     my $cluster_job_id;
     my $out = $self->out_file();
+    my $err = $self->err_file();
     eval{
 	print STDERR "Running it...\n";
-	$cluster_job_id = `$cluster_cmd 2>&1`;
+	$cluster_job_id = `$cluster_cmd >$out 2>$err`; # 2>&1
 	print STDERR "Done...\n";
     };
 
@@ -574,20 +576,20 @@ sub _check_nodes_states {
 }
 
 
-sub _run_completion_hooks {
-    my $self = shift;
+# sub _run_completion_hooks {
+#     my $self = shift;
 
-    $self->_die_if_error; #if our child died, we should die too, not run the completion hooks
+#     $self->_die_if_error; #if our child died, we should die too, not run the completion hooks
 
-    #skip if we have no completion hooks or we have already run them
-    return unless $self->on_completion && ! $self->_already_ran_completion_hooks;
+#     #skip if we have no completion hooks or we have already run them
+#     return unless $self->on_completion && ! $self->_already_ran_completion_hooks;
 
-    #run the hooks
-    $_->($self,@_) for @{ $self->on_completion };
+#     #run the hooks
+#     #$_->($self,@_) for @{ $self->on_completion };
 
-    #set flag saying we have run them
-    $self->_already_ran_completion_hooks(1);
-}
+#     #set flag saying we have run them
+#     $self->_already_ran_completion_hooks(1);
+# }
 
 sub out {
     my ($self) = @_;
