@@ -156,9 +156,9 @@ sub _submit_cluster_job {
     my $out = $self->out_file();
     my $err = $self->err_file();
     eval{
-	print STDERR "Running it... ($cluster_cmd > $out 2> $err)\n";
-	$cluster_job_id = `$cluster_cmd >$out 2>$err`; # 2>&1
-	print STDERR "Done... ($cluster_job_id)\n";
+	print STDERR "Running it...\n";
+	$cluster_job_id = `$cluster_cmd --output $out --error $err`; 
+	print STDERR "Done...\n";
     };
 
     if ($@) {
