@@ -86,64 +86,16 @@ sub run_job {
     if (! $self->err_file()) { $self->err_file(File::Spec->catfile($self->job_tempdir(), 'err')); }
     
     print STDERR "OUTFILE IS ".$self->out_file().". Thanks.\n";
-    #$self->working_dir($tempdir);
 
     my $cmd_string = "\#!/bin/bash\n\n";
-    # my $cmd_string .= do {
-    #   local $Data::Dumper::Terse  = 1;
-    #   local $Data::Dumper::Indent = 0;
-    #   join ', ', map Dumper( "$_" ), @$cmd;
-    # };
+
     my $outfile = $self->out_file;
     my $errfile = $self->err_file;
-
-    
-
-  # also, include a copy of this very module!
-####    $cmd_string .= read_file( "../cxgn-corelibs/lib/CXGN/Tools/Run.pm" );
-    #$cmd_string .= read_file( "../cxgn-corelibs/lib/CXGN/Tools/Run/Slurm.pm");
-  # disguise the ending EOF so that it passes through the file inclusion
-
-   ###### print STDERR Dumper(\@cmd);
 
     my $command = join " ", @cmd;
     $cmd_string .= $command;
     $cmd_string .= " > ".$self->out_file();
-    $cmd_string .= " 2> ".$self->err_file();
-#    $cmd_string .= <<EOSCRIPT;
-
-#     package main;
-
-#   # take PBS_O_* environment variables as our own, overriding local
-#   # node settings
-#   %ENV = ( %ENV,
-# 	   map {
-# 	       my \$orig = \$_;
-# 	       if(s/PBS_O_//) {
-# 		   \$_ => \$ENV{\$orig}
-# 	       } else {
-# 		   ()
-# 	       }
-# 	   }
-# 	   keys \%ENV
-#           );
-    
-#     print STDERR "Create CXGN::Tools::Run Object...\n";
-#     my \$ctr = CXGN::Tools::Run->new(
-# 	{ out_file => '$outfile',
-# 	  err_file => '$errfile',
-# 	  existing_temp => '$temp_base',
-# 	  temp_base => '$temp_base',
-# 	  backend => 'Slurm',
-# 	});
-
-#     print STDERR "Running command...on ".ref(\$ctr)." object...\n";
-#     \$ctr->run($command);
-
-# EOSCRIPT
-
-    
-    
+    $cmd_string .= " 2> ".$self->err_file();    
 
     my $cmd_temp_file = File::Spec->catfile($self->job_tempdir(), 'cmd');
     open(my $CTF, ">", $cmd_temp_file) || die "Can't open cmd temp file $cmd_temp_file for writing...\n";
@@ -152,13 +104,6 @@ sub run_job {
     close($CTF);
 
     print STDERR "CMD TEMP FILE = $cmd_temp_file\n";
-
-#    my $cmd_temp_bash = File::Spec->catfile($job_temp_dir,'bash_cmd');
-#    open(my $BCF, ">", $cmd_temp_bash) || die "Can't open cmd bash file $cmd_temp_bash for writingl...\n";
-
-#    print $BCF "#!/bin/bash\n\nperl $cmd_temp_file\n\n";
-
-#    close($BCF);
 
     print STDERR "JOBID = ".$self->jobid()."\n";
 
@@ -211,9 +156,9 @@ sub _submit_cluster_job {
     my $out = $self->out_file();
     my $err = $self->err_file();
     eval{
-	print STDERR "Running it...\n";
+	print STDERR "Running it... ($cluster_cmd > $out 2> $err)\n";
 	$cluster_job_id = `$cluster_cmd >$out 2>$err`; # 2>&1
-	print STDERR "Done...\n";
+	print STDERR "Done... ($cluster_job_id)\n";
     };
 
     if ($@) {

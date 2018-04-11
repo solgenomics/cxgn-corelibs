@@ -217,8 +217,8 @@ sub dprinta(@) {
 sub create_jobid { 
     my $self = shift;
 
-    mkdir($self->temp_base());
     umask(002);
+    mkdir($self->temp_base());
     my $job_tempdir = tempdir("job_XXXXXX", DIR=>$self->temp_base(), CLEANUP=>0 ); # $self->do_cleanup()
     print STDERR "DIR: $job_tempdir\n";
     $self->job_tempdir($job_tempdir);
