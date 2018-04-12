@@ -7,7 +7,7 @@ use Moose::Role;
 
 use Carp qw | carp confess croak |;
 use Data::Dumper;
-use File::Slurp qw | write_file |;
+use File::Slurp qw | read_file write_file |;
 use File::Spec qw | catfile |;
 use File::Basename qw | basename dirname |;
 use Slurm;
