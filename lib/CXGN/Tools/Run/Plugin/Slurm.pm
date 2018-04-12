@@ -7,7 +7,7 @@ use Moose::Role;
 
 use Carp qw | carp confess croak |;
 use Data::Dumper;
-use File::Slurp;
+use File::Slurp qw | write_file |;
 use File::Spec qw | catfile |;
 use File::Basename qw | basename dirname |;
 use Slurm;
@@ -445,12 +445,15 @@ sub alive {
     }
     if (IS_JOB_FAILED($current_job)) {
         die "Slurm job is failed...\n";
+	write_file(File::Spec->catfile($self->job_tempdir(), "died"), "Slurm job failed\n");
     }
     if (IS_JOB_TIMEOUT($current_job)) {
         die "Slurm job is timed out...\n";
+	write_file(File::Spec->catfile($self->job_tempdir(), "died"), "Slurm job timed out\n");
     }
     if (IS_JOB_NODE_FAILED($current_job)) {
         die "Slurm job node failed...\n";
+	write_file(File::Spec->catfile($self->job_tempdir(), "died"), "Slurm job node failed\n");
     }
 
     $self->_die_if_error;
