@@ -150,6 +150,9 @@ sub get_person_by_username {
     return $sp_person_id;
 }
 
+
+
+
 =head1 METHODS
 
 =head2 function get_bacs_associated_with_person()
@@ -274,7 +277,6 @@ sub fetch {
     foreach my $k ( keys(%$hashref) ) {
         $self->{$k} = $$hashref{$k};
     }
-
 }
 
 
@@ -511,6 +513,9 @@ The following class properties have accessors:
 
 The censor property is user-settable. If it is true, information 
 will not be displayed on the web.
+
+  verify_password($pass) takes a password in cleartext as a parameter and
+  compares it to the hash in the database. Returns 1 if match, 0 if not
 
 =cut
 
@@ -768,6 +773,8 @@ sub add_organisms {
     }
 }
 
+    
+
 =head2 hard_delete
 
  Usage:        $p->hard_delete()
@@ -830,7 +837,12 @@ sub set_sql {
 				FROM sgn_people.sp_person 
 				WHERE username=?
 			",
-
+				
+	person_from_token => 
+                       "        SELECT sp_person_id
+                                FROM sgn_people.sp_person
+                                WHERE confirm_code = ? AND disabled IS NULL",
+			
         person_count =>
 
           "	SELECT COUNT(*) FROM sgn_people.sp_person WHERE sp_person_id=? ",
@@ -983,6 +995,7 @@ sub set_sql {
                                         sp_person_organization.sp_organization_id = ?
                        ",
 
+    
     };
 
     while ( my ( $name, $sql ) = each %{ $self->{queries} } ) {
