@@ -62,6 +62,60 @@ sub new {
     return $self;
 }
 
+
+=head2 function get_person_by_email()
+
+ Usage: my ($sp_person_id1, $sp_person_id, ...) = CXGN::People::Person->get_person_by_email($dbh, $username)
+ Desc:  find the sp_person_id of user $username 
+ Ret:   a list of matching sp_person_ids
+ Args:  $dbh, $email
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_login_by_email {
+    my $class    = shift;
+    my $dbh      = shift;
+    my $email = shift;
+
+    print STDERR "getting login by email with $email\n";
+    my $login = CXGN::People::Login->new($dbh); # create empty login object
+    my $sth    = $login->get_sql("login_from_email");
+    $sth->execute($email);
+    my @person_ids;
+    while (my ($sp_person_id) = $sth->fetchrow_array()) { 
+
+	push @person_ids, $sp_person_id;
+    }
+    
+    return @person_ids;
+}
+
+=head2 function get_person_by_email()
+
+ Usage: my ($sp_person_id1, $sp_person_id, ...) = CXGN::People::Person->get_person_by_email($dbh, $username)
+ Desc:  find the sp_person_id of user $username 
+ Ret:   a list of matching sp_person_ids
+ Args:  $dbh, $email
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_login_by_token {
+    my $class    = shift;
+    my $dbh      = shift;
+    my $token = shift;
+
+    my $person = CXGN::People::Person->new($dbh);  #emtpy object
+    my $sth    = $person->get_sql("person_from_token");
+    $sth->execute($token);
+    my ($sp_person_id) = $sth->fetchrow_array();
+    return $sp_person_id;
+}
+
+
 =head2 construtor get_login()
 
   Synopsis:	$p->get_login("mickey_mouse");
@@ -132,7 +186,6 @@ sub store {
                            SET   username      = ?
                                , private_email = ?
                                , pending_email = ?
-                               , password      = ?
                                , confirm_code  = ?
                                , disabled      = ?
                                , user_type     = ?
@@ -143,7 +196,6 @@ EOQ
             $self->get_username,
             $self->get_private_email,
             $self->get_pending_email,
-            $self->get_password,
             $self->get_confirm_code,
             $self->get_disabled,
             $self->get_user_type,
@@ -170,11 +222,76 @@ EOQ
 
         $sth->execute( $un, $prive, $pende, $pwd, $cc, $dsa, $fn, $ln, $org );
         my $person_id =
-          $self->get_dbh()->last_insert_id( 'sp_person', 'sgn_people' );
+          $self->get_dbh()->last_insert_id( undef, 'sgn_people', 'sp_person', 'sp_person_id' );
         $self->{sp_person_id} = $person_id;
+        print STDERR "NEW USER SP_PERSON_ID: ".$person_id."\n";
 	$self->add_role($self->get_user_type());
     }
     return 1;
+}
+
+
+# this is for the use case where the password needs to be verified again
+# even after login, such as for a password or username change.
+#
+sub verify_password { 
+    my $self = shift;
+    my $password = shift;
+    
+    my $h = $self->get_sql('verify_password');
+    $h->execute($self->get_username(), $password);
+    
+    my ($flag) = $h->fetchrow_array();
+
+    print STDERR "Checked password $password with result $flag.\n";
+    return $flag;
+}
+
+sub update_password { 
+    my $self = shift;
+    my $password = shift;
+    
+    if (!$self->get_sp_person_id()) { 
+	die "NEED TO STORE PERSON OBJECT BEFORE UPDATING PASSWORD!";
+    }
+    my $q = "UPDATE sgn_people.sp_person SET password = crypt('$password', gen_salt('bf')) WHERE sp_person_id=? RETURNING sp_person_id";
+    my $h = $self->get_dbh()->prepare($q);
+    print STDERR "Updating password with $password for id ".$self->get_sp_person_id()."\n";
+    $h->execute($self->get_sp_person_id());
+    my ($flag) = $h->fetchrow_array();
+    
+    print STDERR "Checked password $password with result $flag.\n";
+    return $flag;
+    
+}
+
+=head2 update_confirm_code
+
+ Usage:
+ Desc:
+ Ret:
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+
+sub update_confirm_code { 
+    my $self = shift;
+    my $confirm_code = shift;
+    
+    if (!$self->get_sp_person_id()) { 
+	die "NEED TO STORE PERSON OBJECT BEFORE UPDATING PASSWORD!";
+    }
+    my $q = "UPDATE sgn_people.sp_person SET confirm_code = '$confirm_code' WHERE sp_person_id=? RETURNING sp_person_id";
+    my $h = $self->get_dbh()->prepare($q);
+    print STDERR "Updating confirm_code with $confirm_code for id ".$self->get_sp_person_id()."\n";
+    $h->execute($self->get_sp_person_id());
+    my ($flag) = $h->fetchrow_array();
+    
+    return $flag;
+    
 }
 
 =head2 accessors get_sp_person_id(), set_sp_person_id()
@@ -197,27 +314,29 @@ sub set_sp_person_id {
     $self->{sp_person_id} = shift;
 }
 
-=head2 function get_password()
+# =head2 function get_password()
 
-  Synopsis:	my $password = $p->get_password()
-  Arguments:	none
-  Returns:	the password for login object $p.
-                Note that passwords are being stored unencrypted in
-                the database. The obtained password is clear text.
-  Side effects:	none
-  Description:	Accessor for the password property.
+#   Synopsis:	my $password = $p->get_password()
+#   Arguments:	none
+#   Returns:	the password for login object $p.
+#                 Note that passwords are being stored as BF encoded hash
+#                 plus salt the database.
+#   Side effects:	none
+#   Description:	Accessor for the password property.
 
-=cut
+# =cut
+
+# only here for storage of the password - should not be used in any other way.
 
 sub get_password {
-    my $self = shift;
-    return $self->{password};
-}
+     my $self = shift;
+     return $self->{password};
+ }
 
 =head2 function set_password()
 
   Synopsis:	$p->set_password("hallo");
-  Arguments:	the password
+  Arguments:	the password in clear text. Will be stored as a BF encoded hash.
   Returns:	nothing
   Side effects:	account defined by $p will require $password to login
   Description:	note that passwords are stored unencrypted. 
@@ -228,6 +347,7 @@ sub set_password {
     my $self = shift;
     $self->{password} = shift;
 }
+
 
 =head2 functions get_username(), set_username()
 
@@ -587,37 +707,6 @@ sub set_user_type {
     $self->{user_type}=$role;
 }
 
-
-
-# =head2 functions get_user_type(), set_user_type()
-
-#   Synopsis:	$p->set_user_type("sequencer");
-#   Arguments:	the desired user type. Different types of users have
-#                 different access rights. Currently defined user types
-#                 are\: user (default), submitter, curator (has all access
-#                 rights, kind of the root user), sequencer (can set BAC 
-#                 sequencing statuses).
-#   Returns:	
-#   Side effects:	
-#   Description:	
-
-# =cut
-
-# sub get_user_type {
-#     my $self = shift;
-#     if ( exists( $self->{user_type} ) ) {
-#         return $self->{user_type};
-#     }
-#     else {
-#         return "user";
-#     }
-# }
-
-# sub set_user_type {
-#     my $self = shift;
-#     $self->{user_type} = shift;
-# }
-
 sub set_sql {
     my $self = shift;
 
@@ -648,7 +737,7 @@ sub set_sql {
                 last_name,
                 organization
             ) 
-            VALUES (?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,crypt(?, gen_salt('bf')),?,?,?,?,?)
         ",
 
         get_login =>
@@ -666,6 +755,23 @@ sub set_sql {
 			FROM sgn_people.sp_person
 			WHERE cookie_string=?
 		",
+	verify_password => 
+	" SELECT count(*) FROM sgn_people.sp_person WHERE username = ? AND  (password = crypt( ?, password))",
+	
+	update_password => 
+	" UPDATE sgn_people.sp_person SET password = crypt(?, gen_salt('bf')) WHERE sp_person_id=?",
+	
+		login_from_email => 
+                        "       SELECT sp_person_id 
+                                FROM sgn_people.sp_person
+                                WHERE private_email ilike ?",
+
+	person_from_token => 
+                       "        SELECT sp_person_id
+                                FROM sgn_people.sp_person
+                                WHERE confirm_code = ? AND disabled IS NULL",
+
+
 
     };
 
