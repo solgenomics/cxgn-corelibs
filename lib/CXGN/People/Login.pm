@@ -222,7 +222,7 @@ EOQ
 
         $sth->execute( $un, $prive, $pende, $pwd, $cc, $dsa, $fn, $ln, $org );
         my $person_id =
-          $self->get_dbh()->last_insert_id( 'sp_person', 'sgn_people' );
+          $self->get_dbh()->last_insert_id(undef, 'sgn_people', 'sp_person', 'sp_person_id' );
         $self->{sp_person_id} = $person_id;
 	$self->add_role($self->get_user_type());
     }
