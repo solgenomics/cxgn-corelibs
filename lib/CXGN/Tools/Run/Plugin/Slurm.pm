@@ -7,7 +7,7 @@ use Moose::Role;
 
 use Carp qw | carp confess croak |;
 use Data::Dumper;
-use File::Slurp qw | write_file |;
+use File::Slurp qw | read_file write_file |;
 use File::Spec qw | catfile |;
 use File::Basename qw | basename dirname |;
 use Slurm;
@@ -44,9 +44,9 @@ sub check_job {
 	
 	unless($self->cluster_accessible($file)) {
 	    if(index($file,$tempdir) != -1) {
-		croak "tempdir ".$self->job_tempdir()." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n";
+		warn "tempdir ".$self->job_tempdir()." is not on /data/shared or /data/prod, but needs to be for cluster jobs.  Do you need to set a different temp_base?\n";
 	    } else {
-		croak "'$file' must be in a subdirectory of /data/shared or /data/prod in order to be accessible to all cluster nodes";
+		warn "'$file' must be in a subdirectory of /data/shared or /data/prod in order to be accessible to all cluster nodes";
 	    }
 	}
     }
