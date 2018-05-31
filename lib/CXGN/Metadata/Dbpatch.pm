@@ -142,6 +142,16 @@ has "dbname" => (
     cmd_aliases   => 'D',
 );
 
+has "dbport" => (
+    is            => 'rw',
+    isa           => 'Str',
+    required      => 0,
+    traits        => ['Getopt'],
+    cmd_aliases   => 'p',
+    default       => '5432',
+    documentation => 'optional, database port',
+);
+
 has "name" => (
     is       => 'rw',
     isa      => 'Str',
@@ -207,6 +217,7 @@ sub run {
 	{
 	    dbname =>$self->dbname,
 	    dbhost => $self->dbhost,
+	    dbport => $self->dbport,
 	}
 	)->get_actual_dbh();
 
