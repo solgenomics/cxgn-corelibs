@@ -136,7 +136,7 @@ sub _submit_cluster_job {
 			     "sbatch",
 			    -o => '/dev/null', #$self->out_file(),
 			    -e => '/dev/null', #$self->err_file(),
-			     '--export=PATH',
+			     '--export=PATH,PERL5LIB',
 			     -N => 1, ### the number of nodes, not the name (that's in torque)
 			    #$self->_working_dir_isset ? ('--workdir' => $self->working_dir)
 			     #      : ()
