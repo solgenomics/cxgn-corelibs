@@ -1500,16 +1500,14 @@ sub has_phenotyping_trials {
 
 sub get_image_ids {
     my $self = shift;
-    my $q = "SELECT image_id FROM metadata.md_image_cvterm
-             WHERE obsolete = 'f' AND cvterm_id = ? " ;
-
-    my $sth = $self->get_dbh()->prepare($q);
-    $sth->execute($self->get_cvterm_id());
-    my @image_ids = ();
-    while (my ($image_id) = $sth->fetchrow_array()) {
- 	push @image_ids, $image_id;
+    my @ids;
+    my $q = "SELECT image_id FROM metadata.md_image_cvterm WHERE cvterm_id=? AND obsolete = 'f' ";
+    my $h = $self->get_dbh()->prepare($q);
+    $h->execute($self->get_cvterm_id());
+    while (my ($image_id) = $h->fetchrow_array()){
+        push @ids, [$image_id, 'cvterm'];
     }
-    return @image_ids;
+    return @ids;
 }
 
 
