@@ -483,12 +483,6 @@ sub set_is_obsolete {
 
 sub get_image_ids {
     my $self = shift;
-    my $ids = $self->get_schema->storage->dbh->selectcol_arrayref
-	( "SELECT image_id FROM phenome.stock_image WHERE stock_id=? ",
-	  undef,
-	  $self->get_stock_id
-        );
-    return @$ids;
     my @ids;
     my $q = "select distinct image_id, cvterm.name FROM phenome.stock_image JOIN stock USING(stock_id) JOIN cvterm ON(type_id=cvterm_id) WHERE stock_id = ?";
     my $h = $self->schema->storage->dbh()->prepare($q);
