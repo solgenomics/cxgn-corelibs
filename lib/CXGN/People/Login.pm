@@ -763,7 +763,7 @@ sub set_sql {
 		login_from_email => 
                         "       SELECT sp_person_id 
                                 FROM sgn_people.sp_person
-                                WHERE private_email ilike ?",
+                                WHERE private_email ilike ? AND disabled IS NULL  AND censor=0",
 
 	person_from_token => 
                        "        SELECT sp_person_id
