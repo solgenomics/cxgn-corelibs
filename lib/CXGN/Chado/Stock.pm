@@ -967,8 +967,8 @@ sub merge {
     ## TO DO: check parents, because these will need special checks 
     ## (if already two parents are present for the merge target, don't transfer the parents)
     ##
-    my $female_parent_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_type', 'female_parent')->cvterm_id();
-    my $male_parent_id   = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_type', 'male_parent')->cvterm_id();
+    my $female_parent_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_relationship', 'female_parent')->cvterm_id();
+    my $male_parent_id   = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_relationship', 'male_parent')->cvterm_id();
 
     my $female_parent_rs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $female_parent_id });
     my $male_parent_rs   = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $male_parent_id });
