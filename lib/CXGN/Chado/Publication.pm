@@ -33,7 +33,7 @@ sub new {
     my $class = shift;
     my $dbh   = shift;
     my $id    = shift;    # the pub_id of the publication
-
+    
     my $args = {};
     my $self = $class->SUPER::new($dbh);    #bless $args, $class;
 
@@ -806,6 +806,32 @@ sub get_loci {
     }
     return @loci;
 }
+
+=head2 get_stock_ids
+
+ Usage: $publication->get_stock_ids()
+ Desc: find all the stocks associated with the publication
+ Ret: list of stock_ids 
+ Args: none
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_stock_ids {
+    my $self  = shift;
+    my $query = $self->get_dbh()->prepare(
+        "SELECT stock_id FROM public.stock_pub
+         WHERE pub_id= ? "
+    );
+    $query->execute( $self->get_pub_id() );
+    my @stock_ids;
+    while ( my ($stock_id) = $query->fetchrow_array() ) {
+        push @stock_ids, $stock_id;
+    }
+    return @stock_ids;
+}
+
 
 =head2 get_curator_ref
 
