@@ -942,6 +942,7 @@ sub hard_delete {
     }
 
     $self->get_dbh->do('delete from phenome.stock_image where image_id= ?', undef, $self->get_image_id());
+    $self->get_dbh->do('delete from phenome.metadata.md_tag_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from phenome.locus_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from md_image where image_id = ?', undef, $self->get_image_id );
 }
