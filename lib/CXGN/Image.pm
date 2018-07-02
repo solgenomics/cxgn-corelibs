@@ -925,22 +925,25 @@ sub iconify_file {
 
 sub hard_delete {
     my $self = shift;
+    my $test_mode = shift;
 
     if ( $self->get_original_filename && $self->pointer_count() < 2) {
         foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') {
             my $filename = $self->get_filename($size);
-            unlink $filename;
+	    
+	    if ($test_mode) { 
+		print STDERR  "Test Mode: Would delete $filename.\n";
+	    }
+	    else { 
+		print STDERR "Deleting $filename...\n";
+		unlink $filename;
+	    }
         }
     }
 
-    eval {
-        $self->get_dbh->do( 'delete from md_image where image_id = ?', undef, $self->get_image_id );
-    };
-
-    if ($@) {
-        warn "Error in hard_delete: $@";
-    }
-
+    $self->get_dbh->do('delete from phenome.stock_image where image_id= ?', undef, $self->get_image_id());
+    $self->get_dbh->do('delete from phenome.locus_image where image_id= ?', undef, $self->get_image_id());
+    $self->get_dbh->do('delete from md_image where image_id = ?', undef, $self->get_image_id );
 }
 
 =head2 pointer_count
