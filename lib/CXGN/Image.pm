@@ -45,6 +45,7 @@ use File::Spec;
 use File::Temp 'tempdir';
 use File::Copy qw| copy move |;
 use CXGN::Tag;
+use Image::Size;
 
 use base qw | CXGN::DB::ModifiableI |;
 
@@ -406,7 +407,7 @@ sub process_image {
     my $type_id   = shift;
 
     if ( my $id = $self->get_image_id() ) {
-        die "process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
+        warn "process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
     }
 
     make_path( $self->get_image_dir );
