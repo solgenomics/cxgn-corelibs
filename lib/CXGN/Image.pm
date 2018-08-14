@@ -46,6 +46,7 @@ use File::Temp 'tempdir';
 use File::Copy qw| copy move |;
 use CXGN::Tag;
 use Data::Dumper;
+use Image::Size;
 
 use base qw | CXGN::DB::ModifiableI |;
 
@@ -607,7 +608,7 @@ sub process_image {
     my $type_id   = shift;
 
     if ( my $id = $self->get_image_id() ) {
-        die "process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
+        warn "process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
     }
 
     make_path( $self->get_image_dir );
@@ -1126,22 +1127,26 @@ sub iconify_file {
 
 sub hard_delete {
     my $self = shift;
+    my $test_mode = shift;
 
     if ( $self->get_original_filename && $self->pointer_count() < 2) {
         foreach my $size ('original', 'thumbnail', 'small', 'medium', 'large') {
             my $filename = $self->get_filename($size);
-            unlink $filename;
+	    
+	    if ($test_mode) { 
+		print STDERR  "Test Mode: Would delete $filename.\n";
+	    }
+	    else { 
+		print STDERR "Deleting $filename...\n";
+		unlink $filename;
+	    }
         }
     }
 
-    eval {
-        $self->get_dbh->do( 'delete from md_image where image_id = ?', undef, $self->get_image_id );
-    };
-
-    if ($@) {
-        warn "Error in hard_delete: $@";
-    }
-
+    $self->get_dbh->do('delete from phenome.stock_image where image_id= ?', undef, $self->get_image_id());
+    $self->get_dbh->do('delete from metadata.md_tag_image where image_id= ?', undef, $self->get_image_id());
+    $self->get_dbh->do('delete from phenome.locus_image where image_id= ?', undef, $self->get_image_id());
+    $self->get_dbh->do('delete from md_image where image_id = ?', undef, $self->get_image_id );
 }
 
 =head2 pointer_count

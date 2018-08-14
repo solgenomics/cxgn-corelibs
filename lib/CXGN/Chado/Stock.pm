@@ -694,7 +694,7 @@ sub get_recursive_parents {
 
     $current_level++;
     my @parents = $self->get_direct_parents($individual->get_id());
-
+    
     #print STDERR Dumper(\@parents);
 
     my $pedigree = Bio::GeneticRelationships::Pedigree->new( { name => $individual->get_name()."_pedigree", cross_type=>"unknown"} );
@@ -967,20 +967,36 @@ sub merge {
     ## TO DO: check parents, because these will need special checks 
     ## (if already two parents are present for the merge target, don't transfer the parents)
     ##
-    my $female_parent_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_type', 'female_parent')->cvterm_id();
-    my $male_parent_id   = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_type', 'male_parent')->cvterm_id();
+    my $female_parent_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_relationship', 'female_parent')->cvterm_id();
+    my $male_parent_id   = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_relationship', 'male_parent')->cvterm_id();
 
     my $female_parent_rs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $female_parent_id });
     my $male_parent_rs   = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $male_parent_id });
     
+    my @parents = $self->get_direct_parents();
+    my $this_female_parent_id;
+    my $this_male_parent_id;
+
+    if (@parents > 2) { 
+	print STDERR "WARNING: ".$self->get_uniquename()." has ".scalar(@parents)." parents! (too many!)\n";
+    }
+
+    foreach my $parent (@parents) { 
+	if ($parent->[2] eq "female") { $this_female_parent_id = $parent->[0]; }
+	if ($parent->[2] eq "male") { $this_male_parent_id = $parent->[0]; }
+    }
+
+
     if ($female_parent_rs->count() > 0) { 
-	
+	if ($this_female_parent_id != $female_parent_rs->stock_id()) { 
+	    print STDERR "WARNING! Female parents are different for stock to be merged: ".$self->get_stock_id()." and ".$other_stock_id." NEEDS TO BE FIXED!\n";
+	}
     }
     if ($male_parent_rs ->count() > 0) { 
-
+	if ($this_male_parent_id != $male_parent_rs->stock_id()) { 
+	    print STDERR "WARNING! Male parents are different for stock to be merged: ".$self->get_stock_id()." and ".$other_stock_id." NEEDS TO BE FIXED!\n";
+	}
     }
-
-    
 
     my $osrs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id });
     while (my $row = $osrs->next()) {
