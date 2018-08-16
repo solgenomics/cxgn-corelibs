@@ -45,6 +45,7 @@ use File::Spec;
 use File::Temp 'tempdir';
 use File::Copy qw| copy move |;
 use CXGN::Tag;
+use Data::Dumper;
 use Image::Size;
 
 use base qw | CXGN::DB::ModifiableI |;
@@ -381,6 +382,206 @@ sub set_image_dir {
     $self->{image_dir} = shift;
 }
 
+=head2 accessors get_locus_page_display_order(), set_locus_page_display_order()
+
+ Usage:
+ Desc:
+ Property
+ Side Effects: Will modify the db asap (no store() required)
+               image object needs to have an image_id
+               setter will return error on failure
+ Example:
+
+=cut
+
+sub get_locus_page_display_order {
+    my $self = shift;
+    my $locus_id = shift;
+
+    my @results = $self->get_locus_page_display_order_info($locus_id);
+
+    if (@results) { 
+	return $results[0]->[3];
+    }
+    return undef;
+
+}
+
+sub get_locus_page_display_order_info { 
+    my $self = shift;
+    my $locus_id = shift;
+
+    my $q = "SELECT image_id, locus_image_id, locus_id, display_order FROM phenome.locus_image WHERE image_id = ? and locus_id=?";
+    my $h = $self->get_dbh()->prepare($q);
+    $h->execute($self->get_image_id(), $locus_id);
+    
+    my @results;
+    while (my ($image_id, $locus_id, $locus_image_id, $display_order) = $h->fetchrow_array()) { 
+	push @results, [ $image_id, $locus_id, $locus_image_id, $display_order ];
+    }
+     
+    if (@results > 1) { 
+	print STDERR "Multiple associations of image found ".Dumper(\@results)."\n";
+    }
+
+     return @results;
+}
+
+sub set_locus_page_display_order {
+    my $self = shift;
+    my $locus_id = shift;
+    my $display_order = shift;
+
+    if (!$self->get_image_id()) { 
+	print STDERR "Please store object first before making connections.\n";
+	return;
+    }
+    # check if there is a display_order property for the image
+    #
+    my @results = $self->get_locus_page_display_order_info($locus_id);
+    
+    my $locus_image_id;
+    if (@results > 1) { 
+	print STDERR "Multiple image locus association were found. Modifying only the first one.\n";
+	$locus_image_id = $results[0]->[2];
+    }
+    
+    elsif (@results == 1) { 
+	$locus_image_id = $results[0]->[2];
+    }
+
+    eval { 
+	if ($locus_image_id) { 
+	    my $q = "UPDATE phenome.locus_image SET display_order=? WHERE locus_image_id=?";
+	    my $h = $self->get_dbh()->prepare($q);
+	    $h->execute($display_order, $locus_image_id);
+	}
+	
+	else { 
+	    my $q = "INSERT INTO phenome.locus_image (image_id, sp_person_id, locus_id, display_order) VALUES (?, ?, ?, ?)";
+	    my $h = $self->get_dbh()->prepare($q);
+	    $h->execute($self->get_image_id(), $self->get_sp_person_id(), $locus_id, $display_order);
+	}
+
+    };
+    if ($@) { 
+	return "ERROR: $@\n";
+    }
+}
+
+=head2 accessors get_stock_page_display_order(), set_stock_page_display_order()
+
+ Usage:
+ Desc:
+ Property
+ Side Effects: Will modify the db asap (no store() required)
+               image object needs to have an image_id
+               setter will return error on failure
+ Example:
+
+=cut
+
+sub get_stock_page_display_order {
+    my $self = shift;
+    my $stock_id = shift;
+
+    my @results = $self->get_stock_page_display_order_info($stock_id);
+
+    print STDERR Dumper(\@results);
+    if (@results) { 
+	return $results[0]->[3];
+    }
+    return undef;
+
+}
+
+sub get_stock_page_display_order_info { 
+    my $self = shift;
+    my $stock_id = shift;
+
+    my $q = "SELECT stock_image_id, image_id, stock_id, display_order FROM phenome.stock_image WHERE image_id = ? and stock_id=?";
+    my $h = $self->get_dbh()->prepare($q);
+    $h->execute($self->get_image_id(), $stock_id);
+    
+    my @results;
+    while (my ($stock_image_id, $image_id, $stock_id, $display_order) = $h->fetchrow_array()) { 
+	push @results, [ $stock_image_id, $image_id, $stock_id, $display_order ];
+    }
+     
+    if (@results > 1) { 
+	print STDERR "Multiple associations of image found ".Dumper(\@results)."\n";
+    }
+    print STDERR Dumper(\@results);
+
+     return @results;
+}
+
+sub set_stock_page_display_order {
+    my $self = shift;
+    my $stock_id = shift;
+    my $display_order = shift;
+
+    if (!$self->get_image_id()) { 
+	print STDERR "Please store object first before making connections.\n";
+	return;
+    }
+    # check if there is a display_order property for the image
+    #
+    my @results = $self->get_stock_page_display_order_info($stock_id);
+    
+    my $stock_image_id;
+    if (@results > 1) { 
+	print STDERR "Multiple image locus association were found. Modifying only the first one.\n";
+	$stock_image_id = $results[0]->[0];
+    }
+    
+    elsif (@results == 1) { 
+	$stock_image_id = $results[0]->[0];
+    }
+
+    eval { 
+	if ($stock_image_id) { 
+	    print STDERR "Updating stock_image... (row $stock_image_id)\n";
+	    my $q = "UPDATE phenome.stock_image SET display_order=? WHERE stock_image_id=?";
+	    my $h = $self->get_dbh()->prepare($q);
+	    $h->execute($display_order, $stock_image_id);
+	}
+	
+	else { 
+	    print STDERR "Inserting into stock_image...\n";
+	    my $q = "INSERT INTO phenome.stock_image (image_id, stock_id, display_order) VALUES (?, ?, ?)";
+	    my $h = $self->get_dbh()->prepare($q);
+	    $h->execute($self->get_image_id(), $stock_id, $display_order);
+	}
+
+    };
+    if ($@) { 
+	return "ERROR: $@\n";
+    }
+}
+
+
+sub get_display_order_info { 
+    my $self = shift;
+    
+    my $q = "SELECT stock_image_id, image_id, stock_id, display_order, uniquename FROM phenome.stock_image join stock using(stock_id) WHERE image_id = ?";
+    my $h = $self->get_dbh()->prepare($q);
+    $h->execute($self->get_image_id());
+
+    my @info = ();
+    while (my ($stock_image_id, $image_id, $stock_id, $display_order, $name) = $h->fetchrow_array()) { 
+	push @info, { image_id => $image_id, type => "stock", id => $stock_id, display_order => $display_order, name => $name };
+    }
+
+    my $q = "SELECT locus_image_id, image_id, locus_id, display_order, locus_name FROM phenome.locus_image join locus using(locus_id) WHERE image_id = ?";
+    my $h = $self->get_dbh()->prepare($q);
+    $h->execute($self->get_image_id());
+    while (my ($stock_image_id, $image_id, $locus_id, $display_order, $name) = $h->fetchrow_array()) { 
+	push @info, { image_id => $image_id, type => "locus", id => $locus_id, display_order => $display_order, name => $name };
+    }
+    print STDERR Dumper(\@info);
+    return @info;
+}
 
 =head2 process_image
 
