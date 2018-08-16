@@ -191,7 +191,7 @@ sub store {
                             obsolete,
                             modified_date,
                             md5sum)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, now(), ?)";
+                     VALUES (?, ?, ?, ?, ?, ?, now(), ?)";
 	my $sth = $self->get_dbh()->prepare($query);
 	$sth->execute(
 		       $self->get_name(),
