@@ -1022,7 +1022,7 @@ sub get_image_ids {
     $h->execute($self->get_organism_id);
     my @image_ids = ();
     while (my ($image_id) = $h->fetchrow_array()) { 
-	push @image_ids, $image_id;
+	push @image_ids, [$image_id, 'organism'];
     }
     return @image_ids;
 }
