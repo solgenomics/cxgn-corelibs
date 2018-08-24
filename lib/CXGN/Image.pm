@@ -42,6 +42,7 @@ use Carp qw/ cluck carp confess /;
 use Digest::MD5;
 use File::Path 'make_path';
 use File::Spec;
+use File::Basename qw| basename dirname |;
 use File::Temp 'tempdir';
 use File::Copy qw| copy move |;
 use CXGN::Tag;
@@ -624,8 +625,18 @@ sub process_image {
 
     # copy unmodified image to be fullsize image
     #
-    my ($basename, $directories, $file_ext) = File::Basename::fileparse($file_name, qr/\..+/);
+    #my ($basename, $directories, $file_ext) = File::Basename::fileparse($file_name, qr/\.(?!\.)(.*)$/); #filename may contain one additional dot
+    my $full_basename = basename($file_name);
+    my $directories = dirname($file_name);
+    my $file_ext;
+    my $basename; # without file_ext;
+    if ($full_basename =~ m/(.*)(\.(?!\.).*)$/) {  # extension is what follows last .
+	$basename = $1;
+	$file_ext = $2;
+    }
 
+
+    print STDERR "BASENAME: $basename, DIRECTORIES: $directories FILE_EXT $file_ext\n";
     my $original_filename = $basename;
     my $original_file_ext = $file_ext;
 
