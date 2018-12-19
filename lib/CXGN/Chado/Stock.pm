@@ -220,7 +220,7 @@ Usage: $self->add_synonym
 sub add_synonym {
     my $self = shift;
     my $synonym = shift;
-    my $synonym_cvterm = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_synonym', 'stock_property');
+    my $synonym_cvterm = SGN::Model::Cvterm->get_cvterm_row($schema, 'stock_property', 'stock_synonym');
     my $stock = $self->get_object_row();
     $stock->create_stockprops({$synonym_cvterm->name() => $synonym});
 }
@@ -239,7 +239,7 @@ Usage: $self->remove_synonym
 sub remove_synonym {
     my $self = shift;
     my $synonym = shift;
-    my $synonym_cvterm_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_synonym', 'stock_property')->cvterm_id();
+    my $synonym_cvterm_id = SGN::Model::Cvterm->get_cvterm_row($schema, 'stock_property', 'stock_synonym')->cvterm_id();
     my $synonym_rs = $self->get_schema->resultset("Stock::Stockprop")->search({'stock_id'=>$self->get_stock_id, 'type_id'=>$synonym_cvterm_id, 'value'=>$synonym});
     while(my $s = $synonym_rs->next()){
         $s->delete();
@@ -627,7 +627,7 @@ sub get_trials {
         $geolocations{$nd_geolocation_id} = $description;
     }
 
-    my $geolocation_type_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema(), 'project location', 'project_property')->cvterm_id();
+    my $geolocation_type_id = SGN::Model::Cvterm->get_cvterm_row($schema, 'project_property', 'project location')->cvterm_id();
     my $q;
     if ($stock_type eq 'accession'){
         $q = "select distinct(project.project_id), project.name, projectprop.value from stock as accession join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) FULL OUTER JOIN projectprop ON (project.project_id=projectprop.project_id AND projectprop.type_id=$geolocation_type_id) WHERE accession.stock_id=?;";
@@ -967,8 +967,9 @@ sub merge {
     ## TO DO: check parents, because these will need special checks 
     ## (if already two parents are present for the merge target, don't transfer the parents)
     ##
-    my $female_parent_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_type', 'female_parent')->cvterm_id();
-    my $male_parent_id   = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_type', 'male_parent')->cvterm_id();
+    ##
+    my $female_parent_id = SGN::Model::Cvterm->get_cvterm_row($schema, 'female_parent', 'stock_relationship')->cvterm_id();
+    my $male_parent_id   = SGN::Model::Cvterm->get_cvterm_row($schema, 'male_parent', 'stock_relationship')->cvterm_id();
 
     my $female_parent_rs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $female_parent_id });
     my $male_parent_rs   = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $male_parent_id });
