@@ -904,7 +904,7 @@ sub copy_image_resize {
     my $self = shift;
     my ( $original_image, $new_image, $width ) = @_;
 
-    print STDERR "Resizing: Destination: $new_image\n";
+    #print STDERR "Resizing: Destination: $new_image\n";
     File::Copy::copy( $original_image, $new_image );
     my $chmod = "chmod 664 '$new_image'";
 
