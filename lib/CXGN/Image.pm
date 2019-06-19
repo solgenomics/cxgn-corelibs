@@ -636,13 +636,13 @@ sub process_image {
     }
 
 
-    print STDERR "BASENAME: $basename, DIRECTORIES: $directories FILE_EXT $file_ext\n";
+    #print STDERR "BASENAME: $basename, DIRECTORIES: $directories FILE_EXT $file_ext\n";
     my $original_filename = $basename;
     my $original_file_ext = $file_ext;
 
     my $dest_name = $self->get_processing_dir() . "/" . $basename.$file_ext;
 
-    print STDERR "Destination: ".$dest_name."\n";
+    #print STDERR "Destination: ".$dest_name."\n";
     File::Copy::copy( $file_name, $dest_name )
       || die "Can't copy file $file_name to $dest_name";
     my $chmod = "chmod 664 '$dest_name'";
