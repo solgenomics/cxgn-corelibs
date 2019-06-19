@@ -250,19 +250,17 @@ sub verify_password {
 sub update_password { 
     my $self = shift;
     my $password = shift;
-    
+
     if (!$self->get_sp_person_id()) { 
-	die "NEED TO STORE PERSON OBJECT BEFORE UPDATING PASSWORD!";
+        die "NEED TO STORE PERSON OBJECT BEFORE UPDATING PASSWORD!";
     }
+
     my $q = "UPDATE sgn_people.sp_person SET password = crypt('$password', gen_salt('bf')) WHERE sp_person_id=? RETURNING sp_person_id";
     my $h = $self->get_dbh()->prepare($q);
-    print STDERR "Updating password with $password for id ".$self->get_sp_person_id()."\n";
     $h->execute($self->get_sp_person_id());
     my ($flag) = $h->fetchrow_array();
-    
-    print STDERR "Checked password $password with result $flag.\n";
+
     return $flag;
-    
 }
 
 =head2 update_confirm_code
