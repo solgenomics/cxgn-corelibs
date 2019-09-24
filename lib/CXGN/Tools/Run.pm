@@ -142,6 +142,8 @@ has 'job_tempdir' => (isa => 'Str', is => 'rw'); # The concatenation of temp_bas
 
 has '_host' => (isa => 'Str', is => 'rw');            #hostname where the command ran
 
+has 'submit_host' => (isa => 'Str', is => 'rw');  ## host on which the job will be submitted using ssh
+
 has '_start_time' => (isa => 'Str', is => 'rw', predicate => '_start_time_isset');      #holds the time() from when we started the job
 
 has  '_end_time' => (isa => 'Maybe[Str]', is => 'rw', predicate => '_end_time_isset');        #holds the approximate time from when the job finished
