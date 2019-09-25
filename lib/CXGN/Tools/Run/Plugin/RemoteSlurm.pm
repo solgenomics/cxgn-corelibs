@@ -405,7 +405,7 @@ sub alive {
     my $self = shift;
 
     my $jobid = $self->jobid();
-    my $temp_dir = $self->temp_dir();
+    my $temp_dir = $self->job_tempdir();
     
     print STDERR "Slurm alive()... JobID: $jobid\n";
 
@@ -417,6 +417,8 @@ sub alive {
     
     my $output = `$submit_host_prefix check_slurm_job.pl $jobid $temp_dir 2>&1`;
 
+    print STDERR "OUTPUT: $output\n";
+    
     if ($output == 1) {
 	return 1;
     }
