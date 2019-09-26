@@ -404,7 +404,7 @@ sub _diefile_exists {
 sub alive {
     my $self = shift;
 
-    my $jobid = $self->jobid();
+    my $jobid = $self->cluster_job_id();
     my $temp_dir = $self->job_tempdir();
     
     print STDERR "Slurm alive()... JobID: $jobid\n";
@@ -415,10 +415,10 @@ sub alive {
 	$submit_host_prefix = "ssh $submit_host ";
     }
     
-    my $output = `$submit_host_prefix check_slurm_job.pl $jobid $temp_dir 2>&1`;
+    my $output = `$submit_host_prefix check_slurm_job.pl $jobid $temp_dir`;
 
     print STDERR "OUTPUT: $output\n";
-    
+    sleep(1);
     if ($output == 1) {
 	return 1;
     }
