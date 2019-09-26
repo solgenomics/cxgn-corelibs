@@ -40,7 +40,7 @@ sub alive {
     my $job_info = $slurm->load_job($job_id);
     my $current_job = $job_info->{job_array}->[0];
     
-#    _check_nodes_states();
+    _check_nodes_states();
 
     print STDERR "Check job state...\n";
 
