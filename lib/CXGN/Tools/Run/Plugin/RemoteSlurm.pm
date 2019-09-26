@@ -419,7 +419,7 @@ sub alive {
 
     print STDERR "OUTPUT: $output\n";
     sleep(1);
-    if ($output == 1) {
+    if ($output && $output == 1) {
 	return 1;
     }
     else {
