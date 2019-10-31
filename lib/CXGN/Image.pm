@@ -754,7 +754,6 @@ sub process_image {
 
     # start transaction, store the image object, and associate it to
     # the given type and type_id.
-    my $image_id = 0;
 
     # move the image into the md5sum subdirectory
     #
@@ -767,9 +766,7 @@ sub process_image {
 
     $self->finalize_location($processing_dir);
 
-    $self->set_image_id($image_id);
-
-    $image_id = $self->store();
+    my $image_id = $self->store();
 
     return $image_id;
 
