@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-slurm/alive.pl - a script to query the state of slurm jobs
+check_slurm_job.pl - a script to query the state of slurm jobs
 
 =head1 SYNOPSYS
 
-slurm/alive.pl <job_id> <job_temp_dir>
+check_slurm_job.pl <job_id> <job_temp_dir>
 
 =head1 DESCRIPTION
 
