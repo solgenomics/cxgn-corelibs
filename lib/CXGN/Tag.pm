@@ -280,7 +280,7 @@ sub get_associated_image_ids {
                    FROM metadata.md_tag_image
                   WHERE tag_id=?";
     my $sth = $self->get_dbh()->prepare($query);
-    $sth -> execute($query);
+    $sth -> execute($self->get_tag_id());
     my @image_ids = ();
     while (my ($image_id) = $sth->fetchrow_array()) { 
 	push @image_ids, $image_id;
