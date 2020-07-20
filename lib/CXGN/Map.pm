@@ -79,7 +79,11 @@ sub new {
                                                    AND current_version='t'"
                                            );
         $map_version_id_q->execute($self->{map_id});
-        ($self->{map_version_id})=$map_version_id_q->fetchrow_array();
+	if (my @row = $map_version_id_q->fetchrow_array()) {
+	    $self->{map_version_id} = $row[0];
+	} else {
+	    print STDERR "ERROR no map_version_id\n";
+	}
     }
     $self->{map_version_id} or return undef;
     my $general_info_q=$dbh->prepare
@@ -188,8 +192,11 @@ sub new_map {
                                      WHERE short_name ILIKE ?"
                            );
 	$sth->execute($name);
-	$map_id = $sth->fetchrow_array();
-      print STDERR "Map Id: $map_id\n";
+	if (my @row = $sth->fetchrow_array()) {
+	    $map_id = $row[0];
+	} else {
+            print STDERR "Error: no Map Id for $name\n";
+	}
     }
      else { 
 	print STDERR "Provide map name, please.\n";
@@ -197,9 +204,9 @@ sub new_map {
     }  
 
     unless ($map_id) {
-	    $sth = $dbh->prepare("INSERT INTO sgn.map (short_name, map_type) VALUES (?, 'genetic')");
+	    $sth = $dbh->prepare("INSERT INTO sgn.map (short_name, map_type) VALUES (?, 'genetic') RETURNING map_id");
 	    $sth->execute($name);
-	    $map_id = $dbh->last_insert_id("map", "sgn");
+	    ($map_id) = $sth->fetchrow_array() or die "ERROR can not create map\n";
 	    print STDERR "stored new Map Id: $map_id\n";
     }
     
