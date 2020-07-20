@@ -123,10 +123,12 @@ sub insert
         (".
             join(',',map {'?'} keys(%{$insert_hash}))
         .")
+	RETURNING *
     ";
     my $q=$self->{dbh}->prepare($insert_statement);
     $q->execute(values(%{$insert_hash}));
-    my $id=$self->{dbh}->last_insert_id($table);
+    my @row = $q->fetchrow_array();
+    my $id = $row[0];
     if($self->{verbose})
     {
        # print STDERR "Executed\n$insert_statement;\nwith values\n(".CXGN::Tools::Text::list_to_string(values(%{$insert_hash})).")\ncreating new row with ID $id.\n\n";
