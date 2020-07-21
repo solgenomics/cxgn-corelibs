@@ -405,15 +405,21 @@ sub store_new_data
                 croak"Marker already exists in database with name '$name'. If you meant to modify this marker, you should have sent its ID to the constructor. If there really is a new marker with the same name as an old one, the world has come to an end. Insert it manually and refer to it by its ID.";
             }
         }
-        $q=$dbh->prepare('insert into sgn.marker (marker_id) values (default)');
+        $q=$dbh->prepare('insert into sgn.marker (marker_id) values (default) RETURNING marker_id');
         $q->execute();
-        $self->{marker_id}=$dbh->last_insert_id('marker') or croak "Unable to retrieve marker ID from database after insert";
-        #print STDERR "INSERTING new marker SGN-M$self->{marker_id}.\n";
+	if (my @row = $q->fetchrow_array()) {
+	    $self->{marker_id} = $row[0];
+	} else {
+	    print STDERR "ERROR inserting marker\n";
+	}
+	print STDERR "INSERTING new marker SGN-M$self->{marker_id}.\n";
         push(@inserts,{marker=>$self->{marker_id}});
     
         #insert our preferred name
-        my $alias_id=$sql->insert("marker_alias",{alias=>$marker_name,marker_id=>$self->{marker_id},preferred=>'t'});
-        #print"INSERTING preferred alias '$marker_name'.\n";
+	#$q=$dbh->prepare('insert into sgn.marker_alias (alias, marker_id, preferred) values (?, ?, ?)';
+	#$q->execute($marker_name, $self->{marker_id},'t');
+	my $alias_id=$sql->insert("marker_alias",{alias=>$marker_name,marker_id=>$self->{marker_id},preferred=>'t'});
+        print"INSERTING preferred alias '$marker_name'.\n";
         push(@inserts,{marker_alias=>$alias_id});
 
     }
@@ -493,7 +499,7 @@ sub store_new_data
                 $location->marker_id($marker_id);
                 if(my $location_id=$location->store_unless_exists())
                 {
-                    print STDERR "INSERTED: Location $marker_id, $location_id\n";
+		    #print STDERR "INSERTED: Location $marker_id, $location_id\n";
                     push(@inserts,{marker_location=>$location_id});  
                 }
                 $location_id=$location->location_id() or croak"Could not get location_id from location object";
