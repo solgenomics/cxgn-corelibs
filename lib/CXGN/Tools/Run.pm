@@ -663,7 +663,7 @@ sub _diefile_name {
 sub _write_die {
     my ($self,$error) = @_;
     $self->dbp("ERROR: $error\n");
-    open my $diefile, ">".$self->_diefile_name
+    open my $diefile, "> :encoding(UTF-8)".$self->_diefile_name
 	or die "Could not open file ".$self->_diefile_name.": $error: $!";
     print $diefile $self->_format_error_message($error);
     return 1;
@@ -686,7 +686,7 @@ sub _die_if_error {
 	    if( -f $self->err_file() ) {
 
 		eval {
-		    open my $e, $self->err_file() or die "WARNING: $! opening err file ".$self->err_file;
+		    open(my $e, "< :encoding(UTF-8)", $self->err_file()) or die "WARNING: $! opening err file ".$self->err_file;
 		    while( <$e> ) {
 			next unless m|^\=\>\> PBS:|;
 			$pbs_warnings .= $_;
@@ -753,7 +753,7 @@ sub _file_contents {
     }
     uncache($file) if $self->is_cluster;
     local $/;
-    open my $f, $file or confess "$! reading $file";
+    open(my $f, "< :encoding(UTF-8)", $file) or confess "$! reading $file";
     return scalar <$f>;
 }
 
@@ -1160,7 +1160,7 @@ sub _read_status_file {
     my $statname = File::Spec->catfile( $self->job_tempdir(), 'status');
     uncache($statname) if $self->is_cluster;
     dbp "attempting to open status file $statname\n";
-    open my $statfile, $statname
+    open(my $statfile, "< :encoding(UTF-8)", $statname)
 	or return;
     my ($host,$start,$end,$ret);
     while(<$statfile>) {
@@ -1402,7 +1402,7 @@ sub _spool_data_to_child {
     my $fh;
     if ( ! $type ) {
         local *FH;  # Do this the backcompat way
-        open FH, "<$source" or croak "$!: $source";
+        open(FH, "< :encoding(UTF-8)", $source) or croak "$!: $source";
         $fh = *FH{IO};
         warn "run3(): feeding file '$source' to child STDIN\n"
             if debugging >= 2;
@@ -1486,7 +1486,7 @@ sub _fh_for_child_output {
             if debugging >= 2;
 
         local *FH;
-        open FH, ">$dest" or croak "$!: $dest";
+        open(FH, "> :encoding(UTF-8)", $dest) or croak "$!: $dest";
         $fh = *FH{IO};
     } else {
         warn "run3(): capturing child $what\n"
@@ -1590,7 +1590,7 @@ sub run3 {
 #       if debugging;
 
     if($tempdir) {
-        open(my $statfile,">","$tempdir/status");
+        open(my $statfile,"> :encoding(UTF-8)","$tempdir/status");
         print $statfile "start:",time,"\n";
     }
 
@@ -1690,7 +1690,7 @@ sub run3 {
 	  }
 	  my $ret = waitpid($pid,0); #wait for child to finish
 	  if ($tempdir) {
-	    open(my $statfile,">>","$tempdir/status");
+	    open(my $statfile,">> :encoding(UTF-8)","$tempdir/status");
 	    print $statfile "end:",time,"\n";
 	    print $statfile "ret:$?\n";
 	    print $statfile "host:$host\n";

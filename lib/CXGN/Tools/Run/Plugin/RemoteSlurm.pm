@@ -98,7 +98,7 @@ sub run_job {
     $cmd_string .= " 2> ".$self->err_file();    
 
     my $cmd_temp_file = File::Spec->catfile($self->job_tempdir(), 'cmd');
-    open(my $CTF, ">", $cmd_temp_file) || die "Can't open cmd temp file $cmd_temp_file for writing...\n";
+    open(my $CTF, "> :encoding(UTF-8)", $cmd_temp_file) || die "Can't open cmd temp file $cmd_temp_file for writing...\n";
     
     print $CTF $cmd_string;
     close($CTF);
@@ -347,7 +347,7 @@ sub _die_if_error {
 	    my $pbs_warnings = '';
 	    if( -f $self->err_file ) {
 		eval {
-		    open my $e, $self->err_file or die "WARNING: $! opening err file ".$self->err_file;
+		    open(my $e, "< :encoding(UTF-8)", $self->err_file) or die "WARNING: $! opening err file ".$self->err_file;
 		    while( <$e> ) {
 			next unless m|^\=\>\> PBS:|;
 			$pbs_warnings .= $_;
@@ -576,7 +576,7 @@ sub out {
     my ($self) = @_;
     unless(ref($self->out_file)) {
 
-	return read_file($self->out_file);
+	return read_file($self->out_file, { binmode => ":utf8" });
     }
 #    return undef;
 }
