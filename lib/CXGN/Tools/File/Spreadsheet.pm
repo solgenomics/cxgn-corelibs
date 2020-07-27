@@ -68,8 +68,7 @@ john binns - John Binns <zombieite@gmail.com>
 package CXGN::Tools::File::Spreadsheet;
 use strict;
 use CXGN::Tools::Text;
-sub new
-{
+sub new {
     my $class=shift;
     my $self=bless({},$class);
     ($self->{filename},$self->{skip_rows},$self->{skip_columns},$self->{delimiter})=@_;
@@ -79,7 +78,7 @@ sub new
     $self->{skip_rows}>=0 or die"Skip rows ('$self->{skip_rows}') cannot be negative";
     $self->{skip_columns}>=0 or die"Skip columns ('$self->{skip_columns}') cannot be negative";
     my($FILE,$column_counter,$column_name,$line_string,@line);
-    open($FILE,$self->{filename}) or die"Cannot open file '$self->{filename}'";
+    open($FILE, "< :encoding(UTF-8)", $self->{filename}) or die "Cannot open file '$self->{filename}'";
     #skip any header rows, but not column names
     for(1..$self->{skip_rows})
     {
