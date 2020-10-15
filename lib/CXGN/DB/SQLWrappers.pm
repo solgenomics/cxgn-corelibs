@@ -126,7 +126,10 @@ sub insert
     ";
     my $q=$self->{dbh}->prepare($insert_statement);
     $q->execute(values(%{$insert_hash}));
-    my $id=$self->{dbh}->last_insert_id($table);
+    #my $id=$self->{dbh}->last_insert_id($table);
+    my $idh = $self->{dbh}->prepare("SELECT lastval()");
+    $idh->execute();
+    my ($id) = $idh->fetchrow_array();
     if($self->{verbose})
     {
        # print STDERR "Executed\n$insert_statement;\nwith values\n(".CXGN::Tools::Text::list_to_string(values(%{$insert_hash})).")\ncreating new row with ID $id.\n\n";

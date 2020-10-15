@@ -160,11 +160,12 @@ sub as_string {
 sub insert_into_database {
     my $self = shift;
     my $dbh = $self->{dbh};
-    my $insert = "insert into sgn.map_version (map_id,date_loaded) values (?,current_timestamp)";
+    my $insert = "insert into sgn.map_version (map_id,date_loaded) values (?,current_timestamp) RETURNING map_version.map_version_id";
     my $sth = $dbh->prepare($insert);
     $sth->execute($self->{map_id});
-    $self->{map_version_id} = 
-	$dbh->last_insert_id('map_version') 
+    #$self->{map_version_id} = 
+    #$dbh->last_insert_id('map_version')
+    ($self->{map_version_id}) = $sth->fetchrow_array()
 	or die "Could not get last_insert_id from map_version table from dbh";
     # the other lg_order values currently in the db start with 1,
     # so i'm keeping this convention. it doesn't really matter
@@ -217,11 +218,12 @@ sub map_version {
     
    
 	$sth = $dbh->prepare("INSERT INTO sgn.map_version (map_id, date_loaded) 
-                                          VALUES (?, current_timestamp)"
+                                          VALUES (?, current_timestamp) RETURNING map_version.map_version_id"
                             );  
   
 	$sth->execute($map_id);
-	$map_version_id_new = $dbh->last_insert_id("map_version", "sgn") ;
+	#	$map_version_id_new = $dbh->last_insert_id("map_version", "sgn") ;
+	($map_version_id_new) = $sth->fetchrow_array();
 	if (!$map_version_id_new) { die "did not insert new map version\n";
 	}
 	else {

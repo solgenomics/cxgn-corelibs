@@ -405,9 +405,11 @@ sub store_new_data
                 croak"Marker already exists in database with name '$name'. If you meant to modify this marker, you should have sent its ID to the constructor. If there really is a new marker with the same name as an old one, the world has come to an end. Insert it manually and refer to it by its ID.";
             }
         }
-        $q=$dbh->prepare('insert into sgn.marker (marker_id) values (default)');
+        $q=$dbh->prepare('insert into sgn.marker (marker_id) values (default) RETURNING marker.marker_id');
         $q->execute();
-        $self->{marker_id}=$dbh->last_insert_id('marker') or croak "Unable to retrieve marker ID from database after insert";
+	#        $self->{marker_id}=$dbh->last_insert_id('marker')
+	($self->{marker_id})=$q->fetchrow_array()
+or croak "Unable to retrieve marker ID from database after insert";
         #print STDERR "INSERTING new marker SGN-M$self->{marker_id}.\n";
         push(@inserts,{marker=>$self->{marker_id}});
     

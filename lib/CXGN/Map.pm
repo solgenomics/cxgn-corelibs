@@ -66,7 +66,7 @@ sub new {
     $self->{map_id}=$map_info->{map_id};
 
     my $map_id_t = $self->{map_id};
-    #print STDERR "map id: $map_id_t from map object\n";
+    print STDERR "map id: $map_id_t from map object\n";
     if($self->{map_id})
     {
         if($self->{map_version_id})
@@ -82,6 +82,7 @@ sub new {
         ($self->{map_version_id})=$map_version_id_q->fetchrow_array();
     }
     $self->{map_version_id} or return undef;
+    print STDERR "Inserting data...\n";
     my $general_info_q=$dbh->prepare
     ('
         select 
@@ -118,6 +119,8 @@ sub new {
        
     )=$general_info_q->fetchrow_array();
     if(!$self->{map_version_id}){return undef;}
+
+    print STDERR "Retrieving...\n";
     my $linkage_q=$dbh->prepare('SELECT linkage_group.lg_id AS lg_id,linkage_group.map_version_id AS map_version_id,
                                          lg_order,lg_name, min(position) AS north_centromere, MAX(position) AS south_centromere 
                                         FROM linkage_group 
@@ -197,9 +200,11 @@ sub new_map {
     }  
 
     unless ($map_id) {
-	    $sth = $dbh->prepare("INSERT INTO sgn.map (short_name, map_type) VALUES (?, 'genetic')");
+	    $sth = $dbh->prepare("INSERT INTO sgn.map (short_name, map_type) VALUES (?, 'genetic') RETURNING map.map_id");
 	    $sth->execute($name);
-	    $map_id = $dbh->last_insert_id("map", "sgn");
+	    #	    $map_id = $dbh->last_insert_id("map", "sgn
+	    ($map_id) = $sth->fetchrow_array();
+	    
 	    print STDERR "stored new Map Id: $map_id\n";
     }
     
