@@ -14,6 +14,7 @@ __PACKAGE__->add_columns(
     default_value => "nextval('metadata.attribution_attribution_id_seq'::regclass)",
     is_nullable => 0,
     size => 8,
+    is_auto_increment => 1
   },
   "database_name",
   {

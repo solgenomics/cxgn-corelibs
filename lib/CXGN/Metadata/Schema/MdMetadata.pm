@@ -14,6 +14,7 @@ __PACKAGE__->add_columns(
     default_value => "nextval('metadata.md_metadata_metadata_id_seq'::regclass)",
     is_nullable => 0,
     size => 8,
+    is_auto_increment => 1
   },
   "create_date",
   {
