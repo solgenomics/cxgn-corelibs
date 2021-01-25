@@ -77,6 +77,8 @@ __PACKAGE__->add_columns(
   { data_type => "jsonb", is_nullable => 1 },
   "is_live",
   { data_type => "boolean", is_nullable => 1 },
+  "is_public",
+  { data_type => "boolean", is_nullable => 1 },
 );
 
 =head1 PRIMARY KEY
