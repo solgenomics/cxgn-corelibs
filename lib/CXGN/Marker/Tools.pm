@@ -243,16 +243,13 @@ sub insert {
     $placeholders .= "?";
     $field_names = join(",",@$field_names);
 
-    my $sth = $dbh->prepare("insert into $table ($field_names) values ($placeholders)");
+    my $sth = $dbh->prepare("insert into $table ($field_names) values ($placeholders) RETURNING *");
     $sth->execute(@field_values);
-    
-    my $query = "select max ($id) from $table";
-    my $q = $dbh->prepare($query);
-    $q->execute;
-    ($id) = $q->fetchrow_array();
- 
-    # why doesn't this work????
-    #    my $id = $dbh->last_insert_id(undef,undef,$table,undef);
+    if (my @row = $sth->fetchrow_array()) {
+	$id = $row[0];
+    } else {
+	die "Error could not find entry $table\n";
+    }
     
     return $id;
 }
