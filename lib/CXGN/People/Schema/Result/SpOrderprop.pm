@@ -30,6 +30,12 @@ __PACKAGE__->table("sp_orderprop");
   is_nullable: 0
   sequence: 'sgn_people.sp_orderprop_sp_orderprop_id_seq'
 
+=head2 sp_order_id
+
+  data_type: 'integer'
+  is_foreign_key:1
+  is_nullable:0
+
 =head2 type_id
 
   data_type: 'bigint'
@@ -56,6 +62,8 @@ __PACKAGE__->add_columns(
     is_nullable       => 0,
     sequence          => "sgn_people.sp_orderprop_sp_orderprop_id_seq",
   },
+  "sp_order_id",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
   "type_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
   "value",
