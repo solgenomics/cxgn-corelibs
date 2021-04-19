@@ -48,6 +48,11 @@ __PACKAGE__->table("sp_order");
   is_nullable: 1
   size: 100
 
+=head2 comments
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 create_date
 
   data_type: 'timestamp'
@@ -57,6 +62,8 @@ __PACKAGE__->table("sp_order");
 
   data_type: 'timestamp'
   is_nullable: 1
+
+
 
 =cut
 
@@ -74,6 +81,8 @@ __PACKAGE__->add_columns(
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
   "order_status",
   { data_type => "varchar", is_nullable => 1, size => 100 },
+  "comments",
+  { data_type => "text", is_nullable => 1 },
   "create_date",
   { data_type => "timestamp", is_nullable => 1 },
   "completion_date",
