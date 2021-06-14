@@ -160,12 +160,14 @@ sub as_string {
 sub insert_into_database {
     my $self = shift;
     my $dbh = $self->{dbh};
-    my $insert = "insert into sgn.map_version (map_id,date_loaded) values (?,current_timestamp)";
+    my $insert = "insert into sgn.map_version (map_id,date_loaded) values (?,current_timestamp) RETURNING map_version_id";
     my $sth = $dbh->prepare($insert);
     $sth->execute($self->{map_id});
-    $self->{map_version_id} = 
-	$dbh->last_insert_id('map_version') 
-	or die "Could not get last_insert_id from map_version table from dbh";
+    if (my @row =$sth->fetchrow_array()) {
+	$self->{map_version_id} = $row[0];
+    } else {
+	die "Could not insert map_version\n";
+    }
     # the other lg_order values currently in the db start with 1,
     # so i'm keeping this convention. it doesn't really matter
     # too much, since the only time lg_order is used (as far as i know)
@@ -217,15 +219,15 @@ sub map_version {
     
    
 	$sth = $dbh->prepare("INSERT INTO sgn.map_version (map_id, date_loaded) 
-                                          VALUES (?, current_timestamp)"
+                                          VALUES (?, current_timestamp) RETURNING map_version_id"
                             );  
   
 	$sth->execute($map_id);
-	$map_version_id_new = $dbh->last_insert_id("map_version", "sgn") ;
-	if (!$map_version_id_new) { die "did not insert new map version\n";
-	}
-	else {
-	    print STDERR "stored new map version id: $map_version_id_new\n";
+	if (my @row = $sth->fetchrow_array()) {
+	    $map_version_id_new = $row[0];
+            print STDERR "stored new map version id: $map_version_id_new\n";
+	} else {
+	    die("Error could not insert new map_version $map_id\n");
 	}
     } else { die "map_version function: I need a map id to create map version\n";}
 

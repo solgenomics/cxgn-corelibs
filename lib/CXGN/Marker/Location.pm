@@ -430,7 +430,7 @@ sub store_unless_exists {
     my $dbh = $self->{dbh};
 
     my $statement =
-'insert into sgn.marker_location (lg_id,map_version_id,position,confidence_id,subscript, position_north, position_south) values (?,?,?,?,?,?,?)';
+'insert into sgn.marker_location (lg_id,map_version_id,position,confidence_id,subscript, position_north, position_south) values (?,?,?,?,?,?,?) RETURNING location_id';
     my @values = (
         $self->{lg_id},     $self->{map_version_id},
         $self->{position},  $self->{confidence_id},
@@ -441,8 +441,8 @@ sub store_unless_exists {
 
     #print STDERR "$statement; (@values)\n";
     $q->execute(@values);
-    $self->{location_id} = $dbh->last_insert_id('marker_location')
-      or croak "Can't find last insert id for location " . $self->as_string();
+    my @row = $q->fetchrow_array() or croak "Can't find last insert id\n"; 
+    $self->{location_id} = $row[0];
     return ( $self->{location_id} );
 }
 
