@@ -14,6 +14,7 @@ __PACKAGE__->add_columns(
     default_value => "nextval('metadata.md_dbversion_dbversion_id_seq'::regclass)",
     is_nullable => 0,
     size => 4,
+    is_auto_increment => 1
   },
   "patch_name",
   {

@@ -14,6 +14,7 @@ __PACKAGE__->add_columns(
     default_value => "nextval('metadata.md_tag_image_tag_image_id_seq'::regclass)",
     is_nullable => 0,
     size => 4,
+    is_auto_increment => 1
   },
   "image_id",
   { data_type => "bigint", default_value => undef, is_nullable => 1, size => 8 },

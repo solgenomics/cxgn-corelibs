@@ -14,6 +14,7 @@ __PACKAGE__->add_columns(
     default_value => "nextval('metadata.attribution_to_attribution_to_id_seq'::regclass)",
     is_nullable => 0,
     size => 8,
+    is_auto_increment => 1
   },
   "attribution_id",
   { data_type => "bigint", default_value => undef, is_nullable => 1, size => 8 },

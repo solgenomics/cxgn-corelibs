@@ -14,6 +14,7 @@ __PACKAGE__->add_columns(
     default_value => "nextval('metadata.md_groupmembers_groupmember_id_seq'::regclass)",
     is_nullable => 0,
     size => 8,
+    is_auto_increment => 1
   },
   "group_id",
   { data_type => "integer", default_value => undef, is_nullable => 1, size => 4 },
