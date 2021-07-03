@@ -90,7 +90,7 @@ sub new{
 			'Arabidopsis_lyrata',
 			'Arachis_hypogaea',
 			'Cajanus_cajan',
-			'Lotus_japonica',
+			'Lotus_japonicus',
 			'Cannabis_sativa',
 			'Malus_domestica',
 			'Prunus_persica',
@@ -151,7 +151,7 @@ sub new{
 	$self->set_standard_name('peach', 'Prunus_persica');
 	$self->set_standard_name('peanut', 'Arachis_hypogaea');	
 	$self->set_standard_name('pigeon_pea', 'Cajanus_cajan');
-	$self->set_standard_name('lotus', 'Lotus_japonica');
+	$self->set_standard_name('lotus', 'Lotus_japonicus');
 	$self->set_standard_name('apple', 'Malus_domestica');
 	$self->set_standard_name('cannabis', 'Cannabis_sativa');
 	$self->set_standard_name('hemp', 'Cannabis_sativa');
