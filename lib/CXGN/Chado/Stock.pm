@@ -580,13 +580,13 @@ sub associate_owner {
 sub get_trait_list {
     my $self = shift;
 
-    my $q = "select distinct(cvterm.cvterm_id), db.name || ':' || dbxref.accession, cvterm.name, avg(phenotype.value::Real), stddev(phenotype.value::Real) from stock as accession join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_phenotype USING(nd_experiment_id) JOIN phenotype USING (phenotype_id) JOIN cvterm ON (phenotype.cvalue_id = cvterm.cvterm_id) JOIN dbxref ON(cvterm.dbxref_id = dbxref.dbxref_id) JOIN db USING(db_id) where accession.stock_id=? and phenotype.value~? group by cvterm.cvterm_id, db.name || ':' || dbxref.accession, cvterm.name";
+    my $q = "select distinct(cvterm.cvterm_id), db.name || ':' || dbxref.accession, cvterm.name, avg(phenotype.value::Real), stddev(phenotype.value::Real), count(phenotype.value::Real) from stock as accession join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_phenotype USING(nd_experiment_id) JOIN phenotype USING (phenotype_id) JOIN cvterm ON (phenotype.cvalue_id = cvterm.cvterm_id) JOIN dbxref ON(cvterm.dbxref_id = dbxref.dbxref_id) JOIN db USING(db_id) where accession.stock_id=? and phenotype.value~? group by cvterm.cvterm_id, db.name || ':' || dbxref.accession, cvterm.name";
     my $h = $self->get_schema()->storage->dbh()->prepare($q);
     my $numeric_regex = '^[0-9]+([,.][0-9]+)?$';
     $h->execute($self->get_stock_id(), $numeric_regex);
     my @traits;
-    while (my ($cvterm_id, $cvterm_accession, $cvterm_name, $avg, $stddev) = $h->fetchrow_array()) {
-	push @traits, [ $cvterm_id, $cvterm_accession, $cvterm_name, $avg, $stddev ];
+    while (my ($cvterm_id, $cvterm_accession, $cvterm_name, $avg, $stddev, $count) = $h->fetchrow_array()) {
+	push @traits, [ $cvterm_id, $cvterm_accession, $cvterm_name, $avg, $stddev, $count ];
     }
 
     # get directly associated traits
@@ -649,10 +649,10 @@ sub get_direct_parents {
     my $stock_id = shift || $self->get_stock_id();
 
     #print STDERR "get_direct_parents with $stock_id...\n";
-    
+
     my $female_parent_id;
     my $male_parent_id;
-    
+
     eval {
 	$female_parent_id = $self->get_schema()->resultset("Cv::Cvterm")->find( { name => 'female_parent' })->cvterm_id();
 	$male_parent_id = $self->get_schema()->resultset("Cv::Cvterm")->find( { name => 'male_parent' }) ->cvterm_id();
@@ -694,7 +694,7 @@ sub get_recursive_parents {
 
     $current_level++;
     my @parents = $self->get_direct_parents($individual->get_id());
-    
+
     #print STDERR Dumper(\@parents);
 
     my $pedigree = Bio::GeneticRelationships::Pedigree->new( { name => $individual->get_name()."_pedigree", cross_type=>"unknown"} );
@@ -964,7 +964,7 @@ sub merge {
     # move object relationships
     #
 
-    ## TO DO: check parents, because these will need special checks 
+    ## TO DO: check parents, because these will need special checks
     ## (if already two parents are present for the merge target, don't transfer the parents)
     ##
     my $female_parent_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema, 'stock_relationship', 'female_parent')->cvterm_id();
@@ -972,28 +972,28 @@ sub merge {
 
     my $female_parent_rs = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $female_parent_id });
     my $male_parent_rs   = $schema->resultset("Stock::StockRelationship")->search( { object_id => $other_stock_id, type_id => $male_parent_id });
-    
+
     my @parents = $self->get_direct_parents();
     my $this_female_parent_id;
     my $this_male_parent_id;
 
-    if (@parents > 2) { 
+    if (@parents > 2) {
 	print STDERR "WARNING: ".$self->get_uniquename()." has ".scalar(@parents)." parents! (too many!)\n";
     }
 
-    foreach my $parent (@parents) { 
+    foreach my $parent (@parents) {
 	if ($parent->[2] eq "female") { $this_female_parent_id = $parent->[0]; }
 	if ($parent->[2] eq "male") { $this_male_parent_id = $parent->[0]; }
     }
 
 
-    if ($female_parent_rs->count() > 0) { 
-	if ($this_female_parent_id != $female_parent_rs->stock_id()) { 
+    if ($female_parent_rs->count() > 0) {
+	if ($this_female_parent_id != $female_parent_rs->stock_id()) {
 	    print STDERR "WARNING! Female parents are different for stock to be merged: ".$self->get_stock_id()." and ".$other_stock_id." NEEDS TO BE FIXED!\n";
 	}
     }
-    if ($male_parent_rs ->count() > 0) { 
-	if ($this_male_parent_id != $male_parent_rs->stock_id()) { 
+    if ($male_parent_rs ->count() > 0) {
+	if ($this_male_parent_id != $male_parent_rs->stock_id()) {
 	    print STDERR "WARNING! Male parents are different for stock to be merged: ".$self->get_stock_id()." and ".$other_stock_id." NEEDS TO BE FIXED!\n";
 	}
     }
