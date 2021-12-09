@@ -52,6 +52,19 @@ __PACKAGE__->table("sp_product_profileprop");
   data_type: 'bigint'
   is_nullable: 1
 
+=head2 sp_person_id
+
+  data_type: 'bigint'
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 create_date
+
+  data_type: 'timestamp'
+  default_value: current_timestamp
+  is_nullable: 1
+  original: {default_value => \"now()"}
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -70,6 +83,15 @@ __PACKAGE__->add_columns(
   { data_type => "jsonb", is_nullable => 1 },
   "rank",
   { data_type => "bigint", is_nullable => 1 },
+  "sp_person_id",
+  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
+  "create_date",
+  {
+    data_type     => "timestamp",
+    default_value => \"current_timestamp",
+    is_nullable   => 1,
+    original      => { default_value => \"now()" },
+  },
 );
 
 =head1 PRIMARY KEY
@@ -85,6 +107,26 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("sp_product_profileprop_id");
 
 =head1 RELATIONS
+
+=head2 sp_person
+
+Type: belongs_to
+
+Related object: L<CXGN::People::Schema::Result::SpPerson>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "sp_person",
+  "CXGN::People::Schema::Result::SpPerson",
+  { sp_person_id => "sp_person_id" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "NO ACTION",
+    on_update     => "NO ACTION",
+  },
+);
 
 =head2 sp_product_profile
 
@@ -107,8 +149,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-15 19:45:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aWXBe2R8VXI8xs8dJ1gIcQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-09 21:29:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Gzg7yKlEkRUie4IrU8g7sw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -1,12 +1,12 @@
 use utf8;
-package CXGN::People::Schema::Result::SpProductProfileProject;
+package CXGN::People::Schema::Result::SpProductProfileStage;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-CXGN::People::Schema::Result::SpProductProfileProject
+CXGN::People::Schema::Result::SpProductProfileStage
 
 =cut
 
@@ -15,20 +15,20 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<sp_product_profile_project>
+=head1 TABLE: C<sp_product_profile_stage>
 
 =cut
 
-__PACKAGE__->table("sp_product_profile_project");
+__PACKAGE__->table("sp_product_profile_stage");
 
 =head1 ACCESSORS
 
-=head2 sp_product_profile_project_id
+=head2 sp_product_profile_stage_id
 
   data_type: 'integer'
   is_auto_increment: 1
   is_nullable: 0
-  sequence: 'sgn_people.sp_product_profile_project_sp_product_profile_project_id_seq'
+  sequence: 'sgn_people.sp_product_profile_stage_sp_product_profile_stage_id_seq'
 
 =head2 sp_product_profile_id
 
@@ -36,7 +36,7 @@ __PACKAGE__->table("sp_product_profile_project");
   is_foreign_key: 1
   is_nullable: 1
 
-=head2 project_id
+=head2 sp_stage_gate_id
 
   data_type: 'bigint'
   is_foreign_key: 1
@@ -58,16 +58,16 @@ __PACKAGE__->table("sp_product_profile_project");
 =cut
 
 __PACKAGE__->add_columns(
-  "sp_product_profile_project_id",
+  "sp_product_profile_stage_id",
   {
     data_type         => "integer",
     is_auto_increment => 1,
     is_nullable       => 0,
-    sequence          => "sgn_people.sp_product_profile_project_sp_product_profile_project_id_seq",
+    sequence          => "sgn_people.sp_product_profile_stage_sp_product_profile_stage_id_seq",
   },
   "sp_product_profile_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
-  "project_id",
+  "sp_stage_gate_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
   "sp_person_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
@@ -84,13 +84,13 @@ __PACKAGE__->add_columns(
 
 =over 4
 
-=item * L</sp_product_profile_project_id>
+=item * L</sp_product_profile_stage_id>
 
 =back
 
 =cut
 
-__PACKAGE__->set_primary_key("sp_product_profile_project_id");
+__PACKAGE__->set_primary_key("sp_product_profile_stage_id");
 
 =head1 RELATIONS
 
@@ -134,9 +134,29 @@ __PACKAGE__->belongs_to(
   },
 );
 
+=head2 sp_stage_gate
+
+Type: belongs_to
+
+Related object: L<CXGN::People::Schema::Result::SpStageGate>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "sp_stage_gate",
+  "CXGN::People::Schema::Result::SpStageGate",
+  { sp_stage_gate_id => "sp_stage_gate_id" },
+  {
+    is_deferrable => 0,
+    join_type     => "LEFT",
+    on_delete     => "NO ACTION",
+    on_update     => "NO ACTION",
+  },
+);
+
 
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-09 21:29:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:J/ENm4OgMqlnfY18pGGPFw
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JC4IT61yC6km7IO3YMmpLw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
