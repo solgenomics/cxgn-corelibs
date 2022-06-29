@@ -12,6 +12,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "bigint",
     default_value => "nextval('metadata.md_dbiref_dbiref_id_seq'::regclass)",
+    is_auto_increment => 1,
     is_nullable => 0,
     size => 8,
   },
