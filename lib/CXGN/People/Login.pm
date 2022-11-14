@@ -178,7 +178,8 @@ sub store {
 # store updates the record if an id is defined, or inserts a new row if $id is undefined.
     my $self   = shift;
     my $action = '';
-    if ( $self->get_sp_person_id() ) {
+    my $person_id = $self->get_sp_person_id();
+    if ( $person_id ) {
         $action = 'updated';
         $self->get_dbh->do(
             <<EOQ, undef,
@@ -221,13 +222,13 @@ EOQ
         my $sth = $self->get_sql("insert");
 
         $sth->execute( $un, $prive, $pende, $pwd, $cc, $dsa, $fn, $ln, $org );
-        my $person_id =
-          $self->get_dbh()->last_insert_id( undef, 'sgn_people', 'sp_person', 'sp_person_id' );
+        ($person_id) = $sth->fetchrow_array();
+#          $self->get_dbh()->last_insert_id( undef, 'sgn_people', 'sp_person', 'sp_person_id' );
         $self->{sp_person_id} = $person_id;
         print STDERR "NEW USER SP_PERSON_ID: ".$person_id."\n";
 	$self->add_role($self->get_user_type());
     }
-    return 1;
+    return $person_id;
 }
 
 
@@ -735,7 +736,7 @@ sub set_sql {
                 last_name,
                 organization
             ) 
-            VALUES (?,?,?,crypt(?, gen_salt('bf')),?,?,?,?,?)
+            VALUES (?,?,?,crypt(?, gen_salt('bf')),?,?,?,?,?) RETURNING sp_person_id
         ",
 
         get_login =>
