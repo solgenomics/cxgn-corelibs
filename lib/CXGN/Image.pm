@@ -760,16 +760,40 @@ sub process_image {
     my $original_file_path = $self->get_processing_dir()."/".$self->get_original_filename().$self->get_file_ext();
 
     my $md5sum = $self->calculate_md5sum($original_file_path);
+
+    # check if the image already exists in the database.
+    # For an image to exist, the md5checksum must exist in the metadata.md_image
+    # table, and the file must exist on disk.
+    #
+    # check if this md5sum already exists in the database
+    #
+    my $q = "SELECT image_id from metadata.md_image where md5sum=?";
+    my $h = $self->get_dbh()->prepare($q);
+    $h->execute($md5sum);
+
+    my $message = "";
+    my $image_id;
+    
+    if (($image_id) = $h->fetchrow_array()) {
+     	print STDERR  "An image with an identical md5sum ($md5sum) has already been uploaded with the image id $image_id\n";
+	$message = "Duplicate image $image_id\n";
+    }
+    else {
+	$message = "ok";
+    }
+    
     $self->set_md5sum($md5sum);
-
-    $self->make_dirs();
-
+    $self->make_dirs(); 
     $self->finalize_location($processing_dir);
+    
+    $image_id = $self->store();
 
-    my $image_id = $self->store();
-
-    return $image_id;
-
+    if (wantarray) {
+	return ($image_id, $message);
+    }
+    else {
+	return $image_id;
+    }
 }
 
 =head2 make_dirs
@@ -1276,8 +1300,33 @@ sub exists_tag_image_named {
     }
 }
 
+=head2 is_duplicate($dbh, $image_file_path)
 
+checks if the image in the file $image_file_path is already in the database, checked by matching md5sums.
 
+class function. Call as CXGN::Image->is_duplicate($dbh, $image_file_path);
+=cut
+
+sub is_duplicate {
+    my $class = shift;
+    my $dbh = shift;
+    my $image_file_path = shift;
+
+    my $md5sum = $class->calculate_md5sum($image_file_path);
+    my $q = "SELECT image_id from metadata.md_image where md5sum=?";
+    my $h = $dbh->prepare($q);
+    $h->execute($md5sum);
+
+    my $message = "";
+    my $image_id;
+    
+    if (($image_id) = $h->fetchrow_array()) {
+     	print STDERR  "An image with an identical md5sum ($md5sum) has already been uploaded with the image id $image_id\n";
+	$message = "Duplicate image $image_id\n";
+	return $image_id;
+    }
+    return 0;
+}
 
 =head2 create_schema
 
