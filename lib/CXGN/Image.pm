@@ -760,6 +760,7 @@ sub process_image {
     my $original_file_path = $self->get_processing_dir()."/".$self->get_original_filename().$self->get_file_ext();
 
     my $md5sum = $self->calculate_md5sum($original_file_path);
+    print STDERR "MD5SUM NOW: $md5sum\n";
 
     # check if the image already exists in the database.
     # For an image to exist, the md5checksum must exist in the metadata.md_image
@@ -767,16 +768,14 @@ sub process_image {
     #
     # check if this md5sum already exists in the database
     #
-    my $q = "SELECT image_id from metadata.md_image where md5sum=?";
-    my $h = $self->get_dbh()->prepare($q);
-    $h->execute($md5sum);
+    my $image_id = CXGN::Image->is_duplicate($self->get_dbh(), $original_file_path);
 
     my $message = "";
-    my $image_id;
-    
-    if (($image_id) = $h->fetchrow_array()) {
+
+    if ($image_id) {
      	print STDERR  "An image with an identical md5sum ($md5sum) has already been uploaded with the image id $image_id\n";
 	$message = "Duplicate image $image_id\n";
+	$self->set_image_id($image_id);
     }
     else {
 	$message = "ok";
@@ -1313,21 +1312,45 @@ sub is_duplicate {
     my $image_file_path = shift;
 
     my $md5sum = $class->calculate_md5sum($image_file_path);
-    my $q = "SELECT image_id from metadata.md_image where md5sum=?";
-    my $h = $dbh->prepare($q);
-    $h->execute($md5sum);
-
-    my $message = "";
-    my $image_id;
     
-    if (($image_id) = $h->fetchrow_array()) {
-     	print STDERR  "An image with an identical md5sum ($md5sum) has already been uploaded with the image id $image_id\n";
-	$message = "Duplicate image $image_id\n";
+    my $image_id = $class->find_image_with_md5sum($dbh, $md5sum);
+    print STDERR "Retrieved image_id $image_id\n";
+    
+    if (!$image_id) { 
+	# maybe the provided image needs to be converted the same way as the final
+	# image for the md5sums to match the database
+	print STDERR "raw image did not match, trying conversion...\n";
+	copy($image_file_path, $image_file_path.".mogrified");
+	system( "convert", $image_file_path.".mogrified", $image_file_path.".mogrified.JPG" );   
+	`mogrify -format jpg '$image_file_path.mogrified.JPG'`;
+	$md5sum = $class->calculate_md5sum($image_file_path.".mogrified.JPG");
+	$image_id = $class->find_image_with_md5sum($dbh, $md5sum);
+	print STDERR "Retrived image_id $image_id (second try)\n";
+    }
+    
+    
+    if ($image_id) {
+     	print STDERR  "An image with an identical md5sum ($md5sum) has already been uploaded with the image id <a href=\"/ajax/image/$image_id/view\">$image_id</a>\n";
 	return $image_id;
     }
+    print STDERR "The image $md5sum is not yet in the database!\n";
     return 0;
 }
 
+
+sub find_image_with_md5sum {
+    my $class = shift;
+    my $dbh = shift;
+    my $md5sum = shift;
+
+    print STDERR "checking existence of image with md5sum $md5sum\n";
+    my $q = "SELECT image_id from metadata.md_image where md5sum=?";
+    my $h = $dbh->prepare($q);
+    $h->execute($md5sum);
+    my ($image_id) = $h->fetchrow_array();
+    return $image_id;
+}
+    
 =head2 create_schema
 
  Usage:
