@@ -1325,7 +1325,7 @@ sub is_duplicate {
 	`mogrify -format jpg '$image_file_path.mogrified.JPG'`;
 	$md5sum = $class->calculate_md5sum($image_file_path.".mogrified.JPG");
 	$image_id = $class->find_image_with_md5sum($dbh, $md5sum);
-	print STDERR "Retrived image_id $image_id (second try)\n";
+	print STDERR "Retrieved image_id $image_id (second try)\n";
     }
     
     
