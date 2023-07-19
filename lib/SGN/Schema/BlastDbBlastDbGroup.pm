@@ -18,7 +18,7 @@ __PACKAGE__->add_columns(
     },
     "blast_db_id",
     { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
-    "blast_db_blast_db_group_id",
+    "blast_db_group_id",
     { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
 
     );
