@@ -607,6 +607,7 @@ sub process_image {
     my $file_name = shift;
     my $type      = shift;
     my $type_id   = shift;
+    my $check_duplicates = shift || undef;
 
     if ( my $id = $self->get_image_id() ) {
         warn "process_image: The image object ($id) should already have an associated image. The old image will be overwritten with the new image provided!\n";
@@ -772,7 +773,7 @@ sub process_image {
 
     my $message = "";
 
-    if ($image_id) {
+    if ($image_id && $check_duplicates) {
      	print STDERR  "An image with an identical md5sum ($md5sum) has already been uploaded with the image id $image_id\n";
 	$message = "Duplicate image $image_id\n";
 	$self->set_image_id($image_id);
