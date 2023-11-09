@@ -33,3 +33,6 @@ __PACKAGE__->has_many(
   { "foreign.sp_stage_gate_definition_id" => "self.sp_stage_gate_definition_id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
+
+
+1;
