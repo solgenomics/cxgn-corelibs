@@ -57,12 +57,19 @@ __PACKAGE__->add_columns(
     is_nullable       => 0,
     sequence          => "sgn_people.sp_stage_gate_sp_stage_gate_id_seq",
   },
-  "name",
-  { data_type => "varchar", is_nullable => 1, size => 100 },
+    "sp_stage_gate_definition_id",
+    { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
+      
+    "name",
+    { data_type => "varchar", is_nullable => 1, size => 100 },
   "description",
-  { data_type => "text", is_nullable => 1 },
-  "breeding_program_id",
-  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
+    { data_type => "text", is_nullable => 1 },
+
+    "season",
+    { data_type => "varchar", is_nullable => 1, size => 100 },
+
+    "year",
+    { data_type => "varchar", is_nullable => 1, size => 4 },
 );
 
 =head1 PRIMARY KEY
