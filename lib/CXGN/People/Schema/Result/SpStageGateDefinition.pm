@@ -2,7 +2,7 @@
 package CXGN::People::Schema::Result::SpStageGateDefinition;
 
 use strict;
-use warning;
+use warnings;
 
 use base 'DBIx::Class::Core';
 
