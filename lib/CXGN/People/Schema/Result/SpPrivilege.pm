@@ -48,35 +48,44 @@ __PACKAGE__->table("sp_privilege");
   is_foreign_key: 1
   is_nullable: 1
 
+=head2 require_ownership
+
+  data_type: 'boolean'
+  is_foreign_key: 0
+  is_nullable: 1
+
 =cut
 
 __PACKAGE__->add_columns(
-  "sp_privilege_id",
-  {
-    data_type         => "integer",
-    is_auto_increment => 1,
-    is_nullable       => 0,
-    sequence          => "sgn_people.sp_privilege_sp_privilege_id_seq",
-  },
-  "sp_resource_id",
-  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
-  "sp_role_id",
-  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
-  "sp_access_level_id",
-  { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
-);
+    "sp_privilege_id",
+    {
+	data_type         => "integer",
+	is_auto_increment => 1,
+	is_nullable       => 0,
+	sequence          => "sgn_people.sp_privilege_sp_privilege_id_seq",
+    },
+    "sp_resource_id",
+    { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
+    "sp_role_id",
+    { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
+    "sp_access_level_id",
+    { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
+    "require_ownership",
+    { data_type => "boolean", is_foreign_key => 0, is_nullable => 1 },
+    
+    );
 
 =head1 PRIMARY KEY
 
 =over 4
 
-=item * L</sp_privilege>
+=item * L</sp_privilege_id>
 
 =back
 
 =cut
 
-__PACKAGE__->set_primary_key("sp_privilege");
+__PACKAGE__->set_primary_key("sp_privilege_id");
 
 =head1 RELATIONS
 
