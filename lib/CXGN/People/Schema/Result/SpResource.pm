@@ -41,11 +41,6 @@ __PACKAGE__->table("sp_resource");
   data_type: 'text'
   is_nullable: 1
 
-=head2 require_ownership
-
-  data_type: 'boolean'
-  is_nullable: 1
-
 =cut
 
 __PACKAGE__->add_columns(
@@ -60,8 +55,7 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 100 },
   "url",
   { data_type => "text", is_nullable => 1 },
-  "require_ownership",
-  { data_type => "boolean", is_nullable => 1 },
+
 );
 
 =head1 PRIMARY KEY
