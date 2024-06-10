@@ -34,7 +34,7 @@ __PACKAGE__->table("sp_access_level");
 
   data_type: 'varchar'
   is_nullable: 1
-  size: 10
+  size: 20
 
 =cut
 
@@ -47,7 +47,7 @@ __PACKAGE__->add_columns(
     sequence          => "sgn_people.sp_access_level_sp_access_level_id_seq",
   },
   "name",
-  { data_type => "varchar", is_nullable => 1, size => 10 },
+  { data_type => "varchar", is_nullable => 1, size => 20 },
 );
 
 =head1 PRIMARY KEY

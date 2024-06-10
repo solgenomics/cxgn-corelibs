@@ -51,7 +51,7 @@ __PACKAGE__->table("sp_privilege");
 =head2 require_ownership
 
   data_type: 'boolean'
-  is_foreign_key: 0
+  default_value: false
   is_nullable: 1
 
 =cut
@@ -71,7 +71,7 @@ __PACKAGE__->add_columns(
     "sp_access_level_id",
     { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
     "require_ownership",
-    { data_type => "boolean", is_foreign_key => 0, is_nullable => 1 },
+    { data_type => "boolean", default_value => \"false", is_nullable => 1 },
     
     );
 
