@@ -630,18 +630,75 @@ sub get_trials {
     my $geolocation_type_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema(), 'project location', 'project_property')->cvterm_id();
     my $q;
     if ($stock_type eq 'accession'){
-        $q = "select distinct(project.project_id), project.name, projectprop.value from stock as accession join stock_relationship on (accession.stock_id=stock_relationship.object_id) JOIN stock as plot on (plot.stock_id=stock_relationship.subject_id) JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) FULL OUTER JOIN projectprop ON (project.project_id=projectprop.project_id AND projectprop.type_id=$geolocation_type_id) WHERE accession.stock_id=?;";
+        $q = "SELECT DISTINCT materialized_phenoview.trial_id, project.name, projectprop.value FROM materialized_phenoview 
+        JOIN nd_experiment_project ON nd_experiment_project.project_id=materialized_phenoview.trial_id 
+        JOIN project ON project.project_id=materialized_phenoview.trial_id 
+        FULL OUTER JOIN projectprop ON (projectprop.project_id=project.project_id AND projectprop.type_id=$geolocation_type_id) 
+        JOIN nd_experiment ON nd_experiment.nd_experiment_id=nd_experiment_project.nd_experiment_id 
+        JOIN cvterm ON cvterm.cvterm_id=nd_experiment.type_id 
+        WHERE cvterm.name!='phenotyping_experiment' AND cvterm.name!='analysis_experiment' AND accession_id=?;";
     } else {
-        $q = "select distinct(project.project_id), project.name, projectprop.value from stock JOIN nd_experiment_stock USING(stock_id) JOIN nd_experiment_project USING(nd_experiment_id) JOIN project USING (project_id) FULL OUTER JOIN projectprop ON (project.project_id=projectprop.project_id AND projectprop.type_id=$geolocation_type_id) WHERE stock.stock_id=?;";
+        $q = "select distinct(project.project_id), project.name, projectprop.value from stock 
+		JOIN nd_experiment_stock USING(stock_id) 
+		JOIN nd_experiment_project USING(nd_experiment_id) 
+		JOIN project USING (project_id) 
+        JOIN nd_experiment ON nd_experiment.nd_experiment_id=nd_experiment_project.nd_experiment_id
+        JOIN cvterm ON cvterm.cvterm_id=nd_experiment.type_id
+		FULL OUTER JOIN projectprop ON (project.project_id=projectprop.project_id AND projectprop.type_id=$geolocation_type_id) 
+		WHERE stock.stock_id=? AND cvterm.name!='phenotyping_experiment' AND cvterm.name!='analysis_experiment';";
     }
     my $h = $dbh->prepare($q);
     $h->execute($self->get_stock_id());
     my @trials;
     while (my ($project_id, $project_name, $nd_geolocation_id) = $h->fetchrow_array()) {
-        push @trials, [ $project_id, $project_name, $nd_geolocation_id, $geolocations{$nd_geolocation_id} ];
+		next if (!$nd_geolocation_id); #The logic here is that field trials must have a location, this is enforced during their creation. 
+		push @trials, [ $project_id, $project_name, $nd_geolocation_id, $geolocations{$nd_geolocation_id} ];
     }
 
     return @trials;
+}
+
+=head2 get_stored_analyses
+
+ Usage:
+ Desc:          gets the list of stored analyses using this stock (accession)
+ Args:
+ Side Effects:
+ Example:
+
+=cut
+
+sub get_stored_analyses {
+    my $self = shift;
+    my $dbh = $self->get_schema()->storage()->dbh();
+    my $stock_type = $self->get_type->name();
+
+    my $q;
+    if ($stock_type eq 'accession'){
+        $q = "SELECT DISTINCT materialized_phenoview.trial_id, project.name
+        FROM materialized_phenoview 
+        JOIN nd_experiment_project ON nd_experiment_project.project_id=materialized_phenoview.trial_id 
+        JOIN project ON project.project_id=materialized_phenoview.trial_id 
+        JOIN nd_experiment ON nd_experiment.nd_experiment_id=nd_experiment_project.nd_experiment_id 
+        JOIN cvterm ON cvterm.cvterm_id=nd_experiment.type_id 
+        WHERE accession_id=? AND cvterm.name='analysis_experiment';";
+    } else { #This code doesn't get called anywhere, but is here in case it is needed in the future
+        $q = "select distinct(project.project_id), project.name from stock 
+		JOIN nd_experiment_stock USING(stock_id) 
+		JOIN nd_experiment_project USING(nd_experiment_id) 
+        JOIN nd_experiment ON nd_experiment.nd_experiment_id=nd_experiment_project.nd_experiment_id
+        JOIN cvterm ON cvterm.cvterm_id=nd_experiment.type_id
+		JOIN project USING (project_id)  
+		WHERE stock.stock_id=? AND cvterm.name='analysis_experiment';";
+    }
+    my $h = $dbh->prepare($q);
+    $h->execute($self->get_stock_id());
+    my @analyses;
+    while (my ($project_id, $project_name) = $h->fetchrow_array()) {
+		push @analyses, [ $project_id, $project_name ];
+    }
+
+    return @analyses;
 }
 
 sub get_direct_parents {
