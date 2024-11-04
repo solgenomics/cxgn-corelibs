@@ -630,15 +630,22 @@ sub get_trials {
     my $geolocation_type_id = SGN::Model::Cvterm->get_cvterm_row($self->get_schema(), 'project location', 'project_property')->cvterm_id();
     my $q;
     if ($stock_type eq 'accession'){
-        $q = "SELECT DISTINCT materialized_phenoview.trial_id, project.name, projectprop.value FROM materialized_phenoview 
-        JOIN nd_experiment_project ON nd_experiment_project.project_id=materialized_phenoview.trial_id 
-        JOIN project ON project.project_id=materialized_phenoview.trial_id 
-        FULL OUTER JOIN projectprop ON (projectprop.project_id=project.project_id AND projectprop.type_id=$geolocation_type_id) 
-        JOIN nd_experiment ON nd_experiment.nd_experiment_id=nd_experiment_project.nd_experiment_id 
-        JOIN cvterm ON cvterm.cvterm_id=nd_experiment.type_id 
-        WHERE cvterm.name!='phenotyping_experiment' AND cvterm.name!='analysis_experiment' AND accession_id=?;";
-    } else {
-        $q = "select distinct(project.project_id), project.name, projectprop.value from stock 
+        $q = "SELECT DISTINCT project.project_id, project.name, projectprop.value 
+        FROM stock AS accession 
+        JOIN stock_relationship ON (accession.stock_id=stock_relationship.object_id) 
+        JOIN stock AS plot ON (plot.stock_id=stock_relationship.subject_id) 
+        JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) 
+        JOIN nd_experiment_project USING (nd_experiment_id) 
+        JOIN project USING (project_id) 
+        FULL OUTER JOIN projectprop ON (project.project_id=projectprop.project_id AND projectprop.type_id=$geolocation_type_id) 
+        JOIN cvterm ON (cvterm.cvterm_id=nd_experiment_stock.type_id) 
+        FULL OUTER JOIN breeding_programs ON (breeding_programs.breeding_program_id=project.project_id) 
+        WHERE accession.stock_id=? 
+            AND cvterm.name!='phenotyping_experiment' 
+            AND cvterm.name!='analysis_experiment' 
+            AND breeding_program_id IS NULL;";
+    } else { # Odds are if this is not an accession, it is a plot.
+        $q = "select DISTINCT project.project_id, project.name, projectprop.value from stock 
 		JOIN nd_experiment_stock USING(stock_id) 
 		JOIN nd_experiment_project USING(nd_experiment_id) 
 		JOIN project USING (project_id) 
@@ -675,13 +682,16 @@ sub get_stored_analyses {
 
     my $q;
     if ($stock_type eq 'accession'){
-        $q = "SELECT DISTINCT materialized_phenoview.trial_id, project.name
-        FROM materialized_phenoview 
-        JOIN nd_experiment_project ON nd_experiment_project.project_id=materialized_phenoview.trial_id 
-        JOIN project ON project.project_id=materialized_phenoview.trial_id 
-        JOIN nd_experiment ON nd_experiment.nd_experiment_id=nd_experiment_project.nd_experiment_id 
-        JOIN cvterm ON cvterm.cvterm_id=nd_experiment.type_id 
-        WHERE accession_id=? AND cvterm.name='analysis_experiment';";
+        $q = "SELECT DISTINCT project.project_id, project.name 
+        FROM stock AS accession 
+        JOIN stock_relationship ON (accession.stock_id=stock_relationship.object_id) 
+        JOIN stock AS plot ON (plot.stock_id=stock_relationship.subject_id) 
+        JOIN nd_experiment_stock ON (plot.stock_id=nd_experiment_stock.stock_id) 
+        JOIN nd_experiment_project USING (nd_experiment_id) 
+        JOIN project USING (project_id) 
+        JOIN cvterm ON (cvterm.cvterm_id=nd_experiment_stock.type_id) 
+        WHERE accession.stock_id=?  
+            AND cvterm.name='analysis_experiment';";
     } else { #This code doesn't get called anywhere, but is here in case it is needed in the future
         $q = "select distinct(project.project_id), project.name from stock 
 		JOIN nd_experiment_stock USING(stock_id) 
