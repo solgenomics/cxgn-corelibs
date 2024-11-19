@@ -619,6 +619,10 @@ sub get_trials {
     my $dbh = $self->get_schema()->storage()->dbh();
     my $stock_type = $self->get_type->name();
 
+    if ($stock_type ne 'accession' && $stock_type ne 'plot'){
+        die "CXGN::Chado::Stock::get_trials requires either an accession or a plot.\n";
+    }
+
     my $geolocation_q = "SELECT nd_geolocation_id, description FROM nd_geolocation;";
     my $geolocation_h = $dbh->prepare($geolocation_q);
     $geolocation_h->execute();
@@ -679,6 +683,10 @@ sub get_stored_analyses {
     my $self = shift;
     my $dbh = $self->get_schema()->storage()->dbh();
     my $stock_type = $self->get_type->name();
+
+    if ($stock_type ne 'accession') {
+        die "CXGN::Chado::Stock::get_stored_analyses requires an accession.\n";
+    }
 
     my $q;
     if ($stock_type eq 'accession'){
