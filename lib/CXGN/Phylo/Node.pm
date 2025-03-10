@@ -29,7 +29,7 @@ use CXGN::Phylo::Species_name_map;
 use CXGN::Phylo::Tree;
 use CXGN::Phylo::Label;
 use CXGN::Page::FormattingHelpers qw/tooltipped_text/;
- 
+
 
 =head2 function new()
 
@@ -686,12 +686,13 @@ sub get_standard_species {
 	my $tree = $self->get_tree();
 	if (defined $tree) {
 		my $species_standardizer = $tree->get_species_standardizer();
-		if (defined $species_standardizer) {
+		if (defined $species_standardizer and defined ($species_standardizer->get_standard_name($species)) ) {
 			$species = $species_standardizer->get_standard_name($species);
-		#	print "species standardizer branch. species: $species \n";
+		#	print "species standardizer branch. species: [$species] \n";
 		} else {
-      $species = CXGN::Phylo::Species_name_map::to_standard_format($species); # just e.g.  solanum lycopersicum -> Solanum_lycopersicum
- #     print "to_standard_format branch: $species \n";
+#	print "species: [$species]\n";
+      $species = CXGN::Phylo::Species_name_map->to_standard_format($species, 1); # just e.g.  solanum lycopersicum -> Solanum_lycopersicum
+#      print "to_standard_format branch: [$species] \n";
 		}
 	}
 	return $species;
@@ -999,13 +1000,14 @@ sub set_hidden {
 
 =head2 function recursive_propagate_properties()
 
-  Synopsis:	
-  Arguments:	
+  Synopsis:	$root->recursive_propagate_properties('hidden');
+  Arguments:	A list of properties to be propagated. e.g.
+'hidden', but if no list given then hidden and hilited are propagated.
   Returns:	
   Side effects:	
   Description:	recursively propagates certain attributes to the
                 children nodes.
-                currently, the propagated properties are:
+                currently, the default propagated properties are:
                 hidden, hilited
 
 =cut
@@ -1016,15 +1018,24 @@ sub recursive_propagate_properties {
 	my $hidden = $self->get_hidden();
 	my $hilited = $self->get_hilited();
    
+	my @properties = @_; 
+	unless (@properties){ @properties = ('hidden', 'hilited') } 
+ # print STDERR "X [", scalar @properties, "] ", join("; ", @properties), "\n";
 	my @children = $self->get_children();
 	foreach my $c (@children) {
-		if ($hidden) {
+		foreach my $prop (@properties){
+
+			if (($prop eq 'hidden') and $hidden) {
 			$c->set_hidden($hidden);
-		}
-		if ($hilited) {
+			}elsif (($prop eq 'hilited') and $hilited) {
+#				print STDERR "In rec.propagate_properties.: ", $c->get_name(), " being set hilited\n";
 			$c->set_hilited($hilited);
+			}elsif(defined $self->get_attribute($prop)){
+				$c->set_attribute($prop, $self->get_attribute($prop));		
 		}
-		$c->recursive_propagate_properties();
+		}
+#	print STDERR "Y [", scalar @properties, "] ", join("; ", @properties), "\n";
+		$c->recursive_propagate_properties(@properties);
 	}
 }
 
@@ -1740,7 +1751,7 @@ sub recursive_set_implicit_species_bits{
 	my $bithash = shift;					# this gives the bit pattern associated with each species
 	my $species_bits = int 0;
 	my $implicit_species = $self->get_implicit_species();
-	# print "implicit species: ", join(" ", @$implicit_species), "\n";
+#	print STDERR "\nZZZ. implicit species: ", join(" ", @$implicit_species), "\n";
 	my $a = int 0;
 	my $b = int 0;
 	foreach (@$implicit_species) {
@@ -1749,6 +1760,7 @@ sub recursive_set_implicit_species_bits{
 		#	print STDERR "impl species: [$_],    [", $bithash->{$_}, "]\n";
 		}
 	}
+#	print STDERR "In rec set impl species bits. nodename: ", $self->get_name(), " species bit pattern: [", $species_bits, "]\n\n";
 	$self->set_attribute("species_bit_pattern", $species_bits);
 	foreach ($self->get_children()) {
 		$_->recursive_set_implicit_species_bits($bithash);
@@ -1909,11 +1921,11 @@ sub recursive_copy {
 =cut
 
 sub copy { 
-	my $self = shift;
+	my $self = shift; # this is the node to be copied
 	my $new_parent = shift;
 	my $new_tree = shift;
 
-	my $new = CXGN::Phylo::Node->new();
+	my $new = CXGN::Phylo::Node->new(); # the copy
 
 	if ($new_parent) {
 		$new_parent->add_child_node($new);
@@ -1923,7 +1935,7 @@ sub copy {
 	$new->set_tree($new_tree);
 	$new->set_species($self->get_species());
 	$new->set_label($self->get_label()->copy());
-	$new->set_node_key($self->get_node_key());
+	$new->set_node_key($self->get_node_key()); # the copy gets the same node key as the original
 	$new->set_hidden($self->get_hidden());
 	$new->set_hilited($self->get_hilited());
 	$new->set_horizontal_coord($self->get_horizontal_coord());
@@ -1934,7 +1946,8 @@ sub copy {
 	$new->set_branch_length($self->get_branch_length());
 
 	$new->set_attribute("leaf_count", $self->get_attribute("leaf_count"));
-$new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_count"));
+	$new->set_attribute("leaf_species_count", $self->get_attribute("leaf_species_count"));
+		$new->set_attribute("species_bit_pattern", $self->get_attribute("species_bit_pattern"));
 
 	return $new;
 }
@@ -2003,7 +2016,8 @@ sub make_newick_attributes {
 	my $show_all = shift;
 	my $string = "";
 #	print "In Node::make_newick_attributes. ", join("; ", $self->get_tree()->newick_shown_attributes() ), "\n";
-	foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {
+	
+foreach my $attr ( $self->get_tree()->newick_shown_attributes() ) {
 	#  print "in make_newick_attributes. attribute: $attr\n";
 		my $value = "";
 		if ($attr eq "species") { # species shown for leaves, or all nodes if $show_all
@@ -2359,7 +2373,7 @@ sub recursive_subtree_node_list {
 
 =head2 function get_attribute()
 
-  Synopsis:	my $foo = $node->get_attribte("foo");
+  Synopsis:	my $foo = $node->get_attribute("foo");
   Arguments:	the name of the attribute
   Returns:	the value of the attribute named foo.
   Side effects:	none
@@ -3139,14 +3153,20 @@ print("in robinson-foulds, root bls: ", $root1->get_branch_length(), "   ", $roo
 sub determine_species_from_name{
 	my $self = shift;
 	my $str = shift;
-	my $species = undef;
+#	my $species = undef;
 	if (!$str) {	$str = $self->get_name(); }
 
-	#	print STDERR "string to get species from: ", $str, "\n";
-	if ($str =~ /^At/i) {					# At.... is Arabidopsis
-		$species = "Arabidopsis";
-	}
+	my $id_taxon_map = $self->get_tree()->get_id_taxon_map();
+       my $species = $id_taxon_map->id_to_taxonname($str);
 
+	#	print STDERR "string to get species from: ", $str, "\n";
+#	if ($str =~ /^At/i) {					# At.... is Arabidopsis
+#		$species = "Arabidopsis";
+#	}
+	
+	if(defined $species){
+	   # just keep this value of $species
+	}
 	# for $str of form SGN-U followed by digits,eliminate the SGN-U:
 	elsif ($str =~ /^SGN-{0,1}U(\d+)/i) { # should we require SGN to be initial?
 
@@ -3540,11 +3560,15 @@ sub recursive_compare_species_split{
 	my $self = shift;							# a node of species tree, typically
 	my $a1 = shift;
 	my $a2 = shift;
+
+	if($a1 == 0 or $a2 == 0){ return 0; }; # one subtree has no species found in species tree 
 	my @children = $self->get_children();
+#	print "ZZZ [", scalar @children, "][", $self->get_attribute("species_bit_pattern"), "] &nbsp";
+
 	return int 0 if(scalar @children < 2); # if reach leaf of species tree, no speciation.
 	my $b1 = $children[0]->get_attribute("species_bit_pattern");
 	my $b2 = $children[1]->get_attribute("species_bit_pattern");
-	if (($a1 & ~$b1) == 0) {			# a1 species set is subset of b1 species set		
+	if (($a1 & ~$b1) == 0) {	# a1 (gene tree) species set is subset of b1 species set		
 		if (($a2 & ~$b2) == 0) {
 			return int 1;
 		} elsif (($a2 & ~$b1) == 0) {
@@ -3571,8 +3595,11 @@ sub recursive_compare_species_split{
 sub collect_orthologs_of_leaf{
 	my $self = shift;							# the leaf to start at
 	my @ortholog_array;
+	if ($self->get_attribute("species_bit_pattern") == 0){ return @ortholog_array; }
 	my $prev_parent = $self;
 	my $parent = $self->get_parent();
+#	return @ortholog_array;
+#	print  "XXX: [", $parent->get_attribute("speciation"), "]&nbsp";
 	while (1) {
 		if ($parent->get_attribute("speciation")) {
 			#print  join(";", $parent->get_implicit_names()), "\n";
@@ -3585,7 +3612,7 @@ sub collect_orthologs_of_leaf{
 					$n =~ s/(.*)?\|/$1/;
 				}
 				#print STDERR "implicit names: ", join(" ", @imp_names), "\n";
-				@ortholog_array = (@ortholog_array, @imp_names);
+				@ortholog_array = (@ortholog_array, @imp_names) if ($self->get_attribute("species_bit_pattern") > 0);
 			}
 		}
 		last if($parent->is_root());
@@ -3610,6 +3637,7 @@ sub recursive_collect_max_speciation_nodes{
 	}
 }
 
+# just recursively set_hilited for each speciation node.
 sub recursive_hilite_speciation_nodes{
 	my $self = shift;
 # return;
