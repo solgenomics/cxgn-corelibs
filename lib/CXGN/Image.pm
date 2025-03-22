@@ -1178,7 +1178,17 @@ sub hard_delete {
     $self->get_dbh->do('delete from phenome.stock_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from metadata.md_tag_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from phenome.locus_image where image_id= ?', undef, $self->get_image_id());
-    $self->get_dbh->do('delete from md_image where image_id = ?', undef, $self->get_image_id );
+    $self->get_dbh->do('delete from metadata.md_image where image_id = ?', undef, $self->get_image_id );
+
+    my $sth = $self->get_dbh->prepare('select metadata_id from phenome.stock_image where image_id = ?');
+    $sth->execute($self->get_image_id());
+    my $metadata_id = $sth->fetchrow_array();
+
+    if (defined $metadata_id) {
+        $self->get_dbh->do('delete from metadata.md_metadata where metadata_id= ?', undef $metadata_id);
+    }
+
+    $sth->finish;
 }
 
 =head2 pointer_count
