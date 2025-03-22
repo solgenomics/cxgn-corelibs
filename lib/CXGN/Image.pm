@@ -1205,7 +1205,7 @@ sub pointer_count {
     my ($self) = @_;
 
     return $self->get_dbh->selectrow_array( <<'', undef, $self->get_md5sum );
-SELECT count( distinct( image_id ) ) from md_image WHERE md5sum=?
+SELECT count( distinct( image_id ) ) from metadata.md_image WHERE md5sum=?
 
 }
 
