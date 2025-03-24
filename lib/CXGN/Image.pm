@@ -48,6 +48,8 @@ use File::Copy qw| copy move |;
 use CXGN::Tag;
 use Data::Dumper;
 use Image::Size;
+use Time::Piece;
+use Time::Seconds;
 
 use base qw | CXGN::DB::ModifiableI |;
 
@@ -1175,20 +1177,21 @@ sub hard_delete {
         }
     }
 
+    my $image_id = $self->get_image_id();
+    my $date = localtime->strftime('%Y-%m-%d');
+    my $sth = $self->get_dbh->prepare('select metadata_id from phenome.stock_image where image_id = ?');
+    $sth->execute($self->get_image_id());
+    my $metadata_id = $sth->fetchrow_array();
+
     $self->get_dbh->do('delete from phenome.stock_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from metadata.md_tag_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from phenome.locus_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from metadata.md_image where image_id = ?', undef, $self->get_image_id );
 
-    my $sth = $self->get_dbh->prepare('select metadata_id from phenome.stock_image where image_id = ?');
-    $sth->execute($self->get_image_id());
-    my $metadata_id = $sth->fetchrow_array();
-
     if (defined $metadata_id) {
-        $self->get_dbh->do('delete from metadata.md_metadata where metadata_id= ?', undef $metadata_id);
+        my $note = "Image $image_id deleted on $date";
+        $self->get_dbh->do('update metadata.md_metadata set modification_note = concat_ws(\' \', modification_note::text, $1::text) where metadata_id= $2::integer', undef, $note, $metadata_id);
     }
-
-    $sth->finish;
 }
 
 =head2 pointer_count
