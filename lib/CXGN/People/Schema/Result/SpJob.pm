@@ -36,7 +36,7 @@ __PACKAGE__->table("sp_job");
   is_foreign_key: 1
   is_nullable: 1
 
-=head2 slurm_id
+=head2 backend_id
 
   data_type: 'varchar'
   is_nullable: 0
@@ -83,7 +83,7 @@ __PACKAGE__->add_columns(
   },
   "sp_person_id",
   { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
-  "slurm_id",
+  "backend_id",
   { data_type => "varchar", is_nullable => 0, size => 255 },
   "status",
   { data_type => "varchar", is_nullable => 1, size => 100 },
