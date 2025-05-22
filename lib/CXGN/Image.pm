@@ -1178,7 +1178,7 @@ sub hard_delete {
     $self->get_dbh->do('delete from phenome.stock_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from metadata.md_tag_image where image_id= ?', undef, $self->get_image_id());
     $self->get_dbh->do('delete from phenome.locus_image where image_id= ?', undef, $self->get_image_id());
-    $self->get_dbh->do('delete from md_image where image_id = ?', undef, $self->get_image_id );
+    $self->get_dbh->do('delete from metadata.md_image where image_id = ?', undef, $self->get_image_id );
 }
 
 =head2 pointer_count
@@ -1195,7 +1195,7 @@ sub pointer_count {
     my ($self) = @_;
 
     return $self->get_dbh->selectrow_array( <<'', undef, $self->get_md5sum );
-SELECT count( distinct( image_id ) ) from md_image WHERE md5sum=?
+SELECT count( distinct( image_id ) ) from metadata.md_image WHERE md5sum=?
 
 }
 
