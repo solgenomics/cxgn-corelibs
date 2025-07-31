@@ -49,6 +49,7 @@ use CXGN::Tag;
 use Data::Dumper;
 use Image::Size;
 use Image::ExifTool;
+use JSON;
 use Time::Piece;
 use Time::Seconds;
 
@@ -837,7 +838,42 @@ sub extract_exif_info_user_comment {
     return $info->{UserComment};
 }
 
+=head2 extract_exif_info_class
 
+Class function for extracting exif info from an image
+
+=cut
+
+sub extract_exif_info_class {
+    my ($class, $filename) = @_;
+
+    my $et = Image::ExifTool->new();
+    my $info = $et->ImageInfo($filename, 'UserComment');
+    print STDERR "EXIF info: " . Dumper($info);
+
+    my $comment = $info->{UserComment};
+    
+    if ($comment =~ m/^UNICODE\x00/i || $comment =~m/^ASCII\x00\x00\x00/i) {
+	$comment =~ s/^(.{8})//s;
+    }
+
+    # Remove trailing space
+    $comment =~ s/\x00+$//g;
+    $comment =~ s/\s+$//;
+
+    my $json;
+    eval {
+        $json = decode_json($comment);
+        #print STDERR "JSON data: " . $json;
+    };
+    if ($@) {
+        #print STDERR "JSON decoding failed";
+        return;
+    }
+    $json = decode_json($comment);
+
+    return $json;
+}
 
 =head2 make_dirs
 
