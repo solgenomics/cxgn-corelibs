@@ -840,7 +840,7 @@ sub extract_exif_info_user_comment {
 
 =head2 extract_exif_info_class
 
-Class function for extracting exif info from an image
+Class function for extracting exif info from an image. Returns json in a string
 
 =cut
 
@@ -852,6 +852,7 @@ sub extract_exif_info_class {
     print STDERR "EXIF info: " . Dumper($info);
 
     my $comment = $info->{UserComment};
+    print STDERR "Comment: ." . Dumper($comment);
     
     if ($comment =~ m/^UNICODE\x00/i || $comment =~m/^ASCII\x00\x00\x00/i) {
 	$comment =~ s/^(.{8})//s;
@@ -861,18 +862,7 @@ sub extract_exif_info_class {
     $comment =~ s/\x00+$//g;
     $comment =~ s/\s+$//;
 
-    my $json;
-    eval {
-        $json = decode_json($comment);
-        #print STDERR "JSON data: " . $json;
-    };
-    if ($@) {
-        #print STDERR "JSON decoding failed";
-        return;
-    }
-    $json = decode_json($comment);
-
-    return $json;
+    return $comment;
 }
 
 =head2 make_dirs
