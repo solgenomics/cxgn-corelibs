@@ -48,6 +48,8 @@ use File::Copy qw| copy move |;
 use CXGN::Tag;
 use Data::Dumper;
 use Image::Size;
+use Image::ExifTool;
+use JSON;
 use Time::Piece;
 use Time::Seconds;
 
@@ -796,6 +798,71 @@ sub process_image {
     else {
 	return $image_id;
     }
+}
+
+=head2 extract_exif_info()
+
+Extracts all the exif info from an image file
+
+=cut
+
+sub extract_exif_info {
+    my $self = shift;
+
+    my $et = Image::ExifTool->new();
+
+    my $info = $et->ImageInfo($self->get_filename("original"));
+
+    return $info;
+}
+
+=head2 extract_exif_user_comment 
+
+Extracts only the "UserComment" field from the exif record. This is where the fieldbook stores the image metadata.
+
+=cut
+
+sub extract_exif_info_user_comment {
+    my $self = shift;
+
+    my $et = Image::ExifTool->new();
+
+    my $info = $et->ImageInfo($self->get_filename("original"), "UserComment");
+
+    # if the encoding is specified in the first 8 bytes of the User
+    # Comment field, we cut it out.
+    if ($info =~ m/^UNICODE\x00/i || $info =~m/^ASCII\x00\x00\x00/i) {
+	$info =~ s/^(.{8})//g;
+    }
+    
+    return $info->{UserComment};
+}
+
+=head2 extract_exif_info_class
+
+Class function for extracting exif info from an image. Returns json in a string
+
+=cut
+
+sub extract_exif_info_class {
+    my ($class, $filename) = @_;
+
+    my $et = Image::ExifTool->new();
+    my $info = $et->ImageInfo($filename, 'UserComment');
+    print STDERR "EXIF info: " . Dumper($info);
+
+    my $comment = $info->{UserComment};
+    print STDERR "Comment: ." . Dumper($comment);
+    
+    if ($comment =~ m/^UNICODE\x00/i || $comment =~m/^ASCII\x00\x00\x00/i) {
+	$comment =~ s/^(.{8})//s;
+    }
+
+    # Remove trailing space
+    $comment =~ s/\x00+$//g;
+    $comment =~ s/\s+$//;
+
+    return $comment;
 }
 
 =head2 make_dirs
