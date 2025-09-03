@@ -52,6 +52,9 @@ use Image::ExifTool;
 use JSON;
 use Time::Piece;
 use Time::Seconds;
+use Imager;
+use Barcode::ZBar;
+use Image::Magick;
 
 use base qw | CXGN::DB::ModifiableI |;
 
@@ -863,6 +866,42 @@ sub extract_exif_info_class {
     $comment =~ s/\s+$//;
 
     return $comment;
+}
+
+=head2 read_barcode
+
+Function for reading and parsing info from barcodes using ZBar
+
+=cut
+
+sub read_barcode {
+    my ($class, $filename) = @_;
+    print STDERR "Test filename: $filename";
+
+    my $scanner = Barcode::ZBar::ImageScanner->new();
+
+    $scanner->parse_config("enable");
+
+    my $magick = Image::Magick->new();
+    $magick->Read($filename) && die;
+    my $raw = $magick->ImageToBlob(magick => 'GRAY', depth => 8);
+
+    my $image = Barcode::ZBar::Image->new();
+    $image->set_format('Y800');
+    $image->set_size($magick->Get(qw(columns rows)));
+    $image->set_data($raw);
+
+    my $n = $scanner->scan_image($image);
+
+    my $data;
+    my $type;
+
+    foreach my $symbol ($image->get_symbols()) {
+        $data = $symbol->get_data();
+        $type = $symbol->get_type();
+    }
+    my $stock_id = $data;
+    return $stock_id;
 }
 
 =head2 make_dirs
