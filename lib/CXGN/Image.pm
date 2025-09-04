@@ -876,10 +876,8 @@ Function for reading and parsing info from barcodes using ZBar
 
 sub read_barcode {
     my ($class, $filename) = @_;
-    print STDERR "Test filename: $filename";
-
+    
     my $scanner = Barcode::ZBar::ImageScanner->new();
-
     $scanner->parse_config("enable");
 
     my $magick = Image::Magick->new();
@@ -895,13 +893,15 @@ sub read_barcode {
 
     my $data;
     my $type;
+    my @barcodes;
 
     foreach my $symbol ($image->get_symbols()) {
         $data = $symbol->get_data();
         $type = $symbol->get_type();
+        push @barcodes, { type => $type, data => $data };
     }
     my $stock_id = $data;
-    return $stock_id;
+    return @barcodes;
 }
 
 =head2 make_dirs
