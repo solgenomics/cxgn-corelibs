@@ -810,11 +810,11 @@ Extracts all the exif info from an image file
 =cut
 
 sub extract_exif_info {
-    my $self = shift;
+    my ($class, $filename) = @_;
 
     my $et = Image::ExifTool->new();
 
-    my $info = $et->ImageInfo($self->get_filename("original"));
+    my $info = $et->ImageInfo($filename);
 
     return $info;
 }
