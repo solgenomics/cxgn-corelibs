@@ -72,6 +72,8 @@ __PACKAGE__->add_columns(
     { data_type => "bigint", is_foreign_key => 1, is_nullable => 1 },
     "require_ownership",
     { data_type => "boolean", default_value => \"false", is_nullable => 1 },
+    "require_breeding_program",
+    { data_type => "boolean", default_value => \"false", is_nullable => 1 },
     
     );
 
