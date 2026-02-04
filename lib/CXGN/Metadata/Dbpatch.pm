@@ -142,6 +142,24 @@ has "dbname" => (
     cmd_aliases   => 'D',
 );
 
+has "dbuser" => (
+    is            => 'rw',
+    isa           => 'Str',
+    required      => 0,
+    traits        => ['Getopt'],
+    documentation => 'not required (prompted), database user name',
+    cmd_aliases   => 'U',
+    );
+
+has "dbpass" => (
+    is            => 'rw',
+    isa           => 'Str',
+    required      => 0,
+    traits        => ['Getopt'],
+    documentation => 'not required (prompted), database password',
+    cmd_aliases   => 'P',
+    );
+
 has "name" => (
     is       => 'rw',
     isa      => 'Str',
@@ -203,12 +221,17 @@ sub run {
     $self->init_patch;
     ###
 
-    my $dbh =  CXGN::DB::InsertDBH->new(
+    my $cxgn_db_connection =  CXGN::DB::InsertDBH->new(
 	{
 	    dbname =>$self->dbname,
 	    dbhost => $self->dbhost,
-	}
-	)->get_actual_dbh();
+	});
+
+
+    $self->dbpass($cxgn_db_connection->dbpass());
+    $self->dbuser($cxgn_db_connection->dbuser());
+
+    my $dbh = $cxgn_db_connection->get_actual_dbh();
 
     $dbh->{AutoCommit} = 1;
 
