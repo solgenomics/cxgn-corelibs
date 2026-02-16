@@ -112,6 +112,7 @@ $string = $1;
     for (my $i=0; $i<@tokens; $i++) { 
 	$self->set_error(\@tokens, $i) if($self->{do_set_error});
 	my $t = $tokens[$i];
+	next unless ($t =~ /\S/); # skip tokens with only whitespace
 	if ($t eq "(")  {
 	    #print STDERR "Encountered (. Creating a new child node [parent=".$current_node->get_name()."\n";
 	    my $child = $current_node->add_child();
