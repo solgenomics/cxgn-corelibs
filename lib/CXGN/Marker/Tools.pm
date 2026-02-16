@@ -57,29 +57,6 @@ would appear in our database. Used when someone searches for a marker
 name, or when a loading script is loading new names from a
 spreadsheet.
 
-When called in list context, it returns the cleaned marker name and
-any trimmed subscript. When called in scalar context, it just returns
-the cleaned marker name.
-
-   my $foo = "TG123a"
-
-   my $marker = clean_marker_name($foo); 
-   # returns "TG123"
-
-   my ($marker, $subscript) = clean_marker_name($foo); 
-   # returns "TG123" and "a"
-
-This function GUESSES what you want. It is very smart, and usually
-correct. But we all make mistakes! Do not blindly trust this function.
-It is clever and tricksy and will start giving you wrong answers the 
-day you let your guard down.
-
-The cleaning routines do some or all of the following (probably not an
-exhaustive list): Removes a subscript (returning it if desired, see
-above); zero-pads cos markers (T25 -> T0025); removes zero-padding on
-other types of markers; adds hyphens to EST markers (cLEX11k1 ->
-cLEX-11-k1).
-
 =cut
 
 sub clean_marker_name {
@@ -87,44 +64,10 @@ sub clean_marker_name {
   my $name = shift;
   my $subscript= '';
 
-  if ($name =~ /Solyc\d\dg\d{6}/) { 
-      if (wantarray) { 
-	  return ($name, $subscript);
-      }
-      else { 
-	  return $name;
-      }
-  }
-
   # just in case
   chomp $name;
   $name =~ s/\s+//g;
-  $name =~ s/_CAPS$//i;
-  
-  # Rob's marker-massaging routines
-  # (1) ... to remove any subscript
-  if ($name =~ /^(\S+\d)_?([A-Ca-c])$/) { # require at least one digit
-    $name = $1;
-    $subscript = $2;
-  }
-  # (2) ... to format the ID's of COS markers (and others) correctly.
-  if ($name =~ /^T(\d+)(\W?.*)$/i) { 
-    $name = "T" . sprintf("%04d", $1). $2;
-  } elsif ($name =~ /^([A-z]+)0+(\d+\S*)$/) {
-    # Trim extraneous leading 0's so that eg. CT0051 => CT51
-    $name = $1 . $2;
-  }
-  # (3) ... to format ID's of mapped EST's correctly.
-  if ($name =~ /^(d?c[[:alpha:]]{3})-?(\d+)-?(\w\d+)$/) {
-    $name = "$1-$2-$3";
-  }
-  
-  $name =~ s/\s+//g; # remove any whitespace
 
-  # (Sunseeds uses one convention to name AFLPs, KeyGene uses another.
-  # we decided to stick with the KeyGene convention.)
-  $name =~ s/SS_([A-Z]\d+)([A-Z]\d+)_?([A-Z])_?([\d.]+)/SS_$1\/$2-$3-$4/;
-  
   if(wantarray){
 
     return ($name, $subscript);
