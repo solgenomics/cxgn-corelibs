@@ -515,9 +515,9 @@ sub _check_nodes_states {
         if (IS_NODE_POWER_UP($_)) {
             print STDERR "Slurm node is powered up... Node: ".$_->{name}."\n";
         }
-        if (IS_NODE_POWER_SAVE($_)) {
-            print STDERR "Slurm node is in power save... Node: ".$_->{name}."\n";
-        }
+#        if (IS_NODE_POWER_SAVE($_)) {
+#            print STDERR "Slurm node is in power save... Node: ".$_->{name}."\n";
+#        }
     }
 
     return;
