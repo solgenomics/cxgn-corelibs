@@ -29,25 +29,25 @@ Refactoring and lingual adjustments provided by Chris Carpita <csc32@cornell.edu
 
  CXGN::Phylo::Alignment
  CXGN::Phylo::Alignment::ImageObject
- CXGN::Phylo::Alignment::Member 
+ CXGN::Phylo::Alignment::Member
  CXGN::Phylo::Alignment::Ruler
  CXGN::Phylo::Alignment::Chart
- 
+
  Packages Member, Ruler and Chart inherit from ImageObject
 
 =head1 Package CXGN::Phylo::Alignment
- 
+
  The basic element of the alignment object is an array of member.
- Its attributes include: name, width (pixel), height(pixel), 
- image, members, ruler, chart, conserved_seq, sv_overlap, sv_identtity, 
- start_value and end_value 
- 
+ Its attributes include: name, width (pixel), height(pixel),
+ image, members, ruler, chart, conserved_seq, sv_overlap, sv_identtity,
+ start_value and end_value
+
  Its functionality includes:
- 1. Image display. 
- 2. Calculation and output of pairwise similaity and putative splice variant pairs based on similarity. 
+ 1. Image display.
+ 2. Calculation and output of pairwise similaity and putative splice variant pairs based on similarity.
  3. Hide some alignment sequences so that they are not included in the analysis.
  4. Select a range of sequences to be analyzed.
- 5. Asses how a set of members overlaps with another set.  
+ 5. Asses how a set of members overlaps with another set.
  6. Calculate the non-gap mid point of each alignment sequence and group the sequences according to their overlap.
 
 =head2 Constructer new()
@@ -58,18 +58,18 @@ Create a new alignment, returns an alignment object
 
  Synopsis:  my $alignment = CXGN::Phylo::Alignment->new(
                                                    name=>$name,
-                                                   width=>$width, 
-                                                   height=>$height, 
+                                                   width=>$width,
+                                                   height=>$height,
                                                    type=>$type, #'nt' or 'pep'
                                                    );
 
- Description:  Upon constructing an alignment object, it sets name, 
- width and height using arguments.  It also generates an image object of 
- {width} and {height} and sets the default value of sv_overlap, 
- sv_identity (the minimum number overlapping aa and percentage 
- identity for two members to be considered as putative splice variants), 
- sv_indel_limit (the min aa indel length for two sequences to be considered 
- as splice variants, instead of alleles) and start_value (the start value 
+ Description:  Upon constructing an alignment object, it sets name,
+ width and height using arguments.  It also generates an image object of
+ {width} and {height} and sets the default value of sv_overlap,
+ sv_identity (the minimum number overlapping aa and percentage
+ identity for two members to be considered as putative splice variants),
+ sv_indel_limit (the min aa indel length for two sequences to be considered
+ as splice variants, instead of alleles) and start_value (the start value
  of the ruler and member objects(s))
 
  Returns: A CXGN::Phylo::Alignment object
@@ -115,7 +115,8 @@ sub new {
     ## define some 'empty' attributes that will be asigned later
     @{ $self->{members} } = ();
     $self->{ruler}         = undef;
-    $self->{chart}         = undef $self->{image} = undef;
+    $self->{chart}         = undef;
+    $self->{image} = undef;
     $self->{conserved_seq} = undef;
     $self->{seq_length}    = 0;
 
@@ -210,10 +211,10 @@ get_end_value(), set_end_value(), check_end_value()
 
 get_left_margin(), set_left_margin(), get_top_margin(), set_top_margin()
 
-Those for name, image, sv_overlap and sv_identity, height, width, 
-left_margin, top_margin are straightforward, while the 
-setters for start_value, end_value are not simple, since these attributes 
-are related to and/or restricted by other attributes.  seq_length is 
+Those for name, image, sv_overlap and sv_identity, height, width,
+left_margin, top_margin are straightforward, while the
+setters for start_value, end_value are not simple, since these attributes
+are related to and/or restricted by other attributes.  seq_length is
 determined by the first member added and therefore can not be reset.
 
 =cut
@@ -286,7 +287,7 @@ sub get_tmp_dir {
 
 Synopsis: set_width($x), set_height($x)
 
-Description:  sets the attributes {width} and {height}.  
+Description:  sets the attributes {width} and {height}.
 
 =cut
 
@@ -302,12 +303,12 @@ sub set_height {
 
 =head3 set_sv_criteria()
 
-Synopsis:  $alignment->set_sv_criteria($x, $y, $z), while $x is 
-the minimum overlap, $y is a percentage similarity and $z is the minimal 
+Synopsis:  $alignment->set_sv_criteria($x, $y, $z), while $x is
+the minimum overlap, $y is a percentage similarity and $z is the minimal
 amino acid indel length to be considered as a splice variant
 
-Description:  Set the putative splice variants standard, the minimum 
-overlapping bases and percentage identity (sv_overlap and sv_identity).  
+Description:  Set the putative splice variants standard, the minimum
+overlapping bases and percentage identity (sv_overlap and sv_identity).
 The sub checks if the values are correct before setting the attributes
 
 =cut
@@ -434,7 +435,7 @@ sub get_seq_length {
 
 Synopsis:  set_start_value($x), set_end_value($x)
 
-Description: set the start_value and end_value.  Check if the input value is correct before setting the attributes.  Since the {start_value} and {end_value} attributes of the {ruler} and {members} must be the same as those of the alignment object, the set subs call the set_start_value and set_end_value of the {ruler} and all members of {members} 
+Description: set the start_value and end_value.  Check if the input value is correct before setting the attributes.  Since the {start_value} and {end_value} attributes of the {ruler} and {members} must be the same as those of the alignment object, the set subs call the set_start_value and set_end_value of the {ruler} and all members of {members}
 
 Returns:
 
@@ -693,7 +694,7 @@ sub hide_gappy_members {
     return $n_hide;
 }
 
-=head3 get_members 
+=head3 get_members
 
  Get the member objects of the alignment
  Arg: none
@@ -717,13 +718,13 @@ sub add_legend_item {
 
 =head3 _add_ruler()
 
- Synopsis: $alignment->_add_ruler($x,$y), where $x is the top margin 
+ Synopsis: $alignment->_add_ruler($x,$y), where $x is the top margin
           and $y is the height of the ruler.
 
- Description:  Add a ruler to the alignment object, the start_value and 
- end_value are set to the same as those of the alignment.  If no member 
- has been added to the alignment object, the seq_length, start_value and 
- end_value of the alignment are not set (see sub add_member), then a ruler 
+ Description:  Add a ruler to the alignment object, the start_value and
+ end_value are set to the same as those of the alignment.  If no member
+ has been added to the alignment object, the seq_length, start_value and
+ end_value of the alignment are not set (see sub add_member), then a ruler
  can not be added.
 
 =cut
@@ -742,15 +743,15 @@ sub _add_ruler {
 
 =head3 _add_cvg_chart()
 
- Synopsis: $alignment->_add_ruler($x,$y,$z), while $x is the vertical 
- offset, $y is the id and $z is a hash reference whose key is an integer 
+ Synopsis: $alignment->_add_ruler($x,$y,$z), while $x is the vertical
+ offset, $y is the id and $z is a hash reference whose key is an integer
  (a position) and value is a percentage
 
- Description:  Add a chart representing coverage by a member.  The 
- start_value and end_value are set to the same as those of the alignment.  
- The coverage of each alignment postion is repreesnted by a hash reference 
- passed to the subroutine.  The key of the hash is the alignment postion 
- and the values are percentage converage. 
+ Description:  Add a chart representing coverage by a member.  The
+ start_value and end_value are set to the same as those of the alignment.
+ The coverage of each alignment postion is repreesnted by a hash reference
+ passed to the subroutine.  The key of the hash is the alignment postion
+ and the values are percentage converage.
 
 =cut
 
@@ -786,10 +787,10 @@ sub _add_legend {
 
 Synopsis: $alignment->_add_conserved_seq_obj($x), while $x is the vertical offset.
 
-Description:  Add a member object representing the conserved sequence of 
-the @members.  The seq of this object is generated by another subroutine 
-get_conserved_seq.   If the sequence at a position is not conserved among 
-all present members, it is repreesnted by - in conserved_seq.  This 
+Description:  Add a member object representing the conserved sequence of
+the @members.  The seq of this object is generated by another subroutine
+get_conserved_seq.   If the sequence at a position is not conserved among
+all present members, it is repreesnted by - in conserved_seq.  This
 object is NOT a member of @members.
 
 =cut
@@ -811,8 +812,8 @@ sub _add_conserved_seq_obj {
 
 =head1 Subroutines to search and ouput ids of @members
 
-is_id_member(), is_member(), id_to_member(), get_member_ids(), 
-get_nonhidden_member_ids, get_hidden_member_ids(), get_member_species(), 
+is_id_member(), is_member(), id_to_member(), get_member_ids(),
+get_nonhidden_member_ids, get_hidden_member_ids(), get_member_species(),
 get_member_urls()
 
 =cut
@@ -838,7 +839,7 @@ sub is_id_member {
 
 =head3 is_member()
 
-Synopsis:  is_member($member), while $member is an member object 
+Synopsis:  is_member($member), while $member is an member object
 
 Description:  Is $member already a member?
 
@@ -1105,7 +1106,7 @@ Description: it does the following
  4. Render all non-hidden members of the @aign_seqs
 
 
-Returns: 
+Returns:
 
 =cut
 
@@ -1306,10 +1307,10 @@ sub get_image_map {
 
 =head1 Subroutines to analyze sequences of @members and output result
 
-get_member_similarity(), get_sv_candidates(), get_allele_candidates(), 
-get_overlap_score(), get_all_overlap_score(), get_all_medium(), 
-get_all_range(), get_seqs(), get_nopad_seqs(), get_overlap_seqs(), 
-get_overlap_nums(), get_ngap_pct(), get_all_ngap_length(), 
+get_member_similarity(), get_sv_candidates(), get_allele_candidates(),
+get_overlap_score(), get_all_overlap_score(), get_all_medium(),
+get_all_range(), get_seqs(), get_nopad_seqs(), get_overlap_seqs(),
+get_overlap_nums(), get_ngap_pct(), get_all_ngap_length(),
 get_conserved_seq_obj()
 
 =cut
@@ -1318,7 +1319,7 @@ get_conserved_seq_obj()
 
 Sysopsis: $alignment->get_member_similarity($al_sq) where $al_sq is an object of of algn_seq and member of @members
 
-Description: To output pair-wise similarities (overlap base, percentage indentity)of the member which is specified as argument between other members of @members.  
+Description: To output pair-wise similarities (overlap base, percentage indentity)of the member which is specified as argument between other members of @members.
 
 Returns: two hash references, one for overlap bases and the other for percentage indentity.  The key of both hashes are the ids of other non hidden members of @members
 
@@ -1342,11 +1343,11 @@ sub get_member_similarity {
 
 =head3 get_sv_candidates()
 
- Synopsis: $alignment->get_sv_candidates() 
- Description:  make pairwise comparison between members of @members of the 
- same species.  If the pair have enough overlap, and the percentage 
+ Synopsis: $alignment->get_sv_candidates()
+ Description:  make pairwise comparison between members of @members of the
+ same species.  If the pair have enough overlap, and the percentage
  indentity is high enough, and they have enough insertion-deletion (
- specified as parameter), they are considered as putative splice variant pair  
+ specified as parameter), they are considered as putative splice variant pair
 
  Returns: 3 hash references
          1. for overlap bases, a 2-D hash, the two keys are the ids of putative pslice variant pair.
@@ -1403,10 +1404,10 @@ sub get_sv_candidates {
 
  Synopsis: $alignment->get_allele_candidates()
 
- Description:  make pairwise comparison between members of @members of the 
- same species.  If the pair have enough overlap, and the percentage 
- indentity is high enough, and they only have short insertion-deletion 
- (specified as parameter), they are considered as putative allele pair  
+ Description:  make pairwise comparison between members of @members of the
+ same species.  If the pair have enough overlap, and the percentage
+ indentity is high enough, and they only have short insertion-deletion
+ (specified as parameter), they are considered as putative allele pair
 
  Returns: 3 hash references
          1. for overlap bases, a 2-D hash, the two keys are the ids of putative alllele pair.
@@ -1547,7 +1548,7 @@ Synopsis: $alignment->get_all_range()
 
 Description: Output the start and end of characters of each member sequence
 
-Returns: Two hash references whose keys are the id of a @members element 
+Returns: Two hash references whose keys are the id of a @members element
  and whose values are the start and end positions, respectively
  ($start_pos, $end_pos) = ($start_ref->{$id}, $end_ref->{$id})
 
@@ -1597,7 +1598,7 @@ sub get_seqs {
 =head3 get_nopad_seqs()
 
  Synopsis: $alignment->get_nopad_seqs()
- Description: Output the 'original' sequences (with gaps removed) of @members 
+ Description: Output the 'original' sequences (with gaps removed) of @members
               which are are not hidden, in the range specified by start_value and end_value
  Returns: a hash reference whose key is the id of each members and the value is the sequence
 
@@ -1622,8 +1623,8 @@ sub get_nopad_seqs {
 =head3 get_overlap_seqs()
 
  Synopsis: $alignment-> get_overlap_seqs($max_gaps)
-Arguments: $max_gaps specifies a maximum number of gaps allowed in kept columns. Default is zero. 
- Description: for each non-hidden @members, get the sequences that overlap with all 
+Arguments: $max_gaps specifies a maximum number of gaps allowed in kept columns. Default is zero.
+ Description: for each non-hidden @members, get the sequences that overlap with all
               the other non-hidden @members, in the range from start_value to end_value
  Returns: a hash reference whose key is the id of each member and the value is the overlap sequence
 
@@ -1738,7 +1739,7 @@ sub get_overlap_num {
  Synopsis:  $alignment->get_overlap_cols($max_gaps)
 
  Description:  Like get_overlap_num, but can allow some number ($max_gaps) of gaps in a column (counting non-hidden members only).,
-   instead of requiring this be strictly zero. ($max_gaps is 0 by default). 
+   instead of requiring this be strictly zero. ($max_gaps is 0 by default).
 
  Returns:  The number of columns with no more than $max_gaps gaps in them.
 =cut
@@ -1784,7 +1785,7 @@ Returns:  A list of (The number of columns with no more than $max_gaps gaps in t
 sub get_overlap_cols_nongapchars{ # gets the number of columns with <= max_gaps, and also the number of nongap chars in those columns.
 	my $self = shift;
 	my $max_gaps = shift;					# this is the max number of gaps allowed in a column which is kept in the overlap
-	$max_gaps = 0 unless(defined $max_gaps); 
+	$max_gaps = 0 unless(defined $max_gaps);
 	my $overlap_cols = 0;
 	my $overlap_nongap_chars = 0;
 	return unless   @{$self->{members}}; # return if no sequences
@@ -1792,12 +1793,12 @@ sub get_overlap_cols_nongapchars{ # gets the number of columns with <= max_gaps,
 	foreach (my $i = $self->{start_value} - 1; $i <= $self->{end_value} - 1; $i++) {
 		my $col_gaps = 0;
 		my $n_seq_nonhidden = 0;
-		foreach (@{$self->{members}}) {			
+		foreach (@{$self->{members}}) {
 			next if $_->is_hidden;
 			$n_seq_nonhidden++;
 			my $base = substr($_->get_seq(), $i, 1);
 			if ($base eq '-') {
-				$col_gaps++;				
+				$col_gaps++;
 			}
 		}
 		if ($col_gaps <= $max_gaps) {
@@ -1812,11 +1813,11 @@ sub get_overlap_cols_nongapchars{ # gets the number of columns with <= max_gaps,
 
 Synopsis:  $alignment->get_ngap_pct()
 
-Description:  go from start_value to end_value, get the percentage 
-	coverage by @members.  A position is covered by a member when it has a 
+Description:  go from start_value to end_value, get the percentage
+	coverage by @members.  A position is covered by a member when it has a
 	non gap at the position.
 
-Returns:  a hash reference whose key is the position and values are the 
+Returns:  a hash reference whose key is the position and values are the
 	percentage coverage
 
 =cut
@@ -1892,7 +1893,7 @@ sub get_ngap_pct {
 
  Synopsis:  $alignment->get_all_nogap_length()
 
- Description:  Go from start_value to end_value, get the sequence length 
+ Description:  Go from start_value to end_value, get the sequence length
  without gap of @members...
 
  Returns:  A hash reference whose key is the id and value is the length
@@ -1913,8 +1914,8 @@ sub get_all_nogap_length {
 
 Synopsis:  $alignment->get_conserved_seq()
 
-Description:  go through each postion from start_value to end_value of 
- non-hidden member of @members.  If all members have the same seq at the 
+Description:  go through each postion from start_value to end_value of
+ non-hidden member of @members.  If all members have the same seq at the
  position, get the seq, otherwise put a gap (-) in the position.
 
 Returns:  s string of sequence
@@ -2210,4 +2211,3 @@ sub run_muscle {
 }
 
 1;
-
