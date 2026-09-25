@@ -72,31 +72,38 @@ sub _dbargs {
   # we will prompt the user for a username and password.
   #  my $un = $ENV{"USER"};
 
-  open (my $TTY, '>', '/dev/tty') or die "what the heck - no TTY??\n";
-
-  my $un = "postgres";
-  print $TTY "Database username for write access (default \"$un\"): ";
-
-  use Term::ReadKey;
-  ReadMode 'normal';
-  my $ln = ReadLine(0);
-  chomp $ln;
-  if ($ln) {
-    $un = $ln;
+  if (open (my $TTY, '>', '/dev/tty')) {
+      # we have no terminal, we can't read anything
+      # fall back to environment variables from docker compose file
+      #
+      $dbargs->{dbuser} = $ENV{PGUSER};
+      $dbargs->{dbpass} = $ENV{PGPASSWORD};
   }
+  else {
+      my $un = "postgres";
+      print $TTY "Database username for write access (default \"$un\"): ";
 
-  $dbargs->{dbuser} = $un;
+      use Term::ReadKey;
+      ReadMode 'normal';
+      my $ln = ReadLine(0);
+      chomp $ln;
+      if ($ln) {
+	  $un = $ln;
+      }
 
-  print $TTY 'Password: ';
+      $dbargs->{dbuser} = $un;
 
-  use Term::ReadKey;
-  ReadMode 'noecho';
-  $dbargs->{dbpass} = ReadLine(0);
-  ReadMode 'normal';
-  chomp $dbargs->{dbpass};
-  print $TTY "\n"; #newline to let the user know the password was entered
-  # done with username/password
-  close $TTY;
+      print $TTY 'Password: ';
+
+      use Term::ReadKey;
+      ReadMode 'noecho';
+      $dbargs->{dbpass} = ReadLine(0);
+      ReadMode 'normal';
+      chomp $dbargs->{dbpass};
+      print $TTY "\n"; #newline to let the user know the password was entered
+      # done with username/password
+      close $TTY;
+  }
 
   ###############################################
   # make some default parameters for ease of use, and for safety's sake
@@ -148,8 +155,8 @@ sub connect {
             dbtype   => type of database - 'Pg' or 'mysql'; defaults to 'Pg'
             dbargs   => DBI connection params, merged with the default
             dbhost   => host to connect to, default 'db.sgn.cornell.edu',
-            dbbranch => the database "branch" to use, default 'devel' unless 
-                        you are configured as a production website, in which 
+            dbbranch => the database "branch" to use, default 'devel' unless
+                        you are configured as a production website, in which
                         case it would default to 'production'
          })
         all parameters in the hash are optional as well
@@ -182,8 +189,8 @@ sub new_no_connect {
             dbtype   => type of database - 'Pg' or 'mysql'; defaults to 'Pg'
             dbargs   => DBI connection params, merged with the default
             dbhost   => host to connect to, default 'db.sgn.cornell.edu',
-            dbbranch => the database "branch" to use, default 'devel' unless 
-                        you are configured as a production website, in which 
+            dbbranch => the database "branch" to use, default 'devel' unless
+                        you are configured as a production website, in which
                         case it would default to 'production'
          })
         all parameters in the hash are optional as well
@@ -220,8 +227,8 @@ sub new {
  Side_Effects: Die if something is wrong
 
  Example: commit_prompt($dbh);
- 
-  
+
+
 
 =cut
 
