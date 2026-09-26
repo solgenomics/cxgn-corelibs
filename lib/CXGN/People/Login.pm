@@ -79,7 +79,6 @@ sub get_login_by_email {
     my $dbh      = shift;
     my $email = shift;
 
-    print STDERR "getting login by email with $email\n";
     my $login = CXGN::People::Login->new($dbh); # create empty login object
     my $sth    = $login->get_sql("login_from_email");
     $sth->execute($email);
@@ -244,7 +243,6 @@ sub verify_password {
     
     my ($flag) = $h->fetchrow_array();
 
-    print STDERR "Checked password $password with result $flag.\n";
     return $flag;
 }
 
@@ -256,9 +254,9 @@ sub update_password {
         die "NEED TO STORE PERSON OBJECT BEFORE UPDATING PASSWORD!";
     }
 
-    my $q = "UPDATE sgn_people.sp_person SET password = crypt('$password', gen_salt('bf')) WHERE sp_person_id=? RETURNING sp_person_id";
+    my $q = "UPDATE sgn_people.sp_person SET password = crypt(?, gen_salt('bf')) WHERE sp_person_id=? RETURNING sp_person_id";
     my $h = $self->get_dbh()->prepare($q);
-    $h->execute($self->get_sp_person_id());
+    $h->execute($password, $self->get_sp_person_id());
     my ($flag) = $h->fetchrow_array();
 
     return $flag;
@@ -283,10 +281,9 @@ sub update_confirm_code {
     if (!$self->get_sp_person_id()) { 
 	die "NEED TO STORE PERSON OBJECT BEFORE UPDATING PASSWORD!";
     }
-    my $q = "UPDATE sgn_people.sp_person SET confirm_code = '$confirm_code' WHERE sp_person_id=? RETURNING sp_person_id";
+    my $q = "UPDATE sgn_people.sp_person SET confirm_code = ? WHERE sp_person_id=? RETURNING sp_person_id";
     my $h = $self->get_dbh()->prepare($q);
-    print STDERR "Updating confirm_code with $confirm_code for id ".$self->get_sp_person_id()."\n";
-    $h->execute($self->get_sp_person_id());
+    $h->execute($confirm_code, $self->get_sp_person_id());
     my ($flag) = $h->fetchrow_array();
     
     return $flag;
@@ -716,7 +713,8 @@ sub set_sql {
           "
 			SELECT 
 				sp_person_id, username, private_email, pending_email, 
-				password, confirm_code, disabled, first_name, last_name
+				password, confirm_code, disabled, first_name, last_name,
+				organization
 			FROM sgn_people.sp_person 
 			WHERE sp_person_id=?
 		",
@@ -763,7 +761,7 @@ sub set_sql {
 		login_from_email => 
                         "       SELECT sp_person_id 
                                 FROM sgn_people.sp_person
-                                WHERE private_email ilike ?",
+                                WHERE lower(private_email) = lower(?)",
 
 	person_from_token => 
                        "        SELECT sp_person_id
