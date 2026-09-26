@@ -5,9 +5,9 @@ t/CXGN/People/login_sql.t - tests for the account queries in CXGN::People::Login
 =head1 DESCRIPTION
 
 Checks that passwords and confirm codes are passed to the database as
-bind values, that the email lookup is an exact (case-insensitive) match,
-that fetching a login keeps the organization, and that account secrets
-are not written to STDERR.
+bind values, that the email and username lookups are an exact
+(case-insensitive) match, that fetching a login keeps the organization,
+and that account secrets are not written to STDERR.
 
 Needs a database with the sgn_people schema (for example the sgn test
 fixture). Connection parameters are read by CXGN::DB::Connection, for
@@ -19,7 +19,7 @@ back at the end.
 use strict;
 use warnings;
 
-use Test::More tests => 16;
+use Test::More tests => 18;
 
 BEGIN {
     use_ok('CXGN::DB::Connection');
@@ -102,6 +102,19 @@ is(CXGN::People::Login->new($dbh, $id_a)->get_confirm_code(), $confirm_code, "co
 is_deeply([ CXGN::People::Login->get_login_by_email($dbh, 'LOGIN.SQL.B@Example.ORG') ], [ $id_b ], "email match ignores case");
 is_deeply([ CXGN::People::Login->get_login_by_email($dbh, 'login_sql_b@example.org') ], [ ], "underscore in an email is not a wildcard");
 is_deeply([ CXGN::People::Login->get_login_by_email($dbh, 'login.sql.%') ], [ ], "percent sign in an email is not a wildcard");
+
+# username lookup (get_login) is exact but case-insensitive, the same as
+# the email lookup above.
+#
+is(CXGN::People::Login->get_login($dbh, 'LOGIN_SQL_TEST_B')->get_sp_person_id(), $id_b, "get_login username match ignores case");
+
+# no account is named exactly "login_sql_test_c"; only a decoy whose
+# underscores are each replaced by a different character. Under
+# "username ilike ?", the underscores in the *query* are wildcards, so this
+# query used to match the decoy anyway.
+#
+my $id_decoy = new_login("loginXsqlXtestXc", 'login_sql_decoy@example.org', undef);
+ok(!CXGN::People::Login->get_login($dbh, 'login_sql_test_c')->get_sp_person_id(), "underscore in a username query is not a wildcard for a decoy account");
 
 # account secrets are not logged
 #

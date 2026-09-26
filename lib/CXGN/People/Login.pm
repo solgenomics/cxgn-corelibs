@@ -740,9 +740,9 @@ sub set_sql {
         get_login =>
 
           "
-			SELECT sp_person_id 
-			FROM sgn_people.sp_person 
-			WHERE username ilike ?
+			SELECT sp_person_id
+			FROM sgn_people.sp_person
+			WHERE lower(username) = lower(?)
 		",
 
         user_from_cookie =>
