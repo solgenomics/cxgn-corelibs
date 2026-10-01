@@ -19,17 +19,19 @@ CXGN::Tools::Run::Tsp - helper functions for running jobs with task-spooler (tsp
 Used by CXGN::Tools::Run::Plugin::Tsp and CXGN::Job as a replacement for
 Slurm on a single host. tsp provides the queue (number of concurrent
 jobs, job ids, state, exit codes). If a podman URL is configured, each
-job runs in its own container through the podman API (for example, the
-host's rootless podman socket mounted into the breedbase container);
+job runs in its own container through the podman API (the host's
+rootful podman socket mounted into the breedbase container);
 otherwise jobs run directly in the tsp server's container.
 
 Configuration is read from the environment so that it is the same for
 the web server and the tsp server:
 
   TS_SOCKET                tsp socket (default: tsp's default)
-  BB_JOB_PODMAN_URL        podman API URL, e.g. unix:///run/podman/podman.sock.
-                           Defaults to CONTAINER_HOST. If neither is set,
-                           jobs run without podman.
+  BB_JOB_PODMAN_URL        podman API URL, e.g. unix:///run/podman-host/podman.sock.
+                           If not set, jobs run without podman. (CONTAINER_HOST
+                           is deliberately not used: it may point to a rootless
+                           podman, whose job containers can't write the
+                           root-owned 0600 tempfiles the web server creates.)
   BB_JOB_IMAGE             image for job containers
                            (default docker.io/breedbase/breedbase:latest)
   BB_JOB_MOUNTS            whitespace-separated host_path:container_path[:options]
@@ -39,8 +41,8 @@ the web server and the tsp server:
                            pass to job containers with --add-host
                            (default: breedbase_db)
   BB_JOB_HOST_UID          if set, job directories are chowned to this uid
-                           before submission (rootless podman maps container
-                           root to this host uid)
+                           before submission (only useful with rootless podman,
+                           which maps container root to this host uid)
   BB_JOB_PODMAN_ARGS       extra arguments for podman run, e.g. "--memory 8g"
 
 =cut
@@ -54,7 +56,7 @@ use Socket qw | inet_ntoa |;
 our $DEFAULT_IMAGE = 'docker.io/breedbase/breedbase:latest';
 
 sub podman_url {
-    return $ENV{BB_JOB_PODMAN_URL} || $ENV{CONTAINER_HOST} || '';
+    return $ENV{BB_JOB_PODMAN_URL} || '';
 }
 
 =head2 runner_command($label, $cmd_file, $workdir)
