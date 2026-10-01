@@ -51,12 +51,28 @@ use strict;
 use warnings;
 
 use Carp qw | croak |;
+use IPC::Cmd;
 use Socket qw | inet_ntoa |;
 
 our $DEFAULT_IMAGE = 'docker.io/breedbase/breedbase:latest';
 
 sub podman_url {
     return $ENV{BB_JOB_PODMAN_URL} || '';
+}
+
+=head2 podman_command()
+
+The podman client command for the configured URL, as a list: podman-remote
+(Debian package podman-remote) if installed, otherwise podman --remote.
+
+=cut
+
+sub podman_command {
+    my $url = podman_url();
+    if (IPC::Cmd::can_run('podman-remote')) {
+        return ('podman-remote', '--url', $url);
+    }
+    return ('podman', '--remote', '--url', $url);
 }
 
 =head2 runner_command($label, $cmd_file, $workdir)
@@ -75,7 +91,7 @@ sub runner_command {
         return ('/bin/bash', $cmd_file);
     }
 
-    my @cmd = ('podman', '--remote', '--url', $url, 'run', '--rm', '--init',
+    my @cmd = (podman_command(), 'run', '--rm', '--init',
                "--name=$label", '--network=host', '--entrypoint', '/bin/bash');
 
     foreach my $host (split /\s+/, $ENV{BB_JOB_ADD_HOSTS} // 'breedbase_db') {
@@ -183,9 +199,8 @@ sub cancel {
         system('tsp', '-k', $id);
     }
 
-    my $url = podman_url();
-    if ($url && $label) {
-        system("podman --remote --url '$url' stop -i -t 10 '$label' >/dev/null 2>&1");
+    if (podman_url() && $label) {
+        system(join(' ', map { "'$_'" } podman_command(), 'stop', '-i', '-t', '10', $label).' >/dev/null 2>&1');
     }
 }
 

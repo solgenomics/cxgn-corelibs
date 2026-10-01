@@ -28,6 +28,7 @@ use Carp qw | croak |;
 use Cwd;
 use File::Slurp qw | read_file write_file |;
 use File::Spec;
+use IPC::Cmd;
 use CXGN::Tools::Run::Tsp;
 
 sub job_label {
@@ -42,8 +43,8 @@ sub check_job {
 	or croak "tsp command not in path, cannot submit jobs. Maybe you need to install the task-spooler package?";
 
     if (CXGN::Tools::Run::Tsp::podman_url()) {
-	IPC::Cmd::can_run('podman')
-	    or croak "a podman URL is configured, but the podman command is not in path";
+	(IPC::Cmd::can_run('podman-remote') || IPC::Cmd::can_run('podman'))
+	    or croak "a podman URL is configured, but neither podman-remote nor podman is in path";
     }
 
     $self->in_file()
