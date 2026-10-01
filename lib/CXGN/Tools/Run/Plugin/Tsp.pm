@@ -109,9 +109,32 @@ sub alive {
     return;
 }
 
+# see CXGN::Tools::Run::job_state()
+sub job_state {
+    my $self = shift;
+
+    my $state = CXGN::Tools::Run::Tsp::job_state($self->cluster_job_id(), $self->job_label());
+
+    if ($state->{state} ne 'finished') {
+	return ($state->{state}, "tsp: $state->{state}");
+    }
+    if ($self->_diefile_exists && $self->_file_contents($self->_diefile_name) =~ /was cancelled/) {
+	return ('canceled', 'tsp: cancelled');
+    }
+    if (defined($state->{signal})) {
+	return ('failed', "tsp: killed by signal $state->{signal}");
+    }
+    if (defined($state->{exit}) && $state->{exit} == 0) {
+	return ('finished', 'tsp: exit code 0');
+    }
+    return ('failed', 'tsp: exit code '.($state->{exit} // 'unknown'));
+}
+
 sub _write_tsp_die {
     my ($self, $message) = @_;
 
+    # the job directory may be gone when an old job is checked or cancelled
+    return if !$self->job_tempdir() || ! -d $self->job_tempdir();
     return if $self->_diefile_exists;
     my $err = (-f $self->err_file()) ? read_file($self->err_file()) : '';
     write_file($self->_diefile_name(), "$message\n$err");
