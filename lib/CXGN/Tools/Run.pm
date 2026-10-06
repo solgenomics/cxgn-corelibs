@@ -940,6 +940,26 @@ sub working_dir {
 #     return $self->{is_cluster};
 # }
 
+=head2 job_state
+
+  Usage: my ($state, $backend_state) = $job->job_state();
+  Desc : the state of a cluster job, as reported by the backend, without
+         side effects (unlike alive(), it does not die or run completion
+         hooks). To check a job submitted earlier, create the object with
+         backend, jobid, job_tempdir and cluster_job_id set.
+  Ret  : $state is one of queued, running, finished, failed, canceled,
+         timed_out or unknown; $backend_state is the backend's own
+         description of the state, for messages.
+         Implemented by the backend plugins; without one, the state is
+         unknown.
+  Args : none
+
+=cut
+
+sub job_state {
+    return ('unknown', 'no job backend');
+}
+
 =head2 alive
 
   Usage: print "It's still there" if $runner->alive;
