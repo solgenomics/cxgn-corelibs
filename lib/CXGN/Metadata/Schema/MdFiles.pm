@@ -80,6 +80,11 @@ __PACKAGE__->add_columns(
     default_value => undef,
     is_nullable => 1,
     size => undef
+  },
+  "create_timestamp",
+  {
+    data_type => "timestamp with time zone",
+    is_nullable => 1
   }
 );
 __PACKAGE__->set_primary_key("file_id");
