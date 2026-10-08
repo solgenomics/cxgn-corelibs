@@ -74,6 +74,18 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
     size => undef,
   },
+  "tags",
+  {
+    data_type => "text",
+    default_value => undef,
+    is_nullable => 1,
+    size => undef
+  },
+  "create_timestamp",
+  {
+    data_type => "timestamp with time zone",
+    is_nullable => 1
+  }
 );
 __PACKAGE__->set_primary_key("file_id");
 __PACKAGE__->add_unique_constraint("md_files_pkey", ["file_id"]);
