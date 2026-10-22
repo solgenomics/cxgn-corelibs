@@ -116,7 +116,7 @@ sub new {
     @{ $self->{members} } = ();
     $self->{ruler}         = undef;
     $self->{chart}         = undef;
-    $self->{image} = undef;
+    $self->{image}         = undef;
     $self->{conserved_seq} = undef;
     $self->{seq_length}    = 0;
 
