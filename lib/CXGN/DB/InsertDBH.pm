@@ -69,17 +69,27 @@ sub _dbargs {
   my ($dbargs) = @_;
 
   ######################################################
-  # we will prompt the user for a username and password.
-  #  my $un = $ENV{"USER"};
+  # Work out the username and password to connect with.
+  #
+  # Prefer the environment (PGUSER/PGPASSWORD, as set by the docker
+  # compose files), since that also covers non-interactive runs such as
+  # db/run_all_patches.pl and CI. Otherwise prompt on the terminal. If
+  # neither is available, die: leaving dbuser undef makes
+  # CXGN::DB::Connection fall back to its configured default (web_usr),
+  # which connects successfully but lacks the privileges a patch needs,
+  # producing confusing errors like "must be owner of extension".
+  #
+  if (defined $ENV{PGUSER} || defined $ENV{PGPASSWORD}) {
+      # Require both together. PGPASSWORD alone silently fell through to
+      # web_usr, which is the bug this guard exists to prevent.
+      defined $ENV{PGUSER}
+        or die "PGPASSWORD is set but PGUSER is not; refusing to guess the "
+             . "database user. Set PGUSER (e.g. PGUSER=postgres).\n";
 
-  if (open (my $TTY, '>', '/dev/tty')) {
-      # we have no terminal, we can't read anything
-      # fall back to environment variables from docker compose file
-      #
       $dbargs->{dbuser} = $ENV{PGUSER};
       $dbargs->{dbpass} = $ENV{PGPASSWORD};
   }
-  else {
+  elsif (open (my $TTY, '>', '/dev/tty')) {
       my $un = "postgres";
       print $TTY "Database username for write access (default \"$un\"): ";
 
@@ -103,6 +113,11 @@ sub _dbargs {
       print $TTY "\n"; #newline to let the user know the password was entered
       # done with username/password
       close $TTY;
+  }
+  else {
+      die "No database credentials available: PGUSER/PGPASSWORD are unset "
+        . "and there is no terminal to prompt on. Set PGUSER and PGPASSWORD "
+        . "in the environment.\n";
   }
 
   ###############################################

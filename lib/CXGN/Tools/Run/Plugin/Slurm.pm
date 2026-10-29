@@ -548,10 +548,44 @@ sub out {
 #    return undef;
 }
 
-sub cancel { 
+sub cancel {
     my $self = shift;
 
     system('scancel', $self->cluster_job_id());
+}
+
+# see CXGN::Tools::Run::job_state()
+my %slurm_job_states = (
+    PENDING => 'queued', CONFIGURING => 'queued',
+    RUNNING => 'running', COMPLETING => 'running', SUSPENDED => 'running',
+    COMPLETED => 'finished',
+    CANCELLED => 'canceled',
+    TIMEOUT => 'timed_out', DEADLINE => 'timed_out',
+    FAILED => 'failed', NODE_FAIL => 'failed', OUT_OF_MEMORY => 'failed', BOOT_FAIL => 'failed', PREEMPTED => 'failed',
+);
+
+sub job_state {
+    my $self = shift;
+
+    my $cluster_job_id = $self->cluster_job_id();
+    if (!defined($cluster_job_id) || $cluster_job_id !~ /^\d+(?:_\d+)?$/) {
+        return ('unknown', 'no valid Slurm job id');
+    }
+
+    # scontrol may briefly not know a job right after submission, so try a
+    # few times before giving up
+    my $slurm_state;
+    for my $attempt (1 .. 5) {
+        my $job_info = `scontrol show job -o $cluster_job_id 2>/dev/null`;
+        ($slurm_state) = $job_info =~ /\bJobState=(\S+)/;
+        last if defined($slurm_state);
+        sleep 1 if $attempt < 5;
+    }
+
+    if (!defined($slurm_state)) {
+        return ('unknown', 'UNKNOWN');
+    }
+    return ($slurm_job_states{$slurm_state} || 'unknown', $slurm_state);
 }
 
 # sub serialize { 
