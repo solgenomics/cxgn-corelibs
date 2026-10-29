@@ -83,7 +83,7 @@ __PACKAGE__->add_columns(
   },
   "create_timestamp",
   {
-    data_type => "timestamp with time zone",
+    data_type => "timestamp",
     is_nullable => 1
   }
 );
