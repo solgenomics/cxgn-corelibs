@@ -433,4 +433,11 @@ __PACKAGE__->belongs_to(
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+
+# Added by sgn db patch 00211/AddJobObsoleteColumn. Dismissed jobs are flagged obsolete rather than deleted.
+__PACKAGE__->add_columns(
+  "is_obsolete",
+  { data_type => "boolean", default_value => \"false", is_nullable => 0 },
+);
+
 1;
